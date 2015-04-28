@@ -29,7 +29,7 @@ Open a command console, enter your project directory and execute the
 following command to download the latest stable version of this bundle:
 
 ```bash
-$ composer require pumukit/youtube-bundle dev-mater
+$ composer require pumukit/youtube-bundle dev-master
 ```
 
 This command requires you to have Composer installed globally, as explained
