@@ -1,0 +1,33 @@
+{
+    "name": "Pumukit/YoutubeBundle",
+    "type": "symfony-bundle",
+    "description": "Youtube bundle for Symfony2 to upload videos to Youtube and other features",
+    "keywords": ["youtube", "uploader", "upload", "videos", "symfony2", "bundle", "pumukit"],
+    "homepage": "http://gitlab.com/Pumukit/YoutubeBundle",
+    "license": "",
+    "authors": [
+        {
+            "name": "Teltek Team",
+            "homepage": "http://teltek.es"
+        }
+    ],
+    "require": {
+        "php":                      ">=5.3.3",
+        "symfony/framework-bundle": "~2.0",
+        "twig/twig":                "~1.5",
+        "python":                   ">=2.6"
+    },
+    "require-dev": {
+      "symfony/expression-language": "~2.4"
+    },
+    "autoload": {
+        "psr-4": {
+            "Pumukit\\YoutubeBundle\\": ""
+        }
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "2.4.x-dev"
+        }
+    }
+}

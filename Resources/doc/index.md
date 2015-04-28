@@ -1,0 +1,78 @@
+Youtube Bundle
+==============
+
+Configuration
+-------------
+
+### Create account for uploading Pumukit videos to Youtube
+
+#### Create client_secrets.json file:
+
+File containing the OAuth 2.0 information for this application, including client_id and client_secret. You can acquire an ID/secret pair from the API Access tab on the Google APIs Console:
+http://code.google.com/apis/console#access
+For more information about using OAuth2 to access Google APIs, please visit:
+https://developers.google.com/accounts/docs/OAuth2
+For more information about the client_secrets.json file format, please visit:
+https://developers.google.com/api-client-library/python/guide/aaa_client_secrets
+Please ensure that you have enabled the YouTube Data API for your project.
+
+Go to Resources/data/pyPumukit and create the file:
+
+```
+cd Resources/data/pyPumukit
+emacs client_secrets.json
+```
+
+You will have a client_secrets.json file like this placed in Resources/data/pyPumukit:
+
+```
+{
+ "installed":
+     {
+      "auth_uri":"https://accounts.google.com/o/oauth2/auth",
+      "client_secret":"CHANGE_ME",
+      "token_uri":"https://accounts.google.com/o/oauth2/token",
+      "client_email":"CHANGE_ME",
+      "redirect_uris":["urn:ietf:wg:oauth:2.0:oob","oob"],
+      "client_x509_cert_url":"",
+      "client_id":"CHANGE_ME.apps.googleusercontent.com",
+      "auth_provider_x509_cert_url":"https://www.googleapis.com/oauth2/v1/certs"
+     }
+}
+```
+
+#### Install necessary libraries:
+```
+sudo apt-get install python python-setuptools python-argparse python-pip python-gflags
+```
+
+#### Install Google API Python Client modifying library:
+```
+cd /tmp
+wget https://google-api-python-client.googlecode.com/files/google-api-python-client-1.2.zip
+unzip google-api-python-client-1.2.zip
+cd google-api-python-client-1.2
+sed -i "s/gflags.DEFINE_boolean('auth_local_webserver', True/gflags.DEFINE_boolean('auth_local_webserver', False/g" build/oauth2client/old_run.py
+python setup.py build
+python setup.py install
+```
+
+#### Create credential file executing script:
+```
+cd src/Pumukit/Youtube/Resources/data/pyPumukit
+python createAccount.py
+```
+
+This script launches the login page for acepting the access to our account. We should be logged in to the Youtube account used for publication. Otherwise, the script will launch first the loggin page for credentials.
+
+Once acepted the access, an oauth2.json file will be created in Resources/data. We should rename it to pumukit-oauth2.json.
+
+```
+mv oauth2.json pumukit-oauth2.json
+```
+
+#### Undo modifications:
+```
+cd /tmp
+sed -i "s/gflags.DEFINE_boolean('auth_local_webserver', False/gflags.DEFINE_boolean('auth_local_webserver', True/g" build/oauth2client/old_run.py
+```
