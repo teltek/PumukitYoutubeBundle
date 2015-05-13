@@ -154,6 +154,7 @@ EOT
                 $output->writeln('MultimediaObject with id "'.$mm->getId().'" does have an EmbedTag with path "'.$embedTag->getPath().'" and code "'.$embedTag->getCod().'" but does not exist in Tag repository');
             }
         } else {
+            // TODO: Change "YOUTUBECONFERENCES" to "YT5" as default playlist tag code in CMAR.
             $output->writeln('MultimediaObject with id "'.$mm->getId().'" does not have any EmbedTag with path starting with "ROOT|YOUTUBE|" so we search for Tag with code "YOUTUBECONFERENCES" as default Youtube playlist.');
             $playlistTag = $this->tagRepo->findOneByCod('YOUTUBECONFERENCES');
             if (!$playlistTag) {
