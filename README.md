@@ -15,7 +15,7 @@ Open composer.json and add this repo:
         { ... },
         {
          "type": "vcs",
-         "url": "https://gitlab.com/pumukit/pumukityoutubebundle"
+         "url": "http://gitlab.teltek.es/pumukit2/pumukityoutubebundle.git"
         }
     ]
 
@@ -29,7 +29,7 @@ Open a command console, enter your project directory and execute the
 following command to download the latest stable version of this bundle:
 
 ```bash
-$ composer require "Pumukit/YoutubeBundle" "~1"
+$ composer require pumukit/youtube-bundle dev-master
 ```
 
 This command requires you to have Composer installed globally, as explained
