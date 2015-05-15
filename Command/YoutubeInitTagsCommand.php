@@ -36,7 +36,9 @@ EOT
 
         if ($input->getOption('force')){
             $youtubePublicationChannelTag = $this->createTagWithCode('PUCHYOUTUBE', 'YouTubeEDU', 'PUBCHANNELS', false);
+            $output->writeln("Tag persisted - new id: ".$youtubePublicationChannelTag->getId()." cod: ".$youtubePublicationChannelTag->getCod());
             $youtubePlaylistTag = $this->createTagWithCode('YOUTUBE', 'YouTube Playlists', 'ROOT', true);
+            $output->writeln("Tag persisted - new id: ".$youtubePlaylistTag->getId()." cod: ".$youtubePlaylistTag->getCod());
         } else {
             $output->writeln('<error>ATTENTION:</error> This operation should not be executed in a production environment.');
             $output->writeln('');
