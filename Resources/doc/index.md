@@ -52,7 +52,7 @@ cd /tmp
 wget https://google-api-python-client.googlecode.com/files/google-api-python-client-1.2.zip
 unzip google-api-python-client-1.2.zip
 cd google-api-python-client-1.2
-sed -i "s/gflags.DEFINE_boolean('auth_local_webserver', True/gflags.DEFINE_boolean('auth_local_webserver', False/g" build/oauth2client/old_run.py
+sed -i "s/gflags.DEFINE_boolean('auth_local_webserver', True/gflags.DEFINE_boolean('auth_local_webserver', False/g" oauth2client/old_run.py
 python setup.py build
 python setup.py install
 ```
@@ -63,7 +63,7 @@ cd src/Pumukit/Youtube/Resources/data/pyPumukit
 python createAccount.py
 ```
 
-This script launches the login page for acepting the access to our account. We should be logged in to the Youtube account used for publication. Otherwise, the script will launch first the loggin page for credentials.
+This script launches the login page for acepting the access to our account. We should be logged in to the Youtube account used for publication. Otherwise, the script will launch first the loggin page for credentials. If the script doesn't launch the web page, copy the url given, paste it on a web explorer, login with your account, copy the key given and paste it on the script prompt.
 
 Once acepted the access, an oauth2.json file will be created in Resources/data. We should rename it to pumukit-oauth2.json.
 
@@ -75,4 +75,5 @@ mv oauth2.json pumukit-oauth2.json
 ```
 cd /tmp
 sed -i "s/gflags.DEFINE_boolean('auth_local_webserver', False/gflags.DEFINE_boolean('auth_local_webserver', True/g" build/oauth2client/old_run.py
+sed -i "s/gflags.DEFINE_boolean('auth_local_webserver', False/gflags.DEFINE_boolean('auth_local_webserver', True/g" oauth2client/old_run.py
 ```
