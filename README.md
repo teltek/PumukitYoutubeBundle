@@ -6,7 +6,7 @@ For contribution to the documentation you can find it on [Resources/doc](Resourc
 Installation
 ============
 
-Setp 0: Introduce repository in the root project composer.json
+Setp 1: Introduce repository in the root project composer.json
 ---------------------------------------------------------
 
 Open composer.json and add this repo:
@@ -22,7 +22,7 @@ Open composer.json and add this repo:
 
 
 
-Step 1: Download the Bundle
+Step 2: Download the Bundle
 ---------------------------
 
 Open a command console, enter your project directory and execute the
@@ -36,30 +36,14 @@ This command requires you to have Composer installed globally, as explained
 in the [installation chapter](https://getcomposer.org/doc/00-intro.md)
 of the Composer documentation.
 
-Step 2: Enable the Bundle
--------------------------
+Step 3: Install the Bundle
+--------------------------
 
-Then, enable the bundle by adding the following line in the `app/AppKernel.php`
-file of your project:
+Install the bundle by executing the following line command. This command updates the Kernel to enable the bundle (app/AppKernel.php) and loads the routing (app/config/routing.yml) to add the bundle routes\
+\
+.
 
-```php
-<?php
-// app/AppKernel.php
-
-// ...
-class AppKernel extends Kernel
-{
-    public function registerBundles()
-    {
-        $bundles = array(
-            // ...
-
-            new Pumukit\YoutubeBundle\PumukitYoutubeBundle(),
-        );
-
-        // ...
-    }
-
-    // ...
-}
+```bash
+$ cd /path/to/pumukit2/
+$ php app/console pumukit:install:bundle Pumukit/YoutubeBundle/PumukitYoutubeBundle
 ```
