@@ -6,21 +6,19 @@ For contribution to the documentation you can find it on [Resources/doc](Resourc
 Installation
 ============
 
+Steps 1 and 2 requires you to have Composer installed globally, as explained
+in the [installation chapter](https://getcomposer.org/doc/00-intro.md)
+of the Composer documentation.
+
 Setp 1: Introduce repository in the root project composer.json
 ---------------------------------------------------------
 
-Open composer.json and add this repo:
+Open a command console, enter your project directory and execute the
+following command to add this repo:
 
-    "repositories": [
-        { ... },
-        {
-         "type": "vcs",
-         "url": "http://gitlab.teltek.es/pumukit2/pumukityoutubebundle.git"
-        }
-    ]
-
-
-
+```bash
+$ composer config repositories.pumukityoutubebundle vcs http://gitlab.teltek.es/pumukit2/pumukityoutubebundle.git
+```
 
 Step 2: Download the Bundle
 ---------------------------
@@ -31,10 +29,6 @@ following command to download the latest stable version of this bundle:
 ```bash
 $ composer require teltek/pmk2-youtube-bundle dev-master
 ```
-
-This command requires you to have Composer installed globally, as explained
-in the [installation chapter](https://getcomposer.org/doc/00-intro.md)
-of the Composer documentation.
 
 Step 3: Install the Bundle
 --------------------------
