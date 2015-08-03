@@ -135,7 +135,7 @@ EOT
     private function getMultimediaObjectsInYoutubeWithoutBroadcast($youtubeIds, $broadcastTypeId)
     {
         $mmsNoBroadcast = $this->mmobjRepo->createQueryBuilder()
-            ->field('properties.youtube')->in($ytids)
+            ->field('properties.youtube')->in($youtubeIds)
             ->getQuery()
             ->execute();
 
