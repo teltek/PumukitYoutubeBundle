@@ -114,6 +114,7 @@ EOT
           ->field('status')->equals(MultimediaObject::STATUS_PUBLISHED)
           ->field('broadcast')->references($publicBroadcast)
           /* ->field('tags.cod')->equals('IMPORTANT') TODO When Tag with code 'IMPORTANT' is done ('autónomo' in Pumukit1.8) */
+          ->field('tags.cod')->equals('PUDEAUTO')
           ->field('properties.youtube')->exists(false)
           ->getQuery()
           ->execute();
