@@ -474,7 +474,7 @@ class YoutubeService
      */
     private function getDescriptionForYoutube(MultimediaObject $multimediaObject)
     {
-        $appInfoLink = $this->router->generate("pumukit_webtv_multimediaobject_index", array("id" => $multimediaObject->getId()));
+        $appInfoLink = $this->router->generate("pumukit_webtv_multimediaobject_index", array("id" => $multimediaObject->getId()), true);
         $series = $multimediaObject->getSeries();
         $break = array("<br />", "<br/>");
         $description = strip_tags($series->getTitle() . " - " . $multimediaObject->getTitle() . "\n".$multimediaObject->getSubtitle()."\n". str_replace($break, "\n", $multimediaObject->getDescription()).'<br /> Video available at: '.$appInfoLink);
