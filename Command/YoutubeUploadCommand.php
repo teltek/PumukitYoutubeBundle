@@ -49,8 +49,17 @@ EOT
         $newMultimediaObjects = $this->getNewMultimediaObjectsToUpload();
         $this->uploadVideosToYoutube($newMultimediaObjects, $output);
 
-        $failureMultimediaObjects = $this->getFailureUploads();
+        $errorStatus = array(
+                             Youtube::STATUS_HTTP_ERROR,
+                             Youtube::STATUS_ERROR,
+                             Youtube::STATUS_UPDATE_ERROR
+                             );
+        $failureMultimediaObjects = $this->getUploadsByStatus($errorStatus);
         $this->uploadVideosToYoutube($failureMultimediaObjects, $output);
+
+        $removedStatus = array(Youtube::STATUS_REMOVED);
+        $removedYoutubeMultimediaObjects = $this->getUploadsByStatus($removedStatus);
+        $this->uploadVideosToYoutube($deletedYoutubeMultimediaObjects, $output);
     }
 
     private function initParameters()
@@ -108,35 +117,33 @@ EOT
         $this->checkResultsAndSendEmail();
     }
 
-    private function getNewMultimediaObjectsToUpload()
+    private function createMultimediaObjectsToUploadQueryBuilder()
     {
         $publicBroadcast = $this->broadcastRepo->findPublicBroadcast();
 
-        $mms = $this->mmobjRepo->createQueryBuilder()
+        return $this->mmobjRepo->createQueryBuilder()
           ->field('status')->equals(MultimediaObject::STATUS_PUBLISHED)
           ->field('broadcast')->references($publicBroadcast)
           /* ->field('tags.cod')->equals('IMPORTANT') TODO When Tag with code 'IMPORTANT' is done ('autónomo' in Pumukit1.8) */
-          ->field('tags.cod')->equals('PUDEAUTO')
+          ->field('tags.cod')->equals('PUDEAUTO');
+    }
+
+    private function getNewMultimediaObjectsToUpload()
+    {
+        return $this->createMultimediaObjectsToUploadQueryBuilder()
           ->field('properties.youtube')->exists(false)
           ->getQuery()
           ->execute();
-
-        return $mms;
     }
 
-    private function getFailureUploads()
+    private function getUploadsByStatus($statusArray=array())
     {
-        $errorStatus = array(
-                             Youtube::STATUS_HTTP_ERROR,
-                             Youtube::STATUS_ERROR,
-                             Youtube::STATUS_UPDATE_ERROR
-                             );
-        $mmIds = $this->youtubeRepo->getWithAnyStatus($errorStatus);
+        $mmIds = $this->youtubeRepo->getWithAnyStatus($statusArray);
 
-        $mms = $this->mmobjRepo->createQueryBuilder()
-          ->field('_id')->in($mmIds->toArray());
-
-        return $mms;
+        return $this->createMultimediaObjectsToUploadQueryBuilder()
+          ->field('_id')->in($mmIds->toArray())
+          ->getQuery()
+          ->execute();
     }
 
     private function getPlaylistTagId($mm, OutputInterface $output)
