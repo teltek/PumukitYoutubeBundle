@@ -54,8 +54,8 @@ EOT
         $this->deleteVideosFromYoutube($notPublishedMms, $output);
 
         // TODO When tag IMPORTANT is defined as child of PUBLICATION DECISION Tag
-        // $notImportantMms = $this->getMultimediaObjectsInYoutubeWithoutTagCode($publishedYoutubeIds, 'IMPORTANT');
-        // $this->deleteVideosFromYoutube($notImportantMms, $output);
+        $notImportantMms = $this->getMultimediaObjectsInYoutubeWithoutTagCode($publishedYoutubeIds, 'PUDEAUTO');
+        $this->deleteVideosFromYoutube($notImportantMms, $output);
         
         $notPublicMms = $this->getMultimediaObjectsInYoutubeWithoutBroadcast($publishedYoutubeIds, Broadcast::BROADCAST_TYPE_PUB);
         $this->deleteVideosFromYoutube($notPublicMms, $output);
