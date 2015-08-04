@@ -69,7 +69,7 @@ EOT
         $this->correct = false;
         $this->failure = false;
 
-        $this->logger = $this->getContainer()->get('logger');
+        $this->logger = $this->getContainer()->get('monolog.logger.youtube');
     }
 
     private function updateYoutubePlaylist($youtubes, OutputInterface $output)
