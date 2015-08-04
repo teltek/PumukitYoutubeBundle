@@ -138,7 +138,7 @@ EOT
 
     private function getUploadsByStatus($statusArray=array())
     {
-        $mmIds = $this->youtubeRepo->getWithAnyStatus($statusArray);
+        $mmIds = $this->youtubeRepo->getDistinctMultimediaObjectIdsWithAnyStatus($statusArray);
 
         return $this->createMultimediaObjectsToUploadQueryBuilder()
           ->field('_id')->in($mmIds->toArray())
