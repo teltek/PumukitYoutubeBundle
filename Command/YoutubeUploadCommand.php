@@ -59,7 +59,7 @@ EOT
 
         $removedStatus = array(Youtube::STATUS_REMOVED);
         $removedYoutubeMultimediaObjects = $this->getUploadsByStatus($removedStatus);
-        $this->uploadVideosToYoutube($deletedYoutubeMultimediaObjects, $output);
+        $this->uploadVideosToYoutube($removedYoutubeMultimediaObjects, $output);
     }
 
     private function initParameters()
