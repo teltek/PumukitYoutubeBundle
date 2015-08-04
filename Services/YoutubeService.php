@@ -236,20 +236,21 @@ class YoutubeService
             throw new \Exception('Error, there is no YouTube data of the Multimedia Object '.$multimediaObject->getId());
             return -1;
         }
-        $title = $this->getTitleForYoutube($multimediaObject);
-        $description = $this->getDescriptionForYoutube($multimediaObject);        
-        $tags = $this->getTagsForYoutube($multimediaObject);
-        $dcurrent = getcwd();
-        chdir($this->pythonDirectory);
-        $pyOut = exec('python updateVideo.py --videoid '.$youtube->getYoutubeId().' --title "'.addslashes($title).'" --description "'.addslashes($description).'" --tag "'.$tags.'"', $output, $return_var);
-        chdir($dcurrent);
-        $out = json_decode($pyOut, true);
-        if ($out['error']){
-            $this->logger->addError(__CLASS__." [".__FUNCTION__."] Error in updating metadata for Youtube video with id ".$youtube->getId().": ".$out['error_out']);
-            throw new \Exception("Error in updating metadata for Youtube video with id ".$youtube->getId().": ".$out['error_out']);
-            return -1;
+        if (Youtube::STATUS_PUBLISHED === $youtube->getStatus()) {
+            $title = $this->getTitleForYoutube($multimediaObject);
+            $description = $this->getDescriptionForYoutube($multimediaObject);
+            $tags = $this->getTagsForYoutube($multimediaObject);
+            $dcurrent = getcwd();
+            chdir($this->pythonDirectory);
+            $pyOut = exec('python updateVideo.py --videoid '.$youtube->getYoutubeId().' --title "'.addslashes($title).'" --description "'.addslashes($description).'" --tag "'.$tags.'"', $output, $return_var);
+            chdir($dcurrent);
+            $out = json_decode($pyOut, true);
+            if ($out['error']){
+                $this->logger->addError(__CLASS__." [".__FUNCTION__."] Error in updating metadata for Youtube video with id ".$youtube->getId().": ".$out['error_out']);
+                throw new \Exception("Error in updating metadata for Youtube video with id ".$youtube->getId().": ".$out['error_out']);
+                return -1;
+            }
         }
-
         return 0;
     }
 
