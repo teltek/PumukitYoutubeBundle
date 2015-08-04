@@ -61,7 +61,9 @@ EOT
         $this->youtubeRepo = $this->dm->getRepository("PumukitYoutubeBundle:Youtube");
         $this->broadcastRepo = $this->dm->getRepository("PumukitSchemaBundle:Broadcast");
 
-        $this->youtubeService = $this->getContainer()->get('pumukityoutube.youtube');
+        $container = $this->getContainer();
+        $this->youtubeService = $container->get('pumukityoutube.youtube');
+        $this->senderService = $container->get('pumukit_notification.sender');
 
         $this->okUploads = array();
         $this->failedUploads = array();
@@ -179,8 +181,7 @@ EOT
     private function checkResultsAndSendEmail()
     {
         if ($this->correct){
-            // TODO when EmailBundle is done
-            //$this->sendEmail($this->okUploads, "Ok");
+            $this->sendEmail($this->okUploads, "Ok");
             $this->correct = false;
             $youtubeTag = $this->tagRepo->findByCod('PUCHYOUTUBE');
             if ($youtubeTag) {
@@ -195,43 +196,42 @@ EOT
             $this->okUploads = array();
         }
         if ($this->failure){
-            // TODO when EmailBundle is done
-            //$this->sendEmail($this->failedUploads, "Error", $this->errors);
+            $this->sendEmail($this->failedUploads, "Error", $this->errors);
             $this->failure = false;
             $this->failedUploads = array();
         }
     }
 
-    // TODO when EmailBundle is done
-    /* function sendEmail($mms, $causa, $errores = null) */
-    /* { */
-    /*   $mail = new sfMail(); */
-    /*   $mail->initialize(); */
-    /*   $mail->setMailer('sendmail'); */
-    /*   $mail->setCharset('utf-8'); */
-    /*   $mail->setSender('tv@campusdomar.es', 'CMARTv (no-reply)'); */
-    /*   $mail->setFrom('tv@campusdomar.es', 'CMARTv (no-reply)'); */
-    /*   $mail->addReplyTo('tv@campusdomar.es'); */
-    /*   $mail->addAddresses(array('rubenrua@teltek.es', 'nacho.seijo@teltek.es', 'luispena@teltek.es')); */
-    /*   $mail->setSubject('Resultado de subida de vídeos'); */
-    /*   if ($causa == "Ok"){ */
-    /*     $body = ' */
-    /*    Se han subido los siguientes vídeos a Youtube: */
-    /*           '; */
-    /*     foreach ($mms as $mm){ */
-    /*       $body = $body."\n -".$mm->getId().": ".$mm->getTitle().' http://tv.campusdomar.es/en/video/'.$mm->getId().'.html'; */
-    /*     } */
-    /*   } */
-    /*   elseif ($causa == "Error"){ */
-    /*     $body = '  */
-    /*           Ha fallado la subida a YouTube de los siguientes vídeos: */
-    /*           '; */
-    /*        foreach ($mms as $key => $mm){ */
-    /* 	 $body = $body."\n -".$mm->getId().": ".$mm->getTitle(); */
-    /* 	 $body = $body. "\nCon el siguiente error:\n".$errores[$key]."\n"; */
-    /*        } */
-    /*   } */
-    /*   $mail->setBody($body); */
-    /*   $mail->send(); */
-    /* } */
+    function sendEmail($mms, $cause, $errors = null)
+    {
+        $container = $this->getContainer();
+        $senderService = $container->get('pumukit_notification.sender');
+        $translator = $container->get('translator');
+        $router = $container->get('router');
+        //$mail->addAddresses(array('rubenrua@teltek.es', 'nacho.seijo@teltek.es', 'luispena@teltek.es'));
+        $emailTo = $this->senderService->getSenderEmail();
+        $subject = $this->translator->trans('YouTube upload videos status');
+
+        if ($cause == "Ok"){
+            $body = $this->translator->trans('The following videos were uploaded to Youtube') . ':';
+            foreach ($mms as $mm){
+                $body = $body."\n -".$mm->getId().": ".$mm->getTitle().' '. $router->generatePath('pumukit_webtv_multimediaobject_index', array('id' => $mm->getId()));
+            }
+            $error = false;
+        } elseif ($cause == "Error") {
+            $body = $this->translator->trans('The upload of the following videos has failed') . ':';
+            foreach ($mms as $key => $mm){
+                $body = $body."\n -".$mm->getId().": ".$mm->getTitle();
+                $body = $body. "\n ". $this->translator->trans('With this error'). ":\n".$errors[$key]."\n";
+            }
+            $error = true;
+        }
+
+        $template = 'PumukitNotificationBundle:Email:notification.html.twig';
+        $parameters = array('subject' => $subject, 'body' => $body, 'sender_name' => $this->senderService->getSenderName());
+        $output = $senderService->sendNotification($emailTo, $subject, $template, $parameters, $error);
+        if (0 < $output) {
+            $this->logger->addInfo(__CLASS__.' ['.__FUNCTION__.'] Sent notification email to "'.$emailTo.'"');
+        }
+   }
 }
