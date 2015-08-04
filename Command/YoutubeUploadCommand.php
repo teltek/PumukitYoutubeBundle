@@ -11,6 +11,7 @@ use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\YoutubeBundle\Document\Youtube;
 use Psr\Log\LoggerInterface;
+use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 
 class YoutubeUploadCommand extends ContainerAwareCommand
 {
@@ -20,15 +21,19 @@ class YoutubeUploadCommand extends ContainerAwareCommand
     private $youtubeRepo = null;
     private $broadcastRepo = null;
 
+    private $logger;
     private $youtubeService;
+    private $senderService;
+    private $translator;
+    private $router;
+    private $context;
+    private $controller;
 
     private $okUploads = array();
     private $failedUploads = array();
     private $errors = array();
     private $correct = false;
     private $failure = false;
-
-    private $logger;
 
     protected function configure()
     {
@@ -73,14 +78,17 @@ EOT
         $container = $this->getContainer();
         $this->youtubeService = $container->get('pumukityoutube.youtube');
         $this->senderService = $container->get('pumukit_notification.sender');
+        $this->translator = $container->get('translator');
+        $this->router = $container->get('router');
+        $this->context = $this->router->getContext();
+        $this->controller = new Controller();
+        $this->logger = $container->get('monolog.logger.youtube');
 
         $this->okUploads = array();
         $this->failedUploads = array();
         $this->errors = array();
         $this->correct = false;
         $this->failure = false;
-
-        $this->logger = $this->getContainer()->get('monolog.logger.youtube');
     }
 
     private function uploadVideosToYoutube($mms, OutputInterface $output)
@@ -211,10 +219,6 @@ EOT
 
     function sendEmail($mms, $cause, $errors = null)
     {
-        $container = $this->getContainer();
-        $senderService = $container->get('pumukit_notification.sender');
-        $translator = $container->get('translator');
-        $router = $container->get('router');
         //$mail->addAddresses(array('rubenrua@teltek.es', 'nacho.seijo@teltek.es', 'luispena@teltek.es'));
         $emailTo = $this->senderService->getSenderEmail();
         $subject = $this->translator->trans('YouTube upload videos status');
@@ -222,7 +226,7 @@ EOT
         if ($cause == "Ok"){
             $body = $this->translator->trans('The following videos were uploaded to Youtube') . ':';
             foreach ($mms as $mm){
-                $body = $body."\n -".$mm->getId().": ".$mm->getTitle().' '. $router->generatePath('pumukit_webtv_multimediaobject_index', array('id' => $mm->getId()));
+                $body = $body."\n -".$mm->getId().": ".$mm->getTitle().' '. $this->controller->generateUrl('pumukit_webtv_multimediaobject_index', array('id' => $mm->getId()), true);
             }
             $error = false;
         } elseif ($cause == "Error") {
@@ -236,7 +240,7 @@ EOT
 
         $template = 'PumukitNotificationBundle:Email:notification.html.twig';
         $parameters = array('subject' => $subject, 'body' => $body, 'sender_name' => $this->senderService->getSenderName());
-        $output = $senderService->sendNotification($emailTo, $subject, $template, $parameters, $error);
+        $output = $this->senderService->sendNotification($emailTo, $subject, $template, $parameters, $error);
         if (0 < $output) {
             $this->logger->addInfo(__CLASS__.' ['.__FUNCTION__.'] Sent notification email to "'.$emailTo.'"');
         }
