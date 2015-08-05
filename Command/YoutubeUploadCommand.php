@@ -194,7 +194,7 @@ EOT
             }
             $this->dm->flush();
         }
-        if (!empty($this->okRemoved) || !empty($this->failedRemoved)) {
+        if (!empty($this->okUploads) || !empty($this->failedUploads)) {
             $this->youtubeService->sendEmail('upload', $this->okUploads, $this->failedUploads, $this->errors);
         }
     }
