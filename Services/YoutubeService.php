@@ -103,8 +103,7 @@ class YoutubeService
         } else {
             throw new \Exception("There is no Youtube tag defined with code PUCHYOUTUBE");
         }
-
-        return 0;    
+        return 0;
     }
     
     /**
@@ -213,7 +212,6 @@ class YoutubeService
         $youtube->setForce(false);
         $this->dm->persist($youtube);
         $this->dm->flush();
-        // TODO review (lo desmarca del canal de publicacion)
         $youtubeEduTag = $this->tagRepo->findOneByCod("PUCHYOUTUBE");
         $youtubeTag = $this->tagRepo->findOneByCod("PUCHYOUTUBE");
         if (null != $youtubeTag) {
@@ -274,9 +272,8 @@ class YoutubeService
         // NOTE: If the video has been removed, it returns 404 instead of 200 with 'not found Video'
         if($out['error']){
             if (!strpos($out['error_out'], "was not found.")) {
-                // TODO
-                //$this->sendMail('Removed', $multimediaObject, $youtube);
-                // $this->youtubeService->sendEmail('remove', array(), array($multimediaObject));
+                $data = array('multimediaObject' => $multimediaObject, 'youtube' => $youtube);
+                $this->youtubeService->sendEmail('status removed', $data, array(), array());
                 $youtube->setStatus(Youtube::STATUS_REMOVED);
                 $this->dm->persist($youtube);
                 $youtubeEduTag = $this->tagRepo->findOneByCod("PUCHYOUTUBE");
@@ -297,9 +294,8 @@ class YoutubeService
             $youtube->setStatus(Youtube::STATUS_PUBLISHED);
             $this->dm->persist($youtube);
             $this->dm->flush();
-            // TODO
-            //$this->sendMail('upload', $multimediaObject);
-            // $this->youtubeService->sendEmail('upload', array($multimediaObject), array());
+            $data = array('multimediaObject' => $multimediaObject, 'youtube' => $youtube);
+            $this->youtubeService->sendEmail('finished publication', $data, array(), array());
         }elseif ($out['out'] == "uploaded"){
             $youtube->setStatus(Youtube::STATUS_PROCESSING);
             $this->dm->persist($youtube);
@@ -308,9 +304,8 @@ class YoutubeService
             $youtube->setStatus(Youtube::STATUS_DUPLICATED);
             $this->dm->persist($youtube);
             $this->dm->flush();
-            // TODO
-            //$this->sendMail('duplicate', $multimediaObject);
-            // $this->youtubeService->sendEmail('duplicate', array(), array($multimediaObject));
+            $data = array('multimediaObject' => $multimediaObject, 'youtube' => $youtube);
+            $this->youtubeService->sendEmail('status duplicate', $data, array(), array());
         }
         return 0;
     }
@@ -361,7 +356,7 @@ class YoutubeService
     public function sendEmail($cause='', $succeed=array(), $failed=array(), $errors=array())
     {
         if ($this->senderService->isEnabled()) {
-            $subject = $this->buildEmailSubject($cause, $succeed, $failed);
+            $subject = $this->buildEmailSubject($cause);
             $body = $this->buildEmailBody($cause, $succeed, $failed, $errors);
             $error = $this->getError($errors);
             $emailTo = $this->senderService->getSenderEmail();
@@ -377,30 +372,67 @@ class YoutubeService
         return $output;
     }
 
-    private function buildEmailSubject($cause='', $succeed=array(), $failed=array())
+    private function buildEmailSubject($cause='')
     {
-        $subject = ucfirst($cause) . ' of YouTube videos';
+        $subject = ucfirst($cause) . ' of YouTube video(s)';
 
         return $subject;
     }
 
     private function buildEmailBody($cause='', $succeed=array(), $failed=array(), $errors=array())
     {
+        $statusUpdate = array('finished publication', 'status removed', 'status duplicated');
         $body = '';
         if (!empty($succeed)) {
-          $body = $body.'<br/>The following videos were '.$cause. (substr($cause, -1) === 'e')?'':'e' .'d to Youtube:<br/>';
-            foreach ($succeed as $mm){
-                $body = $body."<br/> -".$mm->getId().": ".$mm->getTitle().' '. $this->router->generate('pumukit_webtv_multimediaobject_index', array('id' => $mm->getId()), true);
+            if (in_array($cause, $statusUpdate)) {
+                $body = $this->buildStatusUpdateBody($cause, $succeed);
+            } else {
+                $body = $body.'<br/>The following videos were '.$cause. (substr($cause, -1) === 'e')?'':'e' .'d to Youtube:<br/>';
+                foreach ($succeed as $mm){
+                    $body = $body."<br/> -".$mm->getId().": ".$mm->getTitle().' '. $this->router->generate('pumukit_webtv_multimediaobject_index', array('id' => $mm->getId()), true);
+                }
             }
         }
         if (!empty($failed)) {
             $body = $body.'<br/>The '.$cause.' of the following videos has failed:<br/>';
             foreach ($failed as $key => $mm){
                 $body = $body.'<br/> -'.$mm->getId().': '.$mm->getTitle();
-                $body = $body. '<br/> With this error:<br/>'.$errors[$key].'<br/>';
+                if (isset($key, $errors)) $body = $body. '<br/> With this error:<br/>'.$errors[$key].'<br/>';
             }
         }
 
+        return $body;
+    }
+
+    private function buildStatusUpdateBody($cause='', $succeed=array())
+    {
+        if ((isset('multimediaObject', $succeed)) && (isset('youtube', $succeed))) {
+            $multimediaObject = $succeed['multimediaObject'];
+            $youtube = $succeed['youtube'];
+            if ($cause === 'finished publication') {
+                if ($multimediaObject instanceof MultimediaObject) {
+                    $body = $body . '<br/>The video "'.$multimediaObject->getTitle() . '" has been successfully published into YouTube.<br/>';
+                }
+                if ($youtube instanceof Youtube) {
+                    $body = $body . '<br/>'.$youtube->getLink().'<br/>';
+                }
+            } elseif ($cause === 'status removed') {
+                if ($multimediaObject instanceof MultimediaObject) {
+                    $body = $body . '<br/>The following video has been removed from YouTube: "'.$multimediaObject->getTitle() . '"<br/>';
+                }
+                if ($youtube instanceof Youtube) {
+                    $body = $body . '<br/>'.$youtube->getLink().'<br/>';
+                }
+            } elseif ($cause === 'status duplicated') {
+                if ($multimediaObject instanceof MultimediaObject) {
+                    $body = $body . '<br/>YouTube has rejected the upload of the video: "'.$multimediaObject->getTitle() . '"</br>';
+                    $body = $body . 'because it has been published previously.<br/>';
+                }
+                if ($youtube instanceof Youtube) {
+                    $body = $body . '<br/>'.$youtube->getLink().'<br/>';
+                }
+            }
+        }
         return $body;
     }
 
@@ -409,91 +441,6 @@ class YoutubeService
         if (!empty($errors)) return true;
         return false;
     }
-
-    // TODO When EmailBundle is done
-    /**
-     * Send mail
-     */
-    /* public static function sendMail($causa, $multimediaObject, $multimediaObjectYt = null, $errores = null) */
-    /* { */
-    /*     $mail = new sfMail(); */
-    /*     $mail->initialize(); */
-    /*     $mail->setMailer('sendmail'); */
-    /*     $mail->setCharset('utf-8'); */
-    /*     $mail->setSender('tv@campusdomar.es', 'CMARTV'); */
-    /*     $mail->setFrom('tv@campusdomar.es', 'CMARTV'); */
-    /*     $mail->addReplyTo('tv@campusdomar.es'); */
-    /*     //    $mail->addAddresses(array('rubenrua@teltek.es', 'nacho.seijo@teltek.es', 'luispena@teltek.es')); */
-    /*     $mail->addAddresses(array('nacho.seijo@teltek.es')); */
-    /*     if ($causa == 'subido') { */
-    /*         $multimediaObject->setCulture('es');  */
-    /*         $mail->setSubject('Publicación Terminada'); */
-    /*         $mail->setBody(' */
-
-    /*         El vídeo "'.$multimediaObject->getTitle().'" ha sido publicado corrrectamente en YouTube. */
-
-    /*         '); */
-    /*     }elseif ($causa == 'Error_subida'){ */
-    /*         $multimediaObject->setCulture('es');  */
-    /*         $mail->setSubject("Error en la subida a youtube"); */
-    /*         $mail->setBody('  */
-
-    /*         Se ha producido un error en la subida a YouTube del vídeo: "'.$multimediaObject->getTitle().'". */
-    /*         En breve se reintentará la subida. */
-
-    /*         '); */
-    /*     }elseif ($causa == 'Duplicado'){ */
-    /*         $multimediaObject->setCulture('es');  */
-    /*         $mail->setSubject("Vídeo duplicado en YouTube"); */
-    /*         $mail->setBody('  */
-
-    /*         YouTube ha rechazado la subida del vídeo: "'.$multimediaObject->getTitle().'". */
-    /*         Porque ya había sido publicado anteriormente. */
-
-    /*         '); */
-    /*     }elseif ($causa == 'Eliminado'){ */
-    /*         if ($multimediaObject != null) { */
-    /*             $multimediaObject->setCulture('es');  */
-    /*             $mail->setBody('  */
-
-    /*             El siguiente vídeo ha sido eliminado en YouTube: "'.$multimediaObject->getTitle().'" http://tv.campusdomar.es/en/video/'.$multimediaObject->getId().'.html */
-    /*             '); */
-    /*         }else { */
-    /*             $mail->setSubject("Se ha eliminado un vídeo en Youtube"); */
-    /*             $mail->setBody('  */
-
-    /*             El siguiente vídeo ha sido eliminado en YouTube: "'.$multimediaObjectYt->getYoutubeLink().'". */
-    /*             Porque se había eliminado el objeto multimedia en Pumukit */
-    /*            '); */
-    /*         } */
-    /*     }elseif ($causa == "Error_borrado"){ */
-    /*         $body = '  */
-    /*         Ha fallado el borrado de YouTube de los siguientes vídeos: */
-
-    /*         '; */
-    /*         if (is_array($multimediaObject)) { */
-    /*             $multimediaObjects = $multimediaObject; */
-    /*             foreach ($multimediaObjects as $key => $multimediaObject){ */
-    /*                 $body = $body."\n -".$multimediaObject->getId()." ".$multimediaObject->getTitle(); */
-    /*                 $body = $body. "\nCon el siguiente error:\n".$errores[$key]."\n"; */
-    /*             } */
-    /*         } */
-    /*         $mail->setBody($body); */
-    /*     }elseif ($causa == "Borrado_multiple"){ */
-    /*         $body = ' */
-    /*         Se han borrado los siguientes vídeos de Youtube: */
-
-    /*         '; */
-    /*         if (is_array($multimediaObject)) { */
-    /*             $multimediaObjects = $multimediaObject; */
-    /*             foreach ($multimediaObjects as $multimediaObject){ */
-    /*                 $body = $body."\n -".$multimediaObject->getId()." ".$multimediaObject->getTitle(); */
-    /*             } */
-    /*         } */
-    /*         $mail->setBody($body);     */
-    /*     } */
-    /*     $mail->send(); */
-    /* } */
 
     /**
      * Get title for youtube
