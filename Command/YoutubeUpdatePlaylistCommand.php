@@ -127,8 +127,8 @@ EOT
                     break;
                 }
             }
-            if ($embedTag) {
-                if ($youtube->getPlaylist !== $embedTag->getProperty('playlist')){
+            if (null != $embedTag) {
+                if ($youtube->getPlaylist() !== $embedTag->getProperty('playlist')){
                     $youtube->setUpdatePlaylist(true);
                     $this->dm->persist($youtube);
                 }
