@@ -238,6 +238,8 @@ EOT
         $output = $this->senderService->sendNotification($emailTo, $subject, $template, $parameters, $error);
         if (0 < $output) {
             $this->logger->addInfo(__CLASS__.' ['.__FUNCTION__.'] Sent notification email to "'.$emailTo.'"');
+        } else {
+            $this->logger->addInfo(__CLASS__.' ['.__FUNCTION__.'] Unable to send notification email to "'.$emailTo.'", '. $output. 'email(s) were sent.');
         }
    }
 }
