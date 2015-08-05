@@ -379,7 +379,7 @@ class YoutubeService
 
     private function buildEmailSubject($cause='', $succeed=array(), $failed=array())
     {
-        $subject = ucfirst($cause) . 'of YouTube videos';
+        $subject = ucfirst($cause) . ' of YouTube videos';
 
         return $subject;
     }
