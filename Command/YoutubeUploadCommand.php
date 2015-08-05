@@ -11,7 +11,6 @@ use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\YoutubeBundle\Document\Youtube;
 use Psr\Log\LoggerInterface;
-use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 
 class YoutubeUploadCommand extends ContainerAwareCommand
 {
@@ -26,8 +25,6 @@ class YoutubeUploadCommand extends ContainerAwareCommand
     private $senderService;
     private $translator;
     private $router;
-    private $context;
-    private $controller;
 
     private $okUploads = array();
     private $failedUploads = array();
@@ -80,8 +77,6 @@ EOT
         $this->senderService = $container->get('pumukit_notification.sender');
         $this->translator = $container->get('translator');
         $this->router = $container->get('router');
-        $this->context = $this->router->getContext();
-        $this->controller = new Controller();
         $this->logger = $container->get('monolog.logger.youtube');
 
         $this->okUploads = array();
@@ -226,7 +221,7 @@ EOT
         if ($cause == "Ok"){
             $body = $this->translator->trans('The following videos were uploaded to Youtube') . ':';
             foreach ($mms as $mm){
-                $body = $body."\n -".$mm->getId().": ".$mm->getTitle().' '. $this->controller->generateUrl('pumukit_webtv_multimediaobject_index', array('id' => $mm->getId()), true);
+                $body = $body."\n -".$mm->getId().": ".$mm->getTitle().' '. $this->router->generate('pumukit_webtv_multimediaobject_index', array('id' => $mm->getId()), true);
             }
             $error = false;
         } elseif ($cause == "Error") {
