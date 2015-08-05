@@ -407,6 +407,7 @@ class YoutubeService
 
     private function buildStatusUpdateBody($cause='', $succeed=array())
     {
+        $body = '';
         if ((array_key_exists('multimediaObject', $succeed)) && (array_key_exists('youtube', $succeed))) {
             $multimediaObject = $succeed['multimediaObject'];
             $youtube = $succeed['youtube'];
