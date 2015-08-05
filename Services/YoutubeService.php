@@ -397,7 +397,7 @@ class YoutubeService
             $body = $body.'<br/>The '.$cause.' of the following videos has failed:<br/>';
             foreach ($failed as $key => $mm){
                 $body = $body.'<br/> -'.$mm->getId().': '.$mm->getTitle();
-                if (isset($key, $errors)) $body = $body. '<br/> With this error:<br/>'.$errors[$key].'<br/>';
+                if (array_key_exists($key, $errors)) $body = $body. '<br/> With this error:<br/>'.$errors[$key].'<br/>';
             }
         }
 
@@ -406,7 +406,7 @@ class YoutubeService
 
     private function buildStatusUpdateBody($cause='', $succeed=array())
     {
-        if ((isset('multimediaObject', $succeed)) && (isset('youtube', $succeed))) {
+        if ((array_key_exists('multimediaObject', $succeed)) && (array_key_exists('youtube', $succeed))) {
             $multimediaObject = $succeed['multimediaObject'];
             $youtube = $succeed['youtube'];
             if ($cause === 'finished publication') {
