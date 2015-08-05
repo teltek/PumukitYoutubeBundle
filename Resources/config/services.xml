@@ -9,6 +9,8 @@
             <argument type="service" id="router"/>
             <argument type="service" id="pumukitschema.tag"/>
             <argument type="service" id="logger"/>
+            <argument type="service" id="pumukit_notification.sender"/>
+            <argument type="service" id="translator"/>
             <tag name="monolog.logger" channel="youtube"/>
         </service>
     </services>
