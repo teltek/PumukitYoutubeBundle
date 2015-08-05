@@ -77,3 +77,10 @@ cd /tmp
 sed -i "s/gflags.DEFINE_boolean('auth_local_webserver', False/gflags.DEFINE_boolean('auth_local_webserver', True/g" build/oauth2client/old_run.py
 sed -i "s/gflags.DEFINE_boolean('auth_local_webserver', False/gflags.DEFINE_boolean('auth_local_webserver', True/g" oauth2client/old_run.py
 ```
+
+#### Configure your host in `app/config/parameters.yml`
+```
+parameters:
+    router.request_context.host: example.org
+    router.request_context.scheme: https
+```
