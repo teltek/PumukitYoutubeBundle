@@ -23,11 +23,9 @@ class YoutubeDeleteCommand extends ContainerAwareCommand
 
     private $youtubeService;
 
-    private $okDeleted = array();
-    private $failedDeleted = array();
+    private $okRemoved = array();
+    private $failedRemoved = array();
     private $errors = array();
-    private $correct = false;
-    private $failure = false;
 
     private $logger;
 
@@ -62,6 +60,8 @@ EOT
         $publishedYoutubeIds = $this->getStringIds($youtubeMongoIds);
         $notPublicMms = $this->getMultimediaObjectsInYoutubeWithoutBroadcast($publishedYoutubeIds, Broadcast::BROADCAST_TYPE_PUB);
         $this->deleteVideosFromYoutube($notPublicMms, $output);
+
+        $this->checkResultsAndSendEmail();
     }
 
     private function initParameters()
@@ -74,11 +74,9 @@ EOT
 
         $this->youtubeService = $this->getContainer()->get('pumukityoutube.youtube');
 
-        $this->okDeleted = array();
-        $this->failedDeleted = array();
+        $this->okRemoved = array();
+        $this->failedRemoved = array();
         $this->errors = array();
-        $this->correct = false;
-        $this->failure = false;
 
         $this->logger = $this->getContainer()->get('monolog.logger.youtube');
     }
@@ -94,27 +92,24 @@ EOT
                     $this->logger->addError(__CLASS__.' ['.__FUNCTION__.'] Unknown output in the removal from Youtube of MultimediaObject with id "'.$mm->getId().'"');
                     $output->writeln('Unknown output in the removal from Youtube of MultimediaObject with id "'.$mm->getId().'"');
                 }
-                $this->okDeleted[] = $mm;
-                $this->correct = true;
+                $this->okRemoved[] = $mm;
             } catch (\Exception $e) {
                 $this->logger->addError(__CLASS__.' ['.__FUNCTION__.'] Removal of video from MultimediaObject with id "'.$mm->getId().'" has failed. '.$e->getMessage());
                 $output->writeln('Removal of video from MultimediaObject with id "'.$mm->getId().'" has failed. '.$e->getMessage());
-                $this->failedDeleted[] = $mm;
+                $this->failedRemoved[] = $mm;
                 $this->errors[] = substr($e->getMessage(), 0, 100);
-                $this->failure = true;
             }
         }
     }
 
     private function getStringIds($mongoIds)
     {
-      $stringIds = array();
-      foreach ($mongoIds as $mongoId)
-        {
-          $stringIds[] = $mongoId->__toString();
+        $stringIds = array();
+        foreach ($mongoIds as $mongoId) {
+            $stringIds[] = $mongoId->__toString();
         }
 
-      return $stringIds;
+        return $stringIds;
     }
 
     private function getMultimediaObjectsInYoutubeWithoutStatus($youtubeIds, $status)
@@ -154,50 +149,15 @@ EOT
 
     private function checkResultsAndSendEmail()
     {
-        if ($this->correct){
-            // TODO when EmailBundle is done
-            //$this->sendEmail($this->okDeleted, "Multiple removal");
-            $this->correct = false;
-            $this->okUploads = array();
+        $youtubeTag = $this->tagRepo->findByCod('PUCHYOUTUBE');
+        if (null != $youtubeTag) {
+            foreach ($this->okRemoved as $mm){
+                if ($mm->containsTagWithCod('PUCHYOUTUBE')) {
+                    $this->tagService->removeTagFromMultimediaObject($multimediaObject, $youtubeTag->getId(), false);
+                }
+            }
+            $this->dm->flush();
         }
-        if ($this->failure){
-            // TODO when EmailBundle is done
-            //$this->sendEmail($this->failedUploads, "Error", $this->errors);
-            $this->failure = false;
-            $this->failedUploads = array();
-        }
+        $this->youtubeService->sendEmail('remove', $this->okRemoved, $this->failedRemoved, $this->errors);
     }
-
-    // TODO when EmailBundle is done
-    /* function sendEmail($mms, $causa, $errores = null) */
-    /* { */
-    /*   $mail = new sfMail(); */
-    /*   $mail->initialize(); */
-    /*   $mail->setMailer('sendmail'); */
-    /*   $mail->setCharset('utf-8'); */
-    /*   $mail->setSender('tv@campusdomar.es', 'CMARTv (no-reply)'); */
-    /*   $mail->setFrom('tv@campusdomar.es', 'CMARTv (no-reply)'); */
-    /*   $mail->addReplyTo('tv@campusdomar.es'); */
-    /*   $mail->addAddresses(array('rubenrua@teltek.es', 'nacho.seijo@teltek.es', 'luispena@teltek.es')); */
-    /*   $mail->setSubject('Resultado de subida de vídeos'); */
-    /*   if ($causa == "Ok"){ */
-    /*     $body = ' */
-    /*    Se han subido los siguientes vídeos a Youtube: */
-    /*           '; */
-    /*     foreach ($mms as $mm){ */
-    /*       $body = $body."\n -".$mm->getId().": ".$mm->getTitle().' http://tv.campusdomar.es/en/video/'.$mm->getId().'.html'; */
-    /*     } */
-    /*   } */
-    /*   elseif ($causa == "Error"){ */
-    /*     $body = '  */
-    /*           Ha fallado la subida a YouTube de los siguientes vídeos: */
-    /*           '; */
-    /*        foreach ($mms as $key => $mm){ */
-    /* 	 $body = $body."\n -".$mm->getId().": ".$mm->getTitle(); */
-    /* 	 $body = $body. "\nCon el siguiente error:\n".$errores[$key]."\n"; */
-    /*        } */
-    /*   } */
-    /*   $mail->setBody($body); */
-    /*   $mail->send(); */
-    /* } */
 }

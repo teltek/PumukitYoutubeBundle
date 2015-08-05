@@ -22,11 +22,9 @@ class YoutubeUpdatePlaylistCommand extends ContainerAwareCommand
 
     private $youtubeService;
 
-    private $okUploads = array();
-    private $failedUploads = array();
+    private $okUpdates = array();
+    private $failedUpdates = array();
     private $errors = array();
-    private $correct = false;
-    private $failure = false;
 
     private $logger;
 
@@ -50,7 +48,7 @@ EOT
         $youtubes = $this->youtubeRepo->getWithStatusAndUpdatePlaylist(Youtube::STATUS_PUBLISHED, true);
 
         $this->updateYoutubePlaylist($youtubes, $output);
-
+        $this->checkResultsAndSendEmail();
     }
 
     private function initParameters()
@@ -63,11 +61,9 @@ EOT
 
         $this->youtubeService = $this->getContainer()->get('pumukityoutube.youtube');
 
-        $this->okUploads = array();
-        $this->failedUploads = array();
+        $this->okUpdates = array();
+        $this->failedUpdates = array();
         $this->errors = array();
-        $this->correct = false;
-        $this->failure = false;
 
         $this->logger = $this->getContainer()->get('monolog.logger.youtube');
     }
@@ -83,10 +79,14 @@ EOT
 
             try {
                 $outUpdatePlaylist = $this->youtubeService->updatePlaylist($mm, $playlistTagId);
+                $this->logger->addInfo(__CLASS__." [".__FUNCTION__."] Updated playlist of MultimediaObject with id ".$multimediaObject->getId());
+                $output->writeln("Updated playlist of MultimediaObject with id ".$multimediaObject->getId());
+                $this->okUpdates[] = $mm;
             } catch (\Exception $e) {
                 $this->logger->addInfo(__CLASS__." [".__FUNCTION__."] Error on updating playlist of MultimediaObject with id ".$multimediaObject->getId());
                 $output->writeln("Error on updating playlist of MultimediaObject with id ".$multimediaObject->getId());
-                return -1;
+                $this->failedUpdates[] = $mm;
+                $this->errors[] = substr($e->getMessage(), 0, 100);
             }
         }
 
@@ -135,5 +135,12 @@ EOT
             }
         }
         $this->dm->flush();
+    }
+
+    private function checkResultsAndSendEmail()
+    {
+        if (!empty($this->errors)) {
+            $this->youtubeService->sendEmail('playlist update', $this->okUpdates, $this->failedUpdates, $this->errors);
+        }
     }
 }

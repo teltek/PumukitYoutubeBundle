@@ -29,8 +29,6 @@ class YoutubeUploadCommand extends ContainerAwareCommand
     private $okUploads = array();
     private $failedUploads = array();
     private $errors = array();
-    private $correct = false;
-    private $failure = false;
 
     protected function configure()
     {
@@ -62,6 +60,8 @@ EOT
         $removedStatus = array(Youtube::STATUS_REMOVED);
         $removedYoutubeMultimediaObjects = $this->getUploadsByStatus($removedStatus);
         $this->uploadVideosToYoutube($removedYoutubeMultimediaObjects, $output);
+
+        $this->checkResultsAndSendEmail();
     }
 
     private function initParameters()
@@ -82,8 +82,6 @@ EOT
         $this->okUploads = array();
         $this->failedUploads = array();
         $this->errors = array();
-        $this->correct = false;
-        $this->failure = false;
     }
 
     private function uploadVideosToYoutube($mms, OutputInterface $output)
@@ -108,16 +106,13 @@ EOT
                     }
                 }
                 $this->okUploads[] = $mm;
-                $this->correct = true;
             } catch (\Exception $e) {
                 $this->logger->addError(__CLASS__.' ['.__FUNCTION__.'] The upload of the video from the Multimedia Object with id "'.$mm->getId().'" failed: '.$e->getMessage());
                 $output->writeln('The upload of the video from the Multimedia Object with id "'.$mm->getId().'" failed: '.$e->getMessage());
                 $this->failedUploads[] = $mm;
                 $this->errors[] = substr($e->getMessage(), 0, 100);
-                $this->failure = true;
             }
         }
-        $this->checkResultsAndSendEmail();
     }
 
     private function createMultimediaObjectsToUploadQueryBuilder()
@@ -159,9 +154,9 @@ EOT
                 break;
             }
         }
-        if ($embedTag) {
+        if (null != $embedTag) {
             $playlistTag = $this->tagRepo->findOneByCod($embedTag->getCod());
-            if ($playlistTag) {
+            if (null != $playlistTag) {
                 $playlistTagId = $playlistTag->getId();
             } else {
                 $output->writeln('MultimediaObject with id "'.$mm->getId().'" does have an EmbedTag with path "'.$embedTag->getPath().'" and code "'.$embedTag->getCod().'" but does not exist in Tag repository');
@@ -190,56 +185,15 @@ EOT
 
     private function checkResultsAndSendEmail()
     {
-        if ($this->correct){
-            $this->sendEmail($this->okUploads, "Ok");
-            $this->correct = false;
-            $youtubeTag = $this->tagRepo->findByCod('PUCHYOUTUBE');
-            if ($youtubeTag) {
-                foreach ($this->okUploads as $mm){
-                    if (!$mm->containsTagWithCod('PUCHYOUTUBE')) {
-                        $mm->addTag($youtubeTag);
-                        $this->dm->persist($mm);
-                    }
+        $youtubeTag = $this->tagRepo->findByCod('PUCHYOUTUBE');
+        if (null != $youtubeTag) {
+            foreach ($this->okUploads as $mm){
+                if (!$mm->containsTagWithCod('PUCHYOUTUBE')) {
+                    $addedTags = $this->tagService->addTagToMultimediaObject($multimediaObject, $youtubeTag->getId(), false);
                 }
-                $this->dm->flush();
             }
-            $this->okUploads = array();
+            $this->dm->flush();
         }
-        if ($this->failure){
-            $this->sendEmail($this->failedUploads, "Error", $this->errors);
-            $this->failure = false;
-            $this->failedUploads = array();
-        }
+        $this->youtubeService->sendEmail('upload', $this->okUploads, $this->failedUploads, $this->errors);
     }
-
-    function sendEmail($mms, $cause, $errors = null)
-    {
-        //$mail->addAddresses(array('rubenrua@teltek.es', 'nacho.seijo@teltek.es', 'luispena@teltek.es'));
-        $emailTo = $this->senderService->getSenderEmail();
-        $subject = $this->translator->trans('YouTube upload videos status');
-
-        if ($cause == "Ok"){
-            $body = $this->translator->trans('The following videos were uploaded to Youtube') . ':';
-            foreach ($mms as $mm){
-                $body = $body."\n -".$mm->getId().": ".$mm->getTitle().' '. $this->router->generate('pumukit_webtv_multimediaobject_index', array('id' => $mm->getId()), true);
-            }
-            $error = false;
-        } elseif ($cause == "Error") {
-            $body = $this->translator->trans('The upload of the following videos has failed') . ':';
-            foreach ($mms as $key => $mm){
-                $body = $body."\n -".$mm->getId().": ".$mm->getTitle();
-                $body = $body. "\n ". $this->translator->trans('With this error'). ":\n".$errors[$key]."\n";
-            }
-            $error = true;
-        }
-
-        $template = 'PumukitNotificationBundle:Email:notification.html.twig';
-        $parameters = array('subject' => $subject, 'body' => $body, 'sender_name' => $this->senderService->getSenderName());
-        $output = $this->senderService->sendNotification($emailTo, $subject, $template, $parameters, $error);
-        if (0 < $output) {
-            $this->logger->addInfo(__CLASS__.' ['.__FUNCTION__.'] Sent notification email to "'.$emailTo.'"');
-        } else {
-            $this->logger->addInfo(__CLASS__.' ['.__FUNCTION__.'] Unable to send notification email to "'.$emailTo.'", '. $output. 'email(s) were sent.');
-        }
-   }
 }
