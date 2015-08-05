@@ -305,7 +305,7 @@ class YoutubeService
             $this->dm->persist($youtube);
             $this->dm->flush();
             $data = array('multimediaObject' => $multimediaObject, 'youtube' => $youtube);
-            $this->sendEmail('status duplicate', $data, array(), array());
+            $this->sendEmail('duplicated', $data, array(), array());
         }
         return 0;
     }
@@ -382,7 +382,7 @@ class YoutubeService
 
     private function buildEmailBody($cause='', $succeed=array(), $failed=array(), $errors=array())
     {
-        $statusUpdate = array('finished publication', 'status removed', 'status duplicated');
+        $statusUpdate = array('finished publication', 'status removed', 'duplicated');
         $body = '';
         if (!empty($succeed)) {
             if (in_array($cause, $statusUpdate)) {
@@ -425,7 +425,7 @@ class YoutubeService
                 if ($youtube instanceof Youtube) {
                     $body = $body . '<br/>'.$youtube->getLink().'<br/>';
                 }
-            } elseif ($cause === 'status duplicated') {
+            } elseif ($cause === 'duplicated') {
                 if ($multimediaObject instanceof MultimediaObject) {
                     $body = $body . '<br/>YouTube has rejected the upload of the video: "'.$multimediaObject->getTitle() . '"</br>';
                     $body = $body . 'because it has been published previously.<br/>';
