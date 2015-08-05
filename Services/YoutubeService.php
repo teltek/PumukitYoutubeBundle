@@ -273,7 +273,7 @@ class YoutubeService
         if($out['error']){
             if (!strpos($out['error_out'], "was not found.")) {
                 $data = array('multimediaObject' => $multimediaObject, 'youtube' => $youtube);
-                $this->youtubeService->sendEmail('status removed', $data, array(), array());
+                $this->sendEmail('status removed', $data, array(), array());
                 $youtube->setStatus(Youtube::STATUS_REMOVED);
                 $this->dm->persist($youtube);
                 $youtubeEduTag = $this->tagRepo->findOneByCod("PUCHYOUTUBE");
@@ -295,7 +295,7 @@ class YoutubeService
             $this->dm->persist($youtube);
             $this->dm->flush();
             $data = array('multimediaObject' => $multimediaObject, 'youtube' => $youtube);
-            $this->youtubeService->sendEmail('finished publication', $data, array(), array());
+            $this->sendEmail('finished publication', $data, array(), array());
         }elseif ($out['out'] == "uploaded"){
             $youtube->setStatus(Youtube::STATUS_PROCESSING);
             $this->dm->persist($youtube);
@@ -305,7 +305,7 @@ class YoutubeService
             $this->dm->persist($youtube);
             $this->dm->flush();
             $data = array('multimediaObject' => $multimediaObject, 'youtube' => $youtube);
-            $this->youtubeService->sendEmail('status duplicate', $data, array(), array());
+            $this->sendEmail('status duplicate', $data, array(), array());
         }
         return 0;
     }
