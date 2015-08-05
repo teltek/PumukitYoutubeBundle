@@ -158,6 +158,8 @@ EOT
             }
             $this->dm->flush();
         }
-        $this->youtubeService->sendEmail('remove', $this->okRemoved, $this->failedRemoved, $this->errors);
+        if (!empty($this->okRemoved) || !empty($this->failedRemoved)) {
+            $this->youtubeService->sendEmail('remove', $this->okRemoved, $this->failedRemoved, $this->errors);
+        }
     }
 }
