@@ -282,6 +282,8 @@ class YoutubeService
                 $youtubeEduTag = $this->tagRepo->findOneByCod("PUCHYOUTUBE");
                 if ($youtubeEduTag) {
                     if ($multimediaObject->containsTag($youtubeEduTag)) $this->tagService->removeTagFromMultimediaObject($multimediaObject, $youtubeEduTag->getId());
+                } else {
+                    throw new \Exception("There is no Youtube tag defined with code PUCHYOUTUBE");
                 }
                 $this->dm->flush();
 
@@ -354,15 +356,14 @@ class YoutubeService
         $this->dm->flush();
 
         return 0;
-
     }
 
-    public function sendEmail($cause='', $succeed=array(), $failed=array())
+    public function sendEmail($cause='', $succeed=array(), $failed=array(), $errors=array())
     {
         if ($this->senderService->isEnabled()) {
             $subject = $this->buildEmailSubject($cause, $succeed, $failed);
-            $body = $this->buildEmailBody($cause, $succeed, $failed);
-            $error = $this->getError($succeed, $failed);
+            $body = $this->buildEmailBody($cause, $succeed, $failed, $errors);
+            $error = $this->getError($errors);
             $emailTo = $this->senderService->getSenderEmail();
             $template = 'PumukitNotificationBundle:Email:notification.html.twig';
             $parameters = array('subject' => $subject, 'body' => $body, 'sender_name' => $this->senderService->getSenderName());
@@ -373,6 +374,7 @@ class YoutubeService
                 $this->logger->addInfo(__CLASS__.' ['.__FUNCTION__.'] Unable to send notification email to "'.$emailTo.'", '. $output. 'email(s) were sent.');
             }
         }
+        return $output;
     }
 
     private function buildEmailSubject($cause='', $succeed=array(), $failed=array())
@@ -382,18 +384,18 @@ class YoutubeService
         return $subject;
     }
 
-    private function buildEmailBody($cause='', $succeed=array(), $failed=array())
+    private function buildEmailBody($cause='', $succeed=array(), $failed=array(), $errors=array())
     {
         $body = '';
         if (!empty($succeed)) {
           $body = $body.'<br/>The following videos were '.$cause. (substr($cause, -1) === 'e')?'':'e' .'d to Youtube:<br/>';
-            foreach ($mms as $mm){
+            foreach ($succeed as $mm){
                 $body = $body."<br/> -".$mm->getId().": ".$mm->getTitle().' '. $this->router->generate('pumukit_webtv_multimediaobject_index', array('id' => $mm->getId()), true);
             }
         }
         if (!empty($failed)) {
             $body = $body.'<br/>The '.$cause.' of the following videos has failed:<br/>';
-            foreach ($mms as $key => $mm){
+            foreach ($failed as $key => $mm){
                 $body = $body.'<br/> -'.$mm->getId().': '.$mm->getTitle();
                 $body = $body. '<br/> With this error:<br/>'.$errors[$key].'<br/>';
             }
@@ -402,9 +404,9 @@ class YoutubeService
         return $body;
     }
 
-    private function getError($succeed=array(), $failed=array())
+    private function getError($errors=array())
     {
-        if (!empty($failed)) return true;
+        if (!empty($errors)) return true;
         return false;
     }
 
