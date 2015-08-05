@@ -397,7 +397,7 @@ class YoutubeService
         if (!empty($failed)) {
             $body = $body.'<br/>The '.$cause.' of the following videos has failed:<br/>';
             foreach ($failed as $key => $mm){
-                $body = $body.'<br/> -'.$mm->getId().': '.$mm->getTitle();
+                $body = $body.'<br/> -'.$mm->getId().': '.$mm->getTitle().'<br/>';
                 if (array_key_exists($key, $errors)) $body = $body. '<br/> With this error:<br/>'.$errors[$key].'<br/>';
             }
         }
