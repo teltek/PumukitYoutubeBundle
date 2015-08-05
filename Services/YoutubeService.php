@@ -368,8 +368,9 @@ class YoutubeService
             } else {
                 $this->logger->addInfo(__CLASS__.' ['.__FUNCTION__.'] Unable to send notification email to "'.$emailTo.'", '. $output. 'email(s) were sent.');
             }
+            return $output;
         }
-        return $output;
+        return false;
     }
 
     private function buildEmailSubject($cause='')
