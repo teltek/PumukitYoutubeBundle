@@ -53,7 +53,7 @@ class YoutubeService
     {
         $track = null;
         $opencastId = $multimediaObject->getProperty('opencast');
-        if ($opencastId !== null) $track = $multimediaObject->getTrackWithTag('sbs');
+        if ($opencastId !== null) $track = $multimediaObject-> getFilteredTrackWithTags(array(), array('sbs'), array('html5'), array(), false);
         else $track = $multimediaObject->getTrackWithTag('html5');
         if (null === $track) $track = $multimediaObject->getTrackWithTag('master');
         if (null === $track) throw new \Exception("Error, the Multimedia Object with id ".$multimediaObject->getId()." has no master");
