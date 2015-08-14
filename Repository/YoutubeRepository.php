@@ -214,4 +214,76 @@ class YoutubeRepository extends DocumentRepository
     {
         return $this->getWithStatusAndUpdatePlaylistQuery($status, $updatePlaylist)->execute();
     }
+
+    /**
+     * Get by multimedia object update date
+     * greater than sync metadata date query builder
+     *
+     * @return QueryBuilder
+     */
+    public function getNotMetadataUpdatedQueryBuilder()
+    {
+        return $this->createQueryBuilder()
+            ->field('multimediaObjectUpdateDate')->gt('syncMetadataUpdate');
+    }
+
+    /**
+     * Get by multimedia object update date
+     * greater than sync metadata date query
+     *
+     * @return Query
+     */
+    public function getNotMetadataUpdatedQuery()
+    {
+        return $this->getNotMetadataUpdatedQueryBuilder()
+            ->getQuery();
+    }
+
+    /**
+     * Get by multimedia object update date
+     * greater than sync metadata date
+     *
+     * @return Cursor
+     */
+    public function getNotMetadataUpdated()
+    {
+        return $this->getNotMetadataUpdatedQuery()
+            ->execute();
+    }
+
+    /**
+     * Get distinct ids by multimedia object update date
+     * greater than sync metadata date query builder
+     *
+     * @return QueryBuilder
+     */
+    public function getDistinctIdsNotMetadataUpdatedQueryBuilder()
+    {
+        return $this->getNotMetadataUpdatedQueryBuilder()
+            ->distinct('_id');
+    }
+
+    /**
+     * Get  distinct ids by multimedia object update date
+     * greater than sync metadata date query
+     *
+     * @return Query
+     */
+    public function getDistinctIdsNotMetadataUpdatedQuery()
+    {
+        return $this->getDistinctIdsNotMetadataUpdatedQueryBuilder()
+            ->getQuery();
+    }
+
+    /**
+     * Get distinct ids by multimedia object update date
+     * greater than sync metadata date
+     *
+     * @return Cursor
+     */
+    public function getDistinctIdsNotMetadataUpdated()
+    {
+        return $this->getDistinctIdsNotMetadataUpdatedQuery()
+            ->execute();
+    }
 }

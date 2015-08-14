@@ -308,4 +308,68 @@ class YoutubeRepositoryTest extends WebTestCase
 	$results = $this->repo->getDistinctFieldWithStatusAndForce('link', $status, false)->toArray();
 	$this->assertEquals($links, $results);
     }
+
+    public function testGetNotMetadataUpdated()
+    {
+        $youtube1 = new Youtube();
+        $youtube1->setMultimediaObjectUpdateDate('2015-08-15 04:09');
+        $youtube1->setSyncMetadataDate('2015-08-14 04:15');
+
+        $youtube2 = new Youtube();
+        $youtube2->setMultimediaObjectUpdateDate('2015-08-12 04:09');
+        $youtube2->setSyncMetadataDate('2015-08-14 04:15');
+
+        $youtube3 = new Youtube();
+        $youtube3->setMultimediaObjectUpdateDate('2015-08-16 04:09');
+        $youtube3->setSyncMetadataDate('2015-08-14 04:15');
+
+        $youtube4 = new Youtube();
+        $youtube4->setMultimediaObjectUpdateDate('2015-08-10 04:09');
+        $youtube4->setSyncMetadataDate('2015-08-14 04:15');
+
+        $this->dm->persist($youtube1);
+        $this->dm->persist($youtube2);
+        $this->dm->persist($youtube3);
+        $this->dm->persist($youtube4);
+        $this->dm->flush();
+
+        $youtubes = $this->repo->getNotMetadataUpdated();
+        $youtubesArray = $youtubes->toArray();
+        $this->assertTrue(in_array($youtube1, $youtubesArray));
+        $this->assertFalse(in_array($youtube2, $youtubesArray));
+        $this->assertTrue(in_array($youtube3, $youtubesArray));
+        $this->assertFalse(in_array($youtube4, $youtubesArray));
+    }
+
+    public function testGetDistinctIdsNotMetadataUpdated()
+    {
+        $youtube1 = new Youtube();
+        $youtube1->setMultimediaObjectUpdateDate('2015-08-15 04:09');
+        $youtube1->setSyncMetadataDate('2015-08-14 04:15');
+
+        $youtube2 = new Youtube();
+        $youtube2->setMultimediaObjectUpdateDate('2015-08-12 04:09');
+        $youtube2->setSyncMetadataDate('2015-08-14 04:15');
+
+        $youtube3 = new Youtube();
+        $youtube3->setMultimediaObjectUpdateDate('2015-08-16 04:09');
+        $youtube3->setSyncMetadataDate('2015-08-14 04:15');
+
+        $youtube4 = new Youtube();
+        $youtube4->setMultimediaObjectUpdateDate('2015-08-20 04:09');
+        $youtube4->setSyncMetadataDate('2015-08-14 04:15');
+
+        $this->dm->persist($youtube1);
+        $this->dm->persist($youtube2);
+        $this->dm->persist($youtube3);
+        $this->dm->persist($youtube4);
+        $this->dm->flush();
+
+        $youtubeIds = $this->repo->getDistinctIdsNotMetadataUpdated();
+        $youtubeIdsArray = $youtubeIds->toArray();
+        $this->assertTrue(in_array($youtube1->getId(), $youtubeIdsArray));
+        $this->assertFalse(in_array($youtube2->getId(), $youtubeIdsArray));
+        $this->assertTrue(in_array($youtube3->getId(), $youtubeIdsArray));
+        $this->assertTrue(in_array($youtube4->getId(), $youtubeIdsArray));
+    }
 }
