@@ -103,4 +103,11 @@ EOT
             $this->youtubeService->sendEmail('status update', $this->okUpdates, $this->failedUpdates, $this->errors);
         }
     }
+
+    private function createYoutubeQueryBuilder($youtubeIds=array())
+    {
+        return $this->mmobjRepo->createQueryBuilder()
+            ->field('properties.youtube')->in($youtubeIds)
+            ->field('properties.pumukit1id')->exists(false);
+    }
 }
