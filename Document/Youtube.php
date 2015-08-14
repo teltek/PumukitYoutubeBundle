@@ -92,14 +92,14 @@ class Youtube
      *
      * @MongoDB\Date
      */
-    private $multimediaObjectUpdateDate;
+    private $multimediaObjectUpdateDate = new \DateTime('1970-01-01 09:00');
 
     /**
      * @var date $syncMetadataDate
      *
      * @MongoDB\Date
      */
-    private $syncMetadataDate;
+    private $syncMetadataDate = new \DateTime('1970-01-01 10:00');
 
     /**
      * Get id
