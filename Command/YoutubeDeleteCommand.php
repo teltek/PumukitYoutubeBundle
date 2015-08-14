@@ -123,7 +123,7 @@ EOT
     private function getMultimediaObjectsInYoutubeWithoutTagCode($youtubeIds, $tagCode)
     {
       return $this->createYoutubeQueryBuilder($youtubeIds)
-            ->field('tag.cod')->notEqual($tagCode)
+            ->field('tags.cod')->notEqual($tagCode)
             ->getQuery()
             ->execute();
     }
