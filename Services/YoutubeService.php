@@ -247,6 +247,9 @@ class YoutubeService
                 $this->logger->addError(__CLASS__." [".__FUNCTION__."] Error in updating metadata for Youtube video with id ".$youtube->getId().": ".$out['error_out']);
                 throw new \Exception("Error in updating metadata for Youtube video with id ".$youtube->getId().": ".$out['error_out']);
             }
+            $youtube->setSyncMetadataDate(new \DateTime('now'));
+            $this->dm->persist($youtube);
+            $this->dm->flush();
         }
         return 0;
     }
