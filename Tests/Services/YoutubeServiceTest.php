@@ -42,6 +42,10 @@ class YoutubeServiceTest extends WebTestCase
           ->get('logger');
         $this->factoryService = $kernel->getContainer()
           ->get('pumukitschema.factory');
+        $this->notificationSender = $kernel->getContainer()
+          ->get('pumukit_notification.sender');
+        $this->translator = $kernel->getContainer()
+          ->get('translator');
     }
 
     public function setUp()
@@ -52,7 +56,7 @@ class YoutubeServiceTest extends WebTestCase
         $this->dm->getDocumentCollection('PumukitYoutubeBundle:Youtube')->remove(array());
         $this->dm->flush();
         $this->tagService = new TagService($this->dm);
-        $this->youtubeService = new YoutubeService($this->dm, $this->router, $this->tagService, $this->logger);
+        $this->youtubeService = new YoutubeService($this->dm, $this->router, $this->tagService, $this->logger, $this->notificationSender, $this->translator);
         $this->resourcesDir = realpath(__DIR__.'/../Resources').'/';
     }
 
