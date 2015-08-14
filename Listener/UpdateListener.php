@@ -17,7 +17,7 @@ class UpdateListener
         $this->container = $container;
     }
 
-    public function preRemove(LifecycleEventArgs $args)
+    public function postUpdate(LifecycleEventArgs $args)
     {
         $document = $args->getDocument();
 
