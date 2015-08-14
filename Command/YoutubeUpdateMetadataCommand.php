@@ -44,7 +44,7 @@ EOT
     {
         $this->initParameters();
 
-        $mms = $this->getMultimediaObjectsInYoutube();
+        $mms = $this->getMultimediaObjectsInYoutubeToUpdate();
         $this->updateVideosInYoutube($mms, $output);
         $this->checkResultsAndSendEmail();
     }
@@ -87,10 +87,13 @@ EOT
         }
     }
 
-    private function getMultimediaObjectsInYoutube()
+    private function getMultimediaObjectsInYoutubeToUpdate()
     {
+        $youtubeIds = $this->youtubeRepo->getDistinctIdsNotMetadataUpdated();
+
         $mms = $this->mmobjRepo->createQueryBuilder()
           ->field('properties.youtube')->exists(true)
+          ->field('properties.youtube')->in($youtubeIds->toArray())
           ->getQuery()
           ->execute();
 
