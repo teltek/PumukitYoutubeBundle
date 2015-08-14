@@ -114,8 +114,7 @@ EOT
 
     private function getMultimediaObjectsInYoutubeWithoutStatus($youtubeIds, $status)
     {
-        return $this->mmobjRepo->createQueryBuilder()
-            ->field('properties.youtube')->in($youtubeIds)
+        return $this->createYoutubeQueryBuilder($youtubeIds)
             ->field('status')->notEqual($status)
             ->getQuery()
             ->execute();
@@ -123,8 +122,7 @@ EOT
 
     private function getMultimediaObjectsInYoutubeWithoutTagCode($youtubeIds, $tagCode)
     {
-        return $this->mmobjRepo->createQueryBuilder()
-            ->field('properties.youtube')->in($youtubeIds)
+      return $this->createYoutubeQueryBuilder($youtubeIds)
             ->field('tag.cod')->notEqual($tagCode)
             ->getQuery()
             ->execute();
@@ -132,8 +130,7 @@ EOT
 
     private function getMultimediaObjectsInYoutubeWithoutBroadcast($youtubeIds, $broadcastTypeId)
     {
-        $mmsNoBroadcast = $this->mmobjRepo->createQueryBuilder()
-            ->field('properties.youtube')->in($youtubeIds)
+        $mmsNoBroadcast = $this->createYoutubeQueryBuilder($youtubeIds)
             ->getQuery()
             ->execute();
 
@@ -145,6 +142,13 @@ EOT
         }
 
         return $mms;
+    }
+
+    private function createYoutubeQueryBuilder($youtubeIds=array())
+    {
+        return $this->mmobjRepo->createQueryBuilder()
+            ->field('properties.youtube')->in($youtubeIds)
+            ->field('properties.pumukit1id')->exists(false);
     }
 
     private function checkResultsAndSendEmail()

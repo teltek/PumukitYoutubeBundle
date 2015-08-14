@@ -92,6 +92,7 @@ EOT
         $youtubeIds = $this->youtubeRepo->getDistinctIdsNotMetadataUpdated();
 
         $mms = $this->mmobjRepo->createQueryBuilder()
+          ->field('properties.pumukit1id')->exists(false)
           ->field('properties.youtube')->exists(true)
           ->field('properties.youtube')->in($youtubeIds->toArray())
           ->getQuery()

@@ -120,6 +120,7 @@ EOT
         $publicBroadcast = $this->broadcastRepo->findPublicBroadcast();
 
         return $this->mmobjRepo->createQueryBuilder()
+          ->field('properties.pumukit1id')->exists(false)
           ->field('status')->equals(MultimediaObject::STATUS_PUBLISHED)
           ->field('broadcast')->references($publicBroadcast)
           /* ->field('tags.cod')->equals('IMPORTANT') TODO When Tag with code 'IMPORTANT' is done ('autónomo' in Pumukit1.8) */

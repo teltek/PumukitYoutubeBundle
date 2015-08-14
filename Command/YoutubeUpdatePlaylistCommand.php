@@ -72,7 +72,10 @@ EOT
     {
         foreach ($youtubes as $youtube){
 
-            $mm = $this->mmobjRepo->find($youtube->getMultimediaObjectId());
+            $mm = $this->createYoutubeQueryBuilder()
+                ->field('_id')->equals(new \MongoId($youtube->getMultimediaObjectId()))
+                ->getQuery()
+                ->getSingleResult();
 
             $playlistTagId = $this->getPlaylistTagId($mm);
             if (null == $playlistTagId) continue;
@@ -113,7 +116,7 @@ EOT
 
     private function updatePlaylistChange()
     {
-        $mms = $this->mmobjRepo->createQueryBuilder()
+        $mms = $this->createYoutubeQueryBuilder()
             ->field('tags.properties.playlist')->exists(true)
             ->field('properties.youtube')->exists(true)
             ->getQuery()
@@ -135,6 +138,12 @@ EOT
             }
         }
         $this->dm->flush();
+    }
+
+    private function createYoutubeQueryBuilder()
+    {
+        return $this->mmobjRepo->createQueryBuilder()
+            ->field('properties.pumukit1id')->exists(false);
     }
 
     private function checkResultsAndSendEmail()

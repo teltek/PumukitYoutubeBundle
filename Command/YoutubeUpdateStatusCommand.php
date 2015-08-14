@@ -79,12 +79,18 @@ EOT
                 $this->logger->addInfo(__CLASS__.' ['.__FUNCTION__.'] Uknown output on the update in Youtube status video "'.$youtube->getId().'"');
                     $output->writeln('Unknown output on the update in Youtube status video "'.$youtube->getId().'"');
                 }
-                $multimediaObject = $this->mmobjRepo->find($youtube->getMultimediaObjectId());
+                $multimediaObject = $this->createYoutubeQueryBuilder()
+                    ->field('_id')->equals(new \MongoId($youtube->getMultimediaObjectId()))
+                    ->getQuery()
+                    ->getSingleResult();
                 if ($multimediaObject) $this->okUpdates[] = $multimediaObject;
             } catch (\Exception $e) {
                 $this->logger->addError(__CLASS__.' ['.__FUNCTION__.'] The update of the Youtube status video "'.$youtube->getId().'" failed: '.$e->getMessage());
                 $output->writeln('The update of the Youtube status video "'.$youtube->getId().'" failed: '.$e->getMessage());
-                $multimediaObject = $this->mmobjRepo->find($youtube->getMultimediaObjectId());
+                $multimediaObject = $this->createYoutubeQueryBuilder()
+                    ->field('_id')->equals(new \MongoId($youtube->getMultimediaObjectId()))
+                    ->getQuery()
+                    ->getSingleResult();
                 if ($multimediaObject) $this->failedUpdates[] = $multimediaObject;
                 $this->errors[] = substr($e->getMessage(), 0, 100);
             }
