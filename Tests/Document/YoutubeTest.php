@@ -15,7 +15,7 @@ class YoutubeTest extends \PHPUnit_Framework_TestCase
         $force = true;
         $updatePlaylist = true;
         $multimediaObjectUpdateDate = new \DateTime('2015-08-14 03:05');
-        $syncMetadataUpdate = new \DateTime('2015-08-14 04:05');
+        $syncMetadataDate = new \DateTime('2015-08-14 04:05');
 
         $youtube = new Youtube();
 
