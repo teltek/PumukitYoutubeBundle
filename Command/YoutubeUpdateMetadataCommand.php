@@ -89,12 +89,16 @@ EOT
 
     private function getMultimediaObjectsInYoutubeToUpdate()
     {
-        $youtubeIds = $this->youtubeRepo->getDistinctIdsNotMetadataUpdated();
+        $mongoObjectIds = $this->youtubeRepo->getDistinctIdsNotMetadataUpdated();
+        $youtubeIds = array();
+        foreach ($mongoObjectIds as $mongoObjectId){
+            $youtubeIds[] = $mongoObjectId->__toString();
+        }
 
         $mms = $this->mmobjRepo->createQueryBuilder()
           ->field('properties.pumukit1id')->exists(false)
           ->field('properties.youtube')->exists(true)
-          ->field('properties.youtube')->in($youtubeIds->toArray())
+          ->field('properties.youtube')->in($youtubeIds)
           ->getQuery()
           ->execute();
 
