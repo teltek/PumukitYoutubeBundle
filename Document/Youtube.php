@@ -88,6 +88,20 @@ class Youtube
     private $updatePlaylist = false;
 
     /**
+     * @var date $multimediaObjectUpdateDate
+     *
+     * @MongoDB\Date
+     */
+    private $multimediaObjectUpdateDate;
+
+    /**
+     * @var date $syncMetadataDate
+     *
+     * @MongoDB\Date
+     */
+    private $syncMetadataDate;
+
+    /**
      * Get id
      *
      * @return string
@@ -257,5 +271,43 @@ class Youtube
         return $this->updatePlaylist;
     }
 
+    /**
+     * Set multimediaObjectUpdateDate
+     *
+     * @param DateTime $multimediaObjectUpdateDate
+     */
+    public function setMultimediaObjectUpdateDate($multimediaObjectUpdateDate)
+    {
+        $this->multimediaObjectUpdateDate = $multimediaObjectUpdateDate;
+    }
 
+    /**
+     * Get multimediaObjectUpdateDate
+     *
+     * @return datetime
+     */
+    public function getMultimediaObjectUpdateDate()
+    {
+        return $this->multimediaObjectUpdateDate;
+    }
+
+    /**
+     * Set syncMetadataDate
+     *
+     * @param DateTime $syncMetadataDate
+     */
+    public function setSyncMetadataDate($syncMetadataDate)
+    {
+        $this->syncMetadataDate = $syncMetadataDate;
+    }
+
+    /**
+     * Get syncMetadataDate
+     *
+     * @return datetime
+     */
+    public function getSyncMetadataDate()
+    {
+        return $this->syncMetadataDate;
+    }
 }

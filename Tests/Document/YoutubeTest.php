@@ -5,7 +5,7 @@ use Pumukit\YoutubeBundle\Document\Youtube;
 
 class YoutubeTest extends \PHPUnit_Framework_TestCase
 {
-    public function testGetterAndSetter()
+    public function testSetterAndGetter()
     {
         $youtubeId = "j7nFiNk157o";
         $link = "https://www.youtube.com/watch?v=j7nFiNk157o";
@@ -14,6 +14,8 @@ class YoutubeTest extends \PHPUnit_Framework_TestCase
         $playlist = "w7dD-JJJytM&list=PLmXxqSJJq-yUfrjvKe5c5LX_1x7nGVF6c";
         $force = true;
         $updatePlaylist = true;
+        $multimediaObjectUpdateDate = new \DateTime('2015-08-14 03:05');
+        $syncMetadataUpdate = new \DateTime('2015-08-14 04:05');
 
         $youtube = new Youtube();
 
@@ -24,6 +26,8 @@ class YoutubeTest extends \PHPUnit_Framework_TestCase
         $youtube->setPlaylist($playlist);
         $youtube->setForce($force);
         $youtube->setUpdatePlaylist($updatePlaylist);
+        $youtube->setMultimediaObjectUpdateDate($multimediaObjectUpdateDate);
+        $youtube->setSyncMetadataDate($syncMetadataDate);
 
         $this->assertEquals($youtubeId, $youtube->getYoutubeId());
         $this->assertEquals($link, $youtube->getLink());
@@ -32,5 +36,7 @@ class YoutubeTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($playlist, $youtube->getPlaylist());
         $this->assertEquals($force, $youtube->getForce());
         $this->assertEquals($updatePlaylist, $youtube->getUpdatePlaylist());
+        $this->assertEquals($multimediaObjectUpdateDate, $youtube->getMultimediaObjectUpdateDate());
+        $this->assertEquals($syncMetadataDate, $youtube->getSyncMetadataDate());
     }
 }
