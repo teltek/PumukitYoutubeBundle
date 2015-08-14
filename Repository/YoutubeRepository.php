@@ -224,7 +224,7 @@ class YoutubeRepository extends DocumentRepository
     public function getNotMetadataUpdatedQueryBuilder()
     {
         return $this->createQueryBuilder()
-            ->field('multimediaObjectUpdateDate')->gt('syncMetadataUpdate');
+            ->where("function() {return this.multimediaObjectUpdateDate > this.syncMetadataUpdate';}");
     }
 
     /**
