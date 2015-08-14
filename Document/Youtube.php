@@ -92,14 +92,14 @@ class Youtube
      *
      * @MongoDB\Date
      */
-    private $multimediaObjectUpdateDate = new \DateTime('1970-01-01 09:00');
+    private $multimediaObjectUpdateDate;
 
     /**
      * @var date $syncMetadataDate
      *
      * @MongoDB\Date
      */
-    private $syncMetadataDate = new \DateTime('1970-01-01 10:00');
+    private $syncMetadataDate;
 
     /**
      * Get id
@@ -109,6 +109,15 @@ class Youtube
     public function getId()
     {
         return $this->id;
+    }
+
+    /**
+     * Constructor
+     */
+    public function __construct()
+    {
+        $this->multimediaObjectUpdateDate = new \DateTime('1970-01-01 09:00');
+        $this->syncMetadataDate = new \DateTime('1980-01-01 10:00');
     }
 
     /**
