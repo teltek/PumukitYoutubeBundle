@@ -30,7 +30,7 @@ class UpdateListener
                 ->getSingleResult();
 
             if (null !== $youtube) {
-                if ($youtube->getMultimediaObjectUpdateDate()->format('Y-m-d H:i') < $youtube->getSyncMetadataDate()->format('Y-m-d H:i')) {
+                if ($youtube->getMultimediaObjectUpdateDate() < $youtube->getSyncMetadataDate()) {
                     $youtube->setMultimediaObjectUpdateDate(new \DateTime('now'));
                     $dm->persist($youtube);
                     $dm->flush();
