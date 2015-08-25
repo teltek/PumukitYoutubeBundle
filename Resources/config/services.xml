@@ -15,7 +15,7 @@
         </service>
         <service id="pumukityoutube.update" class="Pumukit\YoutubeBundle\Listener\UpdateListener">
             <argument type="service" id="service_container" />
-            <tag name="doctrine_mongodb.odm.event_listener" event="postUpdate" />
+            <tag name="kernel.event_listener" event="multimediaObject.update" method="onMultimediaObjectUpdate"/>
         </service>
     </services>
 </container>
