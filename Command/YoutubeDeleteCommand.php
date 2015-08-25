@@ -52,6 +52,16 @@ EOT
 
         $youtubeMongoIds = $this->youtubeRepo->getDistinctFieldWithStatusAndForce("_id", Youtube::STATUS_PUBLISHED, false);
         $publishedYoutubeIds = $this->getStringIds($youtubeMongoIds);
+        $notWebTVMms = $this->getMultimediaObjectsInYoutubeWithoutTagCode($publishedYoutubeIds, 'PUCHWEBTV');
+        $this->deleteVideosFromYoutube($notWebTVMms, $output);
+
+        $youtubeMongoIds = $this->youtubeRepo->getDistinctFieldWithStatusAndForce("_id", Youtube::STATUS_PUBLISHED, false);
+        $publishedYoutubeIds = $this->getStringIds($youtubeMongoIds);
+        $notYoutubeEduMms = $this->getMultimediaObjectsInYoutubeWithoutTagCode($publishedYoutubeIds, 'PUCHYOUTUBE');
+        $this->deleteVideosFromYoutube($notYoutubeEduMms, $output);
+
+        $youtubeMongoIds = $this->youtubeRepo->getDistinctFieldWithStatusAndForce("_id", Youtube::STATUS_PUBLISHED, false);
+        $publishedYoutubeIds = $this->getStringIds($youtubeMongoIds);
         // TODO When tag IMPORTANT is defined as child of PUBLICATION DECISION Tag
         $notImportantMms = $this->getMultimediaObjectsInYoutubeWithoutTagCode($publishedYoutubeIds, 'PUDEAUTO');
         $this->deleteVideosFromYoutube($notImportantMms, $output);
