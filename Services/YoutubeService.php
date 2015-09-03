@@ -143,7 +143,7 @@ class YoutubeService
             return $errorLog;
         }
         $youtubePlaylist = $this->checkYoutubePlaylist($playlistTag->getProperty('youtube'));
-        if (null === $playlistId = $playlistTag->getProperty('youtube') || (!$youtubePlaylist)){
+        if ((null === $playlistId = $playlistTag->getProperty('youtube')) || (!$youtubePlaylist)){
             $pyOut = exec('python createPlaylist.py --title "'.$playlistTag->getTitle().'"', $output, $return_var);
             $out = json_decode($pyOut, true);
             if ($out['error']) {    
@@ -151,6 +151,7 @@ class YoutubeService
                 $errorLog = "Error in creating in Youtube the playlist from tag with id ".$playlistTagId." ".$out['error_out'];
                 return $errorLog;
             }elseif ($out['out'] != null) {
+                $this->logger->addInfo(__CLASS__." [".__FUNCTION__."] Created Youtube Playlist '".$out['out']."' for Tag with id '".$playlistTagId."'");
                 $playlistTag->setProperty('youtube', $out['out']);
                 $this->dm->persist($playlistTag);
                 $this->dm->flush();
@@ -577,8 +578,9 @@ class YoutubeService
         return $errorLog;
     }
 
-    private function checkYoutubePlaylist($youtubePlaylistId)
+    private function checkYoutubePlaylist($youtubePlaylistId='')
     {
+        if (null == $youtubePlaylistId) return false;
         $file_headers = @get_headers(self::YOUTUBE_PLAYLIST_URL . $youtubePlaylistId);
         return ($file_headers[0] === "HTTP/1.0 200 OK");
     }
