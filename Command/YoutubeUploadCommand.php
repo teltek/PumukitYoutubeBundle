@@ -157,7 +157,7 @@ EOT
         $playlistTagId = null;
         $embedTag = null;
         foreach ($mm->getTags() as $tag) {
-            if ((0 === strpos($tag->getPath(), "ROOT|YOUTUBE|")) && ("YOUTUBE" !== $tag->getCod()) {
+            if ((0 === strpos($tag->getPath(), "ROOT|YOUTUBE|")) && ("YOUTUBE" !== $tag->getCod())) {
                 $embedTag = $tag;
                 break;
             }

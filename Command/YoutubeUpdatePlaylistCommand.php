@@ -108,7 +108,7 @@ EOT
         $playlistTagId = null;
         $embedTag = null;
         foreach ($mm->getTags() as $tag) {
-            if (0 === strpos($tag->getPath(), "ROOT|YOUTUBE|") && ($tag->getCod() !== 'YOUTUBE')) {
+          if ((0 === strpos($tag->getPath(), "ROOT|YOUTUBE|")) && ($tag->getCod() !== 'YOUTUBE')) {
                 $embedTag = $tag;
                 break;
             }
@@ -132,7 +132,7 @@ EOT
         foreach ($mms as $mm) {
             $youtube = $this->youtubeRepo->find($mm->getProperty('youtube'));
             foreach ($mm->getTags() as $embedTag) {
-                if (0 === strpos($tag->getPath(), "ROOT|YOUTUBE|") && ($tag->getCod() !== 'YOUTUBE')) {
+                if ((0 === strpos($tag->getPath(), "ROOT|YOUTUBE|")) && ($tag->getCod() !== 'YOUTUBE')) {
                     $embedTag = $tag;
                     break;
                 }
