@@ -82,11 +82,18 @@ EOT
 
             try {
                 $outUpdatePlaylist = $this->youtubeService->updatePlaylist($mm, $playlistTagId);
+                if (0 !== $outUpdatePlaylist) {
+                    $this->logger->addError(__CLASS__.' ['.__FUNCTION__.'] Error in the update of Youtube Playlist of MultimediaObject with id "'.$mm->getId().' and Tag with id "'. $playlistTagId.'": ' . $outUpdatePlaylist);
+                    $output->writeln('Error in the update of Youtube Playlist of MultimediaObject with id "'.$mm->getId().' and Tag with id "'. $playlistTagId.'": ' . $outUpdatePlaylist);
+                    $this->failedUpdates[] = $mm;
+                    $this->errors[] = $outUpdatePlaylist;
+                    continue;
+                }
                 $this->logger->addInfo(__CLASS__." [".__FUNCTION__."] Updated playlist of MultimediaObject with id ".$multimediaObject->getId());
                 $output->writeln("Updated playlist of MultimediaObject with id ".$multimediaObject->getId());
                 $this->okUpdates[] = $mm;
             } catch (\Exception $e) {
-                $this->logger->addInfo(__CLASS__." [".__FUNCTION__."] Error on updating playlist of MultimediaObject with id ".$multimediaObject->getId());
+                $this->logger->addError(__CLASS__." [".__FUNCTION__."] Error on updating playlist of MultimediaObject with id ".$multimediaObject->getId());
                 $output->writeln("Error on updating playlist of MultimediaObject with id ".$multimediaObject->getId());
                 $this->failedUpdates[] = $mm;
                 $this->errors[] = substr($e->getMessage(), 0, 100);
@@ -101,7 +108,7 @@ EOT
         $playlistTagId = null;
         $embedTag = null;
         foreach ($mm->getTags() as $tag) {
-            if (0 === strpos($tag->getPath(), "ROOT|YOUTUBE|")) {
+            if (0 === strpos($tag->getPath(), "ROOT|YOUTUBE|") && ($tag->getCod() !== 'YOUTUBE')) {
                 $embedTag = $tag;
                 break;
             }
@@ -125,7 +132,7 @@ EOT
         foreach ($mms as $mm) {
             $youtube = $this->youtubeRepo->find($mm->getProperty('youtube'));
             foreach ($mm->getTags() as $embedTag) {
-                if (0 === strpos($tag->getPath(), "ROOT|YOUTUBE|")) {
+                if (0 === strpos($tag->getPath(), "ROOT|YOUTUBE|") && ($tag->getCod() !== 'YOUTUBE')) {
                     $embedTag = $tag;
                     break;
                 }

@@ -76,8 +76,10 @@ EOT
                 $output->writeln('Started updating Youtube status video "'.$youtube->getId().'"');
                 $outUpdate = $this->youtubeService->updateStatus($youtube);
                 if (0 !== $outUpdate) {
-                $this->logger->addInfo(__CLASS__.' ['.__FUNCTION__.'] Uknown output on the update in Youtube status video "'.$youtube->getId().'"');
-                    $output->writeln('Unknown output on the update in Youtube status video "'.$youtube->getId().'"');
+                    $this->logger->addError(__CLASS__.' ['.__FUNCTION__.'] Error on the update in Youtube status video "'.$youtube->getId().'": ' . $outUpdate);
+                    $output->writeln('Error on the update in Youtube status video "'.$youtube->getId().'": '. $outUpdate);
+                    $this->errors[] = $outUpdate;
+                    continue;
                 }
                 $multimediaObject = $this->createYoutubeQueryBuilder()
                     ->field('_id')->equals(new \MongoId($youtube->getMultimediaObjectId()))

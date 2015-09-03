@@ -99,8 +99,11 @@ EOT
                 $output->writeln('Started removing video from Youtube of MultimediaObject with id "'.$mm->getId().'"');
                 $outDelete = $this->youtubeService->delete($mm);
                 if (0 !== $outDelete) {
-                    $this->logger->addError(__CLASS__.' ['.__FUNCTION__.'] Unknown output in the removal from Youtube of MultimediaObject with id "'.$mm->getId().'"');
+                    $this->logger->addError(__CLASS__.' ['.__FUNCTION__.'] Error in the removal from Youtube of MultimediaObject with id "'.$mm->getId().'": ' . $outDelete);
                     $output->writeln('Unknown output in the removal from Youtube of MultimediaObject with id "'.$mm->getId().'"');
+                    $this->failedRemoved[] = $mm;
+                    $this->errors[] = $outDelete;
+                    continue;
                 }
                 $this->okRemoved[] = $mm;
             } catch (\Exception $e) {

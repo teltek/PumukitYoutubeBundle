@@ -94,7 +94,11 @@ EOT
                 $output->writeln('Started uploading to Youtube of MultimediaObject with id "'.$mm->getId().'"');
                 $outUpload = $this->youtubeService->upload($mm, 27, 'public', false);
                 if (0 !== $outUpload) {
-                    $output->writeln('Unknown out in the upload to Youtube of MultimediaObject with id "'.$mm->getId().'"');
+                    $this->logger->addError(__CLASS__.' ['.__FUNCTION__.'] Error in the upload to Youtube of MultimediaObject with id "'.$mm->getId().'": ' . $outUpload);
+                    $output->writeln('Error in the upload to Youtube of MultimediaObject with id "'.$mm->getId().'": ' . $outUpload);
+                    $this->failedUploads[] = $mm;
+                    $this->errors[] = $outUpload;
+                    continue;
                 }
                 if ($playlistTagId) {
                     $this->logger->addInfo(__CLASS__.' ['.__FUNCTION__.'] Started moving video to Youtube playlist assign with Tag id "'.$playlistTagId.'" of MultimediaObject with id "'.$mm->getId().'"');
@@ -102,7 +106,10 @@ EOT
                     $outMoveToList = $this->youtubeService->moveToList($mm, $playlistTagId);
                     if (0 !== $outMoveToList) {
                         $this->logger->addError(__CLASS__.' ['.__FUNCTION__.'] Unknown out in the move list to Youtube of MultimediaObject with id "'.$mm->getId().'"');
-                        $output->writeln('Unknown out in the move list to Youtube of MultimediaObject with id "'.$mm->getId().'"');
+                        $output->writeln('Error in the move list to Youtube of MultimediaObject with id "'.$mm->getId().'": ' . $outMoveToList);
+                        $this->failedUploads[] = $mm;
+                        $this->errors[] = $outMoveToList;
+                        continue;
                     }
                 }
                 $this->okUploads[] = $mm;
@@ -123,7 +130,7 @@ EOT
           ->field('properties.pumukit1id')->exists(false)
           ->field('status')->equals(MultimediaObject::STATUS_PUBLISHED)
           ->field('broadcast')->references($publicBroadcast)
-          /* ->field('tags.cod')->equals('IMPORTANT') TODO When Tag with code 'IMPORTANT' is done ('autónomo' in Pumukit1.8) */
+          /* ->field('tags.cod')->equals('IMPORTANT') TODO When Tag with code 'IMPORTANT' is done ('autónomo' in Pumukit1.8) */ // TODO review !!!!!!!!!!!
           ->field('tags.cod')->all(array('PUCHYOUTUBE', 'PUDEAUTO'));
     }
 
@@ -150,7 +157,7 @@ EOT
         $playlistTagId = null;
         $embedTag = null;
         foreach ($mm->getTags() as $tag) {
-            if (0 === strpos($tag->getPath(), "ROOT|YOUTUBE|")) {
+            if ((0 === strpos($tag->getPath(), "ROOT|YOUTUBE|")) && ("YOUTUBE" !== $tag->getCod()) {
                 $embedTag = $tag;
                 break;
             }
@@ -163,7 +170,6 @@ EOT
                 $output->writeln('MultimediaObject with id "'.$mm->getId().'" does have an EmbedTag with path "'.$embedTag->getPath().'" and code "'.$embedTag->getCod().'" but does not exist in Tag repository');
             }
         } else {
-            // TODO: Change "YOUTUBECONFERENCES" to "YT5" as default playlist tag code in CMAR.
             $output->writeln('MultimediaObject with id "'.$mm->getId().'" does not have any EmbedTag with path starting with "ROOT|YOUTUBE|" so we search for Tag with code "YOUTUBECONFERENCES" as default Youtube playlist.');
             $playlistTag = $this->tagRepo->findOneByCod('YOUTUBECONFERENCES');
             if (!$playlistTag) {

@@ -74,8 +74,10 @@ EOT
                 $output->writeln('Started updating Youtube video of MultimediaObject with id "'.$mm->getId().'"');
                 $outUpdate = $this->youtubeService->updateMetadata($mm);
                 if (0 !== $outUpdate) {
-                    $this->logger->addInfo(__CLASS__.' ['.__FUNCTION__.'] Uknown output on the update in Youtube video of MultimediaObject with id "'.$mm->getId().'"');
-                    $output->writeln('Unknown output on the update in Youtube video of MultimediaObject with id "'.$mm->getId().'"');
+                    $this->logger->addError(__CLASS__.' ['.__FUNCTION__.'] Uknown output on the update in Youtube video of MultimediaObject with id "'.$mm->getId().'": '. $outUpdate);
+                    $output->writeln('Error on the update in Youtube video of MultimediaObject with id "'.$mm->getId().'": '. $outUpdate);
+                    $this->failedUpdates[] = $mm;
+                    $this->errors[] = $outUpdate;
                 }
                 $this->okUpdates[] = $mm;
             } catch (\Exception $e) {
