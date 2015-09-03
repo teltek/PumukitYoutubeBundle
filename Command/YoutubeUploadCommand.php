@@ -173,10 +173,10 @@ EOT
             $output->writeln('MultimediaObject with id "'.$mm->getId().'" does not have any EmbedTag with path starting with "ROOT|YOUTUBE|" so we search for Tag with code "YOUTUBECONFERENCES" as default Youtube playlist.');
             $playlistTag = $this->tagRepo->findOneByCod('YOUTUBECONFERENCES');
             if (!$playlistTag) {
-                $rootTag = $this->tagRepo->findOneByCod('ROOT');
+                $youtubeTag = $this->tagRepo->findOneByCod('YOUTUBE');
                 $playlistTag = new Tag();
                 $playlistTag->setCod('YOUTUBECONFERENCES');
-                $playlistTag->setParent($rootTag);
+                $playlistTag->setParent($youtubeTag);
                 $playlistTag->setMetatag(false);
                 $playlistTag->setDisplay(true);
                 $playlistTag->setTitle('Conferences', 'en');
