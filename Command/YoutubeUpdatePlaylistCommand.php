@@ -131,21 +131,22 @@ EOT
     private function updatePlaylistChange()
     {
         $mms = $this->createYoutubeQueryBuilder()
-            ->field('tags.properties.playlist')->exists(true)
+            ->field('tags.properties.youtube')->exists(true)
             ->field('properties.youtube')->exists(true)
             ->getQuery()
             ->execute();
 
         foreach ($mms as $mm) {
             $youtube = $this->youtubeRepo->find($mm->getProperty('youtube'));
-            foreach ($mm->getTags() as $embedTag) {
+            $embedTag = null;
+            foreach ($mm->getTags() as $tag) {
                 if ((0 === strpos($tag->getPath(), "ROOT|YOUTUBE|")) && ($tag->getCod() !== 'YOUTUBE')) {
                     $embedTag = $tag;
                     break;
                 }
             }
             if (null != $embedTag) {
-                if ($youtube->getPlaylist() !== $embedTag->getProperty('playlist')){
+                if ($youtube->getPlaylist() !== $embedTag->getProperty('youtube')){
                     $youtube->setUpdatePlaylist(true);
                     $this->dm->persist($youtube);
                 }
