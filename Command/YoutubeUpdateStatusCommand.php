@@ -72,13 +72,18 @@ EOT
     {
         foreach ($youtubes as $youtube) {
             try {
-                $this->logger->addInfo(__CLASS__.' ['.__FUNCTION__.'] Started updating Youtube status video "'.$youtube->getId().'"');
-                $output->writeln('Started updating Youtube status video "'.$youtube->getId().'"');
+                $infoLog = __CLASS__.' ['.__FUNCTION__
+                  .'] Started updating Youtube status video "'.$youtube->getId().'"';
+                $this->logger->addInfo($infoLog);
+                $output->writeln($infoLog);
                 $outUpdate = $this->youtubeService->updateStatus($youtube);
                 if (0 !== $outUpdate) {
-                    $this->logger->addError(__CLASS__.' ['.__FUNCTION__.'] Error on the update in Youtube status video "'.$youtube->getId().'": ' . $outUpdate);
-                    $output->writeln('Error on the update in Youtube status video "'.$youtube->getId().'": '. $outUpdate);
-                    $this->errors[] = $outUpdate;
+                    $errorLog = __CLASS__.' ['.__FUNCTION__
+                      .'] Unknown error on the update in Youtube status video "'
+                      .$youtube->getId().'": ' . $outUpdate;
+                    $this->logger->addError($errorLog);
+                    $output->writeln($errorLog);
+                    $this->errors[] = $errorLog;
                     continue;
                 }
                 $multimediaObject = $this->createYoutubeQueryBuilder()
@@ -87,8 +92,11 @@ EOT
                     ->getSingleResult();
                 if ($multimediaObject) $this->okUpdates[] = $multimediaObject;
             } catch (\Exception $e) {
-                $this->logger->addError(__CLASS__.' ['.__FUNCTION__.'] The update of the Youtube status video "'.$youtube->getId().'" failed: '.$e->getMessage());
-                $output->writeln('The update of the Youtube status video "'.$youtube->getId().'" failed: '.$e->getMessage());
+                $errorLog = __CLASS__.' ['.__FUNCTION__
+                  .'] The update of the Youtube status video "'.$youtube->getId()
+                  .'" failed: '.$e->getMessage();
+                $this->logger->addError($errorLog);
+                $output->writeln($errorLog);
                 $multimediaObject = $this->createYoutubeQueryBuilder()
                     ->field('_id')->equals(new \MongoId($youtube->getMultimediaObjectId()))
                     ->getQuery()

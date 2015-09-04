@@ -95,20 +95,29 @@ EOT
     {
         foreach ($mms as $mm){
             try{
-                $this->logger->addInfo(__CLASS__.' ['.__FUNCTION__.'] Started removing video from Youtube of MultimediaObject with id "'.$mm->getId().'"');
-                $output->writeln('Started removing video from Youtube of MultimediaObject with id "'.$mm->getId().'"');
+                $infoLog = __CLASS__.' ['.__FUNCTION__
+                  .'] Started removing video from Youtube of MultimediaObject with id "'
+                  .$mm->getId().'"';
+                $this->logger->addInfo($infoLog);
+                $output->writeln($infoLog);
                 $outDelete = $this->youtubeService->delete($mm);
                 if (0 !== $outDelete) {
-                    $this->logger->addError(__CLASS__.' ['.__FUNCTION__.'] Error in the removal from Youtube of MultimediaObject with id "'.$mm->getId().'": ' . $outDelete);
-                    $output->writeln('Unknown output in the removal from Youtube of MultimediaObject with id "'.$mm->getId().'"');
+                    $errorLog = __CLASS__.' ['.__FUNCTION__
+                      .'] Unknown error in the removal from Youtube of MultimediaObject with id "'
+                      .$mm->getId().'": ' . $outDelete;
+                    $this->logger->addError($errorLog);
+                    $output->writeln($errorLog);
                     $this->failedRemoved[] = $mm;
-                    $this->errors[] = $outDelete;
+                    $this->errors[] = $errorLog;
                     continue;
                 }
                 $this->okRemoved[] = $mm;
             } catch (\Exception $e) {
-                $this->logger->addError(__CLASS__.' ['.__FUNCTION__.'] Removal of video from MultimediaObject with id "'.$mm->getId().'" has failed. '.$e->getMessage());
-                $output->writeln('Removal of video from MultimediaObject with id "'.$mm->getId().'" has failed. '.$e->getMessage());
+                $errorLog = __CLASS__.' ['.__FUNCTION__
+                  .'] Removal of video from MultimediaObject with id "'.$mm->getId()
+                  .'" has failed. '.$e->getMessage();
+                $this->logger->addError($errorLog);
+                $output->writeln($errorLog);
                 $this->failedRemoved[] = $mm;
                 $this->errors[] = substr($e->getMessage(), 0, 100);
             }

@@ -70,19 +70,28 @@ EOT
     {
         foreach ($mms as $mm) {
             try {
-                $this->logger->addInfo(__CLASS__.' ['.__FUNCTION__.'] Started updating Youtube video of MultimediaObject with id "'.$mm->getId().'"');
-                $output->writeln('Started updating Youtube video of MultimediaObject with id "'.$mm->getId().'"');
+                $infoLog = __CLASS__.' ['.__FUNCTION__
+                  .'] Started updating Youtube video of MultimediaObject with id "'
+                  .$mm->getId().'"';
+                $this->logger->addInfo($infoLog);
+                $output->writeln($infoLog);
                 $outUpdate = $this->youtubeService->updateMetadata($mm);
                 if (0 !== $outUpdate) {
-                    $this->logger->addError(__CLASS__.' ['.__FUNCTION__.'] Uknown output on the update in Youtube video of MultimediaObject with id "'.$mm->getId().'": '. $outUpdate);
-                    $output->writeln('Error on the update in Youtube video of MultimediaObject with id "'.$mm->getId().'": '. $outUpdate);
+                    $errorLog = __CLASS__.' ['.__FUNCTION__
+                      .'] Uknown output on the update in Youtube video of MultimediaObject with id "'
+                      .$mm->getId().'": '. $outUpdate;
+                    $this->logger->addError($errorLog);
+                    $output->writeln($errorLog);
                     $this->failedUpdates[] = $mm;
-                    $this->errors[] = $outUpdate;
+                    $this->errors[] = $errorLog;
                 }
                 $this->okUpdates[] = $mm;
             } catch (\Exception $e) {
-                $this->logger->addError(__CLASS__.' ['.__FUNCTION__.'] The update of the video from the Multimedia Object with id "'.$mm->getId().'" failed: '.$e->getMessage());
-                $output->writeln('The update of the video from the Multimedia Object with id "'.$mm->getId().'" failed: '.$e->getMessage());
+                $errorLog = __CLASS__.' ['.__FUNCTION__
+                  .'] The update of the video from the Multimedia Object with id "'
+                  .$mm->getId().'" failed: '.$e->getMessage();
+                $this->logger->addError($errorLog);
+                $output->writeln($errorLog);
                 $this->failedUpdates[] = $mm;
                 $this->errors[] = substr($e->getMessage(), 0, 100);
             }

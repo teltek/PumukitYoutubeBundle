@@ -90,32 +90,46 @@ EOT
             $playlistTagId = $this->getPlaylistTagId($mm, $output);
 
             try {
-                $this->logger->addInfo(__CLASS__.' ['.__FUNCTION__.'] Started uploading to Youtube of MultimediaObject with id "'.$mm->getId().'"');
-                $output->writeln('Started uploading to Youtube of MultimediaObject with id "'.$mm->getId().'"');
+                $infoLog = __CLASS__.' ['.__FUNCTION__
+                  .'] Started uploading to Youtube of MultimediaObject with id "'.$mm->getId().'"';
+                $this->logger->addInfo($infoLog);
+                $output->writeln($infoLog);
                 $outUpload = $this->youtubeService->upload($mm, 27, 'public', false);
                 if (0 !== $outUpload) {
-                    $this->logger->addError(__CLASS__.' ['.__FUNCTION__.'] Error in the upload to Youtube of MultimediaObject with id "'.$mm->getId().'": ' . $outUpload);
-                    $output->writeln('Error in the upload to Youtube of MultimediaObject with id "'.$mm->getId().'": ' . $outUpload);
+                    $errorLog = __CLASS__.' ['.__FUNCTION__
+                      .'] Unknown error in the upload to Youtube of MultimediaObject with id "'
+                      .$mm->getId().'": ' . $outUpload;
+                    $this->logger->addError($errorLog);
+                    $output->writeln($errorLog);
                     $this->failedUploads[] = $mm;
-                    $this->errors[] = $outUpload;
+                    $this->errors[] = $errorLog;
                     continue;
                 }
                 if ($playlistTagId) {
-                    $this->logger->addInfo(__CLASS__.' ['.__FUNCTION__.'] Started moving video to Youtube playlist assign with Tag id "'.$playlistTagId.'" of MultimediaObject with id "'.$mm->getId().'"');
-                    $output->writeln('Started moving video to Youtube playlist assign with Tag id "'.$playlistTagId.'" of MultimediaObject with id "'.$mm->getId().'"');
+                    $infoLog = __CLASS__.' ['.__FUNCTION__
+                      .'] Started moving video to Youtube playlist assign with Tag id "'
+                      .$playlistTagId.'" of MultimediaObject with id "'.$mm->getId().'"';
+                    $this->logger->addInfo($infoLog);
+                    $output->writeln($infoLog);
                     $outMoveToList = $this->youtubeService->moveToList($mm, $playlistTagId);
                     if (0 !== $outMoveToList) {
-                        $this->logger->addError(__CLASS__.' ['.__FUNCTION__.'] Unknown out in the move list to Youtube of MultimediaObject with id "'.$mm->getId().'"');
-                        $output->writeln('Error in the move list to Youtube of MultimediaObject with id "'.$mm->getId().'": ' . $outMoveToList);
+                        $errorLog = __CLASS__.' ['.__FUNCTION__
+                          .'] Unknown out in the move list to Youtube of MultimediaObject with id "'
+                          .$mm->getId().'": '. $outMoveToList;
+                        $this->logger->addError($errorLog);
+                        $output->writeln($errorLog);
                         $this->failedUploads[] = $mm;
-                        $this->errors[] = $outMoveToList;
+                        $this->errors[] = $errorLog;
                         continue;
                     }
                 }
                 $this->okUploads[] = $mm;
             } catch (\Exception $e) {
-                $this->logger->addError(__CLASS__.' ['.__FUNCTION__.'] The upload of the video from the Multimedia Object with id "'.$mm->getId().'" failed: '.$e->getMessage());
-                $output->writeln('The upload of the video from the Multimedia Object with id "'.$mm->getId().'" failed: '.$e->getMessage());
+                $errorLog = __CLASS__.' ['.__FUNCTION__
+                  .'] The upload of the video from the Multimedia Object with id "'
+                  .$mm->getId().'" failed: '.$e->getMessage();
+                $this->logger->addError($errorLog);
+                $output->writeln($errorLog);
                 $this->failedUploads[] = $mm;
                 $this->errors[] = substr($e->getMessage(), 0, 100);
             }

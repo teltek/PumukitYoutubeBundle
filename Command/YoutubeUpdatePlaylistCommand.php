@@ -83,18 +83,25 @@ EOT
             try {
                 $outUpdatePlaylist = $this->youtubeService->updatePlaylist($mm, $playlistTagId);
                 if (0 !== $outUpdatePlaylist) {
-                    $this->logger->addError(__CLASS__.' ['.__FUNCTION__.'] Error in the update of Youtube Playlist of MultimediaObject with id "'.$mm->getId().' and Tag with id "'. $playlistTagId.'": ' . $outUpdatePlaylist);
-                    $output->writeln('Error in the update of Youtube Playlist of MultimediaObject with id "'.$mm->getId().' and Tag with id "'. $playlistTagId.'": ' . $outUpdatePlaylist);
+                    $errorLog = __CLASS__.' ['.__FUNCTION__
+                      .'] Unknown error in the update of Youtube Playlist of MultimediaObject with id "'
+                      .$mm->getId().' and Tag with id "'. $playlistTagId.'": ' . $outUpdatePlaylist;
+                    $this->logger->addError($errorLog);
+                    $output->writeln($errorLog);
                     $this->failedUpdates[] = $mm;
-                    $this->errors[] = $outUpdatePlaylist;
+                    $this->errors[] = $errorLog;
                     continue;
                 }
-                $this->logger->addInfo(__CLASS__." [".__FUNCTION__."] Updated playlist of MultimediaObject with id ".$multimediaObject->getId());
-                $output->writeln("Updated playlist of MultimediaObject with id ".$multimediaObject->getId());
+                $infoLog = __CLASS__." [".__FUNCTION__
+                  ."] Updated playlist of MultimediaObject with id ".$multimediaObject->getId();
+                $this->logger->addInfo($infoLog);
+                $output->writeln($infoLog);
                 $this->okUpdates[] = $mm;
             } catch (\Exception $e) {
-                $this->logger->addError(__CLASS__." [".__FUNCTION__."] Error on updating playlist of MultimediaObject with id ".$multimediaObject->getId());
-                $output->writeln("Error on updating playlist of MultimediaObject with id ".$multimediaObject->getId());
+                $errorLog = __CLASS__." [".__FUNCTION__
+                  ."] Error on updating playlist of MultimediaObject with id ".$multimediaObject->getId();
+                $this->logger->addError($errorLog);
+                $output->writeln($errorLog);
                 $this->failedUpdates[] = $mm;
                 $this->errors[] = substr($e->getMessage(), 0, 100);
             }
