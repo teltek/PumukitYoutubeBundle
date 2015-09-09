@@ -72,6 +72,11 @@ EOT
     {
         foreach ($youtubes as $youtube) {
             try {
+                $multimediaObject = $this->createYoutubeQueryBuilder()
+                    ->field('_id')->equals(new \MongoId($youtube->getMultimediaObjectId()))
+                    ->getQuery()
+                    ->getSingleResult();
+                if ($multimediaObject == null) continue;
                 $infoLog = __CLASS__.' ['.__FUNCTION__
                   .'] Started updating Youtube status video "'.$youtube->getId().'"';
                 $this->logger->addInfo($infoLog);
@@ -86,10 +91,6 @@ EOT
                     $this->errors[] = $errorLog;
                     continue;
                 }
-                $multimediaObject = $this->createYoutubeQueryBuilder()
-                    ->field('_id')->equals(new \MongoId($youtube->getMultimediaObjectId()))
-                    ->getQuery()
-                    ->getSingleResult();
                 if ($multimediaObject) $this->okUpdates[] = $multimediaObject;
             } catch (\Exception $e) {
                 $errorLog = __CLASS__.' ['.__FUNCTION__
