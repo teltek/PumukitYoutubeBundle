@@ -131,7 +131,7 @@ EOT
                 $this->logger->addError($errorLog);
                 $output->writeln($errorLog);
                 $this->failedUploads[] = $mm;
-                $this->errors[] = substr($e->getMessage(), 0, 100);
+                $this->errors[] = $e->getMessage();
             }
         }
     }
