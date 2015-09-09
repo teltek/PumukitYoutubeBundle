@@ -71,12 +71,9 @@ EOT
     private function updateVideoStatusInYoutube($youtubes, OutputInterface $output)
     {
         foreach ($youtubes as $youtube) {
+            $multimediaObject = $this->findByYoutubeIdAndPumukit1Id($youtube, false);
+            if ($multimediaObject == null) continue;
             try {
-                $multimediaObject = $this->createYoutubeQueryBuilder($youtubes->toArray())
-                    ->field('_id')->equals(new \MongoId($youtube->getMultimediaObjectId()))
-                    ->getQuery()
-                    ->getSingleResult();
-                if ($multimediaObject == null) continue;
                 $infoLog = __CLASS__.' ['.__FUNCTION__
                   .'] Started updating Youtube status video "'.$youtube->getId().'"';
                 $this->logger->addInfo($infoLog);
@@ -98,10 +95,6 @@ EOT
                   .'" failed: '.$e->getMessage();
                 $this->logger->addError($errorLog);
                 $output->writeln($errorLog);
-                $multimediaObject = $this->createYoutubeQueryBuilder($youtubes->toArray())
-                    ->field('_id')->equals(new \MongoId($youtube->getMultimediaObjectId()))
-                    ->getQuery()
-                    ->getSingleResult();
                 if ($multimediaObject) $this->failedUpdates[] = $multimediaObject;
                 $this->errors[] = substr($e->getMessage(), 0, 100);
             }
@@ -115,10 +108,12 @@ EOT
         }
     }
 
-    private function createYoutubeQueryBuilder($youtubeIds=array())
+    private function findByYoutubeIdAndPumukit1Id(Youtube $youtube, $pumukit1Id=false)
     {
         return $this->mmobjRepo->createQueryBuilder()
-            ->field('properties.youtube')->in($youtubeIds)
-            ->field('properties.pumukit1id')->exists(false);
+            ->field('properties.youtube')->equals($youtube->getId())
+            ->field('properties.pumukit1id')->exists($pumukit1Id);
+            ->getQuery()
+            ->getSingleResult();
     }
 }
