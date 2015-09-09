@@ -460,22 +460,24 @@ class YoutubeService
         if ($this->senderService->isEnabled()) {
             $subject = $this->buildEmailSubject($cause);
             $body = $this->buildEmailBody($cause, $succeed, $failed, $errors);
-            $error = $this->getError($errors);
-            $emailTo = $this->senderService->getSenderEmail();
-            $template = 'PumukitNotificationBundle:Email:notification.html.twig';
-            $parameters = array('subject' => $subject, 'body' => $body, 'sender_name' => $this->senderService->getSenderName());
-            $output = $this->senderService->sendNotification($emailTo, $subject, $template, $parameters, $error);
-            if (0 < $output) {
-                $infoLog = __CLASS__.' ['.__FUNCTION__
-                  . '] Sent notification email to "' . $emailTo . '"';
-                $this->logger->addInfo($infoLog);
-            } else {
-                $infoLog = __CLASS__.' ['.__FUNCTION__
-                  . '] Unable to send notification email to "'
-                  . $emailTo . '", ' . $output. 'email(s) were sent.';
-                $this->logger->addInfo($infoLog);
+            if ($body) {
+                $error = $this->getError($errors);
+                $emailTo = $this->senderService->getSenderEmail();
+                $template = 'PumukitNotificationBundle:Email:notification.html.twig';
+                $parameters = array('subject' => $subject, 'body' => $body, 'sender_name' => $this->senderService->getSenderName());
+                $output = $this->senderService->sendNotification($emailTo, $subject, $template, $parameters, $error);
+                if (0 < $output) {
+                    $infoLog = __CLASS__.' ['.__FUNCTION__
+                      . '] Sent notification email to "' . $emailTo . '"';
+                    $this->logger->addInfo($infoLog);
+                } else {
+                    $infoLog = __CLASS__.' ['.__FUNCTION__
+                      . '] Unable to send notification email to "'
+                      . $emailTo . '", ' . $output. 'email(s) were sent.';
+                    $this->logger->addInfo($infoLog);
+                }
+                return $output;
             }
-            return $output;
         }
         return false;
     }
