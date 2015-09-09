@@ -72,7 +72,7 @@ EOT
     {
         foreach ($youtubes as $youtube) {
             try {
-                $multimediaObject = $this->createYoutubeQueryBuilder($youtubes)
+                $multimediaObject = $this->createYoutubeQueryBuilder($youtubes->toArray())
                     ->field('_id')->equals(new \MongoId($youtube->getMultimediaObjectId()))
                     ->getQuery()
                     ->getSingleResult();
@@ -98,7 +98,7 @@ EOT
                   .'" failed: '.$e->getMessage();
                 $this->logger->addError($errorLog);
                 $output->writeln($errorLog);
-                $multimediaObject = $this->createYoutubeQueryBuilder($youtubes)
+                $multimediaObject = $this->createYoutubeQueryBuilder($youtubes->toArray())
                     ->field('_id')->equals(new \MongoId($youtube->getMultimediaObjectId()))
                     ->getQuery()
                     ->getSingleResult();
