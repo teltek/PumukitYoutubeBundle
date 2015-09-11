@@ -150,8 +150,7 @@ class YoutubeService
             $this->logger->addError($errorLog);
             throw new \Exception($errorLog);
         }
-        $youtubePlaylist = $this->checkYoutubePlaylist($playlistTag->getProperty('youtube'));
-        if ((null === $playlistId = $playlistTag->getProperty('youtube')) || (!$youtubePlaylist)){
+        if (null === $playlistId = $playlistTag->getProperty('youtube')){
             $pyOut = exec('python createPlaylist.py --title "'.$playlistTag->getTitle().'"', $output, $return_var);
             $out = json_decode($pyOut, true);
             if ($out['error']) {
@@ -242,8 +241,7 @@ class YoutubeService
             $this->logger->addError($errorLog);
             throw new \Exception($errorLog);
         }
-        $youtubePlaylist = $this->checkYoutubePlaylist($youtube->getPlaylist());
-        if ((null != $youtube->getPlaylist()) && $youtubePlaylist) {
+        if (null != $youtube->getPlaylist()) {
             $dcurrent = getcwd();
             chdir($this->pythonDirectory);
             $pyOut = exec('python deleteFromList.py --id '.$youtube->getPlaylist(), $output, $return_var);
@@ -628,12 +626,5 @@ class YoutubeService
           . $youtube->getId() . '"';
 
         return $errorLog;
-    }
-
-    private function checkYoutubePlaylist($youtubePlaylistId='')
-    {
-        if (null == $youtubePlaylistId) return false;
-        $file_headers = @get_headers(self::YOUTUBE_PLAYLIST_URL . $youtubePlaylistId);
-        return ($file_headers[0] === "HTTP/1.0 200 OK");
     }
 }
