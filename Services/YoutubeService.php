@@ -132,7 +132,7 @@ class YoutubeService
      * @param string $playlistTagId
      * @return integer 
      */
-    public function moveToList (MultimediaObject $multimediaObject, $playlistTagId)
+    public function moveToList(MultimediaObject $multimediaObject, $playlistTagId)
     {
         if (null === $youtube = $this->youtubeRepo->findOneByMultimediaObjectId($multimediaObject->getId())) {
             //TODO Check
@@ -209,7 +209,7 @@ class YoutubeService
      * @param string $playlistTagId
      * @return integer 
      */
-    public function moveFromListToList (MultimediaObject $multimediaObject, $playlistTagId)
+    public function moveFromListToList(MultimediaObject $multimediaObject, $playlistTagId)
     {
         if (null === $youtube = $this->youtubeRepo->findOneByMultimediaObjectId($multimediaObject->getId())) {
             //TODO Check
