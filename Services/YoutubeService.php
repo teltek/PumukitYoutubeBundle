@@ -166,7 +166,7 @@ class YoutubeService
                   . "' for Tag with id '" . $playlistTagId . "'";
                 $this->logger->addInfo($infoLog);
                 $playlistTag->setProperty('youtube', $out['out']);
-                $this->dm->persist($playlistTagx);
+                $this->dm->persist($playlistTag);
                 $this->dm->flush();
                 $playlistId = $out['out'];
             }else {
