@@ -14,6 +14,9 @@ use Psr\Log\LoggerInterface;
 
 class YoutubeUpdatePlaylistCommand extends ContainerAwareCommand
 {
+    const METATAG_PLAYLIST_COD = 'YOUTUBE';
+    const METATAG_PLAYLIST_PATH = 'ROOT|YOUTUBE|';
+
     private $dm = null;
     private $tagRepo = null;
     private $mmobjRepo = null;
@@ -115,7 +118,7 @@ EOT
         $playlistTagId = null;
         $embedTag = null;
         foreach ($mm->getTags() as $tag) {
-          if ((0 === strpos($tag->getPath(), "ROOT|YOUTUBE|")) && ($tag->getCod() !== 'YOUTUBE')) {
+          if ((0 === strpos($tag->getPath(), self::METATAG_PLAYLIST_PATH)) && ($tag->getCod() !== self::METATAG_PLAYLIST_COD)) {
                 $embedTag = $tag;
                 break;
             }
@@ -140,7 +143,7 @@ EOT
             $youtube = $this->youtubeRepo->find($mm->getProperty('youtube'));
             $embedTag = null;
             foreach ($mm->getTags() as $tag) {
-                if ((0 === strpos($tag->getPath(), "ROOT|YOUTUBE|")) && ($tag->getCod() !== 'YOUTUBE')) {
+                if ((0 === strpos($tag->getPath(), self::METATAG_PLAYLIST_PATH)) && ($tag->getCod() !== self::METATAG_PLAYLIST_COD)) {
                     $embedTag = $tag;
                     break;
                 }
