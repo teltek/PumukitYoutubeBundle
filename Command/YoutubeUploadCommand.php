@@ -14,6 +14,13 @@ use Psr\Log\LoggerInterface;
 
 class YoutubeUploadCommand extends ContainerAwareCommand
 {
+    const PUB_CHANNEL_YOUTUBE = 'PUCHYOUTUBE';
+    const PUB_DECISION_AUTONOMOUS = 'PUDEAUTO';
+    const DEFAULT_PLAYLIST_COD = 'YOUTUBECONFERENCES';
+    const DEFAULT_PLAYLIST_TITLE = 'Conferences';
+    const METATAG_PLAYLIST_COD = 'YOUTUBE';
+    const METATAG_PLAYLIST_PATH = 'ROOT|YOUTUBE|';
+
     private $dm = null;
     private $tagRepo = null;
     private $mmobjRepo = null;
@@ -145,7 +152,7 @@ EOT
           ->field('status')->equals(MultimediaObject::STATUS_PUBLISHED)
           ->field('broadcast')->references($publicBroadcast)
           /* ->field('tags.cod')->equals('IMPORTANT') TODO When Tag with code 'IMPORTANT' is done ('autónomo' in Pumukit1.8) */ // TODO review !!!!!!!!!!!
-          ->field('tags.cod')->all(array('PUCHYOUTUBE', 'PUDEAUTO'));
+          ->field('tags.cod')->all(array(self::PUB_CHANNEL_YOUTUBE, self::PUB_DECISION_AUTONOMOUS));
     }
 
     private function getNewMultimediaObjectsToUpload()
@@ -171,7 +178,7 @@ EOT
         $playlistTagId = null;
         $embedTag = null;
         foreach ($mm->getTags() as $tag) {
-            if ((0 === strpos($tag->getPath(), "ROOT|YOUTUBE|")) && ("YOUTUBE" !== $tag->getCod())) {
+            if ((0 === strpos($tag->getPath(), self::METATAG_PLAYLIST_PATH)) && (self::METATAG_PLAYLIST_COD !== $tag->getCod())) {
                 $embedTag = $tag;
                 break;
             }
@@ -184,19 +191,11 @@ EOT
                 $output->writeln('MultimediaObject with id "'.$mm->getId().'" does have an EmbedTag with path "'.$embedTag->getPath().'" and code "'.$embedTag->getCod().'" but does not exist in Tag repository');
             }
         } else {
-            $output->writeln('MultimediaObject with id "'.$mm->getId().'" does not have any EmbedTag with path starting with "ROOT|YOUTUBE|" so we search for Tag with code "YOUTUBECONFERENCES" as default Youtube playlist.');
-            $playlistTag = $this->tagRepo->findOneByCod('YOUTUBECONFERENCES');
+            $output->writeln('MultimediaObject with id "'.$mm->getId().'" does not have any EmbedTag with path starting with "'.self::METATAG_PLAYLIST_PATH .'" so we search for Tag with code "'. self::DEFAULT_PLAYLIST_COD . '" as default Youtube playlist.');
+            $playlistTag = $this->tagRepo->findOneByCod(self::DEFAULT_PLAYLIST_COD);
             if (!$playlistTag) {
-                $youtubeTag = $this->tagRepo->findOneByCod('YOUTUBE');
-                $playlistTag = new Tag();
-                $playlistTag->setCod('YOUTUBECONFERENCES');
-                $playlistTag->setParent($youtubeTag);
-                $playlistTag->setMetatag(false);
-                $playlistTag->setDisplay(true);
-                $playlistTag->setTitle('Conferences', 'en');
-                $this->dm->persist($playlistTag);
-                $this->dm->flush();
-                $output->writeln('There is no Tag with code "YOUTUBECONFERENCES" as default Youtube playlist so we created it with resultant id "'.$playlistTag->getId().'".');
+                $playlistTag = $this->createDefaultPlaylist();
+                $output->writeln('There is no Tag with code "'.self::DEFAULT_PLAYLIST_COD.'" as default Youtube playlist so we created it with resultant id "'.$playlistTag->getId().'".');
             }
             $playlistTagId = $playlistTag->getId();
         }
@@ -206,10 +205,10 @@ EOT
 
     private function checkResultsAndSendEmail()
     {
-        $youtubeTag = $this->tagRepo->findByCod('PUCHYOUTUBE');
+        $youtubeTag = $this->tagRepo->findByCod(self::PUB_CHANNEL_YOUTUBE);
         if (null != $youtubeTag) {
             foreach ($this->okUploads as $mm){
-                if (!$mm->containsTagWithCod('PUCHYOUTUBE')) {
+                if (!$mm->containsTagWithCod(self::PUB_CHANNEL_YOUTUBE)) {
                     $addedTags = $this->tagService->addTagToMultimediaObject($multimediaObject, $youtubeTag->getId(), false);
                 }
             }
@@ -218,5 +217,20 @@ EOT
         if (!empty($this->okUploads) || !empty($this->failedUploads)) {
             $this->youtubeService->sendEmail('upload', $this->okUploads, $this->failedUploads, $this->errors);
         }
+    }
+
+    private function createDefaultPlaylist()
+    {
+        $youtubeTag = $this->tagRepo->findOneByCod(self::METATAG_PLAYLIST_COD);
+        $playlistTag = new Tag();
+        $playlistTag->setCod(self::DEFAULT_PLAYLIST_COD);
+        $playlistTag->setParent($youtubeTag);
+        $playlistTag->setMetatag(false);
+        $playlistTag->setDisplay(true);
+        $playlistTag->setTitle(self::DEFAULT_PLAYLIST_TITLE, 'en');
+        $this->dm->persist($playlistTag);
+        $this->dm->flush();
+
+        return $playlistTag;
     }
 }

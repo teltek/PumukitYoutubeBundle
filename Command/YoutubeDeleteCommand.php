@@ -15,6 +15,10 @@ use Psr\Log\LoggerInterface;
 
 class YoutubeDeleteCommand extends ContainerAwareCommand
 {
+    const PUB_CHANNEL_WEBTV = 'PUCHWEBTV';
+    const PUB_CHANNEL_YOUTUBE = 'PUCHYOUTUBE';
+    const PUB_DECISION_AUTONOMOUS = 'PUDEAUTO';
+
     private $dm = null;
     private $tagRepo = null;
     private $mmobjRepo = null;
@@ -52,18 +56,18 @@ EOT
 
         $youtubeMongoIds = $this->youtubeRepo->getDistinctFieldWithStatusAndForce("_id", Youtube::STATUS_PUBLISHED, false);
         $publishedYoutubeIds = $this->getStringIds($youtubeMongoIds);
-        $notWebTVMms = $this->getMultimediaObjectsInYoutubeWithoutTagCode($publishedYoutubeIds, 'PUCHWEBTV');
+        $notWebTVMms = $this->getMultimediaObjectsInYoutubeWithoutTagCode($publishedYoutubeIds, self::PUB_CHANNEL_WEBTV);
         $this->deleteVideosFromYoutube($notWebTVMms, $output);
 
         $youtubeMongoIds = $this->youtubeRepo->getDistinctFieldWithStatusAndForce("_id", Youtube::STATUS_PUBLISHED, false);
         $publishedYoutubeIds = $this->getStringIds($youtubeMongoIds);
-        $notYoutubeEduMms = $this->getMultimediaObjectsInYoutubeWithoutTagCode($publishedYoutubeIds, 'PUCHYOUTUBE');
+        $notYoutubeEduMms = $this->getMultimediaObjectsInYoutubeWithoutTagCode($publishedYoutubeIds, self::PUB_CHANNEL_YOUTUBE);
         $this->deleteVideosFromYoutube($notYoutubeEduMms, $output);
 
         $youtubeMongoIds = $this->youtubeRepo->getDistinctFieldWithStatusAndForce("_id", Youtube::STATUS_PUBLISHED, false);
         $publishedYoutubeIds = $this->getStringIds($youtubeMongoIds);
         // TODO When tag IMPORTANT is defined as child of PUBLICATION DECISION Tag
-        $notImportantMms = $this->getMultimediaObjectsInYoutubeWithoutTagCode($publishedYoutubeIds, 'PUDEAUTO');
+        $notImportantMms = $this->getMultimediaObjectsInYoutubeWithoutTagCode($publishedYoutubeIds, self::PUB_DECISION_AUTONOMOUS);
         $this->deleteVideosFromYoutube($notImportantMms, $output);
 
         $youtubeMongoIds = $this->youtubeRepo->getDistinctFieldWithStatusAndForce("_id", Youtube::STATUS_PUBLISHED, false);
@@ -175,10 +179,10 @@ EOT
 
     private function checkResultsAndSendEmail()
     {
-        $youtubeTag = $this->tagRepo->findByCod('PUCHYOUTUBE');
+        $youtubeTag = $this->tagRepo->findByCod(self::PUB_CHANNEL_YOUTUBE);
         if (null != $youtubeTag) {
             foreach ($this->okRemoved as $mm){
-                if ($mm->containsTagWithCod('PUCHYOUTUBE')) {
+                if ($mm->containsTagWithCod(self::PUB_CHANNEL_YOUTUBE)) {
                     $this->tagService->removeTagFromMultimediaObject($multimediaObject, $youtubeTag->getId(), false);
                 }
             }
