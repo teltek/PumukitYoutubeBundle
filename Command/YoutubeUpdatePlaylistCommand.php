@@ -140,15 +140,31 @@ EOT
             $youtube = $this->youtubeRepo->find($mm->getProperty('youtube'));
             foreach ($mm->getTags() as $embedTag) {
                 if ((0 === strpos($embedTag->getPath(), self::METATAG_PLAYLIST_PATH)) && ($embedTag->getCod() !== self::METATAG_PLAYLIST_COD)) {
-                    if (!array_key_exists($embedTag->getProperty('youtube'), $youtube->getPlaylists())) {
+                    $playlistTag = $this->tagRepo->findOneByCod($embedTag->getCod());
+                    if (!array_key_exists($playlistTag->getProperty('youtube'), $youtube->getPlaylists())) {
                         $youtube->setUpdatePlaylist(true);
                         $this->dm->persist($youtube);
+                        $this->dm->flush();
                         break;
                     }
                 }
             }
+            foreach ($youtube->getPlaylists() as $playlistId => $playlist) {
+                $playlistTag = $this->getTagByYoutubeProperty($playlistId);
+                if (null == $playlistTag) {
+                    $youtube->setUpdatePlaylist(true);
+                    $this->dm->persist($youtube);
+                    $this->dm->flush();
+                    break;
+                }
+                if (!$mm->containsTagWithCod($playlistTag->getCod())) {
+                    $youtube->setUpdatePlaylist(true);
+                    $this->dm->persist($youtube);
+                    $this->dm->flush();
+                    break;
+                }
+            }
         }
-        $this->dm->flush();
     }
 
     private function createYoutubeQueryBuilder()
@@ -162,5 +178,12 @@ EOT
         if (!empty($this->errors)) {
             $this->youtubeService->sendEmail('playlist update', $this->okUpdates, $this->failedUpdates, $this->errors);
         }
+    }
+
+    private function getTagByYoutubeProperty($playlistId)
+    {
+        return $this->tagRepo->createQueryBuilder()
+          ->field('property.youtube')->equals($playlistId)
+          ->getQuery()->getSingleResult();
     }
 }
