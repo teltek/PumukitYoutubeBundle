@@ -75,6 +75,9 @@ EOT
         $notPublicMms = $this->getMultimediaObjectsInYoutubeWithoutBroadcast($publishedYoutubeIds, Broadcast::BROADCAST_TYPE_PUB);
         $this->deleteVideosFromYoutube($notPublicMms, $output);
 
+        $orphanYoutubes = $this->youtubeRepo->findByStatus(Youtube::STATUS_TO_DELETE);
+        $this->deleteOrphanVideosFromYoutube($orphanYoutubes, $output);
+
         $this->checkResultsAndSendEmail();
     }
 
@@ -123,6 +126,39 @@ EOT
                 $this->logger->addError($errorLog);
                 $output->writeln($errorLog);
                 $this->failedRemoved[] = $mm;
+                $this->errors[] = $e->getMessage();
+            }
+        }
+    }
+
+    private function deleteOrphanVideosFromYoutube($orphanYoutubes, OutputInterface $output)
+    {
+        foreach ($orphanYoutubes as $youtube) {
+            try{
+                $infoLog = __CLASS__.' ['.__FUNCTION__
+                  .'] Started removing orphan video from Youtube with id "'
+                  .$youtube->getId().'"';
+                $this->logger->addInfo($infoLog);
+                $output->writeln($infoLog);
+                $outDelete = $this->youtubeService->deleteOrphan($youtube);
+                if (0 !== $outDelete) {
+                    $errorLog = __CLASS__.' ['.__FUNCTION__
+                      .'] Unknown error in the removal from Youtube id "'
+                      .$youtube->getId().'": ' . $outDelete;
+                    $this->logger->addError($errorLog);
+                    $output->writeln($errorLog);
+                    $this->failedRemoved[] = $youtube;
+                    $this->errors[] = $errorLog;
+                    continue;
+                }
+                $this->okRemoved[] = $youtube;
+            } catch (\Exception $e) {
+                $errorLog = __CLASS__.' ['.__FUNCTION__
+                  .'] Removal of video from Youtube with id "'.$youtube->getId()
+                  .'" has failed. '.$e->getMessage();
+                $this->logger->addError($errorLog);
+                $output->writeln($errorLog);
+                $this->failedRemoved[] = $youtube;
                 $this->errors[] = $e->getMessage();
             }
         }
@@ -182,8 +218,10 @@ EOT
         $youtubeTag = $this->tagRepo->findByCod(self::PUB_CHANNEL_YOUTUBE);
         if (null != $youtubeTag) {
             foreach ($this->okRemoved as $mm){
-                if ($mm->containsTagWithCod(self::PUB_CHANNEL_YOUTUBE)) {
-                    $this->tagService->removeTagFromMultimediaObject($multimediaObject, $youtubeTag->getId(), false);
+                if ($mm instanceof MultimediaObject) {
+                    if ($mm->containsTagWithCod(self::PUB_CHANNEL_YOUTUBE)) {
+                        $this->tagService->removeTagFromMultimediaObject($multimediaObject, $youtubeTag->getId(), false);
+                    }
                 }
             }
             $this->dm->flush();
