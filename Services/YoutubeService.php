@@ -164,10 +164,10 @@ class YoutubeService
                   . "] Created Youtube Playlist '" . $out['out']
                   . "' for Tag with id '" . $playlistTagId . "'";
                 $this->logger->addInfo($infoLog);
-                $playlistTag->setProperty('youtube', $out['out']);
+                $playlistId = $out['out'];
+                $playlistTag->setProperty('youtube', $playlistId);
                 $this->dm->persist($playlistTag);
                 $this->dm->flush();
-                $playlistId = $out['out'];
             }else {
                 $errorLog = __CLASS__ . " [" . __FUNCTION__
                   . "] Error! Creating the playlist from tag with id '" 
@@ -187,7 +187,7 @@ class YoutubeService
             throw new \Exception($errorLog);
         }
         if ($out['out'] != null) {
-            $youtube->setPlaylist($out['out']);
+            $youtube->setPlaylist($playlistId, $out['out']);
             $this->dm->persist($youtube);
             $this->dm->flush();
         }else{
@@ -217,11 +217,28 @@ class YoutubeService
             $this->logger->addError($errorLog);
             throw new \Exception($errorLog);
         }
-        $dcurrent = getcwd();
-        chdir($this->pythonDirectory);
-        $pyOut = exec('python deleteFromList.py --id '.$youtube->getPlaylist(), $output, $return_var);
-        chdir($dcurrent);
-        $out = json_decode($pyOut, true);
+        if (null === $playlistTag = $this->tagRepo->find($playlistTagId)){
+            $errorLog = __CLASS__ . " [" . __FUNCTION__
+              . "] Error! The tag with id '" . $playlistTagId
+              . "' for Youtube Playlist does not exist";
+            $this->logger->addError($errorLog);
+            throw new \Exception($errorLog);
+        }
+        if (null === $playlistId = $playlistTag->getProperty('youtube')) {
+            $errorLog = __CLASS__ . " [" . __FUNCTION__
+              . "] Error! The tag with id '" . $playlistTagId
+              . "' for Youtube Playlist does not have a 'youtube' property with the playlist id.";
+            $this->logger->addError($errorLog);
+            throw new \Exception($errorLog);
+        }
+        if (null === $playlistItem = $youtube->getPlaylist($playlistId)){
+            $errorLog = __CLASS__ . " [" . __FUNCTION__
+              . "] Error! The Youtube document  with id '" . $youtube->getId()
+              . "' does not have a playlist item for Playlist '" . $playlistId . "'";
+            $this->logger->addError($errorLog);
+            throw new \Exception($errorLog);
+        }
+        $this->deleteFromList($playlistItem, $youtube, $playlistId);
 
         return $this->moveToList($multimediaObject, $playlistTagId);
     }
@@ -241,19 +258,8 @@ class YoutubeService
             $this->logger->addError($errorLog);
             throw new \Exception($errorLog);
         }
-        if (null != $youtube->getPlaylist()) {
-            $dcurrent = getcwd();
-            chdir($this->pythonDirectory);
-            $pyOut = exec('python deleteFromList.py --id '.$youtube->getPlaylist(), $output, $return_var);
-            chdir($dcurrent);
-            $out = json_decode($pyOut, true);
-            if ($out['error']){
-                $errorLog = __CLASS__ . " [" . __FUNCTION__
-                  . "] Error in deleting the Youtube video with id '" . $youtube->getId()
-                  . "' from playlist with id '" . $youtube->getPlaylist() . "': " . $out['error_out'];
-                $this->logger->addError($errorLog);
-                throw new \Exception($errorLog);
-            }
+        foreach ($youtube->getPlaylists() as $playlistId => $playlistItem) {
+            $this->deleteFromList($playlistItem, $youtube, $playlistId);
         }
         $dcurrent = getcwd();
         chdir($this->pythonDirectory);
@@ -416,36 +422,24 @@ class YoutubeService
             $this->logger->addError($errorLog);
             throw new \Exception($errorLog);
         }
-        $dcurrent = getcwd();
-        chdir($this->pythonDirectory);
-        $pyOut = exec('python getPlaylist.py --videoid '.$youtube->getYoutubeId(), $output, $return_var);
-        chdir($dcurrent);
-        $out = json_decode($pyOut, true);
-        if ($out['error']) {
+        if (null === $playlistId = $playlistTag->getProperty('youtube')) {
             $errorLog = __CLASS__ . " [" . __FUNCTION__
-              . "] Error in getting playlist of video with youtube id '"
-              . $youtube->getYoutubeId() . "': " . $out['error_out'];
+              . "] Error! The tag with id '" . $playlistTagId
+              . "' for Youtube Playlist does not have a 'youtube' property with the playlist id.";
             $this->logger->addError($errorLog);
             throw new \Exception($errorLog);
-        } else {
-            $youtubePlaylistId = $playlistTag->getProperty('youtube');
-            if ($out['out'] && (null !== $youtubePlaylistId)) {
-                if ($out['out'] !== $youtubePlaylistId) {
-                    $this->moveFromListToList($multimediaObject, $playlistTagId);
-                    $infoLog = __CLASS__ . " [" . __FUNCTION__
-                      . "] MultimediaObject with id '" . $multimediaObject->getId()
-                      . "' moved from playlist '" . $out['out'] . "' to playlist '"
-                      . $youtubePlaylistId . "'";
-                    $this->logger->addInfo($infoLog);
-                }
-            } else {
-                $this->moveToList($multimediaObject, $playlistTagId);
-                $youtube->setUpdatePlaylist(false);
-                $infoLog = __CLASS__ . " [" . __FUNCTION__
-                  . "] MultimediaObject with id '" . $multimediaObject->getId()
-                  . "' moved to playlist '" . $youtubePlaylistId . "'";
-                $this->logger->addInfo($infoLog);
+        }
+        if (!array_key_exists($playlistId, $youtbe->getPlaylists())) {
+            $this->moveToList($multimediaObject, $playlistTagId);
+        } elseif (!$multimediaObject->containsTagWithCod($playlistTag->getCod())) {
+            if (null === $playlistItem = $youtube->getPlaylist($playlistId)){
+                $errorLog = __CLASS__ . " [" . __FUNCTION__
+                  . "] Error! The Youtube document  with id '" . $youtube->getId()
+                  . "' does not have a playlist item for Playlist '" . $playlistId . "'";
+                $this->logger->addError($errorLog);
+                throw new \Exception($errorLog);
             }
+            $this->deleteFromList($playlistItem, $youtube, $playlistId, false);
         }
         $youtube->setUpdatePlaylist(false);
         $this->dm->persist($youtube);
@@ -454,6 +448,15 @@ class YoutubeService
         return 0;
     }
 
+    /**
+     * Send email
+     *
+     * @param string $cause
+     * @param array $succeed
+     * @param array $failed
+     * @param array $errors
+     * @return integer|boolean
+     */
     public function sendEmail($cause='', $succeed=array(), $failed=array(), $errors=array())
     {
         if ($this->senderService->isEnabled()) {
@@ -626,5 +629,26 @@ class YoutubeService
           . $youtube->getId() . '"';
 
         return $errorLog;
+    }
+
+    private function deleteFromList($playlistItem, $youtube, $playlistId, $doFlush=true)
+    {
+        $dcurrent = getcwd();
+        chdir($this->pythonDirectory);
+        $pyOut = exec('python deleteFromList.py --id '.$playlistItem, $output, $return_var);
+        chdir($dcurrent);
+        $out = json_decode($pyOut, true);
+        if ($out['error']){
+            $errorLog = __CLASS__ . " [" . __FUNCTION__
+              . "] Error in deleting the Youtube video with id '" . $youtube->getId()
+              . "' from playlist with id '" . $playlistItem . "': " . $out['error_out'];
+            $this->logger->addError($errorLog);
+            throw new \Exception($errorLog);
+        }
+        $youtube->removePlaylist($playlistId);
+        $this->dm->persist($youtube);
+        if ($doFlush) {
+            $this->dm->flush();
+        }
     }
 }
