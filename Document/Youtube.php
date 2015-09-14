@@ -23,6 +23,7 @@ class Youtube
     const STATUS_DUPLICATED = 7;
     const STATUS_REMOVED = 8;
     const STATUS_NOTIFIED_ERROR = 9;
+    const STATUS_TO_DELETE = 10;
 
     /**
      * @var string $id
