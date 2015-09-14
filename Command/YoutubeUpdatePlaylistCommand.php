@@ -122,13 +122,15 @@ EOT
             if ((0 === strpos($embedTag->getPath(), self::METATAG_PLAYLIST_PATH)) && ($embedTag->getCod() !== self::METATAG_PLAYLIST_COD)) {
                 $playlistTag = $this->tagRepo->findOneByCod($embedTag->getCod());
                 if (null != $playlistTag) {
-                    $playlistTagIds[] = $playlistTag->getId();
+                    if (!in_array($playlistTag->getId(), $playlistTagIds)) {
+                        $playlistTagIds[] = $playlistTag->getId();
+                    }
                 }
             }
             foreach ($youtube->getPlaylists() as $playlistId => $playlist) {
                 $playlistTag = $this->getTagByYoutubeProperty($playlistId);
                 if (null != $playlistTag) {
-                    if (!$multimediaObject->containsTagWithCod($playlistTag->getCod())) {
+                    if ((!$multimediaObject->containsTagWithCod($playlistTag->getCod())) && (!in_array($playlistTag->getId(), $playlistTagIds))) {
                         $playlistTagIds[] = $playlistTag->getId();
                     }
                 }
