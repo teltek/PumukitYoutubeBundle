@@ -94,8 +94,7 @@ EOT
     private function uploadVideosToYoutube($mms, OutputInterface $output)
     {
         foreach ($mms as $mm) {
-            $playlistTagId = $this->getPlaylistTagId($mm, $output);
-
+            $playlistTagIds = $this->getPlaylistTagIds($mm, $output);
             try {
                 $infoLog = __CLASS__.' ['.__FUNCTION__
                   .'] Started uploading to Youtube of MultimediaObject with id "'.$mm->getId().'"';
@@ -112,7 +111,7 @@ EOT
                     $this->errors[] = $errorLog;
                     continue;
                 }
-                if ($playlistTagId) {
+                foreach ($playlistTagIds as $playlistTagId) {
                     $infoLog = __CLASS__.' ['.__FUNCTION__
                       .'] Started moving video to Youtube playlist assign with Tag id "'
                       .$playlistTagId.'" of MultimediaObject with id "'.$mm->getId().'"';
@@ -173,34 +172,29 @@ EOT
           ->execute();
     }
 
-    private function getPlaylistTagId($mm, OutputInterface $output)
+    private function getPlaylistTagIds($mm, OutputInterface $output)
     {
-        $playlistTagId = null;
-        $embedTag = null;
-        foreach ($mm->getTags() as $tag) {
-            if ((0 === strpos($tag->getPath(), self::METATAG_PLAYLIST_PATH)) && (self::METATAG_PLAYLIST_COD !== $tag->getCod())) {
-                $embedTag = $tag;
-                break;
+        $playlistTagIds = array();
+        foreach ($mm->getTags() as $embedTag) {
+            if ((0 === strpos($embedTag->getPath(), self::METATAG_PLAYLIST_PATH)) && (self::METATAG_PLAYLIST_COD !== $embedTag->getCod())) {
+                $playlistTag = $this->tagRepo->findOneByCod($embedTag->getCod());
+                if (null != $playlistTag) {
+                    $playlistTagIds[] = $playlistTag->getId();
+                } else {
+                    $output->writeln('MultimediaObject with id "'.$mm->getId().'" does have an EmbedTag with path "'.$embedTag->getPath().'" and code "'.$embedTag->getCod().'" but does not exist in Tag repository');
+                }
             }
         }
-        if (null != $embedTag) {
-            $playlistTag = $this->tagRepo->findOneByCod($embedTag->getCod());
-            if (null != $playlistTag) {
-                $playlistTagId = $playlistTag->getId();
-            } else {
-                $output->writeln('MultimediaObject with id "'.$mm->getId().'" does have an EmbedTag with path "'.$embedTag->getPath().'" and code "'.$embedTag->getCod().'" but does not exist in Tag repository');
-            }
-        } else {
+        if (null == $playlistTagIds) {
             $output->writeln('MultimediaObject with id "'.$mm->getId().'" does not have any EmbedTag with path starting with "'.self::METATAG_PLAYLIST_PATH .'" so we search for Tag with code "'. self::DEFAULT_PLAYLIST_COD . '" as default Youtube playlist.');
             $playlistTag = $this->tagRepo->findOneByCod(self::DEFAULT_PLAYLIST_COD);
-            if (!$playlistTag) {
+            if (null == $playlistTag) {
                 $playlistTag = $this->createDefaultPlaylist();
                 $output->writeln('There is no Tag with code "'.self::DEFAULT_PLAYLIST_COD.'" as default Youtube playlist so we created it with resultant id "'.$playlistTag->getId().'".');
             }
-            $playlistTagId = $playlistTag->getId();
+            $playlistTagIds[] = $playlistTag->getId();
         }
-
-        return $playlistTagId;
+        return $playlistTagIds;
     }
 
     private function checkResultsAndSendEmail()
