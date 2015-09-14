@@ -80,55 +80,53 @@ EOT
                 ->getQuery()
                 ->getSingleResult();
 
-            $playlistTagId = $this->getPlaylistTagId($mm);
-            if (null == $playlistTagId) continue;
+            $playlistTagIds = $this->getPlaylistTagIds($mm);
 
-            try {
-                $outUpdatePlaylist = $this->youtubeService->updatePlaylist($mm, $playlistTagId);
-                if (0 !== $outUpdatePlaylist) {
-                    $errorLog = __CLASS__.' ['.__FUNCTION__
-                      .'] Unknown error in the update of Youtube Playlist of MultimediaObject with id "'
-                      .$mm->getId().' and Tag with id "'. $playlistTagId.'": ' . $outUpdatePlaylist;
+            foreach ($playlistTagIds as $playlistTagId) {
+                try {
+                    $outUpdatePlaylist = $this->youtubeService->updatePlaylist($mm, $playlistTagId);
+                    if (0 !== $outUpdatePlaylist) {
+                        $errorLog = __CLASS__.' ['.__FUNCTION__
+                          .'] Unknown error in the update of Youtube Playlist of MultimediaObject with id "'
+                          .$mm->getId().' and Tag with id "'. $playlistTagId.'": ' . $outUpdatePlaylist;
+                        $this->logger->addError($errorLog);
+                        $output->writeln($errorLog);
+                        $this->failedUpdates[] = $mm;
+                        $this->errors[] = $errorLog;
+                        continue;
+                    }
+                    $infoLog = __CLASS__." [".__FUNCTION__
+                      ."] Updated playlist of MultimediaObject with id ".$multimediaObject->getId();
+                    $this->logger->addInfo($infoLog);
+                    $output->writeln($infoLog);
+                    $this->okUpdates[] = $mm;
+                } catch (\Exception $e) {
+                    $errorLog = __CLASS__." [".__FUNCTION__
+                      ."] Error on updating playlist of MultimediaObject with id ".$multimediaObject->getId();
                     $this->logger->addError($errorLog);
                     $output->writeln($errorLog);
                     $this->failedUpdates[] = $mm;
-                    $this->errors[] = $errorLog;
-                    continue;
+                    $this->errors[] = $e->getMessage();
                 }
-                $infoLog = __CLASS__." [".__FUNCTION__
-                  ."] Updated playlist of MultimediaObject with id ".$multimediaObject->getId();
-                $this->logger->addInfo($infoLog);
-                $output->writeln($infoLog);
-                $this->okUpdates[] = $mm;
-            } catch (\Exception $e) {
-                $errorLog = __CLASS__." [".__FUNCTION__
-                  ."] Error on updating playlist of MultimediaObject with id ".$multimediaObject->getId();
-                $this->logger->addError($errorLog);
-                $output->writeln($errorLog);
-                $this->failedUpdates[] = $mm;
-                $this->errors[] = $e->getMessage();
             }
         }
 
         return 0;
     }
 
-    private function getPlaylistTagId(MultimediaObject $mm)
+    private function getPlaylistTagIds(MultimediaObject $mm)
     {
-        $playlistTagId = null;
-        $embedTag = null;
-        foreach ($mm->getTags() as $tag) {
-          if ((0 === strpos($tag->getPath(), self::METATAG_PLAYLIST_PATH)) && ($tag->getCod() !== self::METATAG_PLAYLIST_COD)) {
-                $embedTag = $tag;
-                break;
+        $playlistTagIds = array();
+        foreach ($mm->getTags() as $embedTag) {
+            if ((0 === strpos($embedTag->getPath(), self::METATAG_PLAYLIST_PATH)) && ($embedTag->getCod() !== self::METATAG_PLAYLIST_COD)) {
+                $playlistTag = $this->tagRepo->findOneByCod($embedTag->getCod());
+                if (null != $playlistTag) {
+                    $playlistTagIds[] = $playlistTag->getId();
+                }
             }
         }
-        if ($embedTag) {
-            $playlistTag = $this->tagRepo->findOneByCod($embedTag->getCod());
-            if ($playlistTag) $playlistTagId = $playlistTag->getId();
-        }
 
-        return $playlistTagId;
+        return $playlistTagIds;
     }
 
     private function updatePlaylistChange()
@@ -141,17 +139,13 @@ EOT
 
         foreach ($mms as $mm) {
             $youtube = $this->youtubeRepo->find($mm->getProperty('youtube'));
-            $embedTag = null;
-            foreach ($mm->getTags() as $tag) {
-                if ((0 === strpos($tag->getPath(), self::METATAG_PLAYLIST_PATH)) && ($tag->getCod() !== self::METATAG_PLAYLIST_COD)) {
-                    $embedTag = $tag;
-                    break;
-                }
-            }
-            if (null != $embedTag) {
-                if ($youtube->getPlaylist() !== $embedTag->getProperty('youtube')){
-                    $youtube->setUpdatePlaylist(true);
-                    $this->dm->persist($youtube);
+            foreach ($mm->getTags() as $embedTag) {
+                if ((0 === strpos($embedTag->getPath(), self::METATAG_PLAYLIST_PATH)) && ($embedTag->getCod() !== self::METATAG_PLAYLIST_COD)) {
+                    if (!array_key_exists($embedTag->getProperty('youtube'), $youtube->getPlaylists())) {
+                        $youtube->setUpdatePlaylist(true);
+                        $this->dm->persist($youtube);
+                        break;
+                    }
                 }
             }
         }
