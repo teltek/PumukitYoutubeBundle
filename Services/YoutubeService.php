@@ -650,5 +650,10 @@ class YoutubeService
         if ($doFlush) {
             $this->dm->flush();
         }
+        $infoLog = __CLASS__." [".__FUNCTION__
+          . "] Removed playlist with youtube id '" . $playlistId
+          . "' and relation of playlist item id '" . $playlistItem
+          . "' from Youtube document with Mongo id '".$youtube->getId() ."'";
+        $this->logger->addInfo($infoLog);
     }
 }
