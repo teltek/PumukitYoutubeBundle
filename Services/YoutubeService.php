@@ -429,7 +429,7 @@ class YoutubeService
             $this->logger->addError($errorLog);
             throw new \Exception($errorLog);
         }
-        if (!array_key_exists($playlistId, $youtbe->getPlaylists())) {
+        if (!array_key_exists($playlistId, $youtube->getPlaylists())) {
             $this->moveToList($multimediaObject, $playlistTagId);
         } elseif (!$multimediaObject->containsTagWithCod($playlistTag->getCod())) {
             if (null === $playlistItem = $youtube->getPlaylist($playlistId)){
