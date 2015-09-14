@@ -535,7 +535,7 @@ class YoutubeService
                     if ($mm instanceof MultimediaObject) {
                         $body = $body."<br/> -".$mm->getId().": ".$mm->getTitle().' '. $this->router->generate('pumukit_webtv_multimediaobject_index', array('id' => $mm->getId()), true);
                     } elseif ($mm instanceof Youtube) {
-                        $body = $body . "<br/> -".$mm->getId().": ".$mm->getYoutubeLink();
+                        $body = $body . "<br/> -".$mm->getId().": ".$mm->getLink();
                     }
                 }
             }
@@ -546,7 +546,7 @@ class YoutubeService
                 if ($mm instanceof MultimediaObject) {
                     $body = $body.'<br/> -'.$mm->getId().': '.$mm->getTitle().'<br/>';
                 } elseif ($mm instanceof Youtube) {
-                    $body = $body . "<br/> -".$mm->getId().": ".$mm->getYoutubeLink();
+                    $body = $body . "<br/> -".$mm->getId().": ".$mm->getLink();
                 }
                 if (array_key_exists($key, $errors)) $body = $body. '<br/> With this error:<br/>'.$errors[$key].'<br/>';
             }
