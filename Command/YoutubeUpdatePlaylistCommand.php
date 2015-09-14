@@ -75,23 +75,23 @@ EOT
     {
         foreach ($youtubes as $youtube){
 
-            $mm = $this->createYoutubeQueryBuilder()
+            $multimediaObject = $this->createYoutubeQueryBuilder()
                 ->field('_id')->equals(new \MongoId($youtube->getMultimediaObjectId()))
                 ->getQuery()
                 ->getSingleResult();
 
-            $playlistTagIds = $this->getPlaylistTagIds($mm);
+            $playlistTagIds = $this->getPlaylistTagIds($multimediaObject);
 
             foreach ($playlistTagIds as $playlistTagId) {
                 try {
-                    $outUpdatePlaylist = $this->youtubeService->updatePlaylist($mm, $playlistTagId);
+                    $outUpdatePlaylist = $this->youtubeService->updatePlaylist($multimediaObject, $playlistTagId);
                     if (0 !== $outUpdatePlaylist) {
                         $errorLog = __CLASS__.' ['.__FUNCTION__
                           .'] Unknown error in the update of Youtube Playlist of MultimediaObject with id "'
-                          .$mm->getId().' and Tag with id "'. $playlistTagId.'": ' . $outUpdatePlaylist;
+                          .$multimediaObject->getId().' and Tag with id "'. $playlistTagId.'": ' . $outUpdatePlaylist;
                         $this->logger->addError($errorLog);
                         $output->writeln($errorLog);
-                        $this->failedUpdates[] = $mm;
+                        $this->failedUpdates[] = $multimediaObject;
                         $this->errors[] = $errorLog;
                         continue;
                     }
@@ -99,13 +99,13 @@ EOT
                       ."] Updated playlist of MultimediaObject with id ".$multimediaObject->getId();
                     $this->logger->addInfo($infoLog);
                     $output->writeln($infoLog);
-                    $this->okUpdates[] = $mm;
+                    $this->okUpdates[] = $multimediaObject;
                 } catch (\Exception $e) {
                     $errorLog = __CLASS__." [".__FUNCTION__
                       ."] Error on updating playlist of MultimediaObject with id ".$multimediaObject->getId();
                     $this->logger->addError($errorLog);
                     $output->writeln($errorLog);
-                    $this->failedUpdates[] = $mm;
+                    $this->failedUpdates[] = $multimediaObject;
                     $this->errors[] = $e->getMessage();
                 }
             }
@@ -114,11 +114,11 @@ EOT
         return 0;
     }
 
-    private function getPlaylistTagIds(MultimediaObject $mm)
+    private function getPlaylistTagIds(MultimediaObject $multimediaObject)
     {
         $playlistTagIds = array();
-        $youtube = $this->youtubeRepo->find($mm->getProperty('youtube'));
-        foreach ($mm->getTags() as $embedTag) {
+        $youtube = $this->youtubeRepo->find($multimediaObject->getProperty('youtube'));
+        foreach ($multimediaObject->getTags() as $embedTag) {
             if ((0 === strpos($embedTag->getPath(), self::METATAG_PLAYLIST_PATH)) && ($embedTag->getCod() !== self::METATAG_PLAYLIST_COD)) {
                 $playlistTag = $this->tagRepo->findOneByCod($embedTag->getCod());
                 if (null != $playlistTag) {
@@ -128,7 +128,7 @@ EOT
             foreach ($youtube->getPlaylists() as $playlistId => $playlist) {
                 $playlistTag = $this->getTagByYoutubeProperty($playlistId);
                 if (null != $playlistTag) {
-                    if (!$mm->containsTagWithCod($playlistTag->getCod())) {
+                    if (!$multimediaObject->containsTagWithCod($playlistTag->getCod())) {
                         $playlistTagIds[] = $playlistTag->getId();
                     }
                 }
@@ -140,14 +140,14 @@ EOT
 
     private function updatePlaylistChange()
     {
-        $mms = $this->createYoutubeQueryBuilder()
+        $multimediaObjects = $this->createYoutubeQueryBuilder()
             ->field('properties.youtube')->exists(true)
             ->getQuery()
             ->execute();
 
-        foreach ($mms as $mm) {
-            $youtube = $this->youtubeRepo->find($mm->getProperty('youtube'));
-            foreach ($mm->getTags() as $embedTag) {
+        foreach ($multimediaObjects as $multimediaObject) {
+            $youtube = $this->youtubeRepo->find($multimediaObject->getProperty('youtube'));
+            foreach ($multimediaObject->getTags() as $embedTag) {
                 if ((0 === strpos($embedTag->getPath(), self::METATAG_PLAYLIST_PATH)) && ($embedTag->getCod() !== self::METATAG_PLAYLIST_COD)) {
                     $playlistTag = $this->tagRepo->findOneByCod($embedTag->getCod());
                     if (!array_key_exists($playlistTag->getProperty('youtube'), $youtube->getPlaylists())) {
@@ -166,7 +166,7 @@ EOT
                     $this->dm->flush();
                     break;
                 }
-                if (!$mm->containsTagWithCod($playlistTag->getCod())) {
+                if (!$multimediaObject->containsTagWithCod($playlistTag->getCod())) {
                     $youtube->setUpdatePlaylist(true);
                     $this->dm->persist($youtube);
                     $this->dm->flush();
