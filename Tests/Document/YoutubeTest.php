@@ -11,7 +11,8 @@ class YoutubeTest extends \PHPUnit_Framework_TestCase
         $link = "https://www.youtube.com/watch?v=j7nFiNk157o";
         $embed = '<iframe width="560" height="315" src="https://www.youtube.com/embed/j7nFiNk157o" frameborder="0" allowfullscreen></iframe>';
         $status = Youtube::STATUS_UPLOADING;
-        $playlist = "w7dD-JJJytM&list=PLmXxqSJJq-yUfrjvKe5c5LX_1x7nGVF6c";
+        $playlist = "PLmXxqSJJq-yUfrjvKe5c5LX_1x7nGVF6c";
+        $playlistItem = "PLAwsTYpyHbLgugOuQwrVaPIEnH3QiSoTyXoxRcXf9zm0";
         $force = true;
         $updatePlaylist = true;
         $multimediaObjectUpdateDate = new \DateTime('2015-08-14 03:05');
@@ -23,7 +24,7 @@ class YoutubeTest extends \PHPUnit_Framework_TestCase
         $youtube->setLink($link);
         $youtube->setEmbed($embed);
         $youtube->setStatus($status);
-        $youtube->setPlaylist($playlist);
+        $youtube->setPlaylist($playlist, $playlistItem);
         $youtube->setForce($force);
         $youtube->setUpdatePlaylist($updatePlaylist);
         $youtube->setMultimediaObjectUpdateDate($multimediaObjectUpdateDate);
@@ -33,7 +34,7 @@ class YoutubeTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($link, $youtube->getLink());
         $this->assertEquals($embed, $youtube->getEmbed());
         $this->assertEquals($status, $youtube->getStatus());
-        $this->assertEquals($playlist, $youtube->getPlaylist());
+        $this->assertEquals($playlistItem, $youtube->getPlaylist($playlist));
         $this->assertEquals($force, $youtube->getForce());
         $this->assertEquals($updatePlaylist, $youtube->getUpdatePlaylist());
         $this->assertEquals($multimediaObjectUpdateDate, $youtube->getMultimediaObjectUpdateDate());

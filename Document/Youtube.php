@@ -67,11 +67,11 @@ class Youtube
     private $status = self::STATUS_DEFAULT;
 
     /**
-     * @var string $playlist
+     * @var array $playlists
      *
-     * @MongoDB\String
+     * @MongoDB\Raw
      */
-    private $playlist = '';
+    private $playlists = array();
 
     /**
      * @var boolean $force
@@ -221,23 +221,60 @@ class Youtube
     }
 
     /**
+     * Set playlists
+     *
+     * @param array $playlists
+     */
+    public function setPlaylists($playlists)
+    {
+        $this->playlists = $playlists;
+    }
+
+    /**
+     * Get playlists
+     *
+     * @return array
+     */
+    public function getPlaylists()
+    {
+        return $this->playlists;
+    }
+
+    /**
      * Set playlist
      *
-     * @param string $playlist
+     * @param string $key
+     * @param string $value
      */
-    public function setPlaylist($playlist)
+    public function setPlaylist($key, $value)
     {
-        $this->playlist = $playlist;
+        $this->playlist[$key] = $value;
     }
 
     /**
      * Get playlist
      *
-     * @return string
+     * @param string $key
+     * @return string|null
      */
-    public function getPlaylist()
+    public function getPlaylist($key)
     {
-        return $this->playlist;
+        if (isset($this->playlist[$key])) {
+            return $this->playlist[$key];
+        }
+        return null;
+    }
+
+    /**
+     * Remove playlist
+     *
+     * @param string $key
+     */
+    public function removePlaylist($key)
+    {
+        if (isset($this->playlist[$key])) {
+            unset($this->playlist[$key]);
+        }
     }
 
     /**
