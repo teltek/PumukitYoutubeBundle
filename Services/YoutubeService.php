@@ -292,6 +292,37 @@ class YoutubeService
     }
 
     /**
+     * Delete orphan
+     *
+     * @param Youtube $youtube
+     * @return integer
+     */
+    public function deleteOrphan(Youtube $youtube)
+    {
+        foreach ($youtube->getPlaylists() as $playlistId => $playlistItem) {
+            $this->deleteFromList($playlistItem, $youtube, $playlistId);
+        }
+        $dcurrent = getcwd();
+        chdir($this->pythonDirectory);
+        $pyOut = exec('python deleteVideo.py --videoid '.$youtube->getYoutubeId(), $output, $return_var);
+        chdir($dcurrent);
+        $out = json_decode($pyOut, true);
+        if ($out['error']){
+            $errorLog = __CLASS__ . " [" . __FUNCTION__
+              . "] Error in deleting the YouTube video with id '" . $youtube->getYoutubeId()
+              . "' and mongo id '" . $youtube->getId() . "': " . $out['error_out'];
+            $this->logger->addError($errorLog);
+            throw new \Exception($errorLog);
+        }
+        $youtube->setStatus(Youtube::STATUS_REMOVED);
+        $youtube->setForce(false);
+        $this->dm->persist($youtube);
+        $this->dm->flush();
+
+        return 0;
+    }
+
+    /**
      * Update Metadata
      *
      * @param MultimediaObject $multimediaObject
@@ -501,14 +532,22 @@ class YoutubeService
             } else {
                 $body = $body.'<br/>The following videos were '.$cause. (substr($cause, -1) === 'e')?'':'e' .'d to Youtube:<br/>';
                 foreach ($succeed as $mm){
-                    $body = $body."<br/> -".$mm->getId().": ".$mm->getTitle().' '. $this->router->generate('pumukit_webtv_multimediaobject_index', array('id' => $mm->getId()), true);
+                    if ($mm instanceof MultimediaObject) {
+                        $body = $body."<br/> -".$mm->getId().": ".$mm->getTitle().' '. $this->router->generate('pumukit_webtv_multimediaobject_index', array('id' => $mm->getId()), true);
+                    } elseif ($mm instanceof Youtube) {
+                        $body = $body . "<br/> -".$mm->getId().": ".$mm->getYoutubeLink();
+                    }
                 }
             }
         }
         if (!empty($failed)) {
             $body = $body.'<br/>The '.$cause.' of the following videos has failed:<br/>';
             foreach ($failed as $key => $mm){
-                $body = $body.'<br/> -'.$mm->getId().': '.$mm->getTitle().'<br/>';
+                if ($mm instanceof MultimediaObject) {
+                    $body = $body.'<br/> -'.$mm->getId().': '.$mm->getTitle().'<br/>';
+                } elseif ($mm instanceof Youtube) {
+                    $body = $body . "<br/> -".$mm->getId().": ".$mm->getYoutubeLink();
+                }
                 if (array_key_exists($key, $errors)) $body = $body. '<br/> With this error:<br/>'.$errors[$key].'<br/>';
             }
         }
