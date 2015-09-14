@@ -248,7 +248,7 @@ class Youtube
      */
     public function setPlaylist($key, $value)
     {
-        $this->playlist[$key] = $value;
+        $this->playlists[$key] = $value;
     }
 
     /**
@@ -259,8 +259,8 @@ class Youtube
      */
     public function getPlaylist($key)
     {
-        if (isset($this->playlist[$key])) {
-            return $this->playlist[$key];
+        if (isset($this->playlists[$key])) {
+            return $this->playlists[$key];
         }
         return null;
     }
@@ -272,8 +272,8 @@ class Youtube
      */
     public function removePlaylist($key)
     {
-        if (isset($this->playlist[$key])) {
-            unset($this->playlist[$key]);
+        if (isset($this->playlists[$key])) {
+            unset($this->playlists[$key]);
         }
     }
 
