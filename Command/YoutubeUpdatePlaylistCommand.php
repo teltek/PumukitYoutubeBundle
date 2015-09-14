@@ -124,6 +124,14 @@ EOT
                     $playlistTagIds[] = $playlistTag->getId();
                 }
             }
+            foreach ($youtube->getPlaylists() as $playlistId => $playlist) {
+                $playlistTag = $this->getTagByYoutubeProperty($playlistId);
+                if (null != $playlistTag) {
+                    if (!$mm->containsTagWithCod($playlistTag->getCod())) {
+                        $playlistTagIds[] = $playlistTag->getId();
+                    }
+                }
+            }
         }
 
         return $playlistTagIds;
