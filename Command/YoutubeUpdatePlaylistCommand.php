@@ -132,7 +132,6 @@ EOT
     private function updatePlaylistChange()
     {
         $mms = $this->createYoutubeQueryBuilder()
-            ->field('tags.properties.youtube')->exists(true)
             ->field('properties.youtube')->exists(true)
             ->getQuery()
             ->execute();
