@@ -117,6 +117,7 @@ EOT
     private function getPlaylistTagIds(MultimediaObject $mm)
     {
         $playlistTagIds = array();
+        $youtube = $this->youtubeRepo->find($mm->getProperty('youtube'));
         foreach ($mm->getTags() as $embedTag) {
             if ((0 === strpos($embedTag->getPath(), self::METATAG_PLAYLIST_PATH)) && ($embedTag->getCod() !== self::METATAG_PLAYLIST_COD)) {
                 $playlistTag = $this->tagRepo->findOneByCod($embedTag->getCod());
