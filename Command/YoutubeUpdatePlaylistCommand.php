@@ -124,7 +124,7 @@ EOT
             if ((0 === strpos($embedTag->getPath(), self::METATAG_PLAYLIST_PATH)) && ($embedTag->getCod() !== self::METATAG_PLAYLIST_COD)) {
                 $playlistTag = $this->tagRepo->findOneByCod($embedTag->getCod());
                 if (null != $playlistTag) {
-                    if (!in_array($playlistTag->getId(), $playlistTagIds)) {
+                    if ((!array_key_exists($playlistTag->getProperty('youtube'), $youtube->getPlaylists())) && (!in_array($playlistTag->getId(), $playlistTagIds))) {
                         $playlistTagIds[] = $playlistTag->getId();
                     }
                 }
