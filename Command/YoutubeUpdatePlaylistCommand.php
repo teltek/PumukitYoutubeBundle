@@ -96,13 +96,15 @@ EOT
                         continue;
                     }
                     $infoLog = __CLASS__." [".__FUNCTION__
-                      ."] Updated playlist of MultimediaObject with id ".$multimediaObject->getId();
+                      . "] Updated playlist with id '" . $playlistTagId
+                      . "' of MultimediaObject with id '".$multimediaObject->getId() ."'";
                     $this->logger->addInfo($infoLog);
                     $output->writeln($infoLog);
                     $this->okUpdates[] = $multimediaObject;
                 } catch (\Exception $e) {
                     $errorLog = __CLASS__." [".__FUNCTION__
-                      ."] Error on updating playlist of MultimediaObject with id ".$multimediaObject->getId();
+                      . "] Error on updating playlist with id '". $playlistTagId
+                      . "' of MultimediaObject with id '" . $multimediaObject->getId() . "'";
                     $this->logger->addError($errorLog);
                     $output->writeln($errorLog);
                     $this->failedUpdates[] = $multimediaObject;
