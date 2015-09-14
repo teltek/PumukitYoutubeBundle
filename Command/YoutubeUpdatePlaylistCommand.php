@@ -192,7 +192,7 @@ EOT
     private function getTagByYoutubeProperty($playlistId)
     {
         return $this->tagRepo->createQueryBuilder()
-          ->field('property.youtube')->equals($playlistId)
+          ->field('properties.youtube')->equals($playlistId)
           ->getQuery()->getSingleResult();
     }
 }
