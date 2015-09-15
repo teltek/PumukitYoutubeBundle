@@ -166,6 +166,7 @@ class YoutubeService
                 $this->logger->addInfo($infoLog);
                 $playlistId = $out['out'];
                 $playlistTag->setProperty('youtube', $playlistId);
+                $playlistTag->setProperty('customfield', 'youtube:text'));
                 $this->dm->persist($playlistTag);
                 $this->dm->flush();
             }else {
