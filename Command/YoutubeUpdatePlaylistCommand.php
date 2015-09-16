@@ -116,24 +116,26 @@ EOT
         return 0;
     }
 
-    private function getPlaylistTagIds(MultimediaObject $multimediaObject)
+    private function getPlaylistTagIds($multimediaObject)
     {
         $playlistTagIds = array();
-        $youtube = $this->youtubeRepo->find($multimediaObject->getProperty('youtube'));
-        foreach ($multimediaObject->getTags() as $embedTag) {
-            if ((0 === strpos($embedTag->getPath(), self::METATAG_PLAYLIST_PATH)) && ($embedTag->getCod() !== self::METATAG_PLAYLIST_COD)) {
-                $playlistTag = $this->tagRepo->findOneByCod($embedTag->getCod());
-                if (null != $playlistTag) {
-                    if ((!array_key_exists($playlistTag->getProperty('youtube'), $youtube->getPlaylists())) && (!in_array($playlistTag->getId(), $playlistTagIds))) {
-                        $playlistTagIds[] = $playlistTag->getId();
+        if ($multimediaObject instanceof MultimediaObject) {
+            $youtube = $this->youtubeRepo->find($multimediaObject->getProperty('youtube'));
+            foreach ($multimediaObject->getTags() as $embedTag) {
+                if ((0 === strpos($embedTag->getPath(), self::METATAG_PLAYLIST_PATH)) && ($embedTag->getCod() !== self::METATAG_PLAYLIST_COD)) {
+                    $playlistTag = $this->tagRepo->findOneByCod($embedTag->getCod());
+                    if (null != $playlistTag) {
+                        if ((!array_key_exists($playlistTag->getProperty('youtube'), $youtube->getPlaylists())) && (!in_array($playlistTag->getId(), $playlistTagIds))) {
+                            $playlistTagIds[] = $playlistTag->getId();
+                        }
                     }
                 }
-            }
-            foreach ($youtube->getPlaylists() as $playlistId => $playlist) {
-                $playlistTag = $this->getTagByYoutubeProperty($playlistId);
-                if (null != $playlistTag) {
-                    if ((!$multimediaObject->containsTagWithCod($playlistTag->getCod())) && (!in_array($playlistTag->getId(), $playlistTagIds))) {
-                        $playlistTagIds[] = $playlistTag->getId();
+                foreach ($youtube->getPlaylists() as $playlistId => $playlist) {
+                    $playlistTag = $this->getTagByYoutubeProperty($playlistId);
+                    if (null != $playlistTag) {
+                        if ((!$multimediaObject->containsTagWithCod($playlistTag->getCod())) && (!in_array($playlistTag->getId(), $playlistTagIds))) {
+                            $playlistTagIds[] = $playlistTag->getId();
+                        }
                     }
                 }
             }
