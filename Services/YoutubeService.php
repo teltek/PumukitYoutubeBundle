@@ -454,13 +454,7 @@ class YoutubeService
             $this->logger->addError($errorLog);
             throw new \Exception($errorLog);
         }
-        if (null === $playlistId = $playlistTag->getProperty('youtube')) {
-            $errorLog = __CLASS__ . " [" . __FUNCTION__
-              . "] Error! The tag with id '" . $playlistTagId
-              . "' for Youtube Playlist does not have a 'youtube' property with the playlist id.";
-            $this->logger->addError($errorLog);
-            throw new \Exception($errorLog);
-        }
+        $playlistId = $playlistTag->getProperty('youtube');
         if (!array_key_exists($playlistId, $youtube->getPlaylists())) {
             $this->moveToList($multimediaObject, $playlistTagId);
         } elseif (!$multimediaObject->containsTagWithCod($playlistTag->getCod())) {
