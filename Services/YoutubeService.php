@@ -189,6 +189,9 @@ class YoutubeService
         }
         if ($out['out'] != null) {
             $youtube->setPlaylist($playlistId, $out['out']);
+            if (!$multimediaObject->containsTagWithCod($playlistTag->getCod())) {
+                $addedTags = $this->tagService->addTagToMultimediaObject($multimediaObject, $playlistTag->getId(), false);
+            }
             $this->dm->persist($youtube);
             $this->dm->flush();
         }else{
