@@ -16,6 +16,8 @@ class YoutubeUpdatePlaylistCommand extends ContainerAwareCommand
 {
     const METATAG_PLAYLIST_COD = 'YOUTUBE';
     const METATAG_PLAYLIST_PATH = 'ROOT|YOUTUBE|';
+    const DEFAULT_PLAYLIST_COD = 'YOUTUBECONFERENCES';
+    const DEFAULT_PLAYLIST_TITLE = 'Conferences';
 
     private $dm = null;
     private $tagRepo = null;
@@ -111,6 +113,10 @@ EOT
                     $this->errors[] = $e->getMessage();
                 }
             }
+
+            if (null != $defaultPlaylistTagId = $this->checkEmptyYoutubePlaylists($youtube, $multimediaObject)) {
+                $this->addToDefaultPlaylist($multimediaObject, $youtube, $defaultPlaylistTagId);
+            }
         }
 
         return 0;
@@ -200,5 +206,70 @@ EOT
         return $this->tagRepo->createQueryBuilder()
           ->field('properties.youtube')->equals($playlistId)
           ->getQuery()->getSingleResult();
+    }
+
+    private function checkEmptyYoutubePlaylists(Youtube $youtube, MultimediaObject $multimediaObject)
+    {
+        if (null == $youtube->getPlaylists()) {
+            $output->writeln('MultimediaObject with id "'.$multimediaObject->getId().'" does not have any EmbedTag with path starting with "'.self::METATAG_PLAYLIST_PATH .'" so we search for Tag with code "'. self::DEFAULT_PLAYLIST_COD . '" as default Youtube playlist.');
+            $playlistTag = $this->tagRepo->findOneByCod(self::DEFAULT_PLAYLIST_COD);
+            if (null == $playlistTag) {
+                $playlistTag = $this->createDefaultPlaylist();
+                $output->writeln('There is no Tag with code "'.self::DEFAULT_PLAYLIST_COD.'" as default Youtube playlist so we created it with resultant id "'.$playlistTag->getId().'".');
+            }
+            return $playlistTag->getId();
+        }
+        return null;
+    }
+
+    private function createDefaultPlaylist()
+    {
+        $youtubeTag = $this->tagRepo->findOneByCod(self::METATAG_PLAYLIST_COD);
+        $playlistTag = new Tag();
+        $playlistTag->setCod(self::DEFAULT_PLAYLIST_COD);
+        $playlistTag->setParent($youtubeTag);
+        $playlistTag->setMetatag(false);
+        $playlistTag->setDisplay(true);
+        $playlistTag->setTitle(self::DEFAULT_PLAYLIST_TITLE, 'en');
+        $this->dm->persist($playlistTag);
+        $this->dm->flush();
+
+        return $playlistTag;
+    }
+
+    private function addToDefaultPlaylist(MultimediaObject $multimediaObject, Youtube $youtbue, $defaultPlaylistTagId='')
+    {
+        try {
+            $infoLog = __CLASS__.' ['.__FUNCTION__
+              .'] Started moving video to Youtube playlist assign with Tag id "'
+              .$defaultPlaylistTagId.'" of MultimediaObject with id "'.$multimediaObject->getId().'"';
+            $this->logger->addInfo($infoLog);
+            $output->writeln($infoLog);
+            $outMoveToList = $this->youtubeService->moveToList($multimediaObject, $defaultPlaylistTagId);
+            if (0 !== $outMoveToList) {
+                $errorLog = __CLASS__.' ['.__FUNCTION__
+                  .'] Unknown out in the move list to Youtube of MultimediaObject with id "'
+                  .$multimediaObject->getId().'": '. $outMoveToList;
+                $this->logger->addError($errorLog);
+                $output->writeln($errorLog);
+                $this->failedUploads[] = $multimediaObject;
+                $this->errors[] = $errorLog;
+            } else {
+                $infoLog = __CLASS__." [".__FUNCTION__
+                  . "] Updated playlist with id '" . $defaultPlaylistTagId
+                  . "' of MultimediaObject with id '".$multimediaObject->getId() ."'";
+                $this->logger->addInfo($infoLog);
+                $output->writeln($infoLog);
+                $this->okUpdates[] = $multimediaObject;
+            }
+        } catch (\Exception $e) {
+            $errorLog = __CLASS__.' ['.__FUNCTION__
+              .'] Error in the move list to Youtube of MultimediaObject with id "'
+              .$multimediaObject->getId().'": '. $e->getMessage();
+            $this->logger->addError($errorLog);
+            $output->writeln($errorLog);
+            $this->failedUploads[] = $multimediaObject;
+            $this->errors[] = $errorLog;
+        }
     }
 }
