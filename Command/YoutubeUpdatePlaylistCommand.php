@@ -114,8 +114,8 @@ EOT
                 }
             }
 
-            if (null != $defaultPlaylistTagId = $this->checkEmptyYoutubePlaylists($youtube, $multimediaObject)) {
-                $this->addToDefaultPlaylist($multimediaObject, $youtube, $defaultPlaylistTagId);
+            if (null != $defaultPlaylistTagId = $this->checkEmptyYoutubePlaylists($youtube, $multimediaObject, $output)) {
+              $this->addToDefaultPlaylist($multimediaObject, $youtube, $defaultPlaylistTagId, $output);
             }
         }
 
@@ -208,7 +208,7 @@ EOT
           ->getQuery()->getSingleResult();
     }
 
-    private function checkEmptyYoutubePlaylists(Youtube $youtube, MultimediaObject $multimediaObject)
+    private function checkEmptyYoutubePlaylists(Youtube $youtube, MultimediaObject $multimediaObject, OutputInterface $output)
     {
         if (null == $youtube->getPlaylists()) {
             $output->writeln('MultimediaObject with id "'.$multimediaObject->getId().'" does not have any EmbedTag with path starting with "'.self::METATAG_PLAYLIST_PATH .'" so we search for Tag with code "'. self::DEFAULT_PLAYLIST_COD . '" as default Youtube playlist.');
@@ -237,7 +237,7 @@ EOT
         return $playlistTag;
     }
 
-    private function addToDefaultPlaylist(MultimediaObject $multimediaObject, Youtube $youtbue, $defaultPlaylistTagId='')
+    private function addToDefaultPlaylist(MultimediaObject $multimediaObject, Youtube $youtbue, $defaultPlaylistTagId='', OutputInterface $output)
     {
         try {
             $infoLog = __CLASS__.' ['.__FUNCTION__
