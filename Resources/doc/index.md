@@ -84,3 +84,11 @@ parameters:
     router.request_context.host: example.org
     router.request_context.scheme: https
 ```
+
+### [OPTIONAL] Configure the privacy creation of playlists in `app/config/parameters.yml`
+```
+pumukit_youtube:
+    playlist_privacy_status: private
+```
+
+If this parameter is not configured, the playlists will be created as public.
