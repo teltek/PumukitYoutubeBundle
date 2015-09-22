@@ -114,8 +114,10 @@ EOT
                 }
             }
 
-            if (null != $defaultPlaylistTagId = $this->checkEmptyYoutubePlaylists($youtube, $multimediaObject, $output)) {
-              $this->addToDefaultPlaylist($multimediaObject, $youtube, $defaultPlaylistTagId, $output);
+            if ($multimediaObject instanceof MultimediaObject) {
+                if (null != $defaultPlaylistTagId = $this->checkEmptyYoutubePlaylists($youtube, $multimediaObject, $output)) {
+                    $this->addToDefaultPlaylist($multimediaObject, $youtube, $defaultPlaylistTagId, $output);
+                }
             }
         }
 
