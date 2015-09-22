@@ -85,7 +85,7 @@ parameters:
     router.request_context.scheme: https
 ```
 
-### [OPTIONAL] Configure the privacy creation of playlists in `app/config/parameters.yml`
+#### [OPTIONAL] Configure the privacy creation of playlists in `app/config/parameters.yml`
 ```
 pumukit_youtube:
     playlist_privacy_status: private
