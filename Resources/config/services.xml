@@ -11,6 +11,7 @@
             <argument type="service" id="logger"/>
             <argument type="service" id="pumukit_notification.sender"/>
             <argument type="service" id="translator"/>
+            <argument>%pumukit_youtube.playlist_privacy_status%</argument>
             <tag name="monolog.logger" channel="youtube"/>
         </service>
         <service id="pumukityoutube.update" class="Pumukit\YoutubeBundle\Listener\UpdateListener">

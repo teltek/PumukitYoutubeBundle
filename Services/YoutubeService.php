@@ -26,8 +26,9 @@ class YoutubeService
     private $tagRepo;
     private $mmobjRepo;
     private $pythonDirectory;
+    private $playlistPrivacyStatus;
 
-    public function __construct(DocumentManager $documentManager, Router $router, TagService $tagService, LoggerInterface $logger, SenderService $senderService, TranslatorInterface $translator)
+    public function __construct(DocumentManager $documentManager, Router $router, TagService $tagService, LoggerInterface $logger, SenderService $senderService, TranslatorInterface $translator, $playlistPrivacyStatus)
     {
         $this->dm = $documentManager;
         $this->router = $router;
@@ -39,6 +40,7 @@ class YoutubeService
         $this->tagRepo = $this->dm->getRepository('PumukitSchemaBundle:Tag');
         $this->mmobjRepo = $this->dm->getRepository('PumukitSchemaBundle:MultimediaObject');
         $this->pythonDirectory = __DIR__ . "/../Resources/data/pyPumukit";
+        $this->playlistPrivacyStatus = $playlistPrivacyStatus;
     }
 
     /**
@@ -151,7 +153,7 @@ class YoutubeService
             throw new \Exception($errorLog);
         }
         if (null === $playlistId = $playlistTag->getProperty('youtube')){
-            $pyOut = exec('python createPlaylist.py --title "'.$playlistTag->getTitle().'"', $output, $return_var);
+            $pyOut = exec('python createPlaylist.py --title "'.$playlistTag->getTitle().'" --privacyStatus "'. $this->playlistPrivacyStatus .'"', $output, $return_var);
             $out = json_decode($pyOut, true);
             if ($out['error']) {
                 $errorLog = __CLASS__ . " [" . __FUNCTION__

@@ -75,7 +75,7 @@ def create_playlist(options):
           title=options.title,
           ),
         status=dict(
-          privacyStatus="private"
+          privacyStatus=options.privacyStatus
           )
         )
       ).execute()
@@ -111,10 +111,14 @@ if __name__ == '__main__':
   parser = OptionParser()
   parser.add_option("--title", dest="title",
     help="Title for the playlist.")
+  parser.add_option("--privacyStatus", dest="privacyStatus",
+    help="Privacy status for the playlist.")
 
   (options, args) = parser.parse_args()
 
   if options.title is None:
    exit("Please specify a valid video using --title= parameter")
+  if options.privacyStatus is None:
+   exit("Please specify a valid video using --privacyStatus= parameter")
 
   create_playlist(options)
