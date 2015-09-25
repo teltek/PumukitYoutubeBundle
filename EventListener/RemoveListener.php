@@ -1,6 +1,6 @@
 <?php
 
-namespace Pumukit\YoutubeBundle\Listener;
+namespace Pumukit\YoutubeBundle\EventListener;
 
 use Doctrine\ODM\MongoDB\Event\LifecycleEventArgs;
 use Symfony\Component\HttpFoundation\RequestStack;

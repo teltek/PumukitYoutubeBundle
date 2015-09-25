@@ -14,11 +14,11 @@
             <argument>%pumukit_youtube.playlist_privacy_status%</argument>
             <tag name="monolog.logger" channel="youtube"/>
         </service>
-        <service id="pumukityoutube.update" class="Pumukit\YoutubeBundle\Listener\UpdateListener">
+        <service id="pumukityoutube.update" class="Pumukit\YoutubeBundle\EventListener\UpdateListener">
             <argument type="service" id="service_container" />
             <tag name="kernel.event_listener" event="multimediaobject.update" method="onMultimediaObjectUpdate"/>
         </service>
-        <service id="pumukityoutube.remove" class="Pumukit\YoutubeBundle\Listener\RemoveListener">
+        <service id="pumukityoutube.remove" class="Pumukit\YoutubeBundle\EventListener\RemoveListener">
           <argument type="service" id="service_container"/>
           <tag name="doctrine_mongodb.odm.event_listener" event="preRemove"/>
         </service>
