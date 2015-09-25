@@ -22,6 +22,7 @@ class YoutubeServiceTest extends WebTestCase
     private $tagRepo;
     private $logger;
     private $resourcesDir;
+    private $playlistPrivacyStatus;
 
     public function __construct()
     {
@@ -46,6 +47,8 @@ class YoutubeServiceTest extends WebTestCase
           ->get('pumukit_notification.sender');
         $this->translator = $kernel->getContainer()
           ->get('translator');
+        $this->playlistPrivacyStatus = $kernel->getContainer()
+          ->getParameter('pumukit_youtube.playlist_privacy_status');
     }
 
     public function setUp()
@@ -56,7 +59,7 @@ class YoutubeServiceTest extends WebTestCase
         $this->dm->getDocumentCollection('PumukitYoutubeBundle:Youtube')->remove(array());
         $this->dm->flush();
         $this->tagService = new TagService($this->dm);
-        $this->youtubeService = new YoutubeService($this->dm, $this->router, $this->tagService, $this->logger, $this->notificationSender, $this->translator);
+        $this->youtubeService = new YoutubeService($this->dm, $this->router, $this->tagService, $this->logger, $this->notificationSender, $this->translator, $this->playlistPrivacyStatus);
         $this->resourcesDir = realpath(__DIR__.'/../Resources').'/';
     }
 
