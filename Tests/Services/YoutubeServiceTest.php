@@ -10,9 +10,7 @@ use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\SchemaBundle\Document\Track;
 use Pumukit\SchemaBundle\Services\TagService;
 use Pumukit\SchemaBundle\Services\FactoryService;
-use Doctrine\ODM\MongoDB\DocumentManager;
 use Symfony\Bundle\FrameworkBundle\Routing\Router;
-use Symfony\Component\HttpKernel\Log\LoggerInterface;
 
 class YoutubeServiceTest extends WebTestCase
 {
@@ -124,9 +122,9 @@ class YoutubeServiceTest extends WebTestCase
         $out5 = $this->youtubeService->upload($multimediaObject, 27, 'private', false);
         $this->assertEquals(0, $out5);
 
-        $multimediaObject->setTitle("Test auth api");
-        $multimediaObject->setDescription("Testing the google auth api to upload videos");
-        $multimediaObject->setKeyword("testkeyword");
+        $multimediaObject->setTitle('Test auth api');
+        $multimediaObject->setDescription('Testing the google auth api to upload videos');
+        $multimediaObject->setKeyword('testkeyword');
         $this->dm->persist($multimediaObject);
         $this->dm->flush();
 
@@ -136,13 +134,12 @@ class YoutubeServiceTest extends WebTestCase
         $youtube = $this->youtubeRepo->findOneByMultimediaObjectId($multimediaObject->getId());
         $out7 = $this->youtubeService->updateStatus($youtube);
         $this->assertEquals(0, $out7);
-
     }
 
     private function createTagWithCode($code, $title, $tagParentCode = null, $metatag = false, $display = true)
     {
         if ($tag = $this->tagRepo->findOneByCod($code)) {
-            throw new \Exception("Nothing done - Tag retrieved from DB id: ".$tag->getId()." cod: ".$tag->getCod());
+            throw new \Exception('Nothing done - Tag retrieved from DB id: '.$tag->getId().' cod: '.$tag->getCod());
         }
         $tag = new Tag();
         $tag->setCod($code);
@@ -151,11 +148,11 @@ class YoutubeServiceTest extends WebTestCase
         $tag->setTitle($title, 'es');
         $tag->setTitle($title, 'gl');
         $tag->setTitle($title, 'en');
-        if ($tagParentCode){
+        if ($tagParentCode) {
             if ($parent = $this->tagRepo->findOneByCod($tagParentCode)) {
                 $tag->setParent($parent);
             } else {
-                throw new \Exception("Nothing done - There is no tag in the database with code ".$tagParentCode." to be the parent tag");
+                throw new \Exception('Nothing done - There is no tag in the database with code '.$tagParentCode.' to be the parent tag');
             }
         }
         $this->dm->persist($tag);

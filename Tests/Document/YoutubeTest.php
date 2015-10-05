@@ -1,4 +1,5 @@
 <?php
+
 namespace Pumukit\YoutubeBundle\Tests\Document;
 
 use Pumukit\YoutubeBundle\Document\Youtube;
@@ -7,12 +8,12 @@ class YoutubeTest extends \PHPUnit_Framework_TestCase
 {
     public function testSetterAndGetter()
     {
-        $youtubeId = "j7nFiNk157o";
-        $link = "https://www.youtube.com/watch?v=j7nFiNk157o";
+        $youtubeId = 'j7nFiNk157o';
+        $link = 'https://www.youtube.com/watch?v=j7nFiNk157o';
         $embed = '<iframe width="560" height="315" src="https://www.youtube.com/embed/j7nFiNk157o" frameborder="0" allowfullscreen></iframe>';
         $status = Youtube::STATUS_UPLOADING;
-        $playlist = "PLmXxqSJJq-yUfrjvKe5c5LX_1x7nGVF6c";
-        $playlistItem = "PLAwsTYpyHbLgugOuQwrVaPIEnH3QiSoTyXoxRcXf9zm0";
+        $playlist = 'PLmXxqSJJq-yUfrjvKe5c5LX_1x7nGVF6c';
+        $playlistItem = 'PLAwsTYpyHbLgugOuQwrVaPIEnH3QiSoTyXoxRcXf9zm0';
         $force = true;
         $updatePlaylist = true;
         $multimediaObjectUpdateDate = new \DateTime('2015-08-14 03:05');

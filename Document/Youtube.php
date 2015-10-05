@@ -3,11 +3,9 @@
 namespace Pumukit\YoutubeBundle\Document;
 
 use Doctrine\ODM\MongoDB\Mapping\Annotations as MongoDB;
-use Doctrine\Common\Collections\ArrayCollection;
-use Gedmo\Mapping\Annotation as Gedmo;
 
 /**
- * Pumukit\YoutubeBundle\Document\Youtube
+ * Pumukit\YoutubeBundle\Document\Youtube.
  *
  * @MongoDB\Document(repositoryClass="Pumukit\YoutubeBundle\Repository\YoutubeRepository")
  */
@@ -26,84 +24,84 @@ class Youtube
     const STATUS_TO_DELETE = 10;
 
     /**
-     * @var string $id
+     * @var string
      *
      * @MongoDB\Id
      */
     private $id;
 
     /**
-     * @var string $multimediaObjectId
+     * @var string
      *
      * @MongoDB\String
      */
     private $multimediaObjectId;
 
     /**
-     * @var string $youtubeId
+     * @var string
      *
      * @MongoDB\String
      */
     private $youtubeId;
 
     /**
-     * @var string $link
+     * @var string
      *
      * @MongoDB\String
      */
     private $link = '';
 
     /**
-     * @var string $embed
+     * @var string
      *
      * @MongoDB\String
      */
     private $embed = '';
 
     /**
-     * @var int $status
+     * @var int
      *
      * @MongoDB\Int
      */
     private $status = self::STATUS_DEFAULT;
 
     /**
-     * @var array $playlists
+     * @var array
      *
      * @MongoDB\Raw
      */
     private $playlists = array();
 
     /**
-     * @var boolean $force
+     * @var bool
      *
      * @MongoDB\Boolean
      */
     private $force = false;
 
     /**
-     * @var boolean $updatePlaylist
+     * @var bool
      *
      * @MongoDB\Boolean
      */
     private $updatePlaylist = false;
 
     /**
-     * @var date $multimediaObjectUpdateDate
+     * @var date
      *
      * @MongoDB\Date
      */
     private $multimediaObjectUpdateDate;
 
     /**
-     * @var date $syncMetadataDate
+     * @var date
      *
      * @MongoDB\Date
      */
     private $syncMetadataDate;
 
     /**
-     * Get id
+     * Get id.
      *
      * @return string
      */
@@ -113,7 +111,7 @@ class Youtube
     }
 
     /**
-     * Constructor
+     * Constructor.
      */
     public function __construct()
     {
@@ -122,7 +120,7 @@ class Youtube
     }
 
     /**
-     * Set MultimediaObjectId
+     * Set MultimediaObjectId.
      *
      * @param string $multimediaObjectId
      */
@@ -132,7 +130,7 @@ class Youtube
     }
 
     /**
-     * Get MultimediaObjectId
+     * Get MultimediaObjectId.
      *
      * @return string
      */
@@ -142,7 +140,7 @@ class Youtube
     }
 
     /**
-     * Set youtubeId
+     * Set youtubeId.
      *
      * @param string $youtubeId
      */
@@ -152,7 +150,7 @@ class Youtube
     }
 
     /**
-     * Get youtubeId
+     * Get youtubeId.
      *
      * @return string
      */
@@ -162,7 +160,7 @@ class Youtube
     }
 
     /**
-     * Set link
+     * Set link.
      *
      * @param string $link
      */
@@ -172,7 +170,7 @@ class Youtube
     }
 
     /**
-     * Get link
+     * Get link.
      *
      * @return string
      */
@@ -182,7 +180,7 @@ class Youtube
     }
 
     /**
-     * Set embed
+     * Set embed.
      *
      * @param string $embed
      */
@@ -192,7 +190,7 @@ class Youtube
     }
 
     /**
-     * Get embed
+     * Get embed.
      *
      * @return string
      */
@@ -202,9 +200,9 @@ class Youtube
     }
 
     /**
-     * Set status
+     * Set status.
      *
-     * @param integer $status
+     * @param int $status
      */
     public function setStatus($status)
     {
@@ -212,9 +210,9 @@ class Youtube
     }
 
     /**
-     * Get status
+     * Get status.
      *
-     * @return integer
+     * @return int
      */
     public function getStatus()
     {
@@ -222,7 +220,7 @@ class Youtube
     }
 
     /**
-     * Set playlists
+     * Set playlists.
      *
      * @param array $playlists
      */
@@ -232,7 +230,7 @@ class Youtube
     }
 
     /**
-     * Get playlists
+     * Get playlists.
      *
      * @return array
      */
@@ -242,7 +240,7 @@ class Youtube
     }
 
     /**
-     * Set playlist
+     * Set playlist.
      *
      * @param string $key
      * @param string $value
@@ -253,9 +251,10 @@ class Youtube
     }
 
     /**
-     * Get playlist
+     * Get playlist.
      *
      * @param string $key
+     *
      * @return string|null
      */
     public function getPlaylist($key)
@@ -263,11 +262,12 @@ class Youtube
         if (isset($this->playlists[$key])) {
             return $this->playlists[$key];
         }
-        return null;
+
+        return;
     }
 
     /**
-     * Remove playlist
+     * Remove playlist.
      *
      * @param string $key
      */
@@ -279,9 +279,9 @@ class Youtube
     }
 
     /**
-     * Set force
+     * Set force.
      *
-     * @param boolean $force
+     * @param bool $force
      */
     public function setForce($force)
     {
@@ -289,9 +289,9 @@ class Youtube
     }
 
     /**
-     * Get force
+     * Get force.
      *
-     * @return boolean
+     * @return bool
      */
     public function getForce()
     {
@@ -299,9 +299,9 @@ class Youtube
     }
 
     /**
-     * Set updatePlaylist
+     * Set updatePlaylist.
      *
-     * @param boolean $updatePlaylist
+     * @param bool $updatePlaylist
      */
     public function setUpdatePlaylist($updatePlaylist)
     {
@@ -309,9 +309,9 @@ class Youtube
     }
 
     /**
-     * Get updatePlaylist
+     * Get updatePlaylist.
      *
-     * @return boolean
+     * @return bool
      */
     public function getUpdatePlaylist()
     {
@@ -319,7 +319,7 @@ class Youtube
     }
 
     /**
-     * Set multimediaObjectUpdateDate
+     * Set multimediaObjectUpdateDate.
      *
      * @param DateTime $multimediaObjectUpdateDate
      */
@@ -329,7 +329,7 @@ class Youtube
     }
 
     /**
-     * Get multimediaObjectUpdateDate
+     * Get multimediaObjectUpdateDate.
      *
      * @return datetime
      */
@@ -339,7 +339,7 @@ class Youtube
     }
 
     /**
-     * Set syncMetadataDate
+     * Set syncMetadataDate.
      *
      * @param DateTime $syncMetadataDate
      */
@@ -349,7 +349,7 @@ class Youtube
     }
 
     /**
-     * Get syncMetadataDate
+     * Get syncMetadataDate.
      *
      * @return datetime
      */

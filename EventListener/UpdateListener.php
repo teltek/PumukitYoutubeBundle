@@ -2,11 +2,8 @@
 
 namespace Pumukit\YoutubeBundle\EventListener;
 
-use Doctrine\ODM\MongoDB\Event\LifecycleEventArgs;
-use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Pumukit\YoutubeBundle\Document\Youtube;
-use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Event\MultimediaObjectEvent;
 
 class UpdateListener
@@ -22,8 +19,8 @@ class UpdateListener
     {
         $document = $event->getMultimediaObject();
 
-        $dm = $this->container->get("doctrine_mongodb.odm.document_manager");
-        $youtubeRepo = $dm->getRepository("PumukitYoutubeBundle:Youtube");
+        $dm = $this->container->get('doctrine_mongodb.odm.document_manager');
+        $youtubeRepo = $dm->getRepository('PumukitYoutubeBundle:Youtube');
         $youtube = $youtubeRepo->createQueryBuilder()
             ->field('multimediaObjectId')->equals($document->getId())
             ->getQuery()
