@@ -2,15 +2,12 @@
 
 namespace Pumukit\YoutubeBundle\Command;
 
-use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\YoutubeBundle\Document\Youtube;
-use Psr\Log\LoggerInterface;
 
 class YoutubeUpdateStatusCommand extends ContainerAwareCommand
 {
@@ -54,10 +51,10 @@ EOT
     private function initParameters()
     {
         $this->dm = $this->getContainer()->get('doctrine_mongodb')->getManager();
-        $this->tagRepo = $this->dm->getRepository("PumukitSchemaBundle:Tag");
-        $this->mmobjRepo = $this->dm->getRepository("PumukitSchemaBundle:MultimediaObject");
-        $this->youtubeRepo = $this->dm->getRepository("PumukitYoutubeBundle:Youtube");
-        $this->broadcastRepo = $this->dm->getRepository("PumukitSchemaBundle:Broadcast");
+        $this->tagRepo = $this->dm->getRepository('PumukitSchemaBundle:Tag');
+        $this->mmobjRepo = $this->dm->getRepository('PumukitSchemaBundle:MultimediaObject');
+        $this->youtubeRepo = $this->dm->getRepository('PumukitYoutubeBundle:Youtube');
+        $this->broadcastRepo = $this->dm->getRepository('PumukitSchemaBundle:Broadcast');
 
         $this->youtubeService = $this->getContainer()->get('pumukityoutube.youtube');
 
@@ -72,7 +69,9 @@ EOT
     {
         foreach ($youtubes as $youtube) {
             $multimediaObject = $this->findByYoutubeIdAndPumukit1Id($youtube, false);
-            if ($multimediaObject == null) continue;
+            if ($multimediaObject == null) {
+                continue;
+            }
             try {
                 $infoLog = __CLASS__.' ['.__FUNCTION__
                   .'] Started updating Youtube status video "'.$youtube->getId().'"';
@@ -82,20 +81,24 @@ EOT
                 if (0 !== $outUpdate) {
                     $errorLog = __CLASS__.' ['.__FUNCTION__
                       .'] Unknown error on the update in Youtube status video "'
-                      .$youtube->getId().'": ' . $outUpdate;
+                      .$youtube->getId().'": '.$outUpdate;
                     $this->logger->addError($errorLog);
                     $output->writeln($errorLog);
                     $this->errors[] = $errorLog;
                     continue;
                 }
-                if ($multimediaObject) $this->okUpdates[] = $multimediaObject;
+                if ($multimediaObject) {
+                    $this->okUpdates[] = $multimediaObject;
+                }
             } catch (\Exception $e) {
                 $errorLog = __CLASS__.' ['.__FUNCTION__
                   .'] The update of the Youtube status video "'.$youtube->getId()
                   .'" failed: '.$e->getMessage();
                 $this->logger->addError($errorLog);
                 $output->writeln($errorLog);
-                if ($multimediaObject) $this->failedUpdates[] = $multimediaObject;
+                if ($multimediaObject) {
+                    $this->failedUpdates[] = $multimediaObject;
+                }
                 $this->errors[] = substr($e->getMessage(), 0, 100);
             }
         }
@@ -108,7 +111,7 @@ EOT
         }
     }
 
-    private function findByYoutubeIdAndPumukit1Id(Youtube $youtube, $pumukit1Id=false)
+    private function findByYoutubeIdAndPumukit1Id(Youtube $youtube, $pumukit1Id = false)
     {
         return $this->mmobjRepo->createQueryBuilder()
             ->field('properties.youtube')->equals($youtube->getId())

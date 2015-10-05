@@ -2,7 +2,6 @@
 
 namespace Pumukit\YoutubeBundle\Command;
 
-use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -32,13 +31,13 @@ EOT
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $this->dm = $this->getContainer()->get('doctrine_mongodb')->getManager();
-        $this->tagRepo = $this->dm->getRepository("PumukitSchemaBundle:Tag");
+        $this->tagRepo = $this->dm->getRepository('PumukitSchemaBundle:Tag');
 
-        if ($input->getOption('force')){
+        if ($input->getOption('force')) {
             $youtubePublicationChannelTag = $this->createTagWithCode('PUCHYOUTUBE', 'YouTubeEDU', 'PUBCHANNELS', false);
-            $output->writeln("Tag persisted - new id: ".$youtubePublicationChannelTag->getId()." cod: ".$youtubePublicationChannelTag->getCod());
+            $output->writeln('Tag persisted - new id: '.$youtubePublicationChannelTag->getId().' cod: '.$youtubePublicationChannelTag->getCod());
             $youtubePlaylistTag = $this->createTagWithCode('YOUTUBE', 'YouTube Playlists', 'ROOT', true);
-            $output->writeln("Tag persisted - new id: ".$youtubePlaylistTag->getId()." cod: ".$youtubePlaylistTag->getCod());
+            $output->writeln('Tag persisted - new id: '.$youtubePlaylistTag->getId().' cod: '.$youtubePlaylistTag->getCod());
         } else {
             $output->writeln('<error>ATTENTION:</error> This operation should not be executed in a production environment.');
             $output->writeln('');
@@ -55,7 +54,7 @@ EOT
     private function createTagWithCode($code, $title, $tagParentCode = null, $metatag = false)
     {
         if ($tag = $this->tagRepo->findOneByCod($code)) {
-            throw new \Exception("Nothing done - Tag retrieved from DB id: ".$tag->getId()." cod: ".$tag->getCod());
+            throw new \Exception('Nothing done - Tag retrieved from DB id: '.$tag->getId().' cod: '.$tag->getCod());
         }
         $tag = new Tag();
         $tag->setCod($code);
@@ -64,11 +63,11 @@ EOT
         $tag->setTitle($title, 'es');
         $tag->setTitle($title, 'gl');
         $tag->setTitle($title, 'en');
-        if ($tagParentCode){
+        if ($tagParentCode) {
             if ($parent = $this->tagRepo->findOneByCod($tagParentCode)) {
                 $tag->setParent($parent);
             } else {
-                throw new \Exception("Nothing done - There is no tag in the database with code ".$tagParentCode." to be the parent tag");
+                throw new \Exception('Nothing done - There is no tag in the database with code '.$tagParentCode.' to be the parent tag');
             }
         }
         $this->dm->persist($tag);

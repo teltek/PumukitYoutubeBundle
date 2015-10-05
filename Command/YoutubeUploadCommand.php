@@ -2,15 +2,12 @@
 
 namespace Pumukit\YoutubeBundle\Command;
 
-use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\YoutubeBundle\Document\Youtube;
-use Psr\Log\LoggerInterface;
 
 class YoutubeUploadCommand extends ContainerAwareCommand
 {
@@ -59,7 +56,7 @@ EOT
         $errorStatus = array(
                              Youtube::STATUS_HTTP_ERROR,
                              Youtube::STATUS_ERROR,
-                             Youtube::STATUS_UPDATE_ERROR
+                             Youtube::STATUS_UPDATE_ERROR,
                              );
         $failureMultimediaObjects = $this->getUploadsByStatus($errorStatus);
         $this->uploadVideosToYoutube($failureMultimediaObjects, $output);
@@ -74,10 +71,10 @@ EOT
     private function initParameters()
     {
         $this->dm = $this->getContainer()->get('doctrine_mongodb')->getManager();
-        $this->tagRepo = $this->dm->getRepository("PumukitSchemaBundle:Tag");
-        $this->mmobjRepo = $this->dm->getRepository("PumukitSchemaBundle:MultimediaObject");
-        $this->youtubeRepo = $this->dm->getRepository("PumukitYoutubeBundle:Youtube");
-        $this->broadcastRepo = $this->dm->getRepository("PumukitSchemaBundle:Broadcast");
+        $this->tagRepo = $this->dm->getRepository('PumukitSchemaBundle:Tag');
+        $this->mmobjRepo = $this->dm->getRepository('PumukitSchemaBundle:MultimediaObject');
+        $this->youtubeRepo = $this->dm->getRepository('PumukitYoutubeBundle:Youtube');
+        $this->broadcastRepo = $this->dm->getRepository('PumukitSchemaBundle:Broadcast');
 
         $container = $this->getContainer();
         $this->youtubeService = $container->get('pumukityoutube.youtube');
@@ -104,7 +101,7 @@ EOT
                 if (0 !== $outUpload) {
                     $errorLog = __CLASS__.' ['.__FUNCTION__
                       .'] Unknown error in the upload to Youtube of MultimediaObject with id "'
-                      .$mm->getId().'": ' . $outUpload;
+                      .$mm->getId().'": '.$outUpload;
                     $this->logger->addError($errorLog);
                     $output->writeln($errorLog);
                     $this->failedUploads[] = $mm;
@@ -121,7 +118,7 @@ EOT
                     if (0 !== $outMoveToList) {
                         $errorLog = __CLASS__.' ['.__FUNCTION__
                           .'] Unknown out in the move list to Youtube of MultimediaObject with id "'
-                          .$mm->getId().'": '. $outMoveToList;
+                          .$mm->getId().'": '.$outMoveToList;
                         $this->logger->addError($errorLog);
                         $output->writeln($errorLog);
                         $this->failedUploads[] = $mm;
@@ -146,13 +143,13 @@ EOT
     {
         $publicBroadcast = $this->broadcastRepo->findPublicBroadcast();
 
-        $array_pub_tags = $this->getContainer()->getParameter( 'pumukit_youtube.pub_channels_tags' );
+        $array_pub_tags = $this->getContainer()->getParameter('pumukit_youtube.pub_channels_tags');
 
         return $this->mmobjRepo->createQueryBuilder()
           ->field('properties.pumukit1id')->exists(false)
           ->field('status')->equals(MultimediaObject::STATUS_PUBLISHED)
           ->field('broadcast')->references($publicBroadcast)
-          ->field('tags.cod')->all( $array_pub_tags );
+          ->field('tags.cod')->all($array_pub_tags);
     }
 
     private function getNewMultimediaObjectsToUpload()
@@ -163,7 +160,7 @@ EOT
           ->execute();
     }
 
-    private function getUploadsByStatus($statusArray=array())
+    private function getUploadsByStatus($statusArray = array())
     {
         $mmIds = $this->youtubeRepo->getDistinctMultimediaObjectIdsWithAnyStatus($statusArray);
 
@@ -187,7 +184,7 @@ EOT
             }
         }
         if (null == $playlistTagIds) {
-            $output->writeln('MultimediaObject with id "'.$mm->getId().'" does not have any EmbedTag with path starting with "'.self::METATAG_PLAYLIST_PATH .'" so we search for Tag with code "'. self::DEFAULT_PLAYLIST_COD . '" as default Youtube playlist.');
+            $output->writeln('MultimediaObject with id "'.$mm->getId().'" does not have any EmbedTag with path starting with "'.self::METATAG_PLAYLIST_PATH.'" so we search for Tag with code "'.self::DEFAULT_PLAYLIST_COD.'" as default Youtube playlist.');
             $playlistTag = $this->tagRepo->findOneByCod(self::DEFAULT_PLAYLIST_COD);
             if (null == $playlistTag) {
                 $playlistTag = $this->createDefaultPlaylist();
@@ -195,6 +192,7 @@ EOT
             }
             $playlistTagIds[] = $playlistTag->getId();
         }
+
         return $playlistTagIds;
     }
 
@@ -202,7 +200,7 @@ EOT
     {
         $youtubeTag = $this->tagRepo->findByCod(self::PUB_CHANNEL_YOUTUBE);
         if (null != $youtubeTag) {
-            foreach ($this->okUploads as $mm){
+            foreach ($this->okUploads as $mm) {
                 if (!$mm->containsTagWithCod(self::PUB_CHANNEL_YOUTUBE)) {
                     $addedTags = $this->tagService->addTagToMultimediaObject($multimediaObject, $youtubeTag->getId(), false);
                 }

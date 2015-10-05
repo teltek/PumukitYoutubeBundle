@@ -2,15 +2,12 @@
 
 namespace Pumukit\YoutubeBundle\Command;
 
-use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\YoutubeBundle\Document\Youtube;
-use Psr\Log\LoggerInterface;
 
 class YoutubeUpdateMetadataCommand extends ContainerAwareCommand
 {
@@ -52,10 +49,10 @@ EOT
     private function initParameters()
     {
         $this->dm = $this->getContainer()->get('doctrine_mongodb')->getManager();
-        $this->tagRepo = $this->dm->getRepository("PumukitSchemaBundle:Tag");
-        $this->mmobjRepo = $this->dm->getRepository("PumukitSchemaBundle:MultimediaObject");
-        $this->youtubeRepo = $this->dm->getRepository("PumukitYoutubeBundle:Youtube");
-        $this->broadcastRepo = $this->dm->getRepository("PumukitSchemaBundle:Broadcast");
+        $this->tagRepo = $this->dm->getRepository('PumukitSchemaBundle:Tag');
+        $this->mmobjRepo = $this->dm->getRepository('PumukitSchemaBundle:MultimediaObject');
+        $this->youtubeRepo = $this->dm->getRepository('PumukitYoutubeBundle:Youtube');
+        $this->broadcastRepo = $this->dm->getRepository('PumukitSchemaBundle:Broadcast');
 
         $this->youtubeService = $this->getContainer()->get('pumukityoutube.youtube');
 
@@ -79,7 +76,7 @@ EOT
                 if (0 !== $outUpdate) {
                     $errorLog = __CLASS__.' ['.__FUNCTION__
                       .'] Uknown output on the update in Youtube video of MultimediaObject with id "'
-                      .$mm->getId().'": '. $outUpdate;
+                      .$mm->getId().'": '.$outUpdate;
                     $this->logger->addError($errorLog);
                     $output->writeln($errorLog);
                     $this->failedUpdates[] = $mm;
@@ -102,7 +99,7 @@ EOT
     {
         $mongoObjectIds = $this->youtubeRepo->getDistinctIdsNotMetadataUpdated();
         $youtubeIds = array();
-        foreach ($mongoObjectIds as $mongoObjectId){
+        foreach ($mongoObjectIds as $mongoObjectId) {
             $youtubeIds[] = $mongoObjectId->__toString();
         }
 

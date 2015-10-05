@@ -2,15 +2,12 @@
 
 namespace Pumukit\YoutubeBundle\Command;
 
-use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\YoutubeBundle\Document\Youtube;
-use Psr\Log\LoggerInterface;
 
 class YoutubeUpdatePlaylistCommand extends ContainerAwareCommand
 {
@@ -47,7 +44,7 @@ EOT
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $this->initParameters();        
+        $this->initParameters();
 
         $this->updatePlaylistChange();
         $youtubes = $this->youtubeRepo->getWithStatusAndUpdatePlaylist(Youtube::STATUS_PUBLISHED, true);
@@ -59,10 +56,10 @@ EOT
     private function initParameters()
     {
         $this->dm = $this->getContainer()->get('doctrine_mongodb')->getManager();
-        $this->tagRepo = $this->dm->getRepository("PumukitSchemaBundle:Tag");
-        $this->mmobjRepo = $this->dm->getRepository("PumukitSchemaBundle:MultimediaObject");
-        $this->youtubeRepo = $this->dm->getRepository("PumukitYoutubeBundle:Youtube");
-        $this->broadcastRepo = $this->dm->getRepository("PumukitSchemaBundle:Broadcast");
+        $this->tagRepo = $this->dm->getRepository('PumukitSchemaBundle:Tag');
+        $this->mmobjRepo = $this->dm->getRepository('PumukitSchemaBundle:MultimediaObject');
+        $this->youtubeRepo = $this->dm->getRepository('PumukitYoutubeBundle:Youtube');
+        $this->broadcastRepo = $this->dm->getRepository('PumukitSchemaBundle:Broadcast');
 
         $this->youtubeService = $this->getContainer()->get('pumukityoutube.youtube');
 
@@ -75,8 +72,7 @@ EOT
 
     private function updateYoutubePlaylist($youtubes, OutputInterface $output)
     {
-        foreach ($youtubes as $youtube){
-
+        foreach ($youtubes as $youtube) {
             $multimediaObject = $this->createYoutubeQueryBuilder()
                 ->field('_id')->equals(new \MongoId($youtube->getMultimediaObjectId()))
                 ->getQuery()
@@ -90,23 +86,23 @@ EOT
                     if (0 !== $outUpdatePlaylist) {
                         $errorLog = __CLASS__.' ['.__FUNCTION__
                           .'] Unknown error in the update of Youtube Playlist of MultimediaObject with id "'
-                          .$multimediaObject->getId().' and Tag with id "'. $playlistTagId.'": ' . $outUpdatePlaylist;
+                          .$multimediaObject->getId().' and Tag with id "'.$playlistTagId.'": '.$outUpdatePlaylist;
                         $this->logger->addError($errorLog);
                         $output->writeln($errorLog);
                         $this->failedUpdates[] = $multimediaObject;
                         $this->errors[] = $errorLog;
                         continue;
                     }
-                    $infoLog = __CLASS__." [".__FUNCTION__
-                      . "] Updated playlist with id '" . $playlistTagId
-                      . "' of MultimediaObject with id '".$multimediaObject->getId() ."'";
+                    $infoLog = __CLASS__.' ['.__FUNCTION__
+                      ."] Updated playlist with id '".$playlistTagId
+                      ."' of MultimediaObject with id '".$multimediaObject->getId()."'";
                     $this->logger->addInfo($infoLog);
                     $output->writeln($infoLog);
                     $this->okUpdates[] = $multimediaObject;
                 } catch (\Exception $e) {
-                    $errorLog = __CLASS__." [".__FUNCTION__
-                      . "] Error on updating playlist with id '". $playlistTagId
-                      . "' of MultimediaObject with id '" . $multimediaObject->getId() . "'";
+                    $errorLog = __CLASS__.' ['.__FUNCTION__
+                      ."] Error on updating playlist with id '".$playlistTagId
+                      ."' of MultimediaObject with id '".$multimediaObject->getId()."'";
                     $this->logger->addError($errorLog);
                     $output->writeln($errorLog);
                     $this->failedUpdates[] = $multimediaObject;
@@ -213,15 +209,17 @@ EOT
     private function checkEmptyYoutubePlaylists(Youtube $youtube, MultimediaObject $multimediaObject, OutputInterface $output)
     {
         if (null == $youtube->getPlaylists()) {
-            $output->writeln('MultimediaObject with id "'.$multimediaObject->getId().'" does not have any EmbedTag with path starting with "'.self::METATAG_PLAYLIST_PATH .'" so we search for Tag with code "'. self::DEFAULT_PLAYLIST_COD . '" as default Youtube playlist.');
+            $output->writeln('MultimediaObject with id "'.$multimediaObject->getId().'" does not have any EmbedTag with path starting with "'.self::METATAG_PLAYLIST_PATH.'" so we search for Tag with code "'.self::DEFAULT_PLAYLIST_COD.'" as default Youtube playlist.');
             $playlistTag = $this->tagRepo->findOneByCod(self::DEFAULT_PLAYLIST_COD);
             if (null == $playlistTag) {
                 $playlistTag = $this->createDefaultPlaylist();
                 $output->writeln('There is no Tag with code "'.self::DEFAULT_PLAYLIST_COD.'" as default Youtube playlist so we created it with resultant id "'.$playlistTag->getId().'".');
             }
+
             return $playlistTag->getId();
         }
-        return null;
+
+        return;
     }
 
     private function createDefaultPlaylist()
@@ -239,7 +237,7 @@ EOT
         return $playlistTag;
     }
 
-    private function addToDefaultPlaylist(MultimediaObject $multimediaObject, Youtube $youtbue, $defaultPlaylistTagId='', OutputInterface $output)
+    private function addToDefaultPlaylist(MultimediaObject $multimediaObject, Youtube $youtbue, $defaultPlaylistTagId = '', OutputInterface $output)
     {
         try {
             $infoLog = __CLASS__.' ['.__FUNCTION__
@@ -251,15 +249,15 @@ EOT
             if (0 !== $outMoveToList) {
                 $errorLog = __CLASS__.' ['.__FUNCTION__
                   .'] Unknown out in the move list to Youtube of MultimediaObject with id "'
-                  .$multimediaObject->getId().'": '. $outMoveToList;
+                  .$multimediaObject->getId().'": '.$outMoveToList;
                 $this->logger->addError($errorLog);
                 $output->writeln($errorLog);
                 $this->failedUploads[] = $multimediaObject;
                 $this->errors[] = $errorLog;
             } else {
-                $infoLog = __CLASS__." [".__FUNCTION__
-                  . "] Updated playlist with id '" . $defaultPlaylistTagId
-                  . "' of MultimediaObject with id '".$multimediaObject->getId() ."'";
+                $infoLog = __CLASS__.' ['.__FUNCTION__
+                  ."] Updated playlist with id '".$defaultPlaylistTagId
+                  ."' of MultimediaObject with id '".$multimediaObject->getId()."'";
                 $this->logger->addInfo($infoLog);
                 $output->writeln($infoLog);
                 $this->okUpdates[] = $multimediaObject;
@@ -267,7 +265,7 @@ EOT
         } catch (\Exception $e) {
             $errorLog = __CLASS__.' ['.__FUNCTION__
               .'] Error in the move list to Youtube of MultimediaObject with id "'
-              .$multimediaObject->getId().'": '. $e->getMessage();
+              .$multimediaObject->getId().'": '.$e->getMessage();
             $this->logger->addError($errorLog);
             $output->writeln($errorLog);
             $this->failedUploads[] = $multimediaObject;
