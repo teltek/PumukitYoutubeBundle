@@ -1,0 +1,3 @@
+pumukityoutube_modal:
+    resource: @PumukitYoutubeBundle/Resources/config/routes/modal.yml
+    prefix: /youtube/modal

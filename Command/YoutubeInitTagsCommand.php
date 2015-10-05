@@ -32,9 +32,12 @@ EOT
     {
         $this->dm = $this->getContainer()->get('doctrine_mongodb')->getManager();
         $this->tagRepo = $this->dm->getRepository('PumukitSchemaBundle:Tag');
-
         if ($input->getOption('force')) {
             $youtubePublicationChannelTag = $this->createTagWithCode('PUCHYOUTUBE', 'YouTubeEDU', 'PUBCHANNELS', false);
+            $yt_route = $this->getContainer()->get('router')->generate('pumukityoutube_modal_index');
+            $youtubePublicationChannelTag->setProperty('modal_link', $yt_route);
+            $this->dm->persist($youtubePublicationChannelTag);
+            $this->dm->flush();
             $output->writeln('Tag persisted - new id: '.$youtubePublicationChannelTag->getId().' cod: '.$youtubePublicationChannelTag->getCod());
             $youtubePlaylistTag = $this->createTagWithCode('YOUTUBE', 'YouTube Playlists', 'ROOT', true);
             $output->writeln('Tag persisted - new id: '.$youtubePlaylistTag->getId().' cod: '.$youtubePlaylistTag->getCod());
