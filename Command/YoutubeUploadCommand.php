@@ -93,15 +93,12 @@ EOT
         foreach ($mms as $mm) {
             $playlistTagIds = $this->getPlaylistTagIds($mm, $output);
             try {
-                $infoLog = __CLASS__.' ['.__FUNCTION__
-                  .'] Started uploading to Youtube of MultimediaObject with id "'.$mm->getId().'"';
+                $infoLog = sprintf( '%s [%s] Started uploading to Youtube of MultimediaObject with id %s', __CLASS__, __FUNCTION__, $mm->getId() );
                 $this->logger->addInfo($infoLog);
                 $output->writeln($infoLog);
                 $outUpload = $this->youtubeService->upload($mm, 27, 'public', false);
                 if (0 !== $outUpload) {
-                    $errorLog = __CLASS__.' ['.__FUNCTION__
-                      .'] Unknown error in the upload to Youtube of MultimediaObject with id "'
-                      .$mm->getId().'": '.$outUpload;
+                    $errorLog = sprintf('%s [%s] Unknown error in the upload to Youtube of MultimediaObject with id %s: %s', __CLASS__, __FUNCTION__, $mm->getId(), $outUpload);
                     $this->logger->addError($errorLog);
                     $output->writeln($errorLog);
                     $this->failedUploads[] = $mm;
@@ -109,16 +106,12 @@ EOT
                     continue;
                 }
                 foreach ($playlistTagIds as $playlistTagId) {
-                    $infoLog = __CLASS__.' ['.__FUNCTION__
-                      .'] Started moving video to Youtube playlist assign with Tag id "'
-                      .$playlistTagId.'" of MultimediaObject with id "'.$mm->getId().'"';
+                    $infoLog = sprintf('%s [%s] Started moving video to Youtube playlist assign with Tag id %s of MultimediaObject with id %s ', __CLASS__, __FUNCTION__, $playlistTagId, $mm->getId() );
                     $this->logger->addInfo($infoLog);
                     $output->writeln($infoLog);
                     $outMoveToList = $this->youtubeService->moveToList($mm, $playlistTagId);
                     if (0 !== $outMoveToList) {
-                        $errorLog = __CLASS__.' ['.__FUNCTION__
-                          .'] Unknown out in the move list to Youtube of MultimediaObject with id "'
-                          .$mm->getId().'": '.$outMoveToList;
+                        $errorLog = sprintf('%s [%s] Unknown out in the move list to Youtube of MultimediaObject with id %s: %s"', __CLASS__, __FUNCTION__, $mm->getId(), $outMoveToList);
                         $this->logger->addError($errorLog);
                         $output->writeln($errorLog);
                         $this->failedUploads[] = $mm;
@@ -128,9 +121,7 @@ EOT
                 }
                 $this->okUploads[] = $mm;
             } catch (\Exception $e) {
-                $errorLog = __CLASS__.' ['.__FUNCTION__
-                  .'] The upload of the video from the Multimedia Object with id "'
-                  .$mm->getId().'" failed: '.$e->getMessage();
+                $errorLog = sprintf('%s [%s] The upload of the video from the Multimedia Object with id %s failed: %s', __CLASS__, __FUNCTION__, $mm->getId(), $e->getMessage() );
                 $this->logger->addError($errorLog);
                 $output->writeln($errorLog);
                 $this->failedUploads[] = $mm;
@@ -174,21 +165,22 @@ EOT
     {
         $playlistTagIds = array();
         foreach ($mm->getTags() as $embedTag) {
-            if ((0 === strpos($embedTag->getPath(), self::METATAG_PLAYLIST_PATH)) && (self::METATAG_PLAYLIST_COD !== $embedTag->getCod())) {
-                $playlistTag = $this->tagRepo->findOneByCod($embedTag->getCod());
+            if( $embedTag->isDescendantOfByCod( self::METATAG_PLAYLIST_COD ) )
+            {                
+                $playlistTag = $this->tagRepo->findOneByCod( $embedTag->getCod() );
                 if (null != $playlistTag) {
                     $playlistTagIds[] = $playlistTag->getId();
                 } else {
-                    $output->writeln('MultimediaObject with id "'.$mm->getId().'" does have an EmbedTag with path "'.$embedTag->getPath().'" and code "'.$embedTag->getCod().'" but does not exist in Tag repository');
+                    $output->writeln( sprintf('MultimediaObject with id %s does have an EmbedTag with path %s and code %s but does not exist in Tag repository', $mm->getId(), $embedTag->getPath(), $embedTag->getCod() ) );
                 }
             }
         }
         if (null == $playlistTagIds) {
-            $output->writeln('MultimediaObject with id "'.$mm->getId().'" does not have any EmbedTag with path starting with "'.self::METATAG_PLAYLIST_PATH.'" so we search for Tag with code "'.self::DEFAULT_PLAYLIST_COD.'" as default Youtube playlist.');
+            $output->writeln( sprintf('MultimediaObject with id %s does not have any EmbedTag with path starting with %s so we search for Tag with code %s as default Youtube playlist.', $mm->getId(), self::METATAG_PLAYLIST_PATH,self::DEFAULT_PLAYLIST_COD) );
             $playlistTag = $this->tagRepo->findOneByCod(self::DEFAULT_PLAYLIST_COD);
             if (null == $playlistTag) {
                 $playlistTag = $this->createDefaultPlaylist();
-                $output->writeln('There is no Tag with code "'.self::DEFAULT_PLAYLIST_COD.'" as default Youtube playlist so we created it with resultant id "'.$playlistTag->getId().'".');
+                $output->writeln( sprintf('There is no Tag with code %s as default Youtube playlist so we created it with resultant id: %s', self::DEFAULT_PLAYLIST_COD, $playlistTag->getId() ) );
             }
             $playlistTagIds[] = $playlistTag->getId();
         }
