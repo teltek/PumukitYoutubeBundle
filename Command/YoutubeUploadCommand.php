@@ -146,12 +146,13 @@ EOT
     {
         $publicBroadcast = $this->broadcastRepo->findPublicBroadcast();
 
+        $array_pub_tags = $this->getContainer()->getParameter( 'pumukit_youtube.pub_channels_tags' );
+
         return $this->mmobjRepo->createQueryBuilder()
           ->field('properties.pumukit1id')->exists(false)
           ->field('status')->equals(MultimediaObject::STATUS_PUBLISHED)
           ->field('broadcast')->references($publicBroadcast)
-          /* ->field('tags.cod')->equals('IMPORTANT') TODO When Tag with code 'IMPORTANT' is done ('autónomo' in Pumukit1.8) */ // TODO review !!!!!!!!!!!
-          ->field('tags.cod')->all(array(self::PUB_CHANNEL_YOUTUBE, self::PUB_DECISION_AUTONOMOUS));
+          ->field('tags.cod')->all( $array_pub_tags );
     }
 
     private function getNewMultimediaObjectsToUpload()
