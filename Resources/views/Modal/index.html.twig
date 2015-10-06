@@ -16,44 +16,46 @@
             <span class="alert alert-dismissable alert-warning">{{ youtube_status }} </span> [{{youtube.status}}]
           {% endif %}
         </dd>
-        <dt>Youtube Id</dt>
-        <dd>{{ youtube.id }}</dd>
         <dt>Last Updated</dt>
         <dd>{{ youtube.multimediaObjectUpdateDate | date ("H:i:s ---   d/m/Y ")}}</dd>
-        <dt>Youtube Playlists:</dt>
-        {% for key, playlist in youtube.playlists %}
+        <dt>Youtube Id</dt>
+        <dd>{{ youtube.id }}</dd>
+        {% if youtube_status == 'published' %}
+          <dt>Youtube Playlists:</dt>
+          {% for key, playlist in youtube.playlists %}
+            <dd>
+              <div class="input-group">
+                {{ playlist }}
+                <span class="input-group-addon">
+                  <a href="{{ youtube.link }}&list={{ key}}" target="_blank">
+                    <i class="mdi-action-exit-to-app"></i>
+                  </a>
+                </span>
+              </div>
+            </dd>
+          {% endfor %}
+          <dt>Youtube Link</dt>
           <dd>
-            <div class="input-group">
-              {{ playlist}}
+            <div class="col-lg-10 input-group">
+              <div class="form-control-wrapper">
+                <input type="text" class="form-control" readonly onclick="select()" value="{{ youtube.link }}">
+                <span class="material-input"></span>
+              </div>
               <span class="input-group-addon">
-                <a href="{{ youtube.link }}&list={{ key}}" target="_blank">
+                <a href="{{ youtube.link }}" target="_blank">
                   <i class="mdi-action-exit-to-app"></i>
                 </a>
               </span>
             </div>
           </dd>
-        {% endfor %}
-        <dt>Youtube Link</dt>
-        <dd>
-          <div class="col-lg-10 input-group">
+          <dt>Youtube Embed</dt>
+          <dd>
             <div class="form-control-wrapper">
-              <input type="text" class="form-control" readonly onclick="select()" value="{{ youtube.link }}">
+              <input type="text" class="form-control" readonly onclick="select()" value="{{ youtube.embed }}">
               <span class="material-input"></span>
             </div>
-            <span class="input-group-addon">
-              <a href="{{ youtube.link }}" target="_blank">
-                <i class="mdi-action-exit-to-app"></i>
-              </a>
-            </span>
-          </div>
-        </dd>
-        <dt>Youtube Embed</dt>
-        <dd>
-          <div class="form-control-wrapper">
-            <input type="text" class="form-control" readonly onclick="select()" value="{{ youtube.embed }}">
-            <span class="material-input"></span>
-          </div>
-        </dd>
+          </dd>
+        {% endif %}
       </dl>
     {% else %}
       Never published on youtube. (Maybe waiting for cron?)
