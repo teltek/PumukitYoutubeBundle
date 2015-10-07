@@ -91,7 +91,6 @@ EOT
     private function uploadVideosToYoutube($mms, OutputInterface $output)
     {
         foreach ($mms as $mm) {
-            $playlistTagIds = $this->getPlaylistTagIds($mm, $output);
             try {
                 $infoLog = sprintf( '%s [%s] Started uploading to Youtube of MultimediaObject with id %s', __CLASS__, __FUNCTION__, $mm->getId() );
                 $this->logger->addInfo($infoLog);
@@ -104,20 +103,6 @@ EOT
                     $this->failedUploads[] = $mm;
                     $this->errors[] = $errorLog;
                     continue;
-                }
-                foreach ($playlistTagIds as $playlistTagId) {
-                    $infoLog = sprintf('%s [%s] Started moving video to Youtube playlist assign with Tag id %s of MultimediaObject with id %s ', __CLASS__, __FUNCTION__, $playlistTagId, $mm->getId() );
-                    $this->logger->addInfo($infoLog);
-                    $output->writeln($infoLog);
-                    $outMoveToList = $this->youtubeService->moveToList($mm, $playlistTagId);
-                    if (0 !== $outMoveToList) {
-                        $errorLog = sprintf('%s [%s] Unknown out in the move list to Youtube of MultimediaObject with id %s: %s"', __CLASS__, __FUNCTION__, $mm->getId(), $outMoveToList);
-                        $this->logger->addError($errorLog);
-                        $output->writeln($errorLog);
-                        $this->failedUploads[] = $mm;
-                        $this->errors[] = $errorLog;
-                        continue;
-                    }
                 }
                 $this->okUploads[] = $mm;
             } catch (\Exception $e) {
@@ -161,33 +146,6 @@ EOT
           ->execute();
     }
 
-    private function getPlaylistTagIds($mm, OutputInterface $output)
-    {
-        $playlistTagIds = array();
-        foreach ($mm->getTags() as $embedTag) {
-            if( $embedTag->isDescendantOfByCod( self::METATAG_PLAYLIST_COD ) )
-            {                
-                $playlistTag = $this->tagRepo->findOneByCod( $embedTag->getCod() );
-                if (null != $playlistTag) {
-                    $playlistTagIds[] = $playlistTag->getId();
-                } else {
-                    $output->writeln( sprintf('MultimediaObject with id %s does have an EmbedTag with path %s and code %s but does not exist in Tag repository', $mm->getId(), $embedTag->getPath(), $embedTag->getCod() ) );
-                }
-            }
-        }
-        if (null == $playlistTagIds) {
-            $output->writeln( sprintf('MultimediaObject with id %s does not have any EmbedTag with path starting with %s so we search for Tag with code %s as default Youtube playlist.', $mm->getId(), self::METATAG_PLAYLIST_PATH,self::DEFAULT_PLAYLIST_COD) );
-            $playlistTag = $this->tagRepo->findOneByCod(self::DEFAULT_PLAYLIST_COD);
-            if (null == $playlistTag) {
-                $playlistTag = $this->createDefaultPlaylist();
-                $output->writeln( sprintf('There is no Tag with code %s as default Youtube playlist so we created it with resultant id: %s', self::DEFAULT_PLAYLIST_COD, $playlistTag->getId() ) );
-            }
-            $playlistTagIds[] = $playlistTag->getId();
-        }
-
-        return $playlistTagIds;
-    }
-
     private function checkResultsAndSendEmail()
     {
         $youtubeTag = $this->tagRepo->findByCod(self::PUB_CHANNEL_YOUTUBE);
@@ -202,20 +160,5 @@ EOT
         if (!empty($this->okUploads) || !empty($this->failedUploads)) {
             $this->youtubeService->sendEmail('upload', $this->okUploads, $this->failedUploads, $this->errors);
         }
-    }
-
-    private function createDefaultPlaylist()
-    {
-        $youtubeTag = $this->tagRepo->findOneByCod(self::METATAG_PLAYLIST_COD);
-        $playlistTag = new Tag();
-        $playlistTag->setCod(self::DEFAULT_PLAYLIST_COD);
-        $playlistTag->setParent($youtubeTag);
-        $playlistTag->setMetatag(false);
-        $playlistTag->setDisplay(true);
-        $playlistTag->setTitle(self::DEFAULT_PLAYLIST_TITLE, 'en');
-        $this->dm->persist($playlistTag);
-        $this->dm->flush();
-
-        return $playlistTag;
     }
 }
