@@ -42,6 +42,7 @@ class PumukitYoutubeExtension extends Extension implements PrependExtensionInter
         $config = $this->processConfiguration($configuration, $configs);
 
         $container->setParameter('pumukit_youtube.playlist_privacy_status', $config['playlist_privacy_status']);
+        $container->setParameter('pumukit_youtube.use_default_playlist', $config['use_default_playlist']);
         $container->setParameter('pumukit_youtube.default_playlist_cod', $config['default_playlist_cod']);
         $container->setParameter('pumukit_youtube.default_playlist_title', $config['default_playlist_title']);
         $container->setParameter('pumukit_youtube.metatag_playlist_cod', $config['metatag_playlist_cod']);

@@ -420,38 +420,89 @@ class YoutubeService
     {
         //TODO:
         //If after updating, the playlist list is empty AND the 'default playlist' option is activated, moveToDefaultList.
-        $playlistsToUpdate = $this->getPlaylistsToUpdate($multimediaObject);
-        if (count($playlistsToUpdate) == 0) {
-            return 0;
-        }
 
         $youtube = $this->getYoutubeDocument($multimediaObject);
-        $youtube->setUpdatePlaylist(true);
-        foreach ($playlistsToUpdate as $playlistId) {
-            $playlistTag = $this->getTagByYoutubeProperty($playlistId);
-            if ($playlistTag === null) {
-                $errorLog = sprintf('%s [%s] Error! The tag with id %s for Youtube Playlist does not exist', __CLASS__, __FUNCTION__, $playlistTagId);
-                $this->logger->addError($errorLog);
-                throw new \Exception($errorLog);
-            }
-            if (!array_key_exists($playlistId, $youtube->getPlaylists())) {
+        if( !isset( $youtube ) ) {
+            return 0;
+        }
+        $this->checkAndAddDefaultPlaylistTag($multimediaObject);
+        
+        $playlistsToUpdate = $this->getPlaylistsToUpdate($multimediaObject);
+        if (count($playlistsToUpdate) > 0) {
+            $youtube->setUpdatePlaylist(true);
+            foreach ($playlistsToUpdate as $playlistId) {
                 $playlistTag = $this->getTagByYoutubeProperty($playlistId);
-                $this->moveToList($multimediaObject, $playlistTag->getId());
-            } elseif (!$multimediaObject->containsTagWithCod($playlistTag->getCod())) {
-                $playlistItem = $youtube->getPlaylist($playlistId);
-                if ($playlistItem === null) {
-                    $errorLog = sprintf('%s [%s] Error! The Youtube document with id %s does not have a playlist item for Playlist %s', __CLASS__, __FUNCTION__, $youtube->getId(), $playlistId);
+                if ($playlistTag === null) {
+                    $errorLog = sprintf('%s [%s] Error! The tag with id %s for Youtube Playlist does not exist', __CLASS__, __FUNCTION__, $playlistTagId);
                     $this->logger->addError($errorLog);
                     throw new \Exception($errorLog);
                 }
-                $this->deleteFromList($playlistItem, $youtube, $playlistId, false);
+                if (!array_key_exists($playlistId, $youtube->getPlaylists())) {
+                    $playlistTag = $this->getTagByYoutubeProperty($playlistId);
+                    $this->moveToList($multimediaObject, $playlistTag->getId());
+                } elseif (!$multimediaObject->containsTagWithCod($playlistTag->getCod())) {
+                    $playlistItem = $youtube->getPlaylist($playlistId);
+                    if ($playlistItem === null) {
+                        $errorLog = sprintf('%s [%s] Error! The Youtube document with id %s does not have a playlist item for Playlist %s', __CLASS__, __FUNCTION__, $youtube->getId(), $playlistId);
+                        $this->logger->addError($errorLog);
+                        throw new \Exception($errorLog);
+                    }
+                    $this->deleteFromList($playlistItem, $youtube, $playlistId, false);
+                }
             }
+            $youtube->setUpdatePlaylist(false);
+            $this->dm->persist($youtube);
+            $this->dm->flush();
         }
-        $youtube->setUpdatePlaylist(false);
-        $this->dm->persist($youtube);
-        $this->dm->flush();
-
+        
         return 0;
+    }
+
+    /**
+     * Add the MultimediaObject to the default playlist tag if criteria are met
+     * Current Criteria: - USE_DEFAULT_PLAYLIST == true 
+     *                   - Multimedia Object doesn't have any playlists tag.   
+     *  
+     * @param MultimediaObject $multimediaObject
+     *
+     */
+    private function checkAndAddDefaultPlaylistTag(MultimediaObject $multimediaObject)
+    {
+        if( !$this->USE_DEFAULT_PLAYLIST ) {
+            return 0;
+        }
+        $has_playlist = false;
+        //This logic is duplicated here from getPlaylistsToUpdate in order to make this function more generic, and the criteria easier to change
+        foreach ($multimediaObject->getTags() as $embedTag) {
+            if ($embedTag->isDescendantOfByCod($this->METATAG_PLAYLIST_COD)) {
+                $has_playlist = true;
+                break;
+            }
+        }                
+        if($has_playlist) {
+            return 0;
+        }
+
+        $playlistTag = $this->tagRepo->findByCod($this->DEFAULT_PLAYLIST_COD);
+        if( !isset($playlistTag) ){
+            //$playlistTag = $this->createDefaultPlaylistTag(); //This logic is only used here, no need to split the code for now
+            $metatagPlaylist = $this->tagRepo->findByCod($this->METATAG_PLAYLIST_COD);
+            if( !isset($metatagPlaylist)){
+                $errorLog = sprintf('%s [%s] Error! The METATAG_PLAYLIST with cod:%s for YOUTUBE doesn\'t exist! \n Did you load the tag and set the correct cod in parameters.yml?', __CLASS__, __FUNCTION__, $this->METATAG_PLAYLIST_COD);
+                $this->logger->addError($errorLog);
+                throw new \Exception($errorLog);
+            }
+            $playlistTag = new Tag();
+            $playlistTag->setParent( $metatagPlaylist );
+            $playlistTag->setCod($this->DEFAULT_PLAYLIST_COD);
+            $playlistTag->setTitle($this->DEFAULT_PLAYLIST_TITLE);
+            $this->dm->persist($playlistTag);
+            
+        }
+        $multimediaObject->addTag($playlistTag);
+        $this->dm->persist($multimediaObject);
+        $this->dm->flush();
+        $this->moveToList($multimediaObject, $playlistTag->getId());
     }
 
     /**
