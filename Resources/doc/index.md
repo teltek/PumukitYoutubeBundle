@@ -59,13 +59,13 @@ python setup.py install
 
 #### Create credential file executing script:
 ```
-cd src/Pumukit/Youtube/Resources/data/pyPumukit
+cd src/Pumukit/YoutubeBundle/Resources/data/pyPumukit
 python createAccount.py
 ```
 
 This script launches the login page for acepting the access to our account. We should be logged in to the Youtube account used for publication. Otherwise, the script will launch first the loggin page for credentials. If the script doesn't launch the web page, copy the url given, paste it on a web explorer, login with your account, copy the key given and paste it on the script prompt.
 
-Once acepted the access, an oauth2.json file will be created in Resources/data. We should rename it to pumukit-oauth2.json.
+Once acepted the access, an oauth2.json file will be created in Resources/data/pyPumukit. We should rename it to pumukit-oauth2.json.
 
 ```
 mv oauth2.json pumukit-oauth2.json
