@@ -15,6 +15,7 @@
             <argument>%pumukit_youtube.default_playlist_cod%</argument>
             <argument>%pumukit_youtube.default_playlist_title%</argument>
             <argument>%pumukit_youtube.metatag_playlist_cod%</argument>
+            <argument>%pumukit_youtube.playlists_master%</argument>
 
             <tag name="monolog.logger" channel="youtube"/>
         </service>

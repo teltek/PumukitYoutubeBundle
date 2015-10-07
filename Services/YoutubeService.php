@@ -30,9 +30,10 @@ class YoutubeService
     private $DEFAULT_PLAYLIST_COD;
     private $DEFAULT_PLAYLIST_TITLE;
     private $METATAG_PLAYLIST_COD;
+    private $PLAYLISTS_MASTER;
 
 
-    public function __construct(DocumentManager $documentManager, Router $router, TagService $tagService, LoggerInterface $logger, SenderService $senderService, TranslatorInterface $translator, $playlistPrivacyStatus, $defaultPlaylistCod, $defaultPlaylistTitle, $metatagPlaylistCod)
+    public function __construct(DocumentManager $documentManager, Router $router, TagService $tagService, LoggerInterface $logger, SenderService $senderService, TranslatorInterface $translator, $playlistPrivacyStatus, $defaultPlaylistCod, $defaultPlaylistTitle, $metatagPlaylistCod, $playlist_master)
     {
         $this->dm = $documentManager;
         $this->router = $router;
@@ -48,6 +49,7 @@ class YoutubeService
         $this->DEFAULT_PLAYLIST_COD = $defaultPlaylistCod;
         $this->DEFAULT_PLAYLIST_TITLE = $defaultPlaylistTitle;
         $this->METATAG_PLAYLIST_COD = $metatagPlaylistCod;
+        $this->PLAYLISTS_MASTER = $playlist_master;
     }
 
     /**

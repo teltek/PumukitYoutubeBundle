@@ -39,6 +39,11 @@ class Configuration implements ConfigurationInterface
               ->defaultValue('YOUTUBE')
               ->info('Title for the youtube playlist to be used as default (if any)')
             ->end()
+            ->enumNode('playlists_master')
+              ->defaultValue('pumukit')
+              ->values(array('pumukit', 'youtube'))
+              ->info('Determines from where playlists are created. Possible values: pumukit, youtube')
+            ->end()
           ->end();
 
         return $treeBuilder;
