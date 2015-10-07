@@ -15,6 +15,7 @@ class YoutubeService
 {
     const YOUTUBE_PLAYLIST_URL = 'https://www.youtube.com/playlist?list=';
     const PUB_CHANNEL_YOUTUBE = 'PUCHYOUTUBE';
+    const METATAG_PLAYLIST_COD = 'YOUTUBE';
 
     private $dm;
     private $router;
@@ -214,44 +215,6 @@ class YoutubeService
     }
 
     /**
-     * Move from list to list.
-     *
-     * @param MultimediaObject $multimediaObject
-     * @param string           $playlistTagId
-     *
-     * @return int
-     */
-    public function moveFromListToList(MultimediaObject $multimediaObject, $playlistTagId)
-    {
-        $youtube = $this->getYoutubeDocument($multimediaObject);
-
-        if (null === $playlistTag = $this->tagRepo->find($playlistTagId)) {
-            $errorLog = __CLASS__.' ['.__FUNCTION__
-              ."] Error! The tag with id '".$playlistTagId
-              ."' for Youtube Playlist does not exist";
-            $this->logger->addError($errorLog);
-            throw new \Exception($errorLog);
-        }
-        if (null === $playlistId = $playlistTag->getProperty('youtube')) {
-            $errorLog = __CLASS__.' ['.__FUNCTION__
-              ."] Error! The tag with id '".$playlistTagId
-              ."' for Youtube Playlist does not have a 'youtube' property with the playlist id.";
-            $this->logger->addError($errorLog);
-            throw new \Exception($errorLog);
-        }
-        if (null === $playlistItem = $youtube->getPlaylist($playlistId)) {
-            $errorLog = __CLASS__.' ['.__FUNCTION__
-              ."] Error! The Youtube document  with id '".$youtube->getId()
-              ."' does not have a playlist item for Playlist '".$playlistId."'";
-            $this->logger->addError($errorLog);
-            throw new \Exception($errorLog);
-        }
-        $this->deleteFromList($playlistItem, $youtube, $playlistId);
-
-        return $this->moveToList($multimediaObject, $playlistTagId);
-    }
-
-    /**
      * Delete.
      *
      * @param MultimediaObject $multimediaObject
@@ -439,42 +402,118 @@ class YoutubeService
     }
 
     /**
-     * Update playlist.
+     * Update playlists.
      *
      * @param MultimediaObject $multimediaObject
      * @paran string $playlistTagId
      *
      * @return int
      */
-    public function updatePlaylist(MultimediaObject $multimediaObject, $playlistTagId)
-    {
-        $youtube = $this->getYoutubeDocument($multimediaObject);
-
-        if (null === $playlistTag = $this->tagRepo->find($playlistTagId)) {
-            $errorLog = __CLASS__.'. ['.__FUNCTION__
-              ."] Error! The tag with id '".$playlistTagId
-              ."' for Youtube Playlist does not exist.";
-            $this->logger->addError($errorLog);
-            throw new \Exception($errorLog);
+    public function updatePlaylist(MultimediaObject $multimediaObject)
+    {        
+        //TODO:
+        //If after updating, the playlist list is empty AND the 'default playlist' option is activated, moveToDefaultList.
+        $playlistsToUpdate = $this->getPlaylistsToUpdate( $multimediaObject );
+        if ( count($playlistsToUpdate) == 0 )
+        {
+            return 0;
         }
-        $playlistId = $playlistTag->getProperty('youtube');
-        if (!array_key_exists($playlistId, $youtube->getPlaylists())) {
-            $this->moveToList($multimediaObject, $playlistTagId);
-        } elseif (!$multimediaObject->containsTagWithCod($playlistTag->getCod())) {
-            if (null === $playlistItem = $youtube->getPlaylist($playlistId)) {
-                $errorLog = __CLASS__.' ['.__FUNCTION__
-                  ."] Error! The Youtube document  with id '".$youtube->getId()
-                  ."' does not have a playlist item for Playlist '".$playlistId."'";
+
+        $youtube = $this->getYoutubeDocument($multimediaObject);
+        $youtube->setUpdatePlaylist(true);
+        foreach ( $playlistsToUpdate as $playlistId )
+        {
+
+            $playlistTag = $this->getTagByYoutubeProperty( $playlistId );
+            if ($playlistTag === null ) 
+            {
+                $errorLog = sprintf('%s [%s] Error! The tag with id %s for Youtube Playlist does not exist', __CLASS__, __FUNCTION__, $playlistTagId);
                 $this->logger->addError($errorLog);
                 throw new \Exception($errorLog);
             }
-            $this->deleteFromList($playlistItem, $youtube, $playlistId, false);
+            if (!array_key_exists($playlistId, $youtube->getPlaylists())) 
+            {
+                $playlistTag = $this->getTagByYoutubeProperty( $playlistId );
+                $this->moveToList($multimediaObject, $playlistTag->getId());
+            } 
+            elseif (!$multimediaObject->containsTagWithCod($playlistTag->getCod())) 
+            {
+                $playlistItem = $youtube->getPlaylist($playlistId);
+                if ( $playlistItem === null )
+                {
+                    $errorLog = sprintf('%s [%s] Error! The Youtube document with id %s does not have a playlist item for Playlist %s', __CLASS__, __FUNCTION__, $youtube->getId(), $playlistId);
+                    $this->logger->addError($errorLog);
+                    throw new \Exception($errorLog);
+                }
+                $this->deleteFromList($playlistItem, $youtube, $playlistId, false);
+            }
         }
         $youtube->setUpdatePlaylist(false);
         $this->dm->persist($youtube);
         $this->dm->flush();
 
         return 0;
+    }
+
+    /**
+     * Returns array of playlistsIds to update.
+     * 
+     * @param MultimediaObject $multimediaObject
+     *
+     * @return array
+     */
+    private function getPlaylistsToUpdate( MultimediaObject $multimediaObject )
+    {
+        $playlistsIds = array();
+        $youtube = $this->getYoutubeDocument( $multimediaObject );
+        if ( $youtube->getStatus() !== Youtube::STATUS_PUBLISHED )
+        {
+            return $playlistsIds;
+        }
+        foreach ( $multimediaObject->getTags() as $embedTag ) 
+        {
+            if ( !$embedTag->isDescendantOfByCod( self::METATAG_PLAYLIST_COD ) )
+            {//This is not the tag you are looking for
+                continue;
+            }
+            $playlistTag = $this->tagRepo->findOneByCod( $embedTag->getCod() );
+            $playlistId = $playlistTag->getProperty('youtube');
+            if ( !array_key_exists($playlistId, $youtube->getPlaylists())) 
+            {//If the tag doesn't exist on youtube playlists
+                if ( !in_array( $playlistId, $playlistsIds))
+                {
+                    $playlistsIds[] = $playlistId;
+                }
+            }
+        }
+        foreach ($youtube->getPlaylists() as $playlistId => $playlistRel ) 
+        {
+            $playlistTag = $this->getTagByYoutubeProperty($playlistId);
+            if ( $playlistTag === null 
+                               || !$multimediaObject->containsTagWithCod( $playlistTag->getCod() ))
+            {//If the tag doesn't exist in PuMuKIT or If the mmobj doesn't have this tag
+                if ( !in_array( $playlistId, $playlistsIds))
+                {
+                    $playlistsIds[] = $playlistId;
+                }
+            }
+        }
+        return $playlistsIds;
+    }
+
+    /**
+     * Returns a Tag whose youtube property 'youtube' has a $playlistId value
+     *
+     * @param string $playlistId
+     *
+     * return Tag
+     */
+    private function getTagByYoutubeProperty( $playlistId )
+    {
+        //return $this->tagRepo->getTagByProperty('youtube', $playlistId); //I like this option more (yet unimplemented)
+        return $this->tagRepo->createQueryBuilder()
+                    ->field('properties.youtube')->equals($playlistId)
+                    ->getQuery()->getSingleResult();
     }
 
     /**
