@@ -15,7 +15,6 @@ class YoutubeService
 {
     const YOUTUBE_PLAYLIST_URL = 'https://www.youtube.com/playlist?list=';
     const PUB_CHANNEL_YOUTUBE = 'PUCHYOUTUBE';
-    const METATAG_PLAYLIST_COD = 'YOUTUBE';
 
     private $dm;
     private $router;
@@ -28,8 +27,12 @@ class YoutubeService
     private $mmobjRepo;
     private $pythonDirectory;
     private $playlistPrivacyStatus;
+    private $DEFAULT_PLAYLIST_COD;
+    private $DEFAULT_PLAYLIST_TITLE;
+    private $METATAG_PLAYLIST_COD;
 
-    public function __construct(DocumentManager $documentManager, Router $router, TagService $tagService, LoggerInterface $logger, SenderService $senderService, TranslatorInterface $translator, $playlistPrivacyStatus)
+
+    public function __construct(DocumentManager $documentManager, Router $router, TagService $tagService, LoggerInterface $logger, SenderService $senderService, TranslatorInterface $translator, $playlistPrivacyStatus, $defaultPlaylistCod, $defaultPlaylistTitle, $metatagPlaylistCod)
     {
         $this->dm = $documentManager;
         $this->router = $router;
@@ -42,6 +45,9 @@ class YoutubeService
         $this->mmobjRepo = $this->dm->getRepository('PumukitSchemaBundle:MultimediaObject');
         $this->pythonDirectory = __DIR__.'/../Resources/data/pyPumukit';
         $this->playlistPrivacyStatus = $playlistPrivacyStatus;
+        $this->DEFAULT_PLAYLIST_COD = $defaultPlaylistCod;
+        $this->DEFAULT_PLAYLIST_TITLE = $defaultPlaylistTitle;
+        $this->METATAG_PLAYLIST_COD = $metatagPlaylistCod;
     }
 
     /**
@@ -462,7 +468,7 @@ class YoutubeService
             return $playlistsIds;
         }
         foreach ($multimediaObject->getTags() as $embedTag) {
-            if (!$embedTag->isDescendantOfByCod(self::METATAG_PLAYLIST_COD)) {
+            if (!$embedTag->isDescendantOfByCod($this->METATAG_PLAYLIST_COD) {
                 //This is not the tag you are looking for
                 continue;
             }
