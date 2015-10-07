@@ -410,37 +410,29 @@ class YoutubeService
      * @return int
      */
     public function updatePlaylist(MultimediaObject $multimediaObject)
-    {        
+    {
         //TODO:
         //If after updating, the playlist list is empty AND the 'default playlist' option is activated, moveToDefaultList.
-        $playlistsToUpdate = $this->getPlaylistsToUpdate( $multimediaObject );
-        if ( count($playlistsToUpdate) == 0 )
-        {
+        $playlistsToUpdate = $this->getPlaylistsToUpdate($multimediaObject);
+        if (count($playlistsToUpdate) == 0) {
             return 0;
         }
 
         $youtube = $this->getYoutubeDocument($multimediaObject);
         $youtube->setUpdatePlaylist(true);
-        foreach ( $playlistsToUpdate as $playlistId )
-        {
-
-            $playlistTag = $this->getTagByYoutubeProperty( $playlistId );
-            if ($playlistTag === null ) 
-            {
+        foreach ($playlistsToUpdate as $playlistId) {
+            $playlistTag = $this->getTagByYoutubeProperty($playlistId);
+            if ($playlistTag === null) {
                 $errorLog = sprintf('%s [%s] Error! The tag with id %s for Youtube Playlist does not exist', __CLASS__, __FUNCTION__, $playlistTagId);
                 $this->logger->addError($errorLog);
                 throw new \Exception($errorLog);
             }
-            if (!array_key_exists($playlistId, $youtube->getPlaylists())) 
-            {
-                $playlistTag = $this->getTagByYoutubeProperty( $playlistId );
+            if (!array_key_exists($playlistId, $youtube->getPlaylists())) {
+                $playlistTag = $this->getTagByYoutubeProperty($playlistId);
                 $this->moveToList($multimediaObject, $playlistTag->getId());
-            } 
-            elseif (!$multimediaObject->containsTagWithCod($playlistTag->getCod())) 
-            {
+            } elseif (!$multimediaObject->containsTagWithCod($playlistTag->getCod())) {
                 $playlistItem = $youtube->getPlaylist($playlistId);
-                if ( $playlistItem === null )
-                {
+                if ($playlistItem === null) {
                     $errorLog = sprintf('%s [%s] Error! The Youtube document with id %s does not have a playlist item for Playlist %s', __CLASS__, __FUNCTION__, $youtube->getId(), $playlistId);
                     $this->logger->addError($errorLog);
                     throw new \Exception($errorLog);
@@ -462,53 +454,49 @@ class YoutubeService
      *
      * @return array
      */
-    private function getPlaylistsToUpdate( MultimediaObject $multimediaObject )
+    private function getPlaylistsToUpdate(MultimediaObject $multimediaObject)
     {
         $playlistsIds = array();
-        $youtube = $this->getYoutubeDocument( $multimediaObject );
-        if ( $youtube->getStatus() !== Youtube::STATUS_PUBLISHED )
-        {
+        $youtube = $this->getYoutubeDocument($multimediaObject);
+        if ($youtube->getStatus() !== Youtube::STATUS_PUBLISHED) {
             return $playlistsIds;
         }
-        foreach ( $multimediaObject->getTags() as $embedTag ) 
-        {
-            if ( !$embedTag->isDescendantOfByCod( self::METATAG_PLAYLIST_COD ) )
-            {//This is not the tag you are looking for
+        foreach ($multimediaObject->getTags() as $embedTag) {
+            if (!$embedTag->isDescendantOfByCod(self::METATAG_PLAYLIST_COD)) {
+                //This is not the tag you are looking for
                 continue;
             }
-            $playlistTag = $this->tagRepo->findOneByCod( $embedTag->getCod() );
+            $playlistTag = $this->tagRepo->findOneByCod($embedTag->getCod());
             $playlistId = $playlistTag->getProperty('youtube');
-            if ( !array_key_exists($playlistId, $youtube->getPlaylists())) 
-            {//If the tag doesn't exist on youtube playlists
-                if ( !in_array( $playlistId, $playlistsIds))
-                {
+            if (!array_key_exists($playlistId, $youtube->getPlaylists())) {
+                //If the tag doesn't exist on youtube playlists
+                if (!in_array($playlistId, $playlistsIds)) {
                     $playlistsIds[] = $playlistId;
                 }
             }
         }
-        foreach ($youtube->getPlaylists() as $playlistId => $playlistRel ) 
-        {
+        foreach ($youtube->getPlaylists() as $playlistId => $playlistRel) {
             $playlistTag = $this->getTagByYoutubeProperty($playlistId);
-            if ( $playlistTag === null 
-                               || !$multimediaObject->containsTagWithCod( $playlistTag->getCod() ))
-            {//If the tag doesn't exist in PuMuKIT or If the mmobj doesn't have this tag
-                if ( !in_array( $playlistId, $playlistsIds))
-                {
+            if ($playlistTag === null
+                               || !$multimediaObject->containsTagWithCod($playlistTag->getCod())) {
+                //If the tag doesn't exist in PuMuKIT or If the mmobj doesn't have this tag
+                if (!in_array($playlistId, $playlistsIds)) {
                     $playlistsIds[] = $playlistId;
                 }
             }
         }
+
         return $playlistsIds;
     }
 
     /**
-     * Returns a Tag whose youtube property 'youtube' has a $playlistId value
+     * Returns a Tag whose youtube property 'youtube' has a $playlistId value.
      *
      * @param string $playlistId
      *
      * return Tag
      */
-    private function getTagByYoutubeProperty( $playlistId )
+    private function getTagByYoutubeProperty($playlistId)
     {
         //return $this->tagRepo->getTagByProperty('youtube', $playlistId); //I like this option more (yet unimplemented)
         return $this->tagRepo->createQueryBuilder()

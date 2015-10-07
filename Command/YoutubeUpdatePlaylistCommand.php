@@ -50,15 +50,11 @@ EOT
             ->getQuery()
             ->execute();
 
-        foreach ($multimediaObjects as $multimediaObject) 
-        {
-            try
-            {
-                $outUpdatePlaylist = $this->youtubeService->updatePlaylist( $multimediaObject );
-                if ($outUpdatePlaylist !== 0)
-                {
-                    $errorLog = sprintf('%s [%s] Unknown error in the update of Youtube Playlists of MultimediaObject with id %s: %s'
-                                      , __CLASS__, __FUNCTION__, $multimediaObject->getId(), $outUpdatePlaylist);
+        foreach ($multimediaObjects as $multimediaObject) {
+            try {
+                $outUpdatePlaylist = $this->youtubeService->updatePlaylist($multimediaObject);
+                if ($outUpdatePlaylist !== 0) {
+                    $errorLog = sprintf('%s [%s] Unknown error in the update of Youtube Playlists of MultimediaObject with id %s: %s', __CLASS__, __FUNCTION__, $multimediaObject->getId(), $outUpdatePlaylist);
                     $this->logger->addError($errorLog);
                     $output->writeln($errorLog);
                     $this->failedUpdates[] = $multimediaObject;
@@ -69,9 +65,7 @@ EOT
                 $this->logger->addInfo($infoLog);
                 $output->writeln($infoLog);
                 $this->okUpdates[] = $multimediaObject;
-            }
-            catch (\Exception $e)
-            {
+            } catch (\Exception $e) {
                 $errorLog = sprintf('%s [%s] Error: Couldn\'t update playlists of MultimediaObject with id %s [Exception]:%s', __CLASS__, __FUNCTION__, $multimediaObject->getId(), $e->getMessage());
                 $this->logger->addError($errorLog);
                 $output->writeln($errorLog);
