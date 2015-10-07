@@ -411,11 +411,10 @@ class YoutubeService
      * Update playlists.
      *
      * @param MultimediaObject $multimediaObject
-     * @paran string $playlistTagId
      *
      * @return int
      */
-    public function updatePlaylist(MultimediaObject $multimediaObject)
+    public function updatePlaylists(MultimediaObject $multimediaObject)
     {
         //TODO:
         //If after updating, the playlist list is empty AND the 'default playlist' option is activated, moveToDefaultList.

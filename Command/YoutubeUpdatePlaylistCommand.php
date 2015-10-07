@@ -52,9 +52,9 @@ EOT
 
         foreach ($multimediaObjects as $multimediaObject) {
             try {
-                $outUpdatePlaylist = $this->youtubeService->updatePlaylist($multimediaObject);
-                if ($outUpdatePlaylist !== 0) {
-                    $errorLog = sprintf('%s [%s] Unknown error in the update of Youtube Playlists of MultimediaObject with id %s: %s', __CLASS__, __FUNCTION__, $multimediaObject->getId(), $outUpdatePlaylist);
+                $outUpdatePlaylists = $this->youtubeService->updatePlaylists($multimediaObject);
+                if ($outUpdatePlaylists !== 0) {
+                    $errorLog = sprintf('%s [%s] Unknown error in the update of Youtube Playlists of MultimediaObject with id %s: %s', __CLASS__, __FUNCTION__, $multimediaObject->getId(), $outUpdatePlaylists);
                     $this->logger->addError($errorLog);
                     $output->writeln($errorLog);
                     $this->failedUpdates[] = $multimediaObject;
