@@ -21,6 +21,10 @@ class ModalController extends Controller
         $youtubeRepo = $dm->getRepository('PumukitYoutubeBundle:Youtube');
         $youtube = $youtubeRepo->find($mm->getProperty('youtube'));
 
+        if (!isset($youtube)) {
+            return $this->render('PumukitYoutubeBundle:Modal:404notfound.html.twig', array('mm' => $mm));
+        }
+
         $youtubeStatus = 'none';
         switch ($youtube->getStatus()) {
             case Youtube::STATUS_DEFAULT:

@@ -4,61 +4,57 @@
 </div>
 <div class="modal-body">
   <div class="col-md-8 input-group">
-    {% if youtube is defined and youtube is not null %}
-      <dl class="dl-horizontal">
-        <dt>Youtube Status</dt>
-        <dd style="overflow:hidden">
-          {% if youtube_status == 'error' or youtube_status == 'removed' %}
-            <span class="alert alert-dismissable alert-danger">{{ youtube_status }} </span> [{{youtube.status}}]
-          {% elseif youtube_status == 'published'  %}
-            <span class="alert alert-dismissable alert-success">{{ youtube_status }} </span> [{{youtube.status}}]
-          {% elseif youtube_status == 'proccessing' %}
-            <span class="alert alert-dismissable alert-warning">{{ youtube_status }} </span> [{{youtube.status}}]
-          {% endif %}
-        </dd>
-        <dt>Last Updated</dt>
-        <dd>{{ youtube.multimediaObjectUpdateDate | date ("H:i:s ---   d/m/Y ")}}</dd>
-        <dt>Youtube Id</dt>
-        <dd>{{ youtube.id }}</dd>
-        {% if youtube_status == 'published' %}
-          <dt>Youtube Playlists:</dt>
-          {% for key, playlist in youtube.playlists %}
-            <dd>
-              <div class="input-group">
-                {{ playlist }}
-                <span class="input-group-addon">
-                  <a href="{{ youtube.link }}&list={{ key}}" target="_blank">
-                    <i class="mdi-action-exit-to-app"></i>
-                  </a>
-                </span>
-              </div>
-            </dd>
-          {% endfor %}
-          <dt>Youtube Link</dt>
+    <dl class="dl-horizontal">
+      <dt>Youtube Status</dt>
+      <dd style="overflow:hidden">
+        {% if youtube_status == 'error' or youtube_status == 'removed' %}
+          <span class="alert alert-dismissable alert-danger">{{ youtube_status }} </span> [{{youtube.status}}]
+        {% elseif youtube_status == 'published'  %}
+          <span class="alert alert-dismissable alert-success">{{ youtube_status }} </span> [{{youtube.status}}]
+        {% elseif youtube_status == 'proccessing' %}
+          <span class="alert alert-dismissable alert-warning">{{ youtube_status }} </span> [{{youtube.status}}]
+        {% endif %}
+      </dd>
+      <dt>Last Updated</dt>
+      <dd>{{ youtube.multimediaObjectUpdateDate | date ("H:i:s ---   d/m/Y ")}}</dd>
+      <dt>Youtube Id</dt>
+      <dd>{{ youtube.id }}</dd>
+      {% if youtube_status == 'published' %}
+        <dt>Youtube Playlists:</dt>
+        {% for key, playlist in youtube.playlists %}
           <dd>
-            <div class="col-lg-10 input-group">
-              <div class="form-control-wrapper">
-                <input type="text" class="form-control" readonly onclick="select()" value="{{ youtube.link }}">
-                <span class="material-input"></span>
-              </div>
+            <div class="input-group">
+              {{ playlist }}
               <span class="input-group-addon">
-                <a href="{{ youtube.link }}" target="_blank">
+                <a href="{{ youtube.link }}&list={{ key}}" target="_blank">
                   <i class="mdi-action-exit-to-app"></i>
                 </a>
               </span>
             </div>
           </dd>
-          <dt>Youtube Embed</dt>
-          <dd>
+        {% endfor %}
+        <dt>Youtube Link</dt>
+        <dd>
+          <div class="col-lg-10 input-group">
             <div class="form-control-wrapper">
-              <input type="text" class="form-control" readonly onclick="select()" value="{{ youtube.embed }}">
+              <input type="text" class="form-control" readonly onclick="select()" value="{{ youtube.link }}">
               <span class="material-input"></span>
             </div>
-          </dd>
-        {% endif %}
-      </dl>
-    {% else %}
-      Never published on youtube. (Maybe waiting for cron?)
-    {% endif %}
+            <span class="input-group-addon">
+              <a href="{{ youtube.link }}" target="_blank">
+                <i class="mdi-action-exit-to-app"></i>
+              </a>
+            </span>
+          </div>
+        </dd>
+        <dt>Youtube Embed</dt>
+        <dd>
+          <div class="form-control-wrapper">
+            <input type="text" class="form-control" readonly onclick="select()" value="{{ youtube.embed }}">
+            <span class="material-input"></span>
+          </div>
+        </dd>
+      {% endif %}
+    </dl>
   </div>
 </div>
