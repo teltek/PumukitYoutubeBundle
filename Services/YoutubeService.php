@@ -33,8 +33,9 @@ class YoutubeService
     private $DEFAULT_PLAYLIST_TITLE;
     private $METATAG_PLAYLIST_COD;
     private $PLAYLISTS_MASTER;
+    private $DELETE_PLAYLISTS;
 
-    public function __construct(DocumentManager $documentManager, Router $router, TagService $tagService, LoggerInterface $logger, SenderService $senderService, TranslatorInterface $translator, $playlistPrivacyStatus, $useDefaultPlaylist, $defaultPlaylistCod, $defaultPlaylistTitle, $metatagPlaylistCod, $playlist_master)
+    public function __construct(DocumentManager $documentManager, Router $router, TagService $tagService, LoggerInterface $logger, SenderService $senderService, TranslatorInterface $translator, $playlistPrivacyStatus, $useDefaultPlaylist, $defaultPlaylistCod, $defaultPlaylistTitle, $metatagPlaylistCod, $playlistMaster, $deletePlaylists)
     {
         $this->dm = $documentManager;
         $this->router = $router;
@@ -51,7 +52,8 @@ class YoutubeService
         $this->DEFAULT_PLAYLIST_COD = $defaultPlaylistCod;
         $this->DEFAULT_PLAYLIST_TITLE = $defaultPlaylistTitle;
         $this->METATAG_PLAYLIST_COD = $metatagPlaylistCod;
-        $this->PLAYLISTS_MASTER = $playlist_master;
+        $this->PLAYLISTS_MASTER = $playlistMaster;
+        $this->DELETE_PLAYLISTS = $deletePlaylists;
     }
 
     /**
@@ -468,7 +470,7 @@ class YoutubeService
                         || !in_array($ytPlaylistId, $allYoutubePlaylistsIds)) { //If a playlist on PuMuKIT doesn't exist on Youtube, create it.
                 if ($master == 'pumukit') {
                     $this->createYoutubePlaylist($tag);
-                } else {
+                } elseif ($this->DELETE_PLAYLISTS) {
                     $this->deletePumukitPlaylist($tag);
                 }
             } else { //If a playlist on PuMuKIT exists on Youtube, update metadata (title).
@@ -481,10 +483,10 @@ class YoutubeService
         }
         foreach ($allYoutubePlaylists as $ytPlaylist) {
             if (!in_array($ytPlaylist['id'], $allTagsYtId)) { //If a playlist on Youtube doesn't exist on PuMuKIT, delete it.
-                if ($master == 'pumukit') {
-                    $this->deleteYoutubePlaylist($ytPlaylist);
-                } else {
+                if ($master == 'youtube') {
                     $this->createPumukitPlaylist($ytPlaylist);
+                } elseif ($this->DELETE_PLAYLISTS) {
+                    $this->deleteYoutubePlaylist($ytPlaylist);
                 }
             }
         }

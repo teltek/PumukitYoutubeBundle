@@ -48,6 +48,10 @@ class Configuration implements ConfigurationInterface
               ->values(array('pumukit', 'youtube'))
               ->info('Determines from where playlists are created. Possible values: pumukit, youtube')
             ->end()
+            ->booleanNode('delete_playlists')
+              ->defaultValue('false')
+              ->info('Variable that configures whether playlists that are not on the master(pumukit) are deleted on the slave(youtube) or not.  - default:false')
+            ->end()
           ->end();
 
         return $treeBuilder;
