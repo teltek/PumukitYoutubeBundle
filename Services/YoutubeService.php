@@ -462,6 +462,9 @@ class YoutubeService
      */
     public function syncPlaylistsRelations()
     {
+        if($this->USE_DEFAULT_PLAYLIST) {
+            $this->getOrCreateDefaultTag();
+        }
         $playlistMetaTag = $this->getPlaylistMetaTag();
         $allPlaylistTags = $playlistMetaTag->getChildren();
         $allYoutubePlaylists = $this->getAllYoutubePlaylists();//Returns array with all neccessary, list(['id','title'])
