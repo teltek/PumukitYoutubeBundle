@@ -50,6 +50,7 @@ EOT
             ->getQuery()
             ->execute();
 
+        $this->youtubeService->syncPlaylistsRelations();
         foreach ($multimediaObjects as $multimediaObject) {
             try {
                 $outUpdatePlaylists = $this->youtubeService->updatePlaylists($multimediaObject);
