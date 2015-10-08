@@ -12,6 +12,7 @@
             <argument type="service" id="pumukit_notification.sender"/>
             <argument type="service" id="translator"/>
             <argument>%pumukit_youtube.playlist_privacy_status%</argument>
+            <argument>%pumukit_youtube.use_default_playlist%</argument>
             <argument>%pumukit_youtube.default_playlist_cod%</argument>
             <argument>%pumukit_youtube.default_playlist_title%</argument>
             <argument>%pumukit_youtube.metatag_playlist_cod%</argument>
