@@ -50,22 +50,15 @@ EOT
         $publishedYoutubeIds = $this->getStringIds($youtubeMongoIds);
         $notPublishedMms = $this->getMultimediaObjectsInYoutubeWithoutStatus($publishedYoutubeIds, MultimediaObject::STATUS_PUBLISHED);
         $this->deleteVideosFromYoutube($notPublishedMms, $output);
-
-        $youtubeMongoIds = $this->youtubeRepo->getDistinctFieldWithStatusAndForce('_id', Youtube::STATUS_PUBLISHED, false);
-        $publishedYoutubeIds = $this->getStringIds($youtubeMongoIds);
-        $notWebTVMms = $this->getMultimediaObjectsInYoutubeWithoutTagCode($publishedYoutubeIds, self::PUB_CHANNEL_WEBTV);
-        $this->deleteVideosFromYoutube($notWebTVMms, $output);
-
-        $youtubeMongoIds = $this->youtubeRepo->getDistinctFieldWithStatusAndForce('_id', Youtube::STATUS_PUBLISHED, false);
-        $publishedYoutubeIds = $this->getStringIds($youtubeMongoIds);
-        $notYoutubeEduMms = $this->getMultimediaObjectsInYoutubeWithoutTagCode($publishedYoutubeIds, self::PUB_CHANNEL_YOUTUBE);
-        $this->deleteVideosFromYoutube($notYoutubeEduMms, $output);
-
-        $youtubeMongoIds = $this->youtubeRepo->getDistinctFieldWithStatusAndForce('_id', Youtube::STATUS_PUBLISHED, false);
-        $publishedYoutubeIds = $this->getStringIds($youtubeMongoIds);
-        // TODO When tag IMPORTANT is defined as child of PUBLICATION DECISION Tag
-        $notImportantMms = $this->getMultimediaObjectsInYoutubeWithoutTagCode($publishedYoutubeIds, self::PUB_DECISION_AUTONOMOUS);
-        $this->deleteVideosFromYoutube($notImportantMms, $output);
+      
+        $arrayPubTags = $this->getContainer()->getParameter('pumukit_youtube.pub_channels_tags');
+        foreach($arrayPubTags as $tagCode) {
+            $youtubeMongoIds = $this->youtubeRepo->getDistinctFieldWithStatusAndForce('_id', Youtube::STATUS_PUBLISHED, false);
+            $publishedYoutubeIds = $this->getStringIds($youtubeMongoIds);
+            // TODO When tag IMPORTANT is defined as child of PUBLICATION DECISION Tag
+            $notCorrectTagMms = $this->getMultimediaObjectsInYoutubeWithoutTagCode($publishedYoutubeIds, $tagCode);
+            $this->deleteVideosFromYoutube($notCorrectTagMms, $output);
+        }
 
         $youtubeMongoIds = $this->youtubeRepo->getDistinctFieldWithStatusAndForce('_id', Youtube::STATUS_PUBLISHED, false);
         $publishedYoutubeIds = $this->getStringIds($youtubeMongoIds);
