@@ -82,15 +82,15 @@ class YoutubeService
         }
         if (null === $track) {
             $errorLog = __CLASS__.' ['.__FUNCTION__
-              ."] Error, the Multimedia Object with id '"
-              .$multimediaObject->getId()."' has no master.";
+                       ."] Error, the Multimedia Object with id '"
+                       .$multimediaObject->getId()."' has no master.";
             $this->logger->addError($errorLog);
             throw new \Exception($errorLog);
         }
         $trackPath = $track->getPath();
         if (!file_exists($trackPath)) {
             $errorLog = __CLASS__.' ['.__FUNCTION__
-              .'] Error, there is no file '.$trackPath;
+                       .'] Error, there is no file '.$trackPath;
             $this->logger->addError($errorLog);
             throw new \Exception($errorLog);
         }
@@ -119,7 +119,7 @@ class YoutubeService
             $this->dm->persist($youtube);
             $this->dm->flush();
             $errorLog = __CLASS__.' ['.__FUNCTION__
-              .'] Error in the upload: '.$out['error_out'];
+                       .'] Error in the upload: '.$out['error_out'];
             $this->logger->addError($errorLog);
             throw new \Exception($errorLog);
         }
@@ -141,7 +141,7 @@ class YoutubeService
             $addedTags = $this->tagService->addTagToMultimediaObject($multimediaObject, $youtubeTag->getId());
         } else {
             $errorLog = __CLASS__.' ['.__FUNCTION__
-              .'] There is no Youtube tag defined with code PUCHYOUTUBE.';
+                       .'] There is no Youtube tag defined with code PUCHYOUTUBE.';
             $this->logger->addError($errorLog);
             throw new \Exception($errorLog);
         }
@@ -165,44 +165,20 @@ class YoutubeService
         chdir($this->pythonDirectory);
         if (null === $playlistTag = $this->tagRepo->find($playlistTagId)) {
             $errorLog = __CLASS__.' ['.__FUNCTION__
-              ."] Error! The tag with id '".$playlistTagId
-              ."' for Youtube Playlist does not exist";
+                       ."] Error! The tag with id '".$playlistTagId
+                       ."' for Youtube Playlist does not exist";
             $this->logger->addError($errorLog);
             throw new \Exception($errorLog);
         }
         if (null === $playlistId = $playlistTag->getProperty('youtube')) {
-            $pyOut = exec('python createPlaylist.py --title "'.$playlistTag->getTitle().'" --privacyStatus "'.$this->playlistPrivacyStatus.'"', $output, $return_var);
-            $out = json_decode($pyOut, true);
-            if ($out['error']) {
-                $errorLog = __CLASS__.' ['.__FUNCTION__
-                  ."] Error in creating in Youtube the playlist from tag with id '"
-                  .$playlistTagId."': ".$out['error_out'];
-                $this->logger->addError($errorLog);
-                throw new \Exception($errorLog);
-            } elseif ($out['out'] != null) {
-                $infoLog = __CLASS__.' ['.__FUNCTION__
-                  ."] Created Youtube Playlist '".$out['out']
-                  ."' for Tag with id '".$playlistTagId."'";
-                $this->logger->addInfo($infoLog);
-                $playlistId = $out['out'];
-                $playlistTag->setProperty('youtube', $playlistId);
-                $playlistTag->setProperty('customfield', 'youtube:text');
-                $this->dm->persist($playlistTag);
-                $this->dm->flush();
-            } else {
-                $errorLog = __CLASS__.' ['.__FUNCTION__
-                  ."] Error! Creating the playlist from tag with id '"
-                  .$playlistTagId."'";
-                $this->logger->addError($errorLog);
-                throw new \Exception($errorLog);
-            }
+            throw new \Exception();
         }
         $pyOut = exec('python insertInToList.py --videoid '.$youtube->getYoutubeId().' --playlistid '.$playlistId, $output, $return_var);
         chdir($dcurrent);
         $out = json_decode($pyOut, true);
         if ($out['error']) {
             $errorLog = __CLASS__.' ['.__FUNCTION__
-              ."] Error in moving the Multimedia Object '".$multimediaObject->getId()
+                       ."] Error in moving the Multimedia Object '".$multimediaObject->getId()
               ."' to Youtube playlist with id '".$playlistId."': ".$out['error_out'];
             $this->logger->addError($errorLog);
             throw new \Exception($errorLog);
@@ -478,16 +454,11 @@ class YoutubeService
      */
     public function updateAllPlaylistsRelations()
     {
-        $playlistMetaTag = $this->tagRepo->findOneByCod($this->METATAG_PLAYLIST_COD);
-        if( !isset($playlistMetaTag)){
-            $errorLog = sprintf('%s [%s] Error! The METATAG_PLAYLIST with cod:%s for YOUTUBE doesn\'t exist! \n Did you load the tag and set the correct cod in parameters.yml?', __CLASS__, __FUNCTION__, $this->METATAG_PLAYLIST_COD);
-            $this->logger->addError($errorLog);
-            throw new \Exception($errorLog);
-        }
-
+        $playlistMetaTag = $this->getPlaylistMetaTag();
         $allPlaylistTags = $playlistMetaTag->getChildren();
         $allYoutubePlaylists = $this->getAllYoutubePlaylists();//Returns array with all neccessary, list(['id','title'])
-
+        //REFACTOR THIS ARRAY_MAP >>
+        $allYoutubePlaylistsIds = array_map( function($n) { return $n['id'];},$allYoutubePlaylists);
         $master = $this->PLAYLISTS_MASTER;
         $allTagsYtId = array();
 
@@ -495,7 +466,7 @@ class YoutubeService
             $ytPlaylistId = $tag->getProperty('youtube');
             $allTagsYtId[] = $ytPlaylistId;
             if( $ytPlaylistId === null
-                        ||!in_array($ytPlaylistId, $allYoutubePlaylists)){ //If a playlist on PuMuKIT doesn't exist on Youtube, create it.
+                        ||!in_array($ytPlaylistId, $allYoutubePlaylistsIds)){ //If a playlist on PuMuKIT doesn't exist on Youtube, create it.
                 if($master == 'pumukit') {
                     $this->createYoutubePlaylist($tag);
                 }
@@ -526,31 +497,127 @@ class YoutubeService
     }
 
 
-    //TODO HELPERS:
-    private function createYoutubePlaylist(Tag $tag, $youtubePlaylist=null)
+
+    /**
+     * Creates a new playlist in Youtube using the 'tag' metadata
+     *
+     * @param Tag $tag
+     */
+    private function createYoutubePlaylist(Tag $tag)
     {
-        echo "create On Youtube: ".$tag->getTitle();
+        echo "\ncreate On Youtube: ".$tag->getTitle();
+        $command = sprintf('python createPlaylist.py --title "%s" --privacyStatus "%s"', $tag->getTitle(), $this->playlistPrivacyStatus);
+        
+        $dcurrent = getcwd();
+        chdir($this->pythonDirectory);
+        $pyOut = exec($command, $output, $return_var);
+        chdir($dcurrent);
+        $out = json_decode($pyOut, true);
+        if ($out['error']) {
+            $errorLog = sprintf('%s [%s] Error in creating in Youtube the playlist from tag with id %s: %s', __CLASS__, __FUNCTION__, $tag->getId(), $out['error_out']);
+            $this->logger->addError($errorLog);
+            throw new \Exception($errorLog);
+        } elseif ($out['out'] != null) {
+            $infoLog = sprintf('%s [%s] Created Youtube Playlist %s for Tag with id %s',__CLASS__, __FUNCTION__, $out['out'], $tag->getId());
+            $this->logger->addInfo($infoLog);
+            $playlistId = $out['out'];
+            $tag->setProperty('youtube', $playlistId);
+            $tag->setProperty('customfield', 'youtube:text');
+            $this->dm->persist($tag);
+            $this->dm->flush();
+        } else {
+            $errorLog = sprintf('%s [%s] Error! Creating the playlist from tag with id %s', __CLASS__, __FUNCTION__, $tag->getId());
+            $this->logger->addError($errorLog);
+            throw new \Exception($errorLog);
+        }
     }
+
+
+    /**
+     * Creates a new playlist in PuMuKIT using the 'youtubePlaylist' data. Returns the tag created if successful.
+     *
+     * @param array $youtubePlaylist
+     * string $youtubePlaylist['id'] = id of the playlist on youtube.
+     * string $youtubePlaylist['title'] = title of the playlist on youtube.
+     *
+     * @return Tag
+     */
     private function createPumukitPlaylist($youtubePlaylist)
     {
-        echo "create On Pumukit: ".$youtubePlaylist['title'];
+        echo "\ncreate On Pumukit: ".$youtubePlaylist['title'];
+        $metatag = $this->getPlaylistMetaTag();
+        $tag = new Tag($youtubePlaylist['title']);
+        $tag->setCod($youtubePlaylist['id']);
+        $tag->setTitle($youtubePlaylist['title']);
+        $tag->setDescription('Tag playlist generated automatically from youtube. Do not edit.');
+        $tag->setProperty('youtube', $youtubePlaylist['id']);
+        $tag->setProperty('customfield', 'youtube:text');
+        $tag->setParent($metatag);
+        $this->dm->persist($tag);
+        $this->dm->flush();
+        return $tag;
     }
+
+
+    /**
+     * Deletes an existing playlist on Youtube given a playlist object.
+     *
+     * @param array $youtubePlaylist
+     * string $youtubePlaylist['id'] = id of the playlist on youtube.
+     * string $youtubePlaylist['title'] = title of the playlist on youtube. 
+     */
     private function deleteYoutubePlaylist($youtubePlaylist)
     {
-        echo "delete On Youtube: ".$youtubePlaylist['title'];
+        echo "\ndelete On Youtube: ".$youtubePlaylist['title'];
+        $command = sprintf('python deletePlaylist.py --playlistid "%s" ', $youtubePlaylist['id'] );
+        $dcurrent = getcwd();
+        chdir($this->pythonDirectory);
+        $pyOut = exec($command, $output, $return_var);
+        chdir($dcurrent);
+        $out = json_decode($pyOut, true);
+        if( !isset($out['out']) 
+            && $out['error_out']['code'] != '404') {
+            $errorLog = sprintf('%s [%s] Error in deleting in Youtube the playlist with id %s: %s', __CLASS__, __FUNCTION__, $youtubePlaylist['id'], $out['error_out']);
+            $this->logger->addError($errorLog);
+            throw new \Exception($errorLog);
+        }
+        $infoLog = sprintf('%s [%s] Deleted Youtube Playlist with id %s',__CLASS__, __FUNCTION__,  $youtubePlaylist['id']);
+        $this->logger->addInfo($infoLog);
     }
+
+    /**
+     * Deletes an existing playlist on PuMuKIT. Takes care of deleting all relations left by this tag.
+     *
+     * @param Tag $tag
+     */
     private function deletePumukitPlaylist(Tag $tag)
     {
-        echo "delete On Pumukit: ".$tag->getTitle();
+        echo "\ndelete On Pumukit: ".$tag->getTitle();
+        $multimediaObjects = $this->mmobjRepo->findWithTag($tag);
+        foreach($multimediaObjects as $mmobj){
+            $this->tagService->removeTagFromMultimediaObject($mmobj, $tag->getId());
+            $youtube = $this->youtubeRepo->findOneByMultimediaObjectId($mmobj->getId());
+            if(isset($youtube)){
+                $playlist = $youtube->getPlaylist($tag->getProperty('youtube'));
+                if(isset($playlist)){
+                    $youtube->removePlaylist($playlist->getId());
+                }
+            }
+        }
+        $this->dm->remove($tag);
+        $this->dm->flush();
     }
+
+    //TODO Update Scripts:
     private function updateYoutubePlaylist(Tag $tag)
     {
-        echo "update from Pumukit: ".$tag->getTitle();
+        echo "\nupdate from Pumukit: ".$tag->getTitle();
     }
     private function updatePumukitPlaylist(Tag $tag, $youtubePlaylist=null)
     {
-        echo "update from Youtube: ".$tag->getTitle();
+        echo "\nupdate from Youtube: ".$tag->getTitle();
     }
+    
 
     /**
      * Gets an array of 'playlists' with all youtube playlists data.
@@ -628,12 +695,7 @@ class YoutubeService
         if( isset($playlistTag) ){
             return $playlistTag;
         }
-        $metatagPlaylist = $this->tagRepo->findOneByCod($this->METATAG_PLAYLIST_COD);
-        if( !isset($metatagPlaylist)){
-            $errorLog = sprintf('%s [%s] Error! The METATAG_PLAYLIST with cod:%s for YOUTUBE doesn\'t exist! \n Did you load the tag and set the correct cod in parameters.yml?', __CLASS__, __FUNCTION__, $this->METATAG_PLAYLIST_COD);
-            $this->logger->addError($errorLog);
-            throw new \Exception($errorLog);
-        }
+        $metatagPlaylist = $this->getPlaylistMetaTag();
         $playlistTag = new Tag();
         $playlistTag->setParent( $metatagPlaylist );
         $playlistTag->setCod($this->DEFAULT_PLAYLIST_COD);
@@ -642,7 +704,26 @@ class YoutubeService
         $this->dm->flush();
         return $playlistTag;
     }
+    /**
+     * Returns the metaTag for youtube playlists.
+     *
+     * @return Tag
+     */
+    private function getPlaylistMetaTag() 
+    {
+        static $metatag;
+        if(isset($metatag)){
+            return $metatag
+        }
 
+        $metatag = $this->tagRepo->findOneByCod($this->METATAG_PLAYLIST_COD);
+        if( !isset($metatag)){
+            $errorLog = sprintf('%s [%s] Error! The METATAG_PLAYLIST with cod:%s for YOUTUBE doesn\'t exist! \n Did you load the tag and set the correct cod in parameters.yml?', __CLASS__, __FUNCTION__, $this->METATAG_PLAYLIST_COD);
+            $this->logger->addError($errorLog);
+            throw new \Exception($errorLog);
+        }
+        return $metatag;
+    }
     /**
      * Returns a Tag whose youtube property 'youtube' has a $playlistId value.
      *
