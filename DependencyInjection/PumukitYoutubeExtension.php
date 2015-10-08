@@ -48,6 +48,10 @@ class PumukitYoutubeExtension extends Extension implements PrependExtensionInter
         $container->setParameter('pumukit_youtube.metatag_playlist_cod', $config['metatag_playlist_cod']);
         $container->setParameter('pumukit_youtube.playlists_master', $config['playlists_master']);
         $container->setParameter('pumukit_youtube.delete_playlists', $config['delete_playlists']);
+        $container->setParameter('pumukit_youtube.locale', $config['locale']);
+        $container->setParameter('pumukit_youtube.pub_channels_tags', $config['pub_channels_tags']);
+
+
 
         $loader = new Loader\XmlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
         $loader->load('services.xml');

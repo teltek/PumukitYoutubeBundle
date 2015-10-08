@@ -52,6 +52,15 @@ class Configuration implements ConfigurationInterface
               ->defaultValue('false')
               ->info('Variable that configures whether playlists that are not on the master(pumukit) are deleted on the slave(youtube) or not.  - default:false')
             ->end()
+            ->scalarNode('locale')
+              ->defaultValue('en')
+              ->info('Locale for pumukit metadata uploaded to youtube. -default : en')
+            ->end()
+            ->arrayNode('pub_channels_tags')
+              ->prototype('scalar')->end()
+              ->defaultValue(array('PUCHYOUTUBE'))
+              ->info("caca")
+            ->end()
           ->end();
 
         return $treeBuilder;

@@ -28,6 +28,7 @@ class YoutubeService
     private $mmobjRepo;
     private $pythonDirectory;
     private $playlistPrivacyStatus;
+    private $ytLocale;
     private $USE_DEFAULT_PLAYLIST;
     private $DEFAULT_PLAYLIST_COD;
     private $DEFAULT_PLAYLIST_TITLE;
@@ -35,7 +36,7 @@ class YoutubeService
     private $PLAYLISTS_MASTER;
     private $DELETE_PLAYLISTS;
 
-    public function __construct(DocumentManager $documentManager, Router $router, TagService $tagService, LoggerInterface $logger, SenderService $senderService, TranslatorInterface $translator, $playlistPrivacyStatus, $useDefaultPlaylist, $defaultPlaylistCod, $defaultPlaylistTitle, $metatagPlaylistCod, $playlistMaster, $deletePlaylists)
+    public function __construct(DocumentManager $documentManager, Router $router, TagService $tagService, LoggerInterface $logger, SenderService $senderService, TranslatorInterface $translator, $playlistPrivacyStatus, $locale, $useDefaultPlaylist, $defaultPlaylistCod, $defaultPlaylistTitle, $metatagPlaylistCod, $playlistMaster, $deletePlaylists, $pumukitLocales)
     {
         $this->dm = $documentManager;
         $this->router = $router;
@@ -48,12 +49,18 @@ class YoutubeService
         $this->mmobjRepo = $this->dm->getRepository('PumukitSchemaBundle:MultimediaObject');
         $this->pythonDirectory = __DIR__.'/../Resources/data/pyPumukit';
         $this->playlistPrivacyStatus = $playlistPrivacyStatus;
+        $this->ytLocale = $locale;
         $this->USE_DEFAULT_PLAYLIST = $useDefaultPlaylist;
         $this->DEFAULT_PLAYLIST_COD = $defaultPlaylistCod;
         $this->DEFAULT_PLAYLIST_TITLE = $defaultPlaylistTitle;
         $this->METATAG_PLAYLIST_COD = $metatagPlaylistCod;
         $this->PLAYLISTS_MASTER = $playlistMaster;
         $this->DELETE_PLAYLISTS = $deletePlaylists;
+
+        if(!in_array($this->ytLocale, $pumukitLocales)){
+            $this->ytLocale = $translator->getLocale();
+            echo "WOOOOO";
+        }
     }
 
     /**
@@ -501,8 +508,8 @@ class YoutubeService
      */
     private function createYoutubePlaylist(Tag $tag)
     {
-        echo "\ncreate On Youtube: ".$tag->getTitle();
-        $command = sprintf('python createPlaylist.py --title "%s" --privacyStatus "%s"', $tag->getTitle(), $this->playlistPrivacyStatus);
+        echo "\ncreate On Youtube: ".$tag->getTitle($this->ytLocale);
+        $command = sprintf('python createPlaylist.py --title "%s" --privacyStatus "%s"', $tag->getTitle($this->ytLocale), $this->playlistPrivacyStatus);
 
         $dcurrent = getcwd();
         chdir($this->pythonDirectory);
@@ -587,7 +594,7 @@ class YoutubeService
      */
     private function deletePumukitPlaylist(Tag $tag)
     {
-        echo "\ndelete On Pumukit: ".$tag->getTitle();
+        echo "\ndelete On Pumukit: ".$tag->getTitle($this->ytLocale);
         $multimediaObjects = $this->mmobjRepo->findWithTag($tag);
         foreach ($multimediaObjects as $mmobj) {
             $this->tagService->removeTagFromMultimediaObject($mmobj, $tag->getId());
@@ -606,11 +613,11 @@ class YoutubeService
     //TODO Update Scripts:
     private function updateYoutubePlaylist(Tag $tag)
     {
-        echo "\nupdate from Pumukit: ".$tag->getTitle();
+        echo "\nupdate from Pumukit: ".$tag->getTitle($this->ytLocale);
     }
     private function updatePumukitPlaylist(Tag $tag, $youtubePlaylist = null)
     {
-        echo "\nupdate from Youtube: ".$tag->getTitle();
+        echo "\nupdate from Youtube: ".$tag->getTitle($this->ytLocale);
     }
 
     /**
@@ -790,7 +797,7 @@ class YoutubeService
                 $body = $body.'<br/>The following videos were '.$cause.(substr($cause, -1) === 'e') ? '' : 'e'.'d to Youtube:<br/>';
                 foreach ($succeed as $mm) {
                     if ($mm instanceof MultimediaObject) {
-                        $body = $body.'<br/> -'.$mm->getId().': '.$mm->getTitle().' '.$this->router->generate('pumukit_webtv_multimediaobject_index', array('id' => $mm->getId()), true);
+                        $body = $body.'<br/> -'.$mm->getId().': '.$mm->getTitle($this->ytLocale).' '.$this->router->generate('pumukit_webtv_multimediaobject_index', array('id' => $mm->getId()), true);
                     } elseif ($mm instanceof Youtube) {
                         $body = $body.'<br/> -'.$mm->getId().': '.$mm->getLink();
                     }
@@ -801,7 +808,7 @@ class YoutubeService
             $body = $body.'<br/>The '.$cause.' of the following videos has failed:<br/>';
             foreach ($failed as $key => $mm) {
                 if ($mm instanceof MultimediaObject) {
-                    $body = $body.'<br/> -'.$mm->getId().': '.$mm->getTitle().'<br/>';
+                    $body = $body.'<br/> -'.$mm->getId().': '.$mm->getTitle($this->ytLocale).'<br/>';
                 } elseif ($mm instanceof Youtube) {
                     $body = $body.'<br/> -'.$mm->getId().': '.$mm->getLink();
                 }
@@ -822,21 +829,21 @@ class YoutubeService
             $youtube = $succeed['youtube'];
             if ($cause === 'finished publication') {
                 if ($multimediaObject instanceof MultimediaObject) {
-                    $body = $body.'<br/>The video "'.$multimediaObject->getTitle().'" has been successfully published into YouTube.<br/>';
+                    $body = $body.'<br/>The video "'.$multimediaObject->getTitle($this->ytLocale).'" has been successfully published into YouTube.<br/>';
                 }
                 if ($youtube instanceof Youtube) {
                     $body = $body.'<br/>'.$youtube->getLink().'<br/>';
                 }
             } elseif ($cause === 'status removed') {
                 if ($multimediaObject instanceof MultimediaObject) {
-                    $body = $body.'<br/>The following video has been removed from YouTube: "'.$multimediaObject->getTitle().'"<br/>';
+                    $body = $body.'<br/>The following video has been removed from YouTube: "'.$multimediaObject->getTitle($this->ytLocale).'"<br/>';
                 }
                 if ($youtube instanceof Youtube) {
                     $body = $body.'<br/>'.$youtube->getLink().'<br/>';
                 }
             } elseif ($cause === 'duplicated') {
                 if ($multimediaObject instanceof MultimediaObject) {
-                    $body = $body.'<br/>YouTube has rejected the upload of the video: "'.$multimediaObject->getTitle().'"</br>';
+                    $body = $body.'<br/>YouTube has rejected the upload of the video: "'.$multimediaObject->getTitle($this->ytLocale).'"</br>';
                     $body = $body.'because it has been published previously.<br/>';
                 }
                 if ($youtube instanceof Youtube) {
@@ -862,7 +869,7 @@ class YoutubeService
      */
     private function getTitleForYoutube(MultimediaObject $multimediaObject)
     {
-        $title = $multimediaObject->getTitle();
+        $title = $multimediaObject->getTitle($this->ytLocale);
 
         if (strlen($title) > 60) {
             while (strlen($title) > 55) {
@@ -877,7 +884,7 @@ class YoutubeService
         while (strlen($title) > 55) {
             $title = substr($title, 0, strrpos($title, ' '));
         }
-        if (strlen($multimediaObject->getTitle()) > 55) {
+        if (strlen($multimediaObject->getTitle($this->ytLocale)) > 55) {
             $title = $title.'(...)';
         }
 
@@ -892,7 +899,7 @@ class YoutubeService
         $appInfoLink = $this->router->generate('pumukit_webtv_multimediaobject_index', array('id' => $multimediaObject->getId()), true);
         $series = $multimediaObject->getSeries();
         $break = array('<br />', '<br/>');
-        $description = strip_tags($series->getTitle().' - '.$multimediaObject->getTitle()."\n".$multimediaObject->getSubtitle()."\n".str_replace($break, "\n", $multimediaObject->getDescription()).'<br /> Video available at: '.$appInfoLink);
+        $description = strip_tags($series->getTitle($this->ytLocale).' - '.$multimediaObject->getTitle($this->ytLocale)."\n".$multimediaObject->getSubtitle()."\n".str_replace($break, "\n", $multimediaObject->getDescription($this->ytLocale)).'<br /> Video available at: '.$appInfoLink);
 
         return $description;
     }
