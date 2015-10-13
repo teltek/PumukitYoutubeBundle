@@ -1,3 +1,4 @@
-pumukityoutube_modal:
-    resource: @PumukitYoutubeBundle/Resources/config/routes/modal.yml
-    prefix: /youtube/modal
+pumukit_youtube_bundle:
+    resource: "@PumukitYoutubeBundle/Controller/"
+    type:     annotation
+    prefix:   /admin/youtube

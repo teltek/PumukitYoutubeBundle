@@ -1,5 +1,0 @@
-pumukityoutube_modal_index:
-    pattern: /
-    methods: [GET]
-    defaults:
-        _controller: PumukitYoutubeBundle:Modal:index
