@@ -755,7 +755,7 @@ class YoutubeService
      */
     public function sendEmail($cause = '', $succeed = array(), $failed = array(), $errors = array())
     {
-        if ($this->senderService->isEnabled()) {
+        if ($this->senderService && $this->senderService->isEnabled()) {
             $subject = $this->buildEmailSubject($cause);
             $body = $this->buildEmailBody($cause, $succeed, $failed, $errors);
             if ($body) {

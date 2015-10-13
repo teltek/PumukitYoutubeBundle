@@ -41,8 +41,7 @@ class YoutubeServiceTest extends WebTestCase
           ->get('logger');
         $this->factoryService = $kernel->getContainer()
           ->get('pumukitschema.factory');
-        $this->notificationSender = $kernel->getContainer()
-          ->get('pumukit_notification.sender');
+        $this->notificationSender = null;
         $this->translator = $kernel->getContainer()
           ->get('translator');
         $this->playlistPrivacyStatus = $kernel->getContainer()
