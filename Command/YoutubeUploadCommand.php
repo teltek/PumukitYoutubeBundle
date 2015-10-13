@@ -26,9 +26,6 @@ class YoutubeUploadCommand extends ContainerAwareCommand
 
     private $logger;
     private $youtubeService;
-    private $senderService;
-    private $translator;
-    private $router;
 
     private $okUploads = array();
     private $failedUploads = array();
@@ -78,9 +75,6 @@ EOT
 
         $container = $this->getContainer();
         $this->youtubeService = $container->get('pumukityoutube.youtube');
-        $this->senderService = $container->get('pumukit_notification.sender');
-        $this->translator = $container->get('translator');
-        $this->router = $container->get('router');
         $this->logger = $container->get('monolog.logger.youtube');
 
         $this->okUploads = array();
