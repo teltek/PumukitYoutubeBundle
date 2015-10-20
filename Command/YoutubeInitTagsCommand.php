@@ -41,11 +41,9 @@ EOT
             $youtubePlaylistTag = $this->createTagWithCode('YOUTUBE', 'YouTube Playlists', 'ROOT', true);
             $output->writeln('Tag persisted - new id: '.$youtubePlaylistTag->getId().' cod: '.$youtubePlaylistTag->getCod());
         } else {
-            $output->writeln('<error>ATTENTION:</error> This operation should not be executed in a production environment.');
+            $output->writeln('<error>ATTENTION:</error> This operation should not be executed in a production environment without backup.');
             $output->writeln('');
-            $output->writeln('<info>Would drop the database</info>');
             $output->writeln('Please run the operation with --force to execute.');
-            $output->writeln('<error>All data will be lost!</error>');
 
             return -1;
         }
