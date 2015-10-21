@@ -59,7 +59,7 @@ class Configuration implements ConfigurationInterface
             ->arrayNode('pub_channels_tags')
               ->prototype('scalar')->end()
               ->defaultValue(array('PUCHYOUTUBE'))
-              ->info("caca")
+              ->info("Tags necessary as a condition to be published on YouTube.")
             ->end()
           ->end();
 
