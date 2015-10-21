@@ -30,24 +30,26 @@ class ModalController extends Controller
             case Youtube::STATUS_DEFAULT:
             case Youtube::STATUS_UPLOADING:
             case Youtube::STATUS_PROCESSING:
-            $youtubeStatus = 'proccessing';
-            break;
+                $youtubeStatus = 'proccessing';
+                break;
             case Youtube::STATUS_PUBLISHED:
-            $youtubeStatus = 'published';
-            break;
+                $youtubeStatus = 'published';
+                break;
             case Youtube::STATUS_HTTP_ERROR:
             case Youtube::STATUS_ERROR:
             case Youtube::STATUS_UPDATE_ERROR:
             case Youtube::STATUS_DUPLICATED:
-            $youtubeStatus = 'error';
-            break;
+                $youtubeStatus = 'error';
+                break;
             case Youtube::STATUS_REMOVED:
-            $youtubeStatus = 'removed';
-            break;
+                $youtubeStatus = 'removed';
+                break;
             case Youtube::STATUS_NOTIFIED_ERROR:
+                $youtubeStatus = 'notified error';
+                break;
             case Youtube::STATUS_TO_DELETE:
-            $youtubeStatus = 'caca?';
-            break;
+                $youtubeStatus = 'to delete';
+                break;
         }
 
         return array('mm' => $mm, 'youtube' => $youtube, 'youtube_status' => $youtubeStatus);
