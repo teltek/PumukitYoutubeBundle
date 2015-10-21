@@ -21,16 +21,16 @@ class PumukitYoutubeExtension extends Extension implements PrependExtensionInter
     public function prepend(ContainerBuilder $container)
     {
         $container->prependExtensionConfig('monolog', array(
-                                                            'channels' => array('youtube'),
-                                                            'handlers' => array(
-                                                                                'youtube' => array(
-                                                                                                   'type' => 'stream',
-                                                                                                   'path' => "%kernel.logs_dir%/youtube_%kernel.environment%.log",
-                                                                                                   'level' => 'info',
-                                                                                                   'channels' => array('youtube')
-                                                                                                   )
-                                                                                )
-                                                            ));
+            'channels' => array('youtube'),
+            'handlers' => array(
+                'youtube' => array(
+                    'type' => 'stream',
+                    'path' => "%kernel.logs_dir%/youtube_%kernel.environment%.log",
+                    'level' => 'info',
+                    'channels' => array('youtube')
+                )
+            )
+        ));
     }
 
     /**
@@ -38,7 +38,7 @@ class PumukitYoutubeExtension extends Extension implements PrependExtensionInter
      */
     public function load(array $configs, ContainerBuilder $container)
     {
-        $configuration = new Configuration();
+        $configuration = new Configuration($container->getParameter('locale'));
         $config = $this->processConfiguration($configuration, $configs);
 
         $container->setParameter('pumukit_youtube.playlist_privacy_status', $config['playlist_privacy_status']);
@@ -51,9 +51,15 @@ class PumukitYoutubeExtension extends Extension implements PrependExtensionInter
         $container->setParameter('pumukit_youtube.locale', $config['locale']);
         $container->setParameter('pumukit_youtube.pub_channels_tags', $config['pub_channels_tags']);
 
-
-
         $loader = new Loader\XmlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
         $loader->load('services.xml');
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getConfiguration(array $config, ContainerBuilder $container)
+    {
+        return new Configuration($container->getParameter('locale'));
     }
 }
