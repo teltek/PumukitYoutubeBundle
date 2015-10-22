@@ -33,11 +33,24 @@ $ composer require teltek/pmk2-youtube-bundle dev-master
 Step 3: Install the Bundle
 --------------------------
 
-Install the bundle by executing the following line command. This command updates the Kernel to enable the bundle (app/AppKernel.php) and loads the routing (app/config/routing.yml) to add the bundle routes\
-\
-.
+Install the bundle by executing the following line command. This command updates the Kernel to enable the bundle (app/AppKernel.php) and loads the routing (app/config/routing.yml) to add the bundle routes.
 
 ```bash
 $ cd /path/to/pumukit2/
 $ php app/console pumukit:install:bundle Pumukit/YoutubeBundle/PumukitYoutubeBundle
 ```
+
+Step 4: Install dependencies
+----------------------------
+
+This bundle needs Python libraries to work. Install them by executing:
+
+```bash
+$ sudo apt-get install python python-setuptools python-argparse python-pip python-gflags
+$ sudo pip install google-api-python-client==1.2
+```
+
+Step 5: Configure the bundle
+----------------------------
+
+Follow the steps at [Configuration Guide](https://gitlab.teltek.es/pumukit2/pumukityoutubebundle/blob/master/Resources/doc/ConfigurationGuide.md).
