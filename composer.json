@@ -18,10 +18,5 @@
         "psr-4": {
             "Pumukit\\YoutubeBundle\\": ""
         }
-    },
-    "extra": {
-        "branch-alias": {
-            "dev-master": "8127-make-youtube-generic"
-        }
     }
 }
