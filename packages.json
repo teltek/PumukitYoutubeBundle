@@ -1,9 +1,0 @@
-{
-    "packages": {
-        "teltek/pmk2-youtube-bundle": {
-            "dev-master": { @composer.json },
-            "1.1.x-dev": { @composer.json },
-            "1.0.x-dev": { @composer.json }
-        }
-    }
-}
