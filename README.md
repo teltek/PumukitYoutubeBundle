@@ -6,6 +6,10 @@ For contribution to the documentation you can find it on [Resources/doc](Resourc
 Installation
 ============
 
+Before installing this bundle, check you have installed and enabled NotificationBundle:
+
+[https://github.com/campusdomar/PuMuKIT2/blob/2.1.x/src/Pumukit/NotificationBundle/Resources/doc/AdminGuide.md](https://github.com/campusdomar/PuMuKIT2/blob/2.1.x/src/Pumukit/NotificationBundle/Resources/doc/AdminGuide.md)
+
 Steps 1 and 2 requires you to have Composer installed globally, as explained
 in the [installation chapter](https://getcomposer.org/doc/00-intro.md)
 of the Composer documentation.
@@ -50,7 +54,15 @@ $ sudo apt-get install python python-setuptools python-argparse python-pip pytho
 $ sudo pip install google-api-python-client==1.2
 ```
 
-Step 5: Configure the bundle
+Step 5: Init Youtube tags
+-------------------------
+
+```bash
+$ cd /path/to/pumukit
+$ php app/console pumukit:init:tags --force
+```
+
+Step 6: Configure the bundle
 ----------------------------
 
 Follow the steps at [Configuration Guide](https://gitlab.teltek.es/pumukit2/pumukityoutubebundle/blob/master/Resources/doc/ConfigurationGuide.md).
