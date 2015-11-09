@@ -59,7 +59,7 @@ Step 5: Init Youtube tags
 
 ```bash
 $ cd /path/to/pumukit
-$ php app/console pumukit:init:tags --force
+$ php app/console youtube:init:tags --force
 ```
 
 Step 6: Configure the bundle
