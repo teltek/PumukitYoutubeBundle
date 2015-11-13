@@ -1,8 +1,5 @@
-Youtube Bundle
-==============
-
-Configuration
--------------
+Configuration Guide
+===================
 
 ### Create account for uploading Pumukit videos to Youtube
 
@@ -15,6 +12,13 @@ https://developers.google.com/accounts/docs/OAuth2
 For more information about the client_secrets.json file format, please visit:
 https://developers.google.com/api-client-library/python/guide/aaa_client_secrets
 Please ensure that you have enabled the YouTube Data API for your project.
+
+After the installation of this bundle, it should be placed on:
+
+```
+cd /path/to/pumukit2/
+cd vendor/teltek/pmk2-youtube-bundle/
+```
 
 Go to Resources/data/pyPumukit and create the file:
 
@@ -42,11 +46,13 @@ You will have a client_secrets.json file like this placed in Resources/data/pyPu
 ```
 
 #### Install necessary libraries:
+
 ```
 sudo apt-get install python python-setuptools python-argparse python-pip python-gflags
 ```
 
 #### Install Google API Python Client modifying library:
+
 ```
 cd /tmp
 wget https://google-api-python-client.googlecode.com/files/google-api-python-client-1.2.zip
@@ -58,37 +64,69 @@ python setup.py install
 ```
 
 #### Create credential file executing script:
+
 ```
-cd src/Pumukit/YoutubeBundle/Resources/data/pyPumukit
+cd /path/to/pumukit2/
+cd vendor/teltek/pmk2-youtube-bundle/
+cd Resources/data/pyPumukit
 python createAccount.py
 ```
 
 This script launches the login page for acepting the access to our account. We should be logged in to the Youtube account used for publication. Otherwise, the script will launch first the loggin page for credentials. If the script doesn't launch the web page, copy the url given, paste it on a web explorer, login with your account, copy the key given and paste it on the script prompt.
 
-Once acepted the access, an oauth2.json file will be created in Resources/data/pyPumukit. We should rename it to pumukit-oauth2.json.
+Once acepted the access, an oauth2.json file will be created in Resources/data. We should rename it to pumukit-oauth2.json.
 
 ```
 mv oauth2.json pumukit-oauth2.json
 ```
 
 #### Undo modifications:
+
 ```
 cd /tmp
 sed -i "s/gflags.DEFINE_boolean('auth_local_webserver', False/gflags.DEFINE_boolean('auth_local_webserver', True/g" build/oauth2client/old_run.py
 sed -i "s/gflags.DEFINE_boolean('auth_local_webserver', False/gflags.DEFINE_boolean('auth_local_webserver', True/g" oauth2client/old_run.py
 ```
 
-#### Configure your host in `app/config/parameters.yml`
+### Configure your host in `app/config/parameters.yml`
+
 ```
 parameters:
     router.request_context.host: example.org
     router.request_context.scheme: https
 ```
 
-#### [OPTIONAL] Configure the privacy creation of playlists in `app/config/parameters.yml`
+### [OPTIONAL] Configure the privacy creation of playlists in `app/config/parameters.yml`
+
 ```
 pumukit_youtube:
     playlist_privacy_status: private
 ```
 
 If this parameter is not configured, the playlists will be created as public.
+
+
+### Clear cache
+
+```
+cd /path/to/pumukit2/
+php app/console cache:clear
+php app/console cache:clear --env=prod
+```
+
+### Configure cron to execute Youtube commands
+
+```
+sudo crontab -e
+```
+
+The recommendation on a development environment is to run commands every minute.
+The recommendation on a production environment is to run commands every day, e.g.: every day at time 23:40.
+
+```
+40 23 * * *     /usr/bin/php /var/www/pumukit2/app/console youtube:update:metadata --env=prod
+40 23 * * *     /usr/bin/php /var/www/pumukit2/app/console youtube:update:playlist --env=prod
+40 23 * * *     /usr/bin/php /var/www/pumukit2/app/console youtube:update:status --env=prod
+40 23 * * *     /usr/bin/php /var/www/pumukit2/app/console youtube:upload --env=prod
+40 23 * * *     /usr/bin/php /var/www/pumukit2/app/console youtube:delete --env=prod
+```
