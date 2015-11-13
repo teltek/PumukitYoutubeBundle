@@ -14,14 +14,14 @@ Steps 1 and 2 requires you to have Composer installed globally, as explained
 in the [installation chapter](https://getcomposer.org/doc/00-intro.md)
 of the Composer documentation.
 
-Setp 1: Introduce repository in the root project composer.json
+Step 1: Introduce repository in the root project composer.json
 ---------------------------------------------------------
 
 Open a command console, enter your project directory and execute the
 following command to add this repo:
 
 ```bash
-$ composer config repositories.pumukityoutubebundle vcs http://gitlab.teltek.es/pumukit2/pumukityoutubebundle.git
+$ composer config repositories.pumukityoutubebundle vcs https://github.com/teltek/PuMuKIT2-youtube-bundle
 ```
 
 Step 2: Download the Bundle
@@ -65,4 +65,4 @@ $ php app/console youtube:init:tags --force
 Step 6: Configure the bundle
 ----------------------------
 
-Follow the steps at [Configuration Guide](https://gitlab.teltek.es/pumukit2/pumukityoutubebundle/blob/master/Resources/doc/ConfigurationGuide.md).
+Follow the steps at [Configuration Guide](https://github.com/teltek/PuMuKIT2-youtube-bundle/blob/master/Resources/doc/ConfigurationGuide.md).
