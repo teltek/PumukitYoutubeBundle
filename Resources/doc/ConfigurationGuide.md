@@ -1,6 +1,8 @@
 Configuration Guide
 ===================
 
+*This page is updated to the 2.1.0*
+
 ### Create account for uploading Pumukit videos to Youtube
 
 #### Create client_secrets.json file:
