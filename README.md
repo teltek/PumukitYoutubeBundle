@@ -14,7 +14,7 @@ Steps 1 and 2 requires you to have Composer installed globally, as explained
 in the [installation chapter](https://getcomposer.org/doc/00-intro.md)
 of the Composer documentation.
 
-Setp 1: Introduce repository in the root project composer.json
+Step 1: Introduce repository in the root project composer.json
 ---------------------------------------------------------
 
 Open a command console, enter your project directory and execute the
