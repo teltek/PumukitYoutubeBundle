@@ -3,9 +3,10 @@ Installation Guide
 
 *This page is updated to the PuMuKIT 2.1.0*
 
-Before installing this bundle, check you have installed and enabled NotificationBundle:
+Requirements
+------------
 
-[https://github.com/campusdomar/PuMuKIT2/blob/2.1.x/src/Pumukit/NotificationBundle/Resources/doc/AdminGuide.md](https://github.com/campusdomar/PuMuKIT2/blob/2.1.x/src/Pumukit/NotificationBundle/Resources/doc/AdminGuide.md)
+Before installing this bundle, check you have installed and enabled [NotificationBundle](https://github.com/campusdomar/PuMuKIT2/blob/2.1.x/src/Pumukit/NotificationBundle/Resources/doc/AdminGuide.md).
 
 Steps 1 and 2 requires you to have Composer installed globally, as explained
 in the [installation chapter](https://getcomposer.org/doc/00-intro.md)
