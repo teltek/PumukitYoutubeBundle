@@ -14,3 +14,15 @@ For contribution to the documentation you can find it on [Resources/doc](Resourc
 
 1. [Installation Guide](Resources/doc/InstallationGuide.md)
 2. [Configuration Guide](Resources/doc/ConfigurationGuide.md)
+
+
+With thanks to
+--------------
+
+We would like to thank to the [University of the Basque Country](http://www.ehu.eus/en/en-home)
+for their initial contributions.
+
+We would also like to thank to the [Universidade de Vigo](http://uvigo.es/uvigo_en/index.html),
+[Campus do Mar](http://campusdomar.es/en/) and to the
+[Universidad Nacional de Educación a Distancia](http://www.uned.es/) for all the improvements
+contributed into this project.
