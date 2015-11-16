@@ -1,7 +1,7 @@
 Configuration Guide
 ===================
 
-*This page is updated to the 1.0.x and to the PuMuKIT 2.1.0*
+*This page is updated to the PuMuKIT2-youtube-bundle 1.0.0 and to the PuMuKIT 2.1.0*
 
 ### Create account for uploading Pumukit videos to Youtube
 
