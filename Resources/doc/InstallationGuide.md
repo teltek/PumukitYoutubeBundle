@@ -1,7 +1,7 @@
 Installation Guide
 ==================
 
-*This page is updated to the PuMuKIT 2.1.0*
+*This page is updated to the PuMuKIT2-youtube-bundle 8127-make-youtube-generic and to the PuMuKIT 2.1.0*
 
 Requirements
 ------------

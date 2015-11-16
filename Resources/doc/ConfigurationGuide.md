@@ -1,7 +1,7 @@
 Configuration Guide
 ===================
 
-*This page is updated to the PuMuKIT 2.1.0*
+*This page is updated to the PuMuKIT2-youtube-bundle 8127-make-youtube-generic and to the PuMuKIT 2.1.0*
 
 ### Create account for uploading Pumukit videos to Youtube
 
@@ -116,7 +116,9 @@ php app/console cache:clear
 php app/console cache:clear --env=prod
 ```
 
-### Configure cron to execute Youtube commands
+### Configure cron
+
+Configure cron to synchronize PuMuKIT with Youtube. To do that, you need to add the following commands to the crontab file.
 
 ```
 sudo crontab -e
