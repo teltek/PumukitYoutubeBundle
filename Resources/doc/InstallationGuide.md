@@ -29,7 +29,7 @@ Open a command console, enter your project directory and execute the
 following command to download the latest stable version of this bundle:
 
 ```bash
-$ composer require teltek/pmk2-youtube-bundle 1.0.0
+$ composer require teltek/pmk2-youtube-bundle 1.0.x-dev
 ```
 
 Step 3: Install the Bundle
