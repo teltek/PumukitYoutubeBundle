@@ -1,7 +1,7 @@
 Installation Guide
 ==================
 
-*This page is updated to the PuMuKIT 2.1.0*
+*This page is updated to the 1.0.x and to the PuMuKIT 2.1.0*
 
 Requirements
 ------------
