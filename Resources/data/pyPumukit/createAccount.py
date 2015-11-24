@@ -13,7 +13,8 @@ from apiclient.errors import HttpError
 from apiclient.http import MediaFileUpload
 from oauth2client.file import Storage
 from oauth2client.client import flow_from_clientsecrets
-from oauth2client.tools import run
+from oauth2client.tools import run_flow
+from oauth2client.tools import argparser
 from optparse import OptionParser
 
 CLIENT_SECRETS_FILE = "client_secrets.json" 
@@ -28,4 +29,5 @@ credentials = storage.get()
 
 if credentials is None or credentials.invalid:
     print('No credentials, running authentication flow to get OAuth token')
-    credentials = run(flow, storage)
+    flags = argparser.parse_args(args=['--noauth_local_webserver'])
+    credentials = run_flow(flow, storage, flags)
