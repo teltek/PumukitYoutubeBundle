@@ -4,7 +4,7 @@ import httplib
 import httplib2
 import os
 import sys
-import simplejson as json
+import json
 
 from apiclient.discovery import build
 from apiclient.errors import HttpError
