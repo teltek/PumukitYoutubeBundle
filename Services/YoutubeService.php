@@ -106,10 +106,8 @@ class YoutubeService
             $youtube = new Youtube();
             $youtube->setMultimediaObjectId($multimediaObject->getId());
             $this->dm->persist($youtube);
-            $this->dm->flush();
             $multimediaObject->setProperty('youtube', $youtube->getId());
             $this->dm->persist($multimediaObject);
-            $this->dm->flush();
         } else {
             $youtube = $this->youtubeRepo->find($youtubeId);
         }
@@ -138,7 +136,7 @@ class YoutubeService
         if ($out['out']['status'] == 'uploaded') {
             $youtube->setStatus(Youtube::STATUS_PROCESSING);
         }
-
+        
         $code = $this->getEmbed($out['out']['id']);
         $youtube->setEmbed($code);
         $youtube->setForce($force);
@@ -344,6 +342,13 @@ class YoutubeService
         }
         $dcurrent = getcwd();
         chdir($this->pythonDirectory);
+        
+        if($youtube->getYoutubeId() === null) {
+            $errorLog = __CLASS__.' ['.__FUNCTION__
+                       ."] The object Youtube with id: ".$youtube->getId()." does not have a Youtube ID variable set.";
+            $this->logger->addError($errorLog);
+            throw new \Exception($errorLog);
+        }
         $pyOut = exec('python updateSatus.py --videoid '.$youtube->getYoutubeId(), $output, $return_var);
         chdir($dcurrent);
         $out = json_decode($pyOut, true);
