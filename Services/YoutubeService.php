@@ -344,6 +344,9 @@ class YoutubeService
         chdir($this->pythonDirectory);
         
         if($youtube->getYoutubeId() === null) {
+            $youtube->setStatus(Youtube::STATUS_ERROR);
+            $this->dm->persist($youtube);
+            $this->dm->flush();
             $errorLog = __CLASS__.' ['.__FUNCTION__
                        ."] The object Youtube with id: ".$youtube->getId()." does not have a Youtube ID variable set.";
             $this->logger->addError($errorLog);
