@@ -344,7 +344,7 @@ class YoutubeService
         chdir($this->pythonDirectory);
         
         if($youtube->getYoutubeId() === null) {
-            $youtube>setStatus(Youtube::STATUS_ERROR);
+            $youtube->setStatus(Youtube::STATUS_ERROR);
             $this->dm->persist($youtube);
             $this->dm->flush();
             $errorLog = __CLASS__.' ['.__FUNCTION__
