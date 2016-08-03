@@ -20,7 +20,6 @@ class YoutubeUpdatePlaylistCommand extends ContainerAwareCommand
     private $tagRepo = null;
     private $mmobjRepo = null;
     private $youtubeRepo = null;
-    private $broadcastRepo = null;
 
     private $youtubeService;
 
@@ -83,7 +82,6 @@ EOT
         $this->tagRepo = $this->dm->getRepository('PumukitSchemaBundle:Tag');
         $this->mmobjRepo = $this->dm->getRepository('PumukitSchemaBundle:MultimediaObject');
         $this->youtubeRepo = $this->dm->getRepository('PumukitYoutubeBundle:Youtube');
-        $this->broadcastRepo = $this->dm->getRepository('PumukitSchemaBundle:Broadcast');
 
         $this->youtubeService = $this->getContainer()->get('pumukityoutube.youtube');
 

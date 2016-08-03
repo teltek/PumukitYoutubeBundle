@@ -6,7 +6,6 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 use Pumukit\SchemaBundle\Document\Tag;
-use Pumukit\SchemaBundle\Document\Broadcast;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\YoutubeBundle\Document\Youtube;
 
@@ -20,7 +19,6 @@ class YoutubeDeleteCommand extends ContainerAwareCommand
     private $tagRepo = null;
     private $mmobjRepo = null;
     private $youtubeRepo = null;
-    private $broadcastRepo = null;
 
     private $youtubeService;
 
@@ -50,7 +48,7 @@ EOT
         $publishedYoutubeIds = $this->getStringIds($youtubeMongoIds);
         $notPublishedMms = $this->getMultimediaObjectsInYoutubeWithoutStatus($publishedYoutubeIds, MultimediaObject::STATUS_PUBLISHED);
         $this->deleteVideosFromYoutube($notPublishedMms, $output);
-      
+
         $arrayPubTags = $this->getContainer()->getParameter('pumukit_youtube.pub_channels_tags');
         foreach($arrayPubTags as $tagCode) {
             $youtubeMongoIds = $this->youtubeRepo->getDistinctFieldWithStatusAndForce('_id', Youtube::STATUS_PUBLISHED, false);
@@ -62,8 +60,12 @@ EOT
 
         $youtubeMongoIds = $this->youtubeRepo->getDistinctFieldWithStatusAndForce('_id', Youtube::STATUS_PUBLISHED, false);
         $publishedYoutubeIds = $this->getStringIds($youtubeMongoIds);
+
+        /*
+          TODO
         $notPublicMms = $this->getMultimediaObjectsInYoutubeWithoutBroadcast($publishedYoutubeIds, Broadcast::BROADCAST_TYPE_PUB);
         $this->deleteVideosFromYoutube($notPublicMms, $output);
+        */
 
         $orphanYoutubes = $this->youtubeRepo->findByStatus(Youtube::STATUS_TO_DELETE);
         $this->deleteOrphanVideosFromYoutube($orphanYoutubes, $output);
@@ -77,7 +79,6 @@ EOT
         $this->tagRepo = $this->dm->getRepository('PumukitSchemaBundle:Tag');
         $this->mmobjRepo = $this->dm->getRepository('PumukitSchemaBundle:MultimediaObject');
         $this->youtubeRepo = $this->dm->getRepository('PumukitYoutubeBundle:Youtube');
-        $this->broadcastRepo = $this->dm->getRepository('PumukitSchemaBundle:Broadcast');
 
         $this->youtubeService = $this->getContainer()->get('pumukityoutube.youtube');
 
@@ -180,6 +181,7 @@ EOT
             ->execute();
     }
 
+    //TODO
     private function getMultimediaObjectsInYoutubeWithoutBroadcast($youtubeIds, $broadcastTypeId)
     {
         $mmsNoBroadcast = $this->createYoutubeQueryBuilder($youtubeIds)

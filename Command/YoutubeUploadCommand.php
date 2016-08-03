@@ -22,7 +22,6 @@ class YoutubeUploadCommand extends ContainerAwareCommand
     private $tagRepo = null;
     private $mmobjRepo = null;
     private $youtubeRepo = null;
-    private $broadcastRepo = null;
 
     private $logger;
     private $youtubeService;
@@ -71,7 +70,6 @@ EOT
         $this->tagRepo = $this->dm->getRepository('PumukitSchemaBundle:Tag');
         $this->mmobjRepo = $this->dm->getRepository('PumukitSchemaBundle:MultimediaObject');
         $this->youtubeRepo = $this->dm->getRepository('PumukitYoutubeBundle:Youtube');
-        $this->broadcastRepo = $this->dm->getRepository('PumukitSchemaBundle:Broadcast');
 
         $container = $this->getContainer();
         $this->youtubeService = $container->get('pumukityoutube.youtube');
@@ -111,14 +109,14 @@ EOT
 
     private function createMultimediaObjectsToUploadQueryBuilder()
     {
-        $publicBroadcast = $this->broadcastRepo->findPublicBroadcast();
 
         $array_pub_tags = $this->getContainer()->getParameter('pumukit_youtube.pub_channels_tags');
 
+        //TODO add embedbroadcast
         return $this->mmobjRepo->createQueryBuilder()
           ->field('properties.pumukit1id')->exists(false)
           ->field('status')->equals(MultimediaObject::STATUS_PUBLISHED)
-          ->field('broadcast')->references($publicBroadcast)
+       //->field('broadcast')->references($publicBroadcast)
           ->field('tags.cod')->all($array_pub_tags);
     }
 
