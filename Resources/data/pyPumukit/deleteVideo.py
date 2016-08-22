@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+import httplib2_monkey_patch
+
 import httplib2
 import os
 import random
@@ -79,10 +81,10 @@ def delete_video(options):
 
     if not videos_list_response["items"]:
       out['error'] = True
-      out['error_out'] = 'No se ha encontrado el video' 
+      out['error_out'] = 'No se ha encontrado el video'
       print json.dumps(out)
       return -1
-  
+
     video = videos_list_response["items"][0]
 
     out['out'] = youtube.videos().delete(id=options.videoid).execute()
@@ -101,7 +103,7 @@ if __name__ == "__main__":
   parser = OptionParser()
   parser.add_option("--videoid", dest="videoid",
     help="ID of video to update.")
-  
+
   (options, args) = parser.parse_args()
 
   if options.videoid is None:

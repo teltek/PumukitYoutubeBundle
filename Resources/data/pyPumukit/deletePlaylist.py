@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+import httplib2_monkey_patch
+
 import httplib2
 import os
 import random
@@ -78,7 +80,7 @@ def delete_playlist(options):
 
     if not playlists_list_response["items"]:
       out['error'] = True
-      out['error_out'] = 'No se ha encontrado la playlist' 
+      out['error_out'] = 'No se ha encontrado la playlist'
       print json.dumps(out)
       return -1
 
@@ -101,7 +103,7 @@ if __name__ == "__main__":
     help="ID of playlist to delete.")
   parser.add_option("--ytid", dest="ytid",
     help="Youtube account id.")
-  
+
   (options, args) = parser.parse_args()
 
   if options.playlistid is None:

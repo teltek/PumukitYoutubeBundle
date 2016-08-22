@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+import httplib2_monkey_patch
+
 import httplib
 import httplib2
 import os
@@ -53,7 +55,7 @@ def get_authenticated_service():
   flow = flow_from_clientsecrets(CLIENT_SECRETS_FILE,
                                  message=MISSING_CLIENT_SECRETS_MESSAGE,
                                  scope=YOUTUBE_SCOPE)
-  
+
   storage = Storage("pumukit-oauth2.json")
   credentials = storage.get()
 
@@ -69,7 +71,7 @@ def get_authenticated_service():
 
 def create_playlist(options):
   out = {'error': False, 'out': None}
-    
+
   try:
     youtube = get_authenticated_service()
     playlists_insert_response = youtube.playlists().insert(
@@ -93,7 +95,7 @@ def create_playlist(options):
       out['out'] = playlists_insert_response["id"]
       print json.dumps(out)
       return 0
-      
+
   except HttpError as e:
     out['error'] = True
     out['error_out'] = "Http Error: %s" % e._get_reason()
@@ -104,8 +106,8 @@ def create_playlist(options):
     out['error_out'] = "Unexpected error: %s" % sys.exc_info()[0]
     print json.dumps(out)
     return -1
-  
-  
+
+
 
 
 

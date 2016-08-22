@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+import httplib2_monkey_patch
+
 import httplib2
 import os
 import random
@@ -77,7 +79,7 @@ def update_video_status(options):
       id=options.videoid,
       part='status'
       ).execute()
-    
+
     if not videos_list_response["items"]:
       out['error'] = True
       out['error_out'] = "Video '%s' was not found." % options.videoid
@@ -93,8 +95,8 @@ def update_video_status(options):
     out['error_out'] = "Unexpected error: %s" % sys.exc_info()[0]
     print json.dumps(out)
     return -1
- 
- 
+
+
 #  exit
   out['out'] = videos_list_response["items"][0]["status"]["uploadStatus"]
   if out['out'] == 'rejected':

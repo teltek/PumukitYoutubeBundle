@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+import httplib2_monkey_patch
+
 import httplib2
 import os
 import random
@@ -125,7 +127,7 @@ if __name__ == "__main__":
   parser.add_option("--tag", dest="tag", help="Additional tag to add to video.")
   parser.add_option("--description", dest="description", help="New video description.")
   parser.add_option("--title", dest="title", help="Video title")
-  
+
   (options, args) = parser.parse_args()
 
   if options.videoid is None:

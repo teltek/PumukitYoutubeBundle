@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+import httplib2_monkey_patch
+
 import httplib2
 import os
 import random
@@ -68,7 +70,7 @@ def get_authenticated_service():
 
 def deleteFromPlaylist(itemId):
   out = {'error': False, 'out': None}
-  
+
   try:
     youtube = get_authenticated_service()
     out['out'] = youtube.playlistItems().delete(id=itemId).execute()
@@ -82,8 +84,8 @@ def deleteFromPlaylist(itemId):
     out['error_out'] = "Unexpected error: %s" % sys.exc_info()[0]
     print json.dumps(out)
     return -1
-    
-    
+
+
   print json.dumps(out)
   return 0
 
@@ -93,7 +95,7 @@ if __name__ == "__main__":
   parser = OptionParser()
   parser.add_option("--id", dest="id",
     help="ID of video playlist item to delete.")
-  
+
   (options, args) = parser.parse_args()
 
   if options.id is None:

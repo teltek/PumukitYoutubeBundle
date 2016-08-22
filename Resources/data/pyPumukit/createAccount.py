@@ -1,4 +1,7 @@
-#!/usr/bin/python 
+#!/usr/bin/python
+
+import httplib2_monkey_patch
+
 import httplib
 import httplib2
 import os
@@ -17,8 +20,8 @@ from oauth2client.tools import run_flow
 from oauth2client.tools import argparser
 from optparse import OptionParser
 
-CLIENT_SECRETS_FILE = "client_secrets.json" 
-OAUTH_TOKEN_FILE = "oauth2.json" 
+CLIENT_SECRETS_FILE = "client_secrets.json"
+OAUTH_TOKEN_FILE = "oauth2.json"
 SCOPE = "https://www.googleapis.com/auth/youtube"
 
 flow = flow_from_clientsecrets(CLIENT_SECRETS_FILE,

@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+import httplib2_monkey_patch
+
 import httplib
 import httplib2
 import os
@@ -125,7 +127,7 @@ if __name__ == "__main__":
     help="video ID.")
   parser.add_option("--playlistid", dest="playlistid",
     help="playlist ID.")
- 
+
   (options, args) = parser.parse_args()
 
   if options.videoid is None:

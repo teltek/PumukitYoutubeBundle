@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+import httplib2_monkey_patch
+
 import httplib
 import httplib2
 import os
@@ -53,7 +55,7 @@ def get_authenticated_service(id):
   flow = flow_from_clientsecrets(CLIENT_SECRETS_FILE,
                                  message=MISSING_CLIENT_SECRETS_MESSAGE,
                                  scope=YOUTUBE_SCOPE)
-  
+
   storage = Storage("pumukit-oauth%s.json" % id)
   credentials = storage.get()
 
