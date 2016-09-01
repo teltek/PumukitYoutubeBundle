@@ -83,15 +83,15 @@ class YoutubeService
             $track = $multimediaObject->getFilteredTrackWithTags(array(), array('sbs'), array('html5'), array(), false);
         } //Or array('sbs','html5') ??
         else {
-            $track = $multimediaObject->getTrackWithTag('html5');
+            $track = $multimediaObject->getTrackWithTag('html5'); //TODO get Only the video track with tag html5
         }
-        if (null === $track) {
+        if ((null === $track) || ($track->isOnlyAudio())) {
             $track = $multimediaObject->getTrackWithTag('master');
         }
-        if (null === $track) {
+        if ((null === $track) || ($track->isOnlyAudio())) {
             $errorLog = __CLASS__.' ['.__FUNCTION__
                        ."] Error, the Multimedia Object with id '"
-                       .$multimediaObject->getId()."' has no master.";
+                       .$multimediaObject->getId()."' has no video master.";
             $this->logger->addError($errorLog);
             throw new \Exception($errorLog);
         }
@@ -136,7 +136,7 @@ class YoutubeService
         if ($out['out']['status'] == 'uploaded') {
             $youtube->setStatus(Youtube::STATUS_PROCESSING);
         }
-        
+
         $code = $this->getEmbed($out['out']['id']);
         $youtube->setEmbed($code);
         $youtube->setForce($force);
@@ -342,7 +342,7 @@ class YoutubeService
         }
         $dcurrent = getcwd();
         chdir($this->pythonDirectory);
-        
+
         if($youtube->getYoutubeId() === null) {
             $youtube->setStatus(Youtube::STATUS_ERROR);
             $this->dm->persist($youtube);
@@ -577,7 +577,7 @@ class YoutubeService
      *
      * @param array $youtubePlaylist
      *                               string $youtubePlaylist['id'] = id of the playlist on youtube.
-     *                               string $youtubePlaylist['title'] = title of the playlist on youtube. 
+     *                               string $youtubePlaylist['title'] = title of the playlist on youtube.
      */
     private function deleteYoutubePlaylist($youtubePlaylist)
     {
@@ -633,7 +633,7 @@ class YoutubeService
 
     /**
      * Gets an array of 'playlists' with all youtube playlists data.
-     * 
+     *
      * returns array
      */
     private function getAllYoutubePlaylists()
@@ -664,9 +664,9 @@ class YoutubeService
 
     /**
      * Add the MultimediaObject to the default playlist tag if criteria are met
-     * Current Criteria: - USE_DEFAULT_PLAYLIST == true 
-     *                   - Multimedia Object doesn't have any playlists tag.   
-     *  
+     * Current Criteria: - USE_DEFAULT_PLAYLIST == true
+     *                   - Multimedia Object doesn't have any playlists tag.
+     *
      * @param MultimediaObject $multimediaObject
      */
     private function checkAndAddDefaultPlaylistTag(MultimediaObject $multimediaObject)
@@ -930,7 +930,7 @@ class YoutubeService
 
     /**
      * GetYoutubeDocument
-     * returns youtube document associated with the multimediaObject. 
+     * returns youtube document associated with the multimediaObject.
      * If it doesn't exists, it tries to recreate it and logs an error on the output.
      * If it can't, throws an exception with the error.
      *
