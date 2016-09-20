@@ -40,7 +40,7 @@ EOT
     {
         $this->initParameters();
 
-        $statusArray = array(Youtube::STATUS_REMOVED, Youtube::STATUS_NOTIFIED_ERROR, STATUS_DUPLICATED);
+        $statusArray = array(Youtube::STATUS_REMOVED, Youtube::STATUS_NOTIFIED_ERROR);
         $youtubes = $this->youtubeRepo->getWithoutAnyStatus($statusArray);
 
         $this->updateVideoStatusInYoutube($youtubes, $output);
