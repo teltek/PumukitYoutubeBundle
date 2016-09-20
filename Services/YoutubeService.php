@@ -59,7 +59,6 @@ class YoutubeService
 
         if(!in_array($this->ytLocale, $pumukitLocales)){
             $this->ytLocale = $translator->getLocale();
-            echo "WOOOOO";
         }
     }
 
