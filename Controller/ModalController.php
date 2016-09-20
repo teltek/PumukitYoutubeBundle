@@ -38,8 +38,10 @@ class ModalController extends Controller
             case Youtube::STATUS_HTTP_ERROR:
             case Youtube::STATUS_ERROR:
             case Youtube::STATUS_UPDATE_ERROR:
-            case Youtube::STATUS_DUPLICATED:
                 $youtubeStatus = 'error';
+                break;
+            case Youtube::STATUS_DUPLICATED:
+                $youtubeStatus = 'duplicated';
                 break;
             case Youtube::STATUS_REMOVED:
                 $youtubeStatus = 'removed';
