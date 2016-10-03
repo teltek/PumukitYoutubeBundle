@@ -8,11 +8,11 @@
       <dt>Youtube Status</dt>
       <dd style="overflow:hidden">
         {% if youtube_status == 'error' or youtube_status == 'removed' %}
-          <span class="alert alert-dismissable alert-danger">{{ youtube_status }} </span> [{{youtube.status}}]
+          <span class="label label-dismissable label-danger">{{ youtube_status }} [{{youtube.status}}]</span>
         {% elseif youtube_status == 'published'  %}
-          <span class="alert alert-dismissable alert-success">{{ youtube_status }} </span> [{{youtube.status}}]
+          <span class="label label-dismissable label-success">{{ youtube_status }} [{{youtube.status}}]</span>
         {% elseif youtube_status == 'proccessing' %}
-          <span class="alert alert-dismissable alert-warning">{{ youtube_status }} </span> [{{youtube.status}}]
+          <span class="label label-dismissable label-warning">{{ youtube_status }} [{{youtube.status}}]</span>
         {% endif %}
       </dd>
       <dt>Last Updated</dt>
