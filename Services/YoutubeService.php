@@ -709,6 +709,7 @@ class YoutubeService
         $playlistTag->setParent($metatagPlaylist);
         $playlistTag->setCod($this->DEFAULT_PLAYLIST_COD);
         $playlistTag->setTitle($this->DEFAULT_PLAYLIST_TITLE);
+        $playlistTag->setTitle($this->DEFAULT_PLAYLIST_TITLE, $this->ytLocale);
         $this->dm->persist($playlistTag);
         $this->dm->flush();
 
