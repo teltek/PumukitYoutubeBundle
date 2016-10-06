@@ -623,11 +623,11 @@ class YoutubeService
     //TODO Update Scripts:
     private function updateYoutubePlaylist(Tag $tag)
     {
-        echo "\nupdate from Pumukit: ".$tag->getTitle($this->ytLocale);
+        echo "update from Pumukit: ".$tag->getTitle($this->ytLocale). "\n";
     }
     private function updatePumukitPlaylist(Tag $tag, $youtubePlaylist = null)
     {
-        echo "\nupdate from Youtube: ".$tag->getTitle($this->ytLocale);
+        echo "update from Youtube: ".$tag->getTitle($this->ytLocale). "\n";
     }
 
     /**
