@@ -19,7 +19,7 @@
       <dd>{{ youtube.multimediaObjectUpdateDate | date ("H:i:s ---   d/m/Y ")}}</dd>
       <dt>Youtube Id</dt>
       <dd>{{ youtube.id }}</dd>
-      {% if youtube_status == 'published' %}
+      {% if youtube_status in ['published', 'proccessing'] %}
         <dt>Youtube Playlists:</dt>
         {% for key, playlist in youtube.playlists %}
           <dd>
