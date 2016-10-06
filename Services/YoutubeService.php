@@ -473,7 +473,13 @@ class YoutubeService
             $this->getOrCreateDefaultTag();
         }
         $playlistMetaTag = $this->getPlaylistMetaTag();
-        $allPlaylistTags = $playlistMetaTag->getChildren();
+        //$allPlaylistTags = $playlistMetaTag->getChildren(); //Doctrine ODM bug reapeat last element
+        $allPlaylistTags = $this->dm
+            ->createQueryBuilder('PumukitSchemaBundle:Tag')
+            ->field('parent')->references($playlistMetaTag)
+            ->getQuery()
+            ->execute();
+
         $allYoutubePlaylists = $this->getAllYoutubePlaylists();//Returns array with all neccessary, list(['id','title'])
         //REFACTOR THIS ARRAY_MAP >>
         $allYoutubePlaylistsIds = array_map(function ($n) { return $n['id'];}, $allYoutubePlaylists);
