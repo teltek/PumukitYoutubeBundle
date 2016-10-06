@@ -440,7 +440,7 @@ class YoutubeService
             $playlistTag = $this->getTagByYoutubeProperty($playlistId);
             //If the tag doesn't exist in PuMuKIT
             if ($playlistTag === null) {
-                $errorLog = sprintf('%s [%s] Error! The tag with id %s => %s for Youtube Playlist does not exist', __CLASS__, __FUNCTION__, $playlistTagId, $playlistRel);
+                $errorLog = sprintf('%s [%s] Error! The tag with id %s => %s for Youtube Playlist does not exist', __CLASS__, __FUNCTION__, $playlistId, $playlistRel);
                 $this->logger->warning($errorLog);
                 continue;
             }
