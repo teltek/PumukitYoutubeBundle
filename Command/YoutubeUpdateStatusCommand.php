@@ -30,7 +30,7 @@ class YoutubeUpdateStatusCommand extends ContainerAwareCommand
             ->setName('youtube:update:status')
             ->setDescription('Update Youtube status of the video')
             ->setHelp(<<<EOT
-Command to upload a controlled videos to Youtube.
+Update YouTube status in pumukit using the YouTube API. If enabled it send an email with a summary.
 
 EOT
           );
