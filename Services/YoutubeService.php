@@ -589,6 +589,7 @@ class YoutubeService
         $tag->setDescription('Tag playlist generated automatically from youtube. Do not edit.');
         $tag->setProperty('youtube', $youtubePlaylist['id']);
         $tag->setProperty('customfield', 'youtube:text');
+        $tag->setProperty('origin', 'youtube');
         $tag->setParent($metatag);
         $this->dm->persist($tag);
         $this->dm->flush();
