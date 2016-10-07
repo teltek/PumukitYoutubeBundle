@@ -60,12 +60,9 @@ EOT
 
         $youtubeMongoIds = $this->youtubeRepo->getDistinctFieldWithStatusAndForce('_id', Youtube::STATUS_PUBLISHED, false);
         $publishedYoutubeIds = $this->getStringIds($youtubeMongoIds);
-
-        /*
-          TODO
-        $notPublicMms = $this->getMultimediaObjectsInYoutubeWithoutBroadcast($publishedYoutubeIds, Broadcast::BROADCAST_TYPE_PUB);
+        $notPublicMms = $this->getMultimediaObjectsInYoutubeWithoutEmbeddedBroadcast($publishedYoutubeIds, 'public');
         $this->deleteVideosFromYoutube($notPublicMms, $output);
-        */
+
 
         $orphanYoutubes = $this->youtubeRepo->findByStatus(Youtube::STATUS_TO_DELETE);
         $this->deleteOrphanVideosFromYoutube($orphanYoutubes, $output);
@@ -181,21 +178,13 @@ EOT
             ->execute();
     }
 
-    //TODO
-    private function getMultimediaObjectsInYoutubeWithoutBroadcast($youtubeIds, $broadcastTypeId)
+
+    private function getMultimediaObjectsInYoutubeWithoutEmbeddedBroadcast($youtubeIds, $broadcastTypeId)
     {
-        $mmsNoBroadcast = $this->createYoutubeQueryBuilder($youtubeIds)
+        return $this->createYoutubeQueryBuilder($youtubeIds)
+            ->field('embeddedBroadcast.type', array('$ne' => 'public'))
             ->getQuery()
             ->execute();
-
-        $mms = array();
-        foreach ($mmsNoBroadcast as $mm) {
-            if ($broadcastTypeId !== $mm->getBroadcast()->getBroadcastTypeId()) {
-                $mms[] = $mm;
-            }
-        }
-
-        return $mms;
     }
 
     private function createYoutubeQueryBuilder($youtubeIds = array())

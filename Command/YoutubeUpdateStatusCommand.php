@@ -68,11 +68,14 @@ EOT
         foreach ($youtubes as $youtube) {
             $multimediaObject = $this->findByYoutubeIdAndPumukit1Id($youtube, false);
             if ($multimediaObject == null) {
+                $msg = sprintf("No multimedia object for YouTube document %s\n", $youtube->getId());
+                echo $msg;
+                $this->logger->warn($msg);
                 continue;
             }
             try {
                 $infoLog = __CLASS__.' ['.__FUNCTION__
-                  .'] Started updating Youtube status video "'.$youtube->getId().'"';
+                  .'] Started updating internal YouTube status video "'.$youtube->getId().'"';
                 $this->logger->addInfo($infoLog);
                 $output->writeln($infoLog);
                 $outUpdate = $this->youtubeService->updateStatus($youtube);
