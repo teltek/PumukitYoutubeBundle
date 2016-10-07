@@ -72,17 +72,26 @@ def get_video_playlists(options):
   out = {'error': False, 'out': None}
 
   try:
-    youtube = get_authenticated_service(options.ytid)
-    playlists_request = youtube.playlists().list(
-      part = "snippet",
-      mine = True
-      )
-
-    playlists_response = playlists_request.execute()
-
+    page_token = None
     allPlaylists = []
-    for playlist in playlists_response["items"]:
-      allPlaylists.append(playlist)
+    youtube = get_authenticated_service(options.ytid)
+    while True:
+      if page_token:
+        playlists_request = youtube.playlists().list(part = "snippet", mine = True, pageToken = page_token)
+      else:
+        playlists_request = youtube.playlists().list(part = "snippet", mine = True)
+
+      playlists_response = playlists_request.execute()
+
+
+      for playlist in playlists_response["items"]:
+        allPlaylists.append(playlist)
+
+      page_token = playlists_response.get('nextPageToken')
+      if not page_token:
+        break
+
+
 
     out['out']= allPlaylists;
     print json.dumps(out)

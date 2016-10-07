@@ -489,26 +489,45 @@ class YoutubeService
         foreach ($allPlaylistTags as $tag) {
             $ytPlaylistId = $tag->getProperty('youtube');
             $allTagsYtId[] = $ytPlaylistId;
-            if ($ytPlaylistId === null
-                        || !in_array($ytPlaylistId, $allYoutubePlaylistsIds)) { //If a playlist on PuMuKIT doesn't exist on Youtube, create it.
+
+            if ($ytPlaylistId === null || !in_array($ytPlaylistId, $allYoutubePlaylistsIds)) {
+                //If a playlist on PuMuKIT doesn't exist on Youtube, create it.
                 if ($master == 'pumukit') {
+                    $msg = sprintf('Creating YouTube playlist from tag "%s" (%s) because it doesn\'t exist locally', $tag->getTitle(), $tag->getCod());
+                    echo $msg;
+                    $this->logger->info($msg);
                     $this->createYoutubePlaylist($tag);
                 } elseif ($this->DELETE_PLAYLISTS) {
+                    $msg = sprintf('Deleting tag "%s" (%s) because it doesn\'t exist on YouTube', $tag->getTitle(), $tag->getCod());
+                    echo $msg;
+                    $this->logger->warn($msg);
                     $this->deletePumukitPlaylist($tag);
                 }
-            } else { //If a playlist on PuMuKIT exists on Youtube, update metadata (title).
+            } else {
                 if ($master == 'pumukit') {
+                    $msg = sprintf('Updating YouTube playlist from tag "%s" (%s)', $tag->getTitle(), $tag->getCod());
+                    echo $msg;
+                    $this->logger->info($msg);
                     $this->updateYoutubePlaylist($tag);
                 } else {
+                    $msg = sprintf('Updating YouTube playlist from tag "%s" (%s)', $tag->getTitle(), $tag->getCod());
+                    echo $msg;
+                    $this->logger->info($msg);
                     $this->updatePumukitPlaylist($tag);
                 }
             }
         }
         foreach ($allYoutubePlaylists as $ytPlaylist) {
-            if (!in_array($ytPlaylist['id'], $allTagsYtId)) { //If a playlist on Youtube doesn't exist on PuMuKIT, delete it.
+            if (!in_array($ytPlaylist['id'], $allTagsYtId)) {
                 if ($master == 'youtube') {
+                    $msg = sprintf('Creating tag using YouTube playlist "%s" (%s)', $ytPlaylist['title'], $ytPlaylist['id']);
+                    echo $msg;
+                    $this->logger->info($msg);
                     $this->createPumukitPlaylist($ytPlaylist);
                 } elseif ($this->DELETE_PLAYLISTS) {
+                    $msg = sprintf('Deleting YouTube playlist "%s" (%s) because it doesn\'t exist locally', $ytPlaylist['title'], $ytPlaylist['id']);
+                    echo $msg;
+                    $this->logger->warn($msg);
                     $this->deleteYoutubePlaylist($ytPlaylist);
                 }
             }
@@ -524,7 +543,7 @@ class YoutubeService
      */
     private function createYoutubePlaylist(Tag $tag)
     {
-        echo "\ncreate On Youtube: ".$tag->getTitle($this->ytLocale);
+        echo "create On Youtube: ".$tag->getTitle($this->ytLocale) . "\n";
         $command = sprintf('python createPlaylist.py --title "%s" --privacyStatus "%s"', $tag->getTitle($this->ytLocale), $this->playlistPrivacyStatus);
 
         $dcurrent = getcwd();
@@ -562,7 +581,7 @@ class YoutubeService
      */
     private function createPumukitPlaylist($youtubePlaylist)
     {
-        echo "\ncreate On Pumukit: ".$youtubePlaylist['title'];
+        echo "create On Pumukit: ".$youtubePlaylist['title'] . "\n";
         $metatag = $this->getPlaylistMetaTag();
         $tag = new Tag($youtubePlaylist['title']);
         $tag->setCod($youtubePlaylist['id']);
@@ -586,7 +605,7 @@ class YoutubeService
      */
     private function deleteYoutubePlaylist($youtubePlaylist)
     {
-        echo "\ndelete On Youtube: ".$youtubePlaylist['title'];
+        echo "delete On Youtube: ".$youtubePlaylist['title'] . "\n";
         $command = sprintf('python deletePlaylist.py --playlistid "%s" ', $youtubePlaylist['id']);
         $dcurrent = getcwd();
         chdir($this->pythonDirectory);
@@ -610,7 +629,7 @@ class YoutubeService
      */
     private function deletePumukitPlaylist(Tag $tag)
     {
-        echo "\ndelete On Pumukit: ".$tag->getTitle($this->ytLocale);
+        echo "delete On Pumukit: ".$tag->getTitle($this->ytLocale) . "\n";
         $multimediaObjects = $this->mmobjRepo->findWithTag($tag);
         foreach ($multimediaObjects as $mmobj) {
             $this->tagService->removeTagFromMultimediaObject($mmobj, $tag->getId());
