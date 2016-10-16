@@ -429,6 +429,8 @@ class YoutubeService
             $this->logger->error($errorLog);
             throw new \Exception($errorLog);
         }
+
+        return $out;
     }
 
     /**
