@@ -47,7 +47,10 @@ EOT
         $youtubeMongoIds = $this->youtubeRepo->getDistinctFieldWithStatusAndForce('_id', Youtube::STATUS_PUBLISHED, false);
         $publishedYoutubeIds = $this->getStringIds($youtubeMongoIds);
         $notPublishedMms = $this->getMultimediaObjectsInYoutubeWithoutStatus($publishedYoutubeIds, MultimediaObject::STATUS_PUBLISHED);
-        $this->deleteVideosFromYoutube($notPublishedMms, $output);
+        if (0 != count($notPublishedMms)) {
+            $output->writeln('Removing ' . count($notPublishedMms) . ' object(s) with status not published');
+            $this->deleteVideosFromYoutube($notPublishedMms, $output);
+        }
 
         $arrayPubTags = $this->getContainer()->getParameter('pumukit_youtube.pub_channels_tags');
         foreach($arrayPubTags as $tagCode) {
@@ -55,17 +58,27 @@ EOT
             $publishedYoutubeIds = $this->getStringIds($youtubeMongoIds);
             // TODO When tag IMPORTANT is defined as child of PUBLICATION DECISION Tag
             $notCorrectTagMms = $this->getMultimediaObjectsInYoutubeWithoutTagCode($publishedYoutubeIds, $tagCode);
-            $this->deleteVideosFromYoutube($notCorrectTagMms, $output);
+            if (0 != count($notCorrectTagMms)) {
+                $output->writeln('Removing ' . count($notCorrectTagMms) . ' object(s) w/o tag ' . $tagCode);
+                $this->deleteVideosFromYoutube($notCorrectTagMms, $output);
+            }
         }
+
 
         $youtubeMongoIds = $this->youtubeRepo->getDistinctFieldWithStatusAndForce('_id', Youtube::STATUS_PUBLISHED, false);
         $publishedYoutubeIds = $this->getStringIds($youtubeMongoIds);
         $notPublicMms = $this->getMultimediaObjectsInYoutubeWithoutEmbeddedBroadcast($publishedYoutubeIds, 'public');
-        $this->deleteVideosFromYoutube($notPublicMms, $output);
+        if (0 != count($notPublicMms)){
+            $output->writeln('Removing ' . count($notPublicMms) . ' object(s) with broadcast not public');
+            $this->deleteVideosFromYoutube($notPublicMms, $output);
+        }
 
 
         $orphanYoutubes = $this->youtubeRepo->findByStatus(Youtube::STATUS_TO_DELETE);
-        $this->deleteOrphanVideosFromYoutube($orphanYoutubes, $output);
+        if (0 != count($orphanYoutubes)) {
+            $output->writeln('Removing ' . count($orphanYoutubes) . ' orphanYoutube(s) ');
+            $this->deleteOrphanVideosFromYoutube($orphanYoutubes, $output);
+        }
 
         $this->checkResultsAndSendEmail();
     }
