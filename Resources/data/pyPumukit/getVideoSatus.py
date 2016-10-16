@@ -1,11 +1,5 @@
 #!/usr/bin/python
 
-
-"""
-To be removed: Use getVideoStatus instead.
-Update prefix is used to post data into the youtube API. This command only get data.
-"""
-
 import httplib2_monkey_patch
 
 import httplib2

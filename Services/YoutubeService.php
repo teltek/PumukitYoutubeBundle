@@ -351,7 +351,7 @@ class YoutubeService
             $this->logger->addError($errorLog);
             throw new \Exception($errorLog);
         }
-        $pyOut = exec('python updateSatus.py --videoid '.$youtube->getYoutubeId(), $output, $return_var);
+        $pyOut = exec('python getVideoSatus.py --videoid '.$youtube->getYoutubeId(), $output, $return_var);
         chdir($dcurrent);
         $out = json_decode($pyOut, true);
         // NOTE: If the video has been removed, it returns 404 instead of 200 with 'not found Video'
