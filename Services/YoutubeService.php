@@ -510,7 +510,7 @@ class YoutubeService
                     $this->logger->info($msg);
                     $this->updateYoutubePlaylist($tag);
                 } else {
-                    $msg = sprintf('Updating YouTube playlist from tag "%s" (%s)', $tag->getTitle(), $tag->getCod());
+                    $msg = sprintf('Updating tag from YouTube playlist "%s" (%s)', $tag->getTitle(), $tag->getCod());
                     echo $msg;
                     $this->logger->info($msg);
                     $this->updatePumukitPlaylist($tag);
