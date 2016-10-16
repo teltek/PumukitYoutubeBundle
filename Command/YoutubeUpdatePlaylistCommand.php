@@ -95,6 +95,7 @@ EOT
     private function createYoutubeQueryBuilder()
     {
         return $this->mmobjRepo->createQueryBuilder()
+            ->field('properties.origin')->notEqual('youtube')
             ->field('properties.pumukit1id')->exists(false);
     }
 

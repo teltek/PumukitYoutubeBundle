@@ -114,6 +114,7 @@ EOT
 
         return $this->mmobjRepo->createQueryBuilder()
           ->field('properties.pumukit1id')->exists(false)
+          ->field('properties.origin')->notEqual('youtube')
           ->field('status')->equals(MultimediaObject::STATUS_PUBLISHED)
           ->field('embeddedBroadcast.type')->equals('public')
           ->field('tags.cod')->all($array_pub_tags);

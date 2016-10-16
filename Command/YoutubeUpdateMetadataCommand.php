@@ -103,7 +103,7 @@ EOT
 
         $mms = $this->mmobjRepo->createQueryBuilder()
           ->field('properties.pumukit1id')->exists(false)
-          ->field('properties.youtube')->exists(true)
+          ->field('properties.origin')->notEqual('youtube')
           ->field('properties.youtube')->in($youtubeIds)
           ->getQuery()
           ->execute();

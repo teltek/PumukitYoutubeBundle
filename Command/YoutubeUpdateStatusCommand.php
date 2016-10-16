@@ -116,6 +116,7 @@ EOT
     {
         return $this->mmobjRepo->createQueryBuilder()
             ->field('properties.youtube')->equals($youtube->getId())
+            ->field('properties.origin')->notEqual('youtube')
             ->field('properties.pumukit1id')->exists($pumukit1Id)
             ->getQuery()
             ->getSingleResult();
