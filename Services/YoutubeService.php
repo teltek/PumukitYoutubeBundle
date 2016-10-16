@@ -406,6 +406,32 @@ class YoutubeService
     }
 
     /**
+     * Update Status.
+     *
+     * @param Youtube $youtube
+     *
+     * @return int
+     */
+    public function getVideoMeta($yid)
+    {
+        $dcurrent = getcwd();
+        chdir($this->pythonDirectory);
+
+        $pyOut = exec('python getVideoMeta.py --videoid ' . $yid, $output, $return_var);
+        chdir($dcurrent);
+
+        $out = json_decode($pyOut, true);
+
+        if ($out['error']) {
+            $errorLog = __CLASS__ .' [' . __FUNCTION__
+                . "] Error getting meta from YouTube id"
+                . $yid . ": " . $out['error_out'];
+            $this->logger->error($errorLog);
+            throw new \Exception($errorLog);
+        }
+    }
+
+    /**
      * Update playlists.
      *
      * @param MultimediaObject $multimediaObject
