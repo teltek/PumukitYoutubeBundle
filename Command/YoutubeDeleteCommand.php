@@ -195,7 +195,7 @@ EOT
     private function getMultimediaObjectsInYoutubeWithoutEmbeddedBroadcast($youtubeIds, $broadcastTypeId)
     {
         return $this->createYoutubeQueryBuilder($youtubeIds)
-            ->field('embeddedBroadcast.type', array('$ne' => 'public'))
+            ->field('embeddedBroadcast.type')->notEqual('public')
             ->getQuery()
             ->execute();
     }
