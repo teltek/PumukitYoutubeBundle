@@ -12,7 +12,7 @@ use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Series;
 use Pumukit\YoutubeBundle\Document\Youtube;
 
-class YoutubeCreateMmObjCommand extends ContainerAwareCommand
+class YoutubeImportVideoCommand extends ContainerAwareCommand
 {
     private $dm = null;
     private $tagRepo = null;
@@ -27,7 +27,7 @@ class YoutubeCreateMmObjCommand extends ContainerAwareCommand
     protected function configure()
     {
         $this
-            ->setName('youtube:createmmobj')
+            ->setName('youtube:import:video')
             ->setDescription('Create a multimedia object from Youtube')
             ->addArgument('yid', InputArgument::REQUIRED, 'YouTube ID')
             ->addArgument('series', InputArgument::OPTIONAL, 'Series id where the object is created')
@@ -41,7 +41,7 @@ Steps:
  * 3.- Download/move the tracks
 
 Example:
-  <info>php bin/console youtube:createmmobj --env=prod --step=1 XXXXXYYYY</info>
+  <info>php bin/console youtube:import:video --env=prod --step=1 XXXXXYYYY</info>
 
 EOT
           );
