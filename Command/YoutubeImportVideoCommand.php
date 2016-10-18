@@ -89,8 +89,12 @@ EOT
         //Create using the factory
         $mmobj = $this->factoryService->createMultimediaObject($series, false);
         $mmobj->setTitle($meta['out']['snippet']['title']);
-        $mmobj->setDescription($meta['out']['snippet']['description']);
-        $mmobj->setKeywords($meta['out']['snippet']['tags']);
+        if (isset($meta['out']['snippet']['description'])) {
+            $mmobj->setDescription($meta['out']['snippet']['description']);
+        }
+        if (isset($meta['out']['snippet']['tags'])) {
+            $mmobj->setKeywords($meta['out']['snippet']['tags']);
+        }
         $dataTime = \DateTime::createFromFormat('Y-m-d\TH:i:s', substr($meta['out']['snippet']['publishedAt'], 0, 19));
         $mmobj->setRecordDate($dataTime);
         $mmobj->setPublicDate($dataTime);
