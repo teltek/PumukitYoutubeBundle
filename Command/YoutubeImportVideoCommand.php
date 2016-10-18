@@ -55,8 +55,14 @@ EOT
         $step = $input->getOption('step');
         switch ($step) {
         case 1:
+            //Check if exists
+            if ($this->getMmObjFromYid($yid)) {
+                $output->writeln('<error>Already exists a mmobj from Youtube video with id ' . $yid .'</error>');
+                return false;
+            }
+
             $series = $this->getSeries($input->getArgument('series'));
-            $output->writeln(' * Creating multimedia object from id . ' . $yid);
+            $output->writeln(sprintf(' * Creating multimedia object from id %s in series %s', $yid, $series->getId()));
             $this->createMultimediaObject($yid, $series, $output);
             break;
         case 2:
@@ -77,12 +83,6 @@ EOT
             $meta = $this->youtubeService->getVideoMeta($yid);
         } catch (\Exception $e) {
             $output->writeln('<error>No Youtube video with id ' . $yid .'</error>');
-            return false;
-        }
-
-        //Check if exists
-        if ($this->getMmObjFromYid($yid)) {
-            $output->writeln('<error>Already exists a mmobj from Youtube video with id ' . $yid .'</error>');
             return false;
         }
 
