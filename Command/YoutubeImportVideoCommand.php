@@ -32,13 +32,15 @@ class YoutubeImportVideoCommand extends ContainerAwareCommand
             ->addArgument('yid', InputArgument::REQUIRED, 'YouTube ID')
             ->addArgument('series', InputArgument::OPTIONAL, 'Series id where the object is created')
             ->addOption('step', 'S', InputOption::VALUE_REQUIRED, 'Step of the importation. See help for more info', -99)
+            ->addOption('tags', null, InputOption::VALUE_IS_ARRAY | InputOption::VALUE_OPTIONAL, 'Youtube tags to add in the object', array())
             ->setHelp(<<<EOT
 Command to create a multimedia object from Youtube.
 
 Steps:
- * 1.- Create the Multimedia Object.
+ * 1.- Create the Multimedia Object (add tagging).
  * 2.- Download the image
  * 3.- Download/move the tracks
+ * 4.- Tag object
 
 Example:
   <info>php bin/console youtube:import:video --env=prod --step=1 XXXXXYYYY</info>
@@ -63,7 +65,9 @@ EOT
 
             $series = $this->getSeries($input->getArgument('series'));
             $output->writeln(sprintf(' * Creating multimedia object from id %s in series %s', $yid, $series->getId()));
-            $this->createMultimediaObject($yid, $series, $output);
+            $mmobj = $this->createMultimediaObject($yid, $series, $output);
+            $output->writeln(' * Tagging multimedia object ');
+            $this->tagMultimediaObject($mmobj, $input->getOption('tags'));
             break;
         case 2:
             $output->writeln(' * TODO ');
@@ -71,11 +75,40 @@ EOT
         case 3:
             $output->writeln(' * TODO ');
             break;
+        case 4:
+            $mmobj = $this->getMmObjFromYid($yid);
+            if (!$mmobj) {
+                $output->writeln('<error>No mmobj from Youtube video with id ' . $yid .'</error>');
+                return false;
+            }
+            $output->writeln(' * Tagging multimedia object ');
+            $this->tagMultimediaObject($mmobj, $input->getOption('tags'));
+            break;
         default:
             $output->writeln('<error>Select a valid step</error>');
         }
     }
 
+
+    private function tagMultimediaObject(MultimediaObject $mmobj, $tagIds)
+    {
+        $tags = $this->tagRepo->findBy(array('properties.origin' => 'youtube', 'properties.youtube' => array('$in' => $tagIds)));
+        if (count($tagIds) != count($tags)) {
+            throw new \Exception(
+                sprintf(
+                    'No all tags found with this Youtube ids, input has %d id(s) and only %d tag(s) found',
+                    count($tagIds),
+                    count($tags)
+                )
+            );
+        }
+
+
+        foreach ($tags as $tag) {
+            $this->tagService->addTag($mmobj, $tag);
+        }
+
+    }
 
     private function createMultimediaObject($yid, Series $series, OutputInterface $output)
     {
@@ -103,6 +136,8 @@ EOT
 
         $this->dm->persist($mmobj);
         $this->dm->flush();
+
+        return $mmobj;
     }
 
 
@@ -178,6 +213,7 @@ EOT
 
         $this->youtubeService = $this->getContainer()->get('pumukityoutube.youtube');
         $this->factoryService = $this->getContainer()->get('pumukitschema.factory');
+        $this->tagService = $this->getContainer()->get('pumukitschema.tag');
 
         $this->logger = $this->getContainer()->get('monolog.logger.youtube');
     }
