@@ -31,6 +31,7 @@ class YoutubeImportVideoCommand extends ContainerAwareCommand
             ->setDescription('Create a multimedia object from Youtube')
             ->addArgument('yid', InputArgument::REQUIRED, 'YouTube ID')
             ->addArgument('series', InputArgument::OPTIONAL, 'Series id where the object is created')
+            ->addOption('status', null, InputOption::VALUE_OPTIONAL, 'Status of the new multimedia object (published, blocked or hidden)', 'published')
             ->addOption('step', 'S', InputOption::VALUE_REQUIRED, 'Step of the importation. See help for more info', -99)
             ->addOption('tags', null, InputOption::VALUE_IS_ARRAY | InputOption::VALUE_OPTIONAL, 'Youtube tags to add in the object', array())
             ->setHelp(<<<EOT
@@ -38,12 +39,18 @@ Command to create a multimedia object from Youtube.
 
 Steps:
  * 1.- Create the Multimedia Object (add tagging).
+
+   Examples:
+     <info>php bin/console youtube:import:video --env=prod --step=1 6aeJ7kOVfH8  58066eadd4c38ebf300041aa</info>
+     <info>php bin/console youtube:import:video --env=prod --step=1 6aeJ7kOVfH8  PLW9tHnDKi2SZ9ea_QK-Trz_hc9-255Fc3 --tags=PLW9tHnDKi2SZ9ea_QK-Trz_hc9-255Fc3 --tags=PLW9tHnDKi2SZcLbuDgLYhHodMw8UH2fHN --status=bloq</info>
+
  * 2.- Download the image
  * 3.- Download/move the tracks
  * 4.- Tag object
 
-Example:
-  <info>php bin/console youtube:import:video --env=prod --step=1 XXXXXYYYY</info>
+   Examples:
+     <info>php bin/console youtube:import:video --env=prod --step=4 6aeJ7kOVfH8  --tags=PLW9tHnDKi2SZ9ea_QK-Trz_hc9-255Fc3 --tags=PLW9tHnDKi2SZcLbuDgLYhHodMw8UH2fHN --status=bloq</info>
+
 
 EOT
           );
@@ -58,6 +65,8 @@ EOT
         switch ($step) {
         case 1:
             //Check if exists
+            $status = $this->getStatus($input->getOption('status'));
+
             if ($this->getMmObjFromYid($yid)) {
                 $output->writeln('<error>Already exists a mmobj from Youtube video with id ' . $yid .'</error>');
                 return false;
@@ -65,9 +74,12 @@ EOT
 
             $series = $this->getSeries($input->getArgument('series'));
             $output->writeln(sprintf(' * Creating multimedia object from id %s in series %s', $yid, $series->getId()));
-            $mmobj = $this->createMultimediaObject($yid, $series, $output);
-            $output->writeln(' * Tagging multimedia object ');
-            $this->tagMultimediaObject($mmobj, $input->getOption('tags'));
+            $mmobj = $this->createMultimediaObject($series, $yid, $status, $output);
+
+            if($tags = $input->getOption('tags')) {
+                $output->writeln(' * Tagging multimedia object ');
+                $this->tagMultimediaObject($mmobj, $tags);
+            }
             break;
         case 2:
             $output->writeln(' * TODO ');
@@ -110,7 +122,7 @@ EOT
 
     }
 
-    private function createMultimediaObject($yid, Series $series, OutputInterface $output)
+    private function createMultimediaObject(Series $series, $yid, $status, OutputInterface $output)
     {
         try {
             $meta = $this->youtubeService->getVideoMeta($yid);
@@ -121,6 +133,7 @@ EOT
 
         //Create using the factory
         $mmobj = $this->factoryService->createMultimediaObject($series, false);
+        $mmobj->setStatus($status);
         $mmobj->setTitle($meta['out']['snippet']['title']);
         if (isset($meta['out']['snippet']['description'])) {
             $mmobj->setDescription($meta['out']['snippet']['description']);
@@ -199,8 +212,30 @@ EOT
 
         }
 
-
         throw new \Exception('No series, or YouTube tag with id '. $seriesId);
+    }
+
+
+    private function getStatus($status)
+    {
+        $status = strtolower($status);
+        $validStatus = array('published', 'pub', 'block', 'blocked', 'hide', 'hidden');
+        if (!in_array($status, $validStatus)) {
+            throw new \Exception('Status "' . $status . '" not in '. implode(', ', $validStatus));
+        }
+
+        switch ($status) {
+          case 'published':
+          case 'pub':
+              return MultimediaObject::STATUS_PUBLISHED;
+          case 'block':
+          case 'blocked':
+              return MultimediaObject::STATUS_BLOCKED;
+          case 'hide':
+          case 'hidden':
+              return MultimediaObject::STATUS_HIDDEN;
+        }
+        return MultimediaObject::STATUS_PUBLISHED;
     }
 
     private function initParameters()
