@@ -74,10 +74,10 @@ def get_video_playlists(options):
   out = {'error': False, 'out': None}
 
   try:
-    page_token = None
+    youtube = get_authenticated_service(options.ytid)
     allPlaylists = []
     review = []
-    youtube = get_authenticated_service(options.ytid)
+    page_token = None
     while True:
       if page_token:
         playlists_request = youtube.playlists().list(part = "snippet", mine = True, pageToken = page_token)
@@ -96,15 +96,25 @@ def get_video_playlists(options):
 
 
     for playlist in allPlaylists:
-      playlistitems_list_request = youtube.playlistItems().list(
-        part="snippet",
-        playlistId= playlist["id"],
-        maxResults=50
-      )
 
-      playlistitems_list_response = playlistitems_list_request.execute()
+      allPlaylistItems = []
+      page_token = None
+      while True:
+        if page_token:
+          playlistitems_list_request = youtube.playlistItems().list(part="snippet", playlistId=playlist["id"], maxResults=50, pageToken=page_token)
+        else:
+          playlistitems_list_request = youtube.playlistItems().list(part="snippet", playlistId=playlist["id"], maxResults=50)
 
-      for playlistitem in playlistitems_list_response['items']:
+        playlistitems_list_response = playlistitems_list_request.execute()
+
+        for playlistitem in playlistitems_list_response['items']:
+          allPlaylistItems.append(playlistitem)
+
+        page_token = playlistitems_list_response.get('nextPageToken')
+        if not page_token:
+          break
+
+      for playlistitem in allPlaylistItems:
         if "youtube#video" == playlistitem.get('snippet', {}).get('resourceId', {}).get('kind'):
           review.append((playlist['id'], playlistitem['snippet']['resourceId']['videoId'], playlistitem['id']))
 
