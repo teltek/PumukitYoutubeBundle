@@ -32,7 +32,7 @@ class YoutubeImportVideoCommand extends ContainerAwareCommand
             ->setName('youtube:import:video')
             ->setDescription('Create a multimedia object from Youtube')
             ->addArgument('yid', InputArgument::REQUIRED, 'YouTube ID')
-            ->addArgument('series', InputArgument::OPTIONAL, 'Series id where the object is created')
+            ->addArgument('series', InputArgument::OPTIONAL, 'Series id where the object is created or path where the master is located')
             ->addOption('status', null, InputOption::VALUE_OPTIONAL, 'Status of the new multimedia object (published, blocked or hidden)', 'published')
             ->addOption('step', 'S', InputOption::VALUE_REQUIRED, 'Step of the importation. See help for more info', -99)
             ->addOption('tags', null, InputOption::VALUE_IS_ARRAY | InputOption::VALUE_OPTIONAL, 'Youtube tags to add in the object', array())
@@ -50,7 +50,7 @@ Steps:
        <info>php bin/console youtube:import:video --env=prod --step=2 6aeJ7kOVfH8</info>
 
  * 3.- Download/move the tracks. Examples:
-       <info>php bin/console youtube:import:video --env=prod --step=3 6aeJ7kOVfH8</info>
+       <info>php bin/console youtube:import:video --env=prod --step=3 6aeJ7kOVfH8 /mnt/videos/stevejobs-memorial-us-20121005_416x234h.mp4</info>
 
  * 4.- Tag objects. Examples:
        <info>php bin/console youtube:import:video --env=prod --step=4 6aeJ7kOVfH8  --tags=PLW9tHnDKi2SZ9ea_QK-Trz_hc9-255Fc3 --tags=PLW9tHnDKi2SZcLbuDgLYhHodMw8UH2fHN --status=bloq</info>
@@ -88,20 +88,23 @@ EOT
         case 2:
             $mmobj = $this->getMmObjFromYid($yid);
             if (!$mmobj) {
-                $output->writeln('<error>No mmobj from Youtube video with id ' . $yid .'</error>');
-                return false;
+                throw new \Exception('No mmobj from Youtube video with id ' . $yid);
             }
             $output->writeln(' * Downloading image for multimedia object ');
             $this->downloadPic($mmobj);
             break;
         case 3:
-            $output->writeln(' * TODO ');
+            $mmobj = $this->getMmObjFromYid($yid);
+            if (!$mmobj) {
+                throw new \Exception('No mmobj from Youtube video with id ' . $yid);
+            }
+            $output->writeln(' * Moving tracks for multimedia object ');
+            $this->moveTracks($mmobj, $input->getArgument('series'));
             break;
         case 4:
             $mmobj = $this->getMmObjFromYid($yid);
             if (!$mmobj) {
-                $output->writeln('<error>No mmobj from Youtube video with id ' . $yid .'</error>');
-                return false;
+                throw new \Exception('No mmobj from Youtube video with id ' . $yid);
             }
             $output->writeln(' * Tagging multimedia object ');
             $this->tagMultimediaObject($mmobj, $input->getOption('tags'));
@@ -111,6 +114,44 @@ EOT
         }
     }
 
+
+    private function moveTracks(MultimediaObject $mmobj, $trackPath)
+    {
+        $profileService = $this->getContainer()->get('pumukitencoder.profile');
+        $jobService = $this->getContainer()->get('pumukitencoder.job');
+
+        if ($profileService->getProfile('master_copy')) {
+            $masterProfile = 'master_copy';
+        } elseif ($profileService->getProfile('master-copy')) {
+            $masterProfile = 'master-copy';
+        } else {
+            throw new \Exception('Error: No master_copy|master-copy profile');
+        }
+
+        if ($profileService->getProfile('video_h264')) {
+            $videoH264Profile = 'video_h264';
+        } elseif ($profileService->getProfile('broadcast-mp4')) {
+            $videoH264Profile = 'broadcast-mp4';
+        } else {
+            throw new \Exception('Error: No video_h264|broadcast-mp4 profile');
+        }
+
+        if ($mmobj->getTrackWithTag('master')) {
+            throw new \Exception('Object already has master track');
+        }
+
+        try {
+            $jobService->createTrackWithFile($trackPath . '.delivery', $videoH264Profile, $mmobj);
+        } catch (\Exception $e) {
+            throw new \Exception('Error coping delivery file "' . $trackPath . '.delivery' . '"');
+        }
+
+        try {
+            $jobService->createTrackWithFile($trackPath, $masterProfile, $mmobj);
+        } catch (\Exception $e) {
+            throw new \Exception('Error coping master file "'. $trackPath . '"');
+        }
+    }
 
     private function downloadPic(MultimediaObject $mmobj)
     {
