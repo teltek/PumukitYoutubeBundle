@@ -134,11 +134,38 @@ EOT
         if (!$seriesId) {
             throw new \Exception('No series id argument');
         }
+
         $series = $this->seriesRepo->find($seriesId);
-        if (!$series) {
-            throw new \Exception('No series with id '. $seriesId);
+        if ($series) {
+            $this->logger->info(sprintf("Using series with id %s", $seriesId));
+            return $series;
         }
-        return $series;
+
+
+        $series = $this->seriesRepo->findOneBy(array('properties.origin' => 'youtube', 'properties.fromyoutubetag' => $seriesId));
+        if ($series) {
+            $this->logger->info(sprintf("Using series with YouTube property %s", $seriesId));
+            return $series;
+        }
+
+        //tag with youtube
+        $tag = $this->tagRepo->findOneBy(array('properties.origin' => 'youtube', 'properties.youtube' => $seriesId));
+        if ($tag) {
+            $this->logger->info(sprintf("Creating series from YouTube property %s", $seriesId));
+            $series = $this->factoryService->createSeries();
+            $series->setI18nTitle($tag->getI18nTitle());
+            $series->setProperty('origin', 'youtube');
+            $series->setProperty('fromyoutubetag', $seriesId);
+
+            $this->dm->persist($series);
+            $this->dm->flush();
+
+            return $series;
+
+        }
+
+
+        throw new \Exception('No series, or YouTube tag with id '. $seriesId);
     }
 
     private function initParameters()
