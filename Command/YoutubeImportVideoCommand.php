@@ -6,7 +6,9 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\HttpFoundation\File\Exception\FileException;
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
+use Pumukit\SchemaBundle\Document\Pic;
 use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Series;
@@ -38,18 +40,20 @@ class YoutubeImportVideoCommand extends ContainerAwareCommand
 Command to create a multimedia object from Youtube.
 
 Steps:
- * 1.- Create the Multimedia Object (add tagging).
+ * 1.- Create the Multimedia Object (add tagging). Examples:
+       <info>php bin/console youtube:import:video --env=prod --step=1 6aeJ7kOVfH8  58066eadd4c38ebf300041aa</info>
+       <info>php bin/console youtube:import:video --env=prod --step=1 6aeJ7kOVfH8  PLW9tHnDKi2SZ9ea_QK-Trz_hc9-255Fc3 \
+               --tags=PLW9tHnDKi2SZ9ea_QK-Trz_hc9-255Fc3 --tags=PLW9tHnDKi2SZcLbuDgLYhHodMw8UH2fHN --status=bloq</info>
 
-   Examples:
-     <info>php bin/console youtube:import:video --env=prod --step=1 6aeJ7kOVfH8  58066eadd4c38ebf300041aa</info>
-     <info>php bin/console youtube:import:video --env=prod --step=1 6aeJ7kOVfH8  PLW9tHnDKi2SZ9ea_QK-Trz_hc9-255Fc3 --tags=PLW9tHnDKi2SZ9ea_QK-Trz_hc9-255Fc3 --tags=PLW9tHnDKi2SZcLbuDgLYhHodMw8UH2fHN --status=bloq</info>
 
- * 2.- Download the image
- * 3.- Download/move the tracks
- * 4.- Tag object
+ * 2.- Download the images. Examples:
+       <info>php bin/console youtube:import:video --env=prod --step=2 6aeJ7kOVfH8</info>
 
-   Examples:
-     <info>php bin/console youtube:import:video --env=prod --step=4 6aeJ7kOVfH8  --tags=PLW9tHnDKi2SZ9ea_QK-Trz_hc9-255Fc3 --tags=PLW9tHnDKi2SZcLbuDgLYhHodMw8UH2fHN --status=bloq</info>
+ * 3.- Download/move the tracks. Examples:
+       <info>php bin/console youtube:import:video --env=prod --step=3 6aeJ7kOVfH8</info>
+
+ * 4.- Tag objects. Examples:
+       <info>php bin/console youtube:import:video --env=prod --step=4 6aeJ7kOVfH8  --tags=PLW9tHnDKi2SZ9ea_QK-Trz_hc9-255Fc3 --tags=PLW9tHnDKi2SZcLbuDgLYhHodMw8UH2fHN --status=bloq</info>
 
 
 EOT
@@ -82,7 +86,13 @@ EOT
             }
             break;
         case 2:
-            $output->writeln(' * TODO ');
+            $mmobj = $this->getMmObjFromYid($yid);
+            if (!$mmobj) {
+                $output->writeln('<error>No mmobj from Youtube video with id ' . $yid .'</error>');
+                return false;
+            }
+            $output->writeln(' * Downloading image for multimedia object ');
+            $this->downloadPic($mmobj);
             break;
         case 3:
             $output->writeln(' * TODO ');
@@ -99,6 +109,37 @@ EOT
         default:
             $output->writeln('<error>Select a valid step</error>');
         }
+    }
+
+
+    private function downloadPic(MultimediaObject $mmobj)
+    {
+        $picService = $this->getContainer()->get('pumukitschema.mmspic');
+
+        $meta = $mmobj->getProperty('youtubemeta');
+        $picUrl = $meta['snippet']['thumbnails']['standard']['url'];
+
+        if (0 != count($mmobj->getPics())) {
+            throw new \Exception('Object "' . $mmobj->getId() . '" already has pics' );
+        }
+
+        if (!$picUrl) {
+            throw new \Exception('No pic for object with id' . $mmobj->getId() );
+        }
+
+        $filePath = $picService->getTargetPath($mmobj);
+        $fileName = basename(parse_url($picUrl, PHP_URL_PATH));
+
+        $this->download($picUrl, $filePath, $fileName);
+
+        $path = $filePath.'/'.$fileName;
+        $pic = new Pic();
+        $pic->setUrl(str_replace($filePath, $picService->getTargetUrl($mmobj), $path));
+        $pic->setPath($path);
+        $mmobj->addPic($pic);
+
+        $this->dm->persist($mmobj);
+        $this->dm->flush();
     }
 
 
@@ -127,8 +168,7 @@ EOT
         try {
             $meta = $this->youtubeService->getVideoMeta($yid);
         } catch (\Exception $e) {
-            $output->writeln('<error>No Youtube video with id ' . $yid .'</error>');
-            return false;
+            throw new \Exception('No Youtube video with id ' . $yid);
         }
 
         //Create using the factory
@@ -236,6 +276,27 @@ EOT
               return MultimediaObject::STATUS_HIDDEN;
         }
         return MultimediaObject::STATUS_PUBLISHED;
+    }
+
+    private function download($url, $directory, $filename)
+    {
+        if (!is_dir($directory)) {
+            if (false === @mkdir($directory, 0777, true) && !is_dir($directory)) {
+                throw new FileException(sprintf('Unable to create the "%s" directory', $directory));
+            }
+        } elseif (!is_writable($directory)) {
+            throw new FileException(sprintf('Unable to write in the "%s" directory', $directory));
+        }
+
+        $file_headers = @get_headers($url);
+        if (strstr($file_headers[0], 'HTTP/1.1 404')) {
+            throw new FileException(sprintf('Unable to download  "%s"', $url));
+        }
+
+        $output = file_put_contents($directory.'/'.$filename, fopen(str_replace(' ', '%20', $url), 'r'));
+        if (!$output) {
+            throw new FileException(sprintf('Error downloading  "%s"', $url));
+        }
     }
 
     private function initParameters()
