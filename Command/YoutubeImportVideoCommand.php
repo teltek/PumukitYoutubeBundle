@@ -43,7 +43,7 @@ Steps:
  * 1.- Create the Multimedia Object (add tagging). Examples:
        <info>php bin/console youtube:import:video --env=prod --step=1 6aeJ7kOVfH8  58066eadd4c38ebf300041aa</info>
        <info>php bin/console youtube:import:video --env=prod --step=1 6aeJ7kOVfH8  PLW9tHnDKi2SZ9ea_QK-Trz_hc9-255Fc3 \
-               --tags=PLW9tHnDKi2SZ9ea_QK-Trz_hc9-255Fc3 --tags=PLW9tHnDKi2SZcLbuDgLYhHodMw8UH2fHN --status=bloq</info>
+               --tags=PLW9tHnDKi2SZ9ea_QK-Trz_hc9-255Fc3 --tags=PLW9tHnDKi2SZcLbuDgLYhHodMw8UH2fHN --status=blocked</info>
 
 
  * 2.- Download the images. Examples:
@@ -300,21 +300,22 @@ EOT
     private function getStatus($status)
     {
         $status = strtolower($status);
-        $validStatus = array('published', 'pub', 'block', 'blocked', 'hide', 'hidden');
+        $validStatus = array('published', 'pub', 'block', 'bloq', 'blocked', 'hide', 'hidden');
         if (!in_array($status, $validStatus)) {
             throw new \Exception('Status "' . $status . '" not in '. implode(', ', $validStatus));
         }
 
         switch ($status) {
-          case 'published':
-          case 'pub':
-              return MultimediaObject::STATUS_PUBLISHED;
-          case 'block':
-          case 'blocked':
-              return MultimediaObject::STATUS_BLOCKED;
-          case 'hide':
-          case 'hidden':
-              return MultimediaObject::STATUS_HIDDEN;
+            case 'published':
+            case 'pub':
+                return MultimediaObject::STATUS_PUBLISHED;
+            case 'bloq':
+            case 'block':
+            case 'blocked':
+                return MultimediaObject::STATUS_BLOCKED;
+            case 'hide':
+            case 'hidden':
+                return MultimediaObject::STATUS_HIDDEN;
         }
         return MultimediaObject::STATUS_PUBLISHED;
     }
