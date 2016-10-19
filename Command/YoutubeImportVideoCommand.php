@@ -53,7 +53,10 @@ Steps:
        <info>php bin/console youtube:import:video --env=prod --step=3 6aeJ7kOVfH8 /mnt/videos/stevejobs-memorial-us-20121005_416x234h.mp4</info>
 
  * 4.- Tag objects. Examples:
-       <info>php bin/console youtube:import:video --env=prod --step=4 6aeJ7kOVfH8  --tags=PLW9tHnDKi2SZ9ea_QK-Trz_hc9-255Fc3 --tags=PLW9tHnDKi2SZcLbuDgLYhHodMw8UH2fHN --status=bloq</info>
+       <info>php bin/console youtube:import:video --env=prod --step=4 6aeJ7kOVfH8  --tags=PLW9tHnDKi2SZ9ea_QK-Trz_hc9-255Fc3 --tags=PLW9tHnDKi2SZcLbuDgLYhHodMw8UH2fHN</info>
+
+ * 5.- Publish objects. Examples:
+       <info>php bin/console youtube:import:video --env=prod --step=5 6aeJ7kOVfH8</info>
 
 
 EOT
@@ -108,6 +111,14 @@ EOT
             }
             $output->writeln(' * Tagging multimedia object ');
             $this->tagMultimediaObject($mmobj, $input->getOption('tags'));
+            break;
+        case 5:
+            $mmobj = $this->getMmObjFromYid($yid);
+            if (!$mmobj) {
+                throw new \Exception('No mmobj from Youtube video with id ' . $yid);
+            }
+            $output->writeln(' * publishing multimedia object ');
+            $this->tagService->addTagByCodToMultimediaObject($mmobj, 'PUCHWEBTV');
             break;
         default:
             $output->writeln('<error>Select a valid step</error>');
