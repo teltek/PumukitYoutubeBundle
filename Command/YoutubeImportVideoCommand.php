@@ -45,6 +45,11 @@ Steps:
        <info>php bin/console youtube:import:video --env=prod --step=1 6aeJ7kOVfH8  PLW9tHnDKi2SZ9ea_QK-Trz_hc9-255Fc3 \
                --tags=PLW9tHnDKi2SZ9ea_QK-Trz_hc9-255Fc3 --tags=PLW9tHnDKi2SZcLbuDgLYhHodMw8UH2fHN --status=blocked</info>
 
+       For YouTube identifies starting with slash (-):
+       <info>php bin/console youtube:import:video --env=prod --step=1 \
+               --tags=PLW9tHnDKi2SZ9ea_QK-Trz_hc9-255Fc3 --tags=PLW9tHnDKi2SZcLbuDgLYhHodMw8UH2fHN --status=blocked \
+               -- -aeJ7kOVfH8  PLW9tHnDKi2SZ9ea_QK-Trz_hc9-255Fc3 </info>
+
 
  * 2.- Download the images. Examples:
        <info>php bin/console youtube:import:video --env=prod --step=2 6aeJ7kOVfH8</info>
