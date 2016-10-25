@@ -346,8 +346,24 @@ EOT
             throw new FileException(sprintf('Unable to download  "%s"', $url));
         }
 
-        $output = file_put_contents($directory.'/'.$filename, fopen(str_replace(' ', '%20', $url), 'r'));
-        if (!$output) {
+        //$output = file_put_contents($directory.'/'.$filename, fopen(str_replace(' ', '%20', $url), 'r'));
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        //curl_setopt($ch, CURLOPT_SSLVERSION,3);
+        $data = curl_exec ($ch);
+        $error = curl_error($ch);
+        curl_close ($ch);
+
+        if ($error) {
+            throw new FileException(sprintf('Error downloading  "%s": %s', $url, $error));
+        }
+
+        $file = fopen($directory.'/'.$filename, "w+");
+        $output = fputs($file, $data);
+        $output2 = fclose($file);
+
+        if (!$output || !$output2) {
             throw new FileException(sprintf('Error downloading  "%s"', $url));
         }
     }
