@@ -174,14 +174,17 @@ EOT
         $picService = $this->getContainer()->get('pumukitschema.mmspic');
 
         $meta = $mmobj->getProperty('youtubemeta');
-        $picUrl = $meta['snippet']['thumbnails']['standard']['url'];
+
+        $picUrl = isset($meta['snippet']['thumbnails']['standard']['url']) ?
+                $meta['snippet']['thumbnails']['standard']['url'] :
+                $meta['snippet']['thumbnails']['default']['url'];
 
         if (0 != count($mmobj->getPics())) {
             throw new \Exception('Object "' . $mmobj->getId() . '" already has pics' );
         }
 
         if (!$picUrl) {
-            throw new \Exception('No pic for object with id' . $mmobj->getId() );
+            throw new \Exception('No pic for object with id ' . $mmobj->getId() );
         }
 
         $filePath = $picService->getTargetPath($mmobj);
