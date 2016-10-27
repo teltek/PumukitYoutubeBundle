@@ -54,6 +54,10 @@ Steps:
  * 2.- Download the images. Examples:
        <info>php bin/console youtube:import:video --env=prod --step=2 6aeJ7kOVfH8</info>
 
+       Use <comment>all</comment> to iterate over all multimedia objects imported from Youtube:
+       <info>php bin/console youtube:import:video --env=prod --step=2 all</info>
+
+
  * 3.- Download/move the tracks. Examples:
        <info>php bin/console youtube:import:video --env=prod --step=3 6aeJ7kOVfH8 /mnt/videos/stevejobs-memorial-us-20121005_416x234h.mp4</info>
 
@@ -94,12 +98,20 @@ EOT
             }
             break;
         case 2:
-            $mmobj = $this->getMmObjFromYid($yid);
-            if (!$mmobj) {
-                throw new \Exception('No mmobj from Youtube video with id ' . $yid);
+            if ('all' == $yid) {
+                $mmobjs = $this->mmobjRepo->findBy(array('properties.origin' => 'youtube'));
+                foreach($mmobjs as $mmobj) {
+                    $output->writeln(' * Downloading image for multimedia object with id ' . $mmobj->getId());
+                    $this->downloadPic($mmobj);
+                }
+            } else {
+                $mmobj = $this->getMmObjFromYid($yid);
+                if (!$mmobj) {
+                    throw new \Exception('No mmobj from Youtube video with id ' . $yid);
+                }
+                $output->writeln(' * Downloading image for multimedia object with YouTube id ' . $yid);
+                $this->downloadPic($mmobj);
             }
-            $output->writeln(' * Downloading image for multimedia object ');
-            $this->downloadPic($mmobj);
             break;
         case 3:
             $mmobj = $this->getMmObjFromYid($yid);
