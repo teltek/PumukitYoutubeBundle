@@ -36,6 +36,7 @@ class YoutubeImportVideoCommand extends ContainerAwareCommand
             ->addOption('status', null, InputOption::VALUE_OPTIONAL, 'Status of the new multimedia object (published, blocked or hidden)', 'published')
             ->addOption('step', 'S', InputOption::VALUE_REQUIRED, 'Step of the importation. See help for more info', -99)
             ->addOption('tags', null, InputOption::VALUE_IS_ARRAY | InputOption::VALUE_OPTIONAL, 'Youtube tags to add in the object', array())
+            ->addOption('force', null, InputOption::VALUE_NONE, 'Set this parameter force the execution of this action')
             ->setHelp(<<<EOT
 Command to create a multimedia object from Youtube.
 
@@ -104,7 +105,11 @@ EOT
                 $mmobjs = $this->mmobjRepo->findBy(array('properties.origin' => 'youtube'));
                 foreach($mmobjs as $mmobj) {
                     $output->writeln(' * Downloading image for multimedia object with id ' . $mmobj->getId());
-                    $this->downloadPic($mmobj, $input->getArgument('series'));
+                    try {
+                        $this->downloadPic($mmobj, $input->getArgument('series'), $input->getOption('force'));
+                    } catch(\Exception $e) {
+                        $output->writeln('<error>' . $e->getMessage() . '</error>');
+                    }
                 }
             } else {
                 $mmobj = $this->getMmObjFromYid($yid);
@@ -112,7 +117,7 @@ EOT
                     throw new \Exception('No mmobj from Youtube video with id ' . $yid);
                 }
                 $output->writeln(' * Downloading image for multimedia object with YouTube id ' . $yid);
-                $this->downloadPic($mmobj, $input->getArgument('series'));
+                $this->downloadPic($mmobj, $input->getArgument('series'), $input->getOption('force'));
             }
             break;
         case 3:
@@ -183,25 +188,32 @@ EOT
         }
     }
 
-    private function downloadPic(MultimediaObject $mmobj, $quality = null)
+    private function downloadPic(MultimediaObject $mmobj, $quality = null, $force = false)
     {
         $picService = $this->getContainer()->get('pumukitschema.mmspic');
 
         $meta = $mmobj->getProperty('youtubemeta');
 
-        if ($quality) {
+        if (!$quality) {
             $picUrl = isset($meta['snippet']['thumbnails']['standard']['url']) ?
                     $meta['snippet']['thumbnails']['standard']['url'] :
                     $meta['snippet']['thumbnails']['default']['url'];
         } else {
             if(!isset($meta['snippet']['thumbnails'][$quality]['url'])) {
-                throw new \Exception('Object "' . $mmobj->getId() . '" doesn\'t have image with ' . $quality . ' quality');
+                throw new \Exception('Object "' . $mmobj->getId() . '" doesn\'t have image with "' . $quality . '" quality');
             }
             $picUrl = $meta['snippet']['thumbnails'][$quality]['url'];
         }
 
-        if (0 != count($mmobj->getPics())) {
-            throw new \Exception('Object "' . $mmobj->getId() . '" already has pics' );
+        if ($force) {
+            $picIds = array_map(function($p){ return $p->getId();}, $mmobj->getPics()->toArray());
+            foreach($picIds as $picId) {
+                $picService->removePicFromMultimediaObject($mmobj, $picId);
+            }
+        } else {
+            if (0 != count($mmobj->getPics())) {
+                throw new \Exception('Object "' . $mmobj->getId() . '" already has pics' );
+            }
         }
 
         if (!$picUrl) {
