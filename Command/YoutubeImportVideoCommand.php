@@ -57,6 +57,8 @@ Steps:
        Use <comment>all</comment> to iterate over all multimedia objects imported from Youtube:
        <info>php bin/console youtube:import:video --env=prod --step=2 all</info>
 
+       Use the second argument to force a thumbnails quality (default|high|medium|maxres|standard):
+       <info>php bin/console youtube:import:video --env=prod --step=2 all standard</info>
 
  * 3.- Download/move the tracks. Examples:
        <info>php bin/console youtube:import:video --env=prod --step=3 6aeJ7kOVfH8 /mnt/videos/stevejobs-memorial-us-20121005_416x234h.mp4</info>
@@ -102,7 +104,7 @@ EOT
                 $mmobjs = $this->mmobjRepo->findBy(array('properties.origin' => 'youtube'));
                 foreach($mmobjs as $mmobj) {
                     $output->writeln(' * Downloading image for multimedia object with id ' . $mmobj->getId());
-                    $this->downloadPic($mmobj);
+                    $this->downloadPic($mmobj, $input->getArgument('series'));
                 }
             } else {
                 $mmobj = $this->getMmObjFromYid($yid);
@@ -110,7 +112,7 @@ EOT
                     throw new \Exception('No mmobj from Youtube video with id ' . $yid);
                 }
                 $output->writeln(' * Downloading image for multimedia object with YouTube id ' . $yid);
-                $this->downloadPic($mmobj);
+                $this->downloadPic($mmobj, $input->getArgument('series'));
             }
             break;
         case 3:
@@ -181,15 +183,22 @@ EOT
         }
     }
 
-    private function downloadPic(MultimediaObject $mmobj)
+    private function downloadPic(MultimediaObject $mmobj, $quality = null)
     {
         $picService = $this->getContainer()->get('pumukitschema.mmspic');
 
         $meta = $mmobj->getProperty('youtubemeta');
 
-        $picUrl = isset($meta['snippet']['thumbnails']['standard']['url']) ?
-                $meta['snippet']['thumbnails']['standard']['url'] :
-                $meta['snippet']['thumbnails']['default']['url'];
+        if ($quality) {
+            $picUrl = isset($meta['snippet']['thumbnails']['standard']['url']) ?
+                    $meta['snippet']['thumbnails']['standard']['url'] :
+                    $meta['snippet']['thumbnails']['default']['url'];
+        } else {
+            if(!isset($meta['snippet']['thumbnails'][$quality]['url'])) {
+                throw new \Exception('Object "' . $mmobj->getId() . '" doesn\'t have image with ' . $quality . ' quality');
+            }
+            $picUrl = $meta['snippet']['thumbnails'][$quality]['url'];
+        }
 
         if (0 != count($mmobj->getPics())) {
             throw new \Exception('Object "' . $mmobj->getId() . '" already has pics' );
