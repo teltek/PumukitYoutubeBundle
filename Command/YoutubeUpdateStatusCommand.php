@@ -28,9 +28,11 @@ class YoutubeUpdateStatusCommand extends ContainerAwareCommand
     {
         $this
             ->setName('youtube:update:status')
-            ->setDescription('Update Youtube status of the video')
+            ->setDescription('Update local YouTube status of the video')
             ->setHelp(<<<EOT
-Update YouTube status in pumukit using the YouTube API. If enabled it send an email with a summary.
+Update the YouTube status in PuMuKIT YouTube collection using the YouTube API. If enabled it send an email with a summary.
+
+The statuses removed, notified error and duplicated are not updated.
 
 EOT
           );
