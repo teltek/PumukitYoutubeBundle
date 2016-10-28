@@ -190,11 +190,13 @@ EOT
             throw new \Exception('Object already has master track');
         }
 
+        /*
         try {
             $jobService->createTrackWithFile($trackPath . '.delivery', $videoH264Profile, $mmobj);
         } catch (\Exception $e) {
             throw new \Exception('Error coping delivery file "' . $trackPath . '.delivery' . '"');
         }
+        */
 
         try {
             $jobService->createTrackWithFile($trackPath, $masterProfile, $mmobj);
