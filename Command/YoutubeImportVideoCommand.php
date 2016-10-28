@@ -70,6 +70,9 @@ Steps:
  * 5.- Publish objects. Examples:
        <info>php bin/console youtube:import:video --env=prod --step=5 6aeJ7kOVfH8</info>
 
+       Use <comment>all</comment> to iterate over all multimedia objects imported from Youtube:
+       <info>php bin/console youtube:import:video --env=prod --step=5 all</info>
+
 
 EOT
           );
@@ -137,12 +140,24 @@ EOT
             $this->tagMultimediaObject($mmobj, $input->getOption('tags'));
             break;
         case 5:
-            $mmobj = $this->getMmObjFromYid($yid);
-            if (!$mmobj) {
-                throw new \Exception('No mmobj from Youtube video with id ' . $yid);
+            if ('all' == $yid) {
+                $mmobjs = $this->mmobjRepo->findBy(array('properties.origin' => 'youtube'));
+                foreach($mmobjs as $mmobj) {
+                    $output->writeln(' * Publishing multimedia object ' . $mmobj->getId());
+                    try {
+                        $this->tagService->addTagByCodToMultimediaObject($mmobj, 'PUCHWEBTV');
+                    } catch(\Exception $e) {
+                        $output->writeln('<error>' . $e->getMessage() . '</error>');
+                    }
+                }
+            } else {
+                $mmobj = $this->getMmObjFromYid($yid);
+                if (!$mmobj) {
+                    throw new \Exception('No mmobj from Youtube video with id ' . $yid);
+                }
+                $output->writeln(' * Publishing multimedia object ' . $mmobj->getId());
+                $this->tagService->addTagByCodToMultimediaObject($mmobj, 'PUCHWEBTV');
             }
-            $output->writeln(' * publishing multimedia object ');
-            $this->tagService->addTagByCodToMultimediaObject($mmobj, 'PUCHWEBTV');
             break;
         default:
             $output->writeln('<error>Select a valid step</error>');
