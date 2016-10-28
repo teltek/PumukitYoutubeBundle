@@ -140,6 +140,7 @@ EOT
             $this->tagMultimediaObject($mmobj, $input->getOption('tags'));
             break;
         case 5:
+            $dispatcher = $this->getContainer()->get('pumukitschema.multimediaobject_dispatcher');
             if ('all' == $yid) {
                 $mmobjs = $this->mmobjRepo->findBy(array('properties.origin' => 'youtube'));
                 foreach($mmobjs as $mmobj) {
@@ -150,6 +151,9 @@ EOT
                         $output->writeln('<error>' . $e->getMessage() . '</error>');
                     }
                 }
+                foreach ($mmobjs as $mmobj) {
+                    $dispatcher->dispatchUpdate($mmobj);
+                }
             } else {
                 $mmobj = $this->getMmObjFromYid($yid);
                 if (!$mmobj) {
@@ -157,6 +161,7 @@ EOT
                 }
                 $output->writeln(' * Publishing multimedia object ' . $mmobj->getId());
                 $this->tagService->addTagByCodToMultimediaObject($mmobj, 'PUCHWEBTV');
+                $dispatcher->dispatchUpdate($mmobj);
             }
             break;
         default:
