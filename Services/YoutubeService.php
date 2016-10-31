@@ -611,7 +611,8 @@ class YoutubeService
     {
         echo "create On Pumukit: ".$youtubePlaylist['title'] . "\n";
         $metatag = $this->getPlaylistMetaTag();
-        $tag = new Tag($youtubePlaylist['title']);
+        $tag = new Tag();
+        $tag->setLocale($this->ytLocale);
         $tag->setCod($youtubePlaylist['id']);
         $tag->setTitle($youtubePlaylist['title']);
         $tag->setDescription('Tag playlist generated automatically from youtube. Do not edit.');
