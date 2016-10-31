@@ -102,7 +102,7 @@ EOT
                 if ($multimediaObject) {
                     $this->failedUpdates[] = $multimediaObject;
                 }
-                $this->errors[] = substr($e->getMessage(), 0, 100);
+                $this->errors[] = $e->getMessage();
             }
         }
     }
