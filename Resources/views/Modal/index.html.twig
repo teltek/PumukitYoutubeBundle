@@ -5,7 +5,7 @@
 <div class="modal-body">
   <div class="col-md-8 input-group">
     <dl class="dl-horizontal">
-      <dt>Youtube Status</dt>
+      <dt>{% trans %}Youtube Status{% endtrans %}</dt>
       <dd style="overflow:hidden">
         {% if youtube_status == 'error' or youtube_status == 'removed' %}
           <span class="label label-dismissable label-danger">{{ youtube_status }} [{{youtube.status}}]</span>
@@ -15,12 +15,12 @@
           <span class="label label-dismissable label-warning">{{ youtube_status }} [{{youtube.status}}]</span>
         {% endif %}
       </dd>
-      <dt>Last Updated</dt>
+      <dt>{% trans %}Last Updated{% endtrans %}</dt>
       <dd>{{ youtube.multimediaObjectUpdateDate | date ("H:i:s ---   d/m/Y ")}}</dd>
-      <dt>Youtube Id</dt>
+      <dt>{% trans %}Youtube Id{% endtrans %}</dt>
       <dd>{{ youtube.id }}</dd>
       {% if youtube_status in ['published', 'proccessing'] %}
-        <dt>Youtube Playlists:</dt>
+        <dt>{% trans %}Youtube Playlists{% endtrans %}:</dt>
         {% for key, playlist in youtube.playlists %}
           <dd>
             <div class="input-group">
@@ -33,7 +33,7 @@
             </div>
           </dd>
         {% endfor %}
-        <dt>Youtube Link</dt>
+        <dt>{% trans %}Youtube Link{% endtrans %}</dt>
         <dd>
           <div class="col-lg-10 input-group">
             <div class="form-control-wrapper">
@@ -47,7 +47,7 @@
             </span>
           </div>
         </dd>
-        <dt>Youtube Embed</dt>
+        <dt>{% trans %}Youtube Embed{% endtrans %}</dt>
         <dd>
           <div class="form-control-wrapper">
             <input type="text" class="form-control" readonly onclick="select()" value="{{ youtube.embed }}">

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xliff xmlns="urn:oasis:names:tc:xliff:document:1.2" version="1.2">
+  <file source-language="en" target-language="es" datatype="plaintext" original="file.ext">
+    <body>
+      <trans-unit id="ef41a936940c9936bca642486c583c59" resname="Youtube Info For Multimedia Object:">
+        <source>Youtube Info For Multimedia Object:</source>
+        <target>Youtube Info For Multimedia Object:</target>
+      </trans-unit>
+      <trans-unit id="f27a1f28ebb8640db0853ed84b9015c8" resname="This Multimedia Object does not have YouTube data yet.">
+        <source>This Multimedia Object does not have YouTube data yet.</source>
+        <target>This Multimedia Object does not have YouTube data yet.</target>
+      </trans-unit>
+      <trans-unit id="e67f56e5ab901ef0a66aa74815e3c13a" resname="Youtube Status">
+        <source>Youtube Status</source>
+        <target>Youtube Status</target>
+      </trans-unit>
+      <trans-unit id="4221d3e17c6eca2ca6337251a3cf9c4e" resname="Last Updated">
+        <source>Last Updated</source>
+        <target>Last Updated</target>
+      </trans-unit>
+      <trans-unit id="86771391ce939c4a331c462fc0395d19" resname="Youtube Id">
+        <source>Youtube Id</source>
+        <target>Youtube Id</target>
+      </trans-unit>
+      <trans-unit id="19d698ac3336747ac45edafc8796a8c5" resname="Youtube Playlists">
+        <source>Youtube Playlists</source>
+        <target>Youtube Playlists</target>
+      </trans-unit>
+      <trans-unit id="3af3ed1c10f980a2c6c13af659167fd1" resname="Youtube Link">
+        <source>Youtube Link</source>
+        <target>Youtube Link</target>
+      </trans-unit>
+      <trans-unit id="02e7e21d4c246ee7022f6a2dc44f5b51" resname="Youtube Embed">
+        <source>Youtube Embed</source>
+        <target>Youtube Embed</target>
+      </trans-unit>
+    </body>
+  </file>
+</xliff>
