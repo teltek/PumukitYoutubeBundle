@@ -690,7 +690,7 @@ class YoutubeService
      *
      * returns array
      */
-    private function getAllYoutubePlaylists()
+    public function getAllYoutubePlaylists()
     {
         $res = array();
         $playlist = array();
@@ -714,6 +714,31 @@ class YoutubeService
         }
 
         return $res;
+    }
+
+    /**
+     * Gets an array of 'playlisitems.
+     *
+     * returns array
+     */
+    public function getAllYoutubePlaylistItems()
+    {
+        $res = array();
+        $playlist = array();
+        $command = 'python getAllPlaylistItems.py';
+
+        $dcurrent = getcwd();
+        chdir($this->pythonDirectory);
+        $pyOut = exec($command, $output, $return_var);
+        chdir($dcurrent);
+        $out = json_decode($pyOut, true);
+        if ($out['error']) {
+            $errorLog = sprintf('%s [%s] Error in executing getAllPlaylists.py:', __CLASS__, __FUNCTION__, $out['error_out']);
+            $this->logger->addError($errorLog);
+            throw new \Exception($errorLog);
+        }
+
+        return $out['out'];
     }
 
     /**
