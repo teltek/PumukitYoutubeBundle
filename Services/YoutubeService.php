@@ -139,6 +139,10 @@ class YoutubeService
         $code = $this->getEmbed($out['out']['id']);
         $youtube->setEmbed($code);
         $youtube->setForce($force);
+
+        $now = new \DateTime('now');
+        $youtube->setSyncMetadataDate($now);
+        $youtube->setUploadDate($now);
         $this->dm->persist($youtube);
         $this->dm->flush();
         $youtubeTag = $this->tagRepo->findOneByCod(self::PUB_CHANNEL_YOUTUBE);

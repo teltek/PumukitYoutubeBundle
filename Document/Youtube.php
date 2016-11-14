@@ -101,6 +101,13 @@ class Youtube
     private $syncMetadataDate;
 
     /**
+     * @var date
+     *
+     * @MongoDB\Date
+     */
+    private $uploadDate;
+
+    /**
      * Get id.
      *
      * @return string
@@ -117,6 +124,7 @@ class Youtube
     {
         $this->multimediaObjectUpdateDate = new \DateTime('1970-01-01 09:00');
         $this->syncMetadataDate = new \DateTime('1980-01-01 10:00');
+        $this->uploadDate = new \DateTime('1980-01-01 10:00');
     }
 
     /**
@@ -356,5 +364,25 @@ class Youtube
     public function getSyncMetadataDate()
     {
         return $this->syncMetadataDate;
+    }
+
+    /**
+     * Set uploadDate.
+     *
+     * @param DateTime $uploadDate
+     */
+    public function setUploadDate($uploadDate)
+    {
+        $this->uploadDate = $uploadDate;
+    }
+
+    /**
+     * Get uploadDate.
+     *
+     * @return datetime
+     */
+    public function getUploadDate()
+    {
+        return $this->uploadDate;
     }
 }
