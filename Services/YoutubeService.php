@@ -116,7 +116,7 @@ class YoutubeService
         $tags = $this->getTagsForYoutube($multimediaObject);
         $dcurrent = getcwd();
         chdir($this->pythonDirectory);
-        $pyOut = exec('python upload.py --file '.$trackPath.' --title "'.addslashes($title).'" --description "'.addslashes($description).'" --category '.$category.' --keywords "'.$tags.'" --privacyStatus '.$privacy, $output, $return_var);
+        $pyOut = exec('python upload.py --file '.$trackPath.' --title \''.addslashes($title).'\' --description \''.addslashes($description).'\' --category '.$category.' --keywords \''.$tags.'\' --privacyStatus '.$privacy, $output, $return_var);
         chdir($dcurrent);
         $out = json_decode($pyOut, true);
         if ($out['error']) {
@@ -307,7 +307,7 @@ class YoutubeService
             $tags = $this->getTagsForYoutube($multimediaObject);
             $dcurrent = getcwd();
             chdir($this->pythonDirectory);
-            $pyOut = exec('python updateVideo.py --videoid '.$youtube->getYoutubeId().' --title "'.addslashes($title).'" --description "'.addslashes($description).'" --tag "'.$tags.'"', $output, $return_var);
+            $pyOut = exec('python updateVideo.py --videoid '.$youtube->getYoutubeId().' --title \''.addslashes($title).'\' --description \''.addslashes($description).'\' --tag \''.$tags.'\'', $output, $return_var);
             chdir($dcurrent);
             $out = json_decode($pyOut, true);
             if ($out['error']) {
@@ -576,7 +576,7 @@ class YoutubeService
     private function createYoutubePlaylist(Tag $tag)
     {
         echo "create On Youtube: ".$tag->getTitle($this->ytLocale) . "\n";
-        $command = sprintf('python createPlaylist.py --title "%s" --privacyStatus "%s"', $tag->getTitle($this->ytLocale), $this->playlistPrivacyStatus);
+        $command = sprintf('python createPlaylist.py --title \'%s\' --privacyStatus \'%s\'', $tag->getTitle($this->ytLocale), $this->playlistPrivacyStatus);
 
         $dcurrent = getcwd();
         chdir($this->pythonDirectory);
