@@ -962,13 +962,13 @@ class YoutubeService
     /**
      * Get title for youtube.
      */
-    private function getTitleForYoutube(MultimediaObject $multimediaObject)
+    private function getTitleForYoutube(MultimediaObject $multimediaObject, $limit = 60)
     {
         $title = $multimediaObject->getTitle($this->ytLocale);
 
-        if (strlen($title) > 60) {
-            while (strlen($title) > 55) {
-                $pos = strrpos($title, ' ', 61);
+        if (strlen($title) > $limit) {
+            while (strlen($title) > ($limit - 5)) {
+                $pos = strrpos($title, ' ', $limit + 1);
                 if ($pos !== false) {
                     $title = substr($title, 0, $pos);
                 } else {
@@ -976,10 +976,10 @@ class YoutubeService
                 }
             }
         }
-        while (strlen($title) > 55) {
+        while (strlen($title) > ($limit - 5)) {
             $title = substr($title, 0, strrpos($title, ' '));
         }
-        if (strlen($multimediaObject->getTitle($this->ytLocale)) > 55) {
+        if (strlen($multimediaObject->getTitle($this->ytLocale)) > ($limit - 5)) {
             $title = $title.'(...)';
         }
 
