@@ -962,7 +962,7 @@ class YoutubeService
     /**
      * Get title for youtube.
      */
-    private function getTitleForYoutube(MultimediaObject $multimediaObject, $limit = 60)
+    private function getTitleForYoutube(MultimediaObject $multimediaObject, $limit = 100)
     {
         $title = $multimediaObject->getTitle($this->ytLocale);
 
