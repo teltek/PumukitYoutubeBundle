@@ -21,8 +21,9 @@ class YoutubeServiceTest extends WebTestCase
     private $logger;
     private $resourcesDir;
     private $playlistPrivacyStatus;
+    private $multimediaobject_dispatcher;
 
-    public function __construct()
+    public function setUp()
     {
         $options = array('environment' => 'test');
         $kernel = static::createKernel($options);
@@ -46,18 +47,45 @@ class YoutubeServiceTest extends WebTestCase
           ->get('translator');
         $this->playlistPrivacyStatus = $kernel->getContainer()
           ->getParameter('pumukit_youtube.playlist_privacy_status');
-    }
-
-    public function setUp()
-    {
         $this->dm->getDocumentCollection('PumukitSchemaBundle:MultimediaObject')->remove(array());
         $this->dm->getDocumentCollection('PumukitSchemaBundle:Series')->remove(array());
         $this->dm->getDocumentCollection('PumukitSchemaBundle:Tag')->remove(array());
         $this->dm->getDocumentCollection('PumukitYoutubeBundle:Youtube')->remove(array());
         $this->dm->flush();
-        $this->tagService = new TagService($this->dm);
-        $this->youtubeService = new YoutubeService($this->dm, $this->router, $this->tagService, $this->logger, $this->notificationSender, $this->translator, $this->playlistPrivacyStatus);
+        $this->multimediaobject_dispatcher = $kernel->getContainer()
+          ->get('pumukitschema.multimediaobject_dispatcher');
+        $this->tagService = new TagService($this->dm, $this->multimediaobject_dispatcher);
+        $locale = 'en';
+        $useDefaultPlaylist = false;
+        $defaultPlaylistCod = 'YOUTUBECONFERENCES';
+        $defaultPlaylistTitle = 'Conferences';
+        $metatagPlaylistCod = 'YOUTUBE';
+        $playlistMaster = array('pumukit', 'youtube');
+        $deletePlaylists = false;
+        $pumukitLocales = array('en');
+        $this->youtubeService = new YoutubeService($this->dm, $this->router, $this->tagService, $this->logger, $this->notificationSender, $this->translator, $this->playlistPrivacyStatus, $locale, $useDefaultPlaylist, $defaultPlaylistCod, $defaultPlaylistTitle, $metatagPlaylistCod, $playlistMaster, $deletePlaylists, $pumukitLocales);
         $this->resourcesDir = realpath(__DIR__.'/../Resources').'/';
+    }
+
+    public function tearDown()
+    {
+        $this->dm->close();
+        $this->dm = null;
+        $this->youtubeRepo = null;
+        $this->tagRepo = null;
+        $this->mmobjRepo = null;
+        $this->tagService = null;
+        $this->router = null;
+        $this->logger = null;
+        $this->factoryService = null;
+        $this->notificationSender = null;
+        $this->translator = null;
+        $this->playlistPrivacyStatus = null;
+        $this->multimediaobject_dispatcher = null;
+        $this->youtubeService = null;
+        $this->resourcesDir = null;
+        gc_collect_cycles();
+        parent::tearDown();
     }
 
     public function testYoutubeServiceFunctions()
