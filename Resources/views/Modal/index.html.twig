@@ -16,7 +16,7 @@
         {% endif %}
       </dd>
       <dt>{% trans %}Last Updated{% endtrans %}</dt>
-      <dd>{{ youtube.multimediaObjectUpdateDate | date ("H:i:s ---   d/m/Y ")}}</dd>
+      <dd>{{ youtube.syncMetadataDate|localizeddate}}</dd>
       <dt>{% trans %}Youtube Id{% endtrans %}</dt>
       <dd>{{ youtube.id }}</dd>
       {% if youtube_status in ['published', 'proccessing'] %}
