@@ -7,11 +7,11 @@
     <dl class="dl-horizontal">
       <dt>{% trans %}Youtube Status{% endtrans %}</dt>
       <dd style="overflow:hidden">
-        {% if youtube_status == 'error' or youtube_status == 'removed' %}
+        {% if youtube_status == 'error' or youtube_status == 'removed' or youtube_status == 'duplicated' %}
           <span class="label label-dismissable label-danger">{{ youtube_status }} [{{youtube.status}}]</span>
         {% elseif youtube_status == 'published'  %}
           <span class="label label-dismissable label-success">{{ youtube_status }} [{{youtube.status}}]</span>
-        {% elseif youtube_status == 'proccessing' %}
+        {% else %}
           <span class="label label-dismissable label-warning">{{ youtube_status }} [{{youtube.status}}]</span>
         {% endif %}
       </dd>
