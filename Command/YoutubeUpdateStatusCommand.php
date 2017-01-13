@@ -72,7 +72,7 @@ EOT
             if ($multimediaObject == null) {
                 $msg = sprintf("No multimedia object for YouTube document %s\n", $youtube->getId());
                 echo $msg;
-                $this->logger->warn($msg);
+                $this->logger->addInfo($msg);
                 continue;
             }
             try {
