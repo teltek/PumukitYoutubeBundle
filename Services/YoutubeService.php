@@ -993,7 +993,7 @@ class YoutubeService
     {
         $series = $multimediaObject->getSeries();
         $break = array('<br />', '<br/>');
-        $description = $series->getTitle($this->ytLocale).' - '.$multimediaObject->getTitle($this->ytLocale)."\n".$multimediaObject->getSubtitle()."\n".str_replace($break, "\n", $multimediaObject->getDescription($this->ytLocale));
+        $description = $series->getTitle($this->ytLocale).' - '.$multimediaObject->getTitle($this->ytLocale)."\n".$multimediaObject->getSubtitle($this->ytLocale)."\n".str_replace($break, "\n", $multimediaObject->getDescription($this->ytLocale));
 
         if(MultimediaObject::STATUS_PUBLISHED == $multimediaObject->getStatus() && $multimediaObject->containsTagWithCod('PUCHWEBTV')) {
             $appInfoLink = $this->router->generate('pumukit_webtv_multimediaobject_index', array('id' => $multimediaObject->getId()), true);
