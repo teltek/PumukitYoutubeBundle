@@ -546,7 +546,6 @@ class YoutubeService
             if (!in_array($ytPlaylist['id'], $allTagsYtId)) {
                 if ($master == 'youtube') {
                     $msg = sprintf('Creating tag using YouTube playlist "%s" (%s)', $ytPlaylist['title'], $ytPlaylist['id']);
-                    $msg = sprintf('Creating tag using YouTube playlist "%s" (%s)', $ytPlaylist['title'], $ytPlaylist['id']);
                     echo $msg;
                     $this->logger->info($msg);
                     $this->createPumukitPlaylist($ytPlaylist);
@@ -994,12 +993,14 @@ class YoutubeService
      */
     private function getTagsForYoutube(MultimediaObject $multimediaObject)
     {
-        $numbers = array('1', '2', '3', '4', '5', '6', '7', '8', '9', '0');
+        return $multimediaObject->getKeywords();
+
+        /* Se matiene comentado el código por si en algún momento un usuario decide devolver por defecto ciertas keywords fijas a sus videos. */
+        //$numbers = array('1', '2', '3', '4', '5', '6', '7', '8', '9', '0');
         // TODO CMAR
         //$tags = str_replace($numbers, '', $multimediaObject->getKeyword()) . ', CMAR, Mar, Galicia, Portugal, Eurorregión, Campus, Excelencia, Internacional';
-        $tags = str_replace($numbers, '', $multimediaObject->getKeyword());
-
-        return $tags;
+        //$tags = str_replace($numbers, '', $multimediaObject->getKeyword());
+        //return $tags;
     }
 
     /**
