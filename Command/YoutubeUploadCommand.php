@@ -144,7 +144,7 @@ EOT
         if (null != $youtubeTag) {
             foreach ($this->okUploads as $mm) {
                 if (!$mm->containsTagWithCod(self::PUB_CHANNEL_YOUTUBE)) {
-                    $addedTags = $this->tagService->addTagToMultimediaObject($multimediaObject, $youtubeTag->getId(), false);
+                    $addedTags = $this->tagService->addTagToMultimediaObject($mm, $youtubeTag->getId(), false);
                 }
             }
             $this->dm->flush();
