@@ -36,6 +36,7 @@
             <argument type="service" id="doctrine_mongodb.odm.document_manager"/>
             <argument type="service" id="router"/>
             <argument type="service" id="logger"/>
+            <argument>%pumukit_youtube.process_timeout%</argument>
         </service>
     </services>
 </container>

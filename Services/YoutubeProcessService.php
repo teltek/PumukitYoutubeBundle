@@ -12,13 +12,15 @@ class YoutubeProcessService
     private $dm;
     private $router;
     private $logger;
+    private $process_timeout;
 
-    public function __construct(DocumentManager $documentManager, Router $router, LoggerInterface $logger)
+    public function __construct(DocumentManager $documentManager, Router $router, LoggerInterface $logger, $process_timeout)
     {
         $this->dm = $documentManager;
         $this->router = $router;
         $this->logger = $logger;
         $this->pythonDirectory = __DIR__.'/../Resources/data/pyPumukit/';
+        $this->process_timeout = $process_timeout;
     }
 
     public function upload($trackPath, $title, $description, $category, $tags, $privacy)
@@ -127,7 +129,7 @@ class YoutubeProcessService
         $builder->setPrefix('python');
         array_unshift($aCommandArguments, $sFile);
         $builder->setArguments($aCommandArguments);
-        $builder->setTimeout(3600);
+        $builder->setTimeout($this->process_timeout);
         $builder->setWorkingDirectory($this->pythonDirectory);
 
         $pyProcess = $builder->getProcess();

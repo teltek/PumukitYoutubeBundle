@@ -68,6 +68,10 @@ class Configuration implements ConfigurationInterface
               ->defaultValue(array('PUCHYOUTUBE'))
               ->info('Tags necessary as a condition to be published on YouTube.')
             ->end()
+            ->scalarNode('process_timeout')
+                ->defaultValue(3600)
+                ->info('Time of the process timeout')
+            ->end()
           ->end();
 
         return $treeBuilder;

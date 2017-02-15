@@ -546,6 +546,7 @@ class YoutubeService
             if (!in_array($ytPlaylist['id'], $allTagsYtId)) {
                 if ($master == 'youtube') {
                     $msg = sprintf('Creating tag using YouTube playlist "%s" (%s)', $ytPlaylist['title'], $ytPlaylist['id']);
+                    $msg = sprintf('Creating tag using YouTube playlist "%s" (%s)', $ytPlaylist['title'], $ytPlaylist['id']);
                     echo $msg;
                     $this->logger->info($msg);
                     $this->createPumukitPlaylist($ytPlaylist);
