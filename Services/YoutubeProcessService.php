@@ -44,15 +44,15 @@ class YoutubeProcessService
 
     public function updateVideo($youtube, $title, $description, $tags)
     {
-        $sFile = "updateVideo.py";
+        $sFile = 'updateVideo.py';
         $aCommandArguments = array(
-            "--videoid",
+            '--videoid',
             $youtube->getYoutubeId(),
-            "--title",
+            '--title',
             $title,
-            "--description",
+            '--description',
             $description,
-            "--tag",
+            '--tag',
             $tags,
         );
 
@@ -61,40 +61,40 @@ class YoutubeProcessService
 
     public function deleteVideo($youtube)
     {
-        $sFile = "deleteVideo.py";
-        $aCommandArguments = array("--videoid", $youtube->getYoutubeId());
+        $sFile = 'deleteVideo.py';
+        $aCommandArguments = array('--videoid', $youtube->getYoutubeId());
 
         return $this->createProcess($sFile, $aCommandArguments);
     }
 
     public function createPlaylist($sTitleTag, $playlistPrivacyStatus)
     {
-        $sFile = "createPlaylist.py";
-        $aCommandArguments = array("--title", $sTitleTag, "--privacyStatus", $playlistPrivacyStatus);
+        $sFile = 'createPlaylist.py';
+        $aCommandArguments = array('--title', $sTitleTag, '--privacyStatus', $playlistPrivacyStatus);
 
         return $this->createProcess($sFile, $aCommandArguments);
     }
 
     public function deletePlaylist($youtubePlaylistId)
     {
-        $sFile = "deletePlaylist.py";
-        $aCommandArguments = array("--playlistid", $youtubePlaylistId);
+        $sFile = 'deletePlaylist.py';
+        $aCommandArguments = array('--playlistid', $youtubePlaylistId);
 
         return $this->createProcess($sFile, $aCommandArguments);
     }
 
     public function insertInToList($youtube, $youtubePlaylistId)
     {
-        $sFile = "insertInToList.py";
-        $aCommandArguments = array("--videoid", $youtube->getYoutubeId(), "--playlistid", $youtubePlaylistId);
+        $sFile = 'insertInToList.py';
+        $aCommandArguments = array('--videoid', $youtube->getYoutubeId(), '--playlistid', $youtubePlaylistId);
 
         return $this->createProcess($sFile, $aCommandArguments);
     }
 
     public function deleteFromList($youtubePlaylistItem)
     {
-        $sFile = "deleteFromList.py";
-        $aCommandArguments = array("--id", $youtubePlaylistItem);
+        $sFile = 'deleteFromList.py';
+        $aCommandArguments = array('--id', $youtubePlaylistItem);
 
         return $this->createProcess($sFile, $aCommandArguments);
     }
@@ -103,20 +103,20 @@ class YoutubeProcessService
     {
         switch ($sType) {
             case 'status':
-                $sFile = "getVideoStatus.py";
+                $sFile = 'getVideoStatus.py';
                 break;
             case 'meta':
-                $sFile = "getVideoMeta.py";
+                $sFile = 'getVideoMeta.py';
                 break;
         }
-        $aCommandArguments = array("--videoid", $sYoutubeId);
+        $aCommandArguments = array('--videoid', $sYoutubeId);
 
         return $this->createProcess($sFile, $aCommandArguments);
     }
 
     public function getAllPlaylist()
     {
-        $sFile = "getAllPlaylists.py";
+        $sFile = 'getAllPlaylists.py';
 
         return $this->createProcess($sFile);
     }
@@ -140,6 +140,6 @@ class YoutubeProcessService
             return json_decode($pyProcess->getOutput(), true);
         } catch (ProcessFailedException $e) {
             echo $e->getMessage();
-        };
+        }
     }
 }

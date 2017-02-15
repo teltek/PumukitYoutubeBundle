@@ -9,7 +9,7 @@ use Symfony\Component\DependencyInjection\Loader;
 use Symfony\Component\DependencyInjection\Extension\PrependExtensionInterface;
 
 /**
- * This is the class that loads and manages your bundle configuration
+ * This is the class that loads and manages your bundle configuration.
  *
  * To learn more see {@link http://symfony.com/doc/current/cookbook/bundles/extension.html}
  */
@@ -25,11 +25,11 @@ class PumukitYoutubeExtension extends Extension implements PrependExtensionInter
             'handlers' => array(
                 'youtube' => array(
                     'type' => 'stream',
-                    'path' => "%kernel.logs_dir%/youtube_%kernel.environment%.log",
+                    'path' => '%kernel.logs_dir%/youtube_%kernel.environment%.log',
                     'level' => 'info',
-                    'channels' => array('youtube')
-                )
-            )
+                    'channels' => array('youtube'),
+                ),
+            ),
         ));
     }
 

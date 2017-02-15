@@ -33,7 +33,7 @@ class YoutubeDeleteCommand extends ContainerAwareCommand
         $this
             ->setName('youtube:delete')
             ->setDescription('Delete videos from Youtube')
-            ->setHelp(<<<EOT
+            ->setHelp(<<<'EOT'
 Command to delete controlled videos from Youtube.
 
 EOT
@@ -48,35 +48,33 @@ EOT
         $publishedYoutubeIds = $this->getStringIds($youtubeMongoIds);
         $notPublishedMms = $this->getMultimediaObjectsInYoutubeWithoutStatus($publishedYoutubeIds, MultimediaObject::STATUS_PUBLISHED);
         if (0 != count($notPublishedMms)) {
-            $output->writeln('Removing ' . count($notPublishedMms) . ' object(s) with status not published');
+            $output->writeln('Removing '.count($notPublishedMms).' object(s) with status not published');
             $this->deleteVideosFromYoutube($notPublishedMms, $output);
         }
 
         $arrayPubTags = $this->getContainer()->getParameter('pumukit_youtube.pub_channels_tags');
-        foreach($arrayPubTags as $tagCode) {
+        foreach ($arrayPubTags as $tagCode) {
             $youtubeMongoIds = $this->youtubeRepo->getDistinctFieldWithStatusAndForce('_id', Youtube::STATUS_PUBLISHED, false);
             $publishedYoutubeIds = $this->getStringIds($youtubeMongoIds);
             // TODO When tag IMPORTANT is defined as child of PUBLICATION DECISION Tag
             $notCorrectTagMms = $this->getMultimediaObjectsInYoutubeWithoutTagCode($publishedYoutubeIds, $tagCode);
             if (0 != count($notCorrectTagMms)) {
-                $output->writeln('Removing ' . count($notCorrectTagMms) . ' object(s) w/o tag ' . $tagCode);
+                $output->writeln('Removing '.count($notCorrectTagMms).' object(s) w/o tag '.$tagCode);
                 $this->deleteVideosFromYoutube($notCorrectTagMms, $output);
             }
         }
 
-
         $youtubeMongoIds = $this->youtubeRepo->getDistinctFieldWithStatusAndForce('_id', Youtube::STATUS_PUBLISHED, false);
         $publishedYoutubeIds = $this->getStringIds($youtubeMongoIds);
         $notPublicMms = $this->getMultimediaObjectsInYoutubeWithoutEmbeddedBroadcast($publishedYoutubeIds, 'public');
-        if (0 != count($notPublicMms)){
-            $output->writeln('Removing ' . count($notPublicMms) . ' object(s) with broadcast not public');
+        if (0 != count($notPublicMms)) {
+            $output->writeln('Removing '.count($notPublicMms).' object(s) with broadcast not public');
             $this->deleteVideosFromYoutube($notPublicMms, $output);
         }
 
-
         $orphanYoutubes = $this->youtubeRepo->findByStatus(Youtube::STATUS_TO_DELETE);
         if (0 != count($orphanYoutubes)) {
-            $output->writeln('Removing ' . count($orphanYoutubes) . ' orphanYoutube(s) ');
+            $output->writeln('Removing '.count($orphanYoutubes).' orphanYoutube(s) ');
             $this->deleteOrphanVideosFromYoutube($orphanYoutubes, $output);
         }
 
@@ -190,7 +188,6 @@ EOT
             ->getQuery()
             ->execute();
     }
-
 
     private function getMultimediaObjectsInYoutubeWithoutEmbeddedBroadcast($youtubeIds, $broadcastTypeId)
     {
