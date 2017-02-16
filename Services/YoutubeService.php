@@ -116,25 +116,25 @@ class YoutubeService
         $description = $this->getDescriptionForYoutube($multimediaObject);
         $tags = $this->getTagsForYoutube($multimediaObject);
 
-        $sResult = $this->youtubeProcessService->upload($trackPath, $title, $description, $category, $tags, $privacy);
-        if ($sResult['error']) {
+        $aResult = $this->youtubeProcessService->upload($trackPath, $title, $description, $category, $tags, $privacy);
+        if ($aResult['error']) {
             $youtube->setStatus(Youtube::STATUS_ERROR);
             $this->dm->persist($youtube);
             $this->dm->flush();
             $errorLog = __CLASS__.' ['.__FUNCTION__
-                       .'] Error in the upload: '.$sResult['error_out'];
+                       .'] Error in the upload: '.$aResult['error_out'];
             $this->logger->addError($errorLog);
             throw new \Exception($errorLog);
         }
-        $youtube->setYoutubeId($sResult['out']['id']);
-        $youtube->setLink('https://www.youtube.com/watch?v='.$sResult['out']['id']);
+        $youtube->setYoutubeId($aResult['out']['id']);
+        $youtube->setLink('https://www.youtube.com/watch?v='.$aResult['out']['id']);
         $multimediaObject->setProperty('youtubeurl', $youtube->getLink());
         $this->dm->persist($multimediaObject);
-        if ($sResult['out']['status'] == 'uploaded') {
+        if ($aResult['out']['status'] == 'uploaded') {
             $youtube->setStatus(Youtube::STATUS_PROCESSING);
         }
 
-        $code = $this->getEmbed($sResult['out']['id']);
+        $code = $this->getEmbed($aResult['out']['id']);
         $youtube->setEmbed($code);
         $youtube->setForce($force);
 
@@ -183,16 +183,16 @@ class YoutubeService
             throw new \Exception();
         }
 
-        $sResult = $this->youtubeProcessService->insertInToList($youtube, $playlistId);
-        if ($sResult['error']) {
+        $aResult = $this->youtubeProcessService->insertInToList($youtube, $playlistId);
+        if ($aResult['error']) {
             $errorLog = __CLASS__.' ['.__FUNCTION__
                        ."] Error in moving the Multimedia Object '".$multimediaObject->getId()
-              ."' to Youtube playlist with id '".$playlistId."': ".$sResult['error_out'];
+              ."' to Youtube playlist with id '".$playlistId."': ".$aResult['error_out'];
             $this->logger->addError($errorLog);
             throw new \Exception($errorLog);
         }
-        if ($sResult['out'] != null) {
-            $youtube->setPlaylist($playlistId, $sResult['out']);
+        if ($aResult['out'] != null) {
+            $youtube->setPlaylist($playlistId, $aResult['out']);
             if (!$multimediaObject->containsTagWithCod($playlistTag->getCod())) {
                 $addedTags = $this->tagService->addTagToMultimediaObject($multimediaObject, $playlistTag->getId(), false);
             }
@@ -225,11 +225,11 @@ class YoutubeService
         foreach ($youtube->getPlaylists() as $playlistId => $playlistItem) {
             $this->deleteFromList($playlistItem, $youtube, $playlistId);
         }
-        $sResult = $this->youtubeProcessService->deleteVideo($youtube);
-        if ($sResult['error']) {
+        $aResult = $this->youtubeProcessService->deleteVideo($youtube);
+        if ($aResult['error']) {
             $errorLog = __CLASS__.' ['.__FUNCTION__
               ."] Error in deleting the YouTube video with id '".$youtube->getYoutubeId()
-              ."' and mongo id '".$youtube->getId()."': ".$sResult['error_out'];
+              ."' and mongo id '".$youtube->getId()."': ".$aResult['error_out'];
             $this->logger->addError($errorLog);
             throw new \Exception($errorLog);
         }
@@ -268,11 +268,11 @@ class YoutubeService
             $this->deleteFromList($playlistItem, $youtube, $playlistId);
         }
 
-        $sResult = $this->youtubeProcessService->deleteVideo($youtube);
-        if ($sResult['error']) {
+        $aResult = $this->youtubeProcessService->deleteVideo($youtube);
+        if ($aResult['error']) {
             $errorLog = __CLASS__.' ['.__FUNCTION__
               ."] Error in deleting the YouTube video with id '".$youtube->getYoutubeId()
-              ."' and mongo id '".$youtube->getId()."': ".$sResult['error_out'];
+              ."' and mongo id '".$youtube->getId()."': ".$aResult['error_out'];
             $this->logger->addError($errorLog);
             throw new \Exception($errorLog);
         }
@@ -302,11 +302,11 @@ class YoutubeService
             $description = $this->getDescriptionForYoutube($multimediaObject);
             $tags = $this->getTagsForYoutube($multimediaObject);
 
-            $sResult = $this->youtubeProcessService->updateVideo($youtube, $title, $description, $tags);
-            if ($sResult['error']) {
+            $aResult = $this->youtubeProcessService->updateVideo($youtube, $title, $description, $tags);
+            if ($aResult['error']) {
                 $errorLog = __CLASS__.' ['.__FUNCTION__
                   ."] Error in updating metadata for Youtube video with id '"
-                  .$youtube->getId()."': ".$sResult['error_out'];
+                  .$youtube->getId()."': ".$aResult['error_out'];
                 $this->logger->addError($errorLog);
                 throw new \Exception($errorLog);
             }
@@ -349,10 +349,10 @@ class YoutubeService
             throw new \Exception($errorLog);
         }
 
-        $sResult = $this->youtubeProcessService->getData('status', $youtube->getYoutubeId());
+        $aResult = $this->youtubeProcessService->getData('status', $youtube->getYoutubeId());
         // NOTE: If the video has been removed, it returns 404 instead of 200 with 'not found Video'
-        if ($sResult['error']) {
-            if (strpos($sResult['error_out'], 'was not found.')) {
+        if ($aResult['error']) {
+            if (strpos($aResult['error_out'], 'was not found.')) {
                 $data = array('multimediaObject' => $multimediaObject, 'youtube' => $youtube);
                 $this->sendEmail('status removed', $data, array(), array());
                 $youtube->setStatus(Youtube::STATUS_REMOVED);
@@ -375,22 +375,22 @@ class YoutubeService
                 $errorLog = __CLASS__.' ['.__FUNCTION__
                   ."] Error in verifying the status of the video from youtube with id '"
                   .$youtube->getYoutubeId()."' and mongo id '".$youtube->getId()
-                  ."':  ".$sResult['error_out'];
+                  ."':  ".$aResult['error_out'];
                 $this->logger->addError($errorLog);
                 throw new \Exception($errorLog);
             }
         }
-        if (($sResult['out'] == 'processed') && ($youtube->getStatus() == Youtube::STATUS_PROCESSING)) {
+        if (($aResult['out'] == 'processed') && ($youtube->getStatus() == Youtube::STATUS_PROCESSING)) {
             $youtube->setStatus(Youtube::STATUS_PUBLISHED);
             $this->dm->persist($youtube);
             $this->dm->flush();
             $data = array('multimediaObject' => $multimediaObject, 'youtube' => $youtube);
             $this->sendEmail('finished publication', $data, array(), array());
-        } elseif ($sResult['out'] == 'uploaded') {
+        } elseif ($aResult['out'] == 'uploaded') {
             $youtube->setStatus(Youtube::STATUS_PROCESSING);
             $this->dm->persist($youtube);
             $this->dm->flush();
-        } elseif (($sResult['out'] == 'rejected') && ($sResult['rejectedReason'] == 'duplicate') && ($youtube->getStatus() != Youtube::STATUS_DUPLICATED)) {
+        } elseif (($aResult['out'] == 'rejected') && ($aResult['rejectedReason'] == 'duplicate') && ($youtube->getStatus() != Youtube::STATUS_DUPLICATED)) {
             $youtube->setStatus(Youtube::STATUS_DUPLICATED);
             $this->dm->persist($youtube);
             $this->dm->flush();
@@ -412,16 +412,16 @@ class YoutubeService
      */
     public function getVideoMeta($yid)
     {
-        $sResult = $this->youtubeProcessService->getData('status', $yid);
-        if ($sResult['error']) {
+        $aResult = $this->youtubeProcessService->getData('status', $yid);
+        if ($aResult['error']) {
             $errorLog = __CLASS__.' ['.__FUNCTION__
                 .'] Error getting meta from YouTube id'
-                .$yid.': '.$sResult['error_out'];
+                .$yid.': '.$aResult['error_out'];
             $this->logger->error($errorLog);
             throw new \Exception($errorLog);
         }
 
-        return $sResult;
+        return $aResult;
     }
 
     /**
@@ -572,15 +572,15 @@ class YoutubeService
     {
         echo 'create On Youtube: '.$tag->getTitle($this->ytLocale)."\n";
 
-        $sResult = $this->youtubeProcessService->createPlaylist($tag->getTitle($this->ytLocale), $this->playlistPrivacyStatus);
-        if ($sResult['error']) {
-            $errorLog = sprintf('%s [%s] Error in creating in Youtube the playlist from tag with id %s: %s', __CLASS__, __FUNCTION__, $tag->getId(), $sResult['error_out']);
+        $aResult = $this->youtubeProcessService->createPlaylist($tag->getTitle($this->ytLocale), $this->playlistPrivacyStatus);
+        if ($aResult['error']) {
+            $errorLog = sprintf('%s [%s] Error in creating in Youtube the playlist from tag with id %s: %s', __CLASS__, __FUNCTION__, $tag->getId(), $aResult['error_out']);
             $this->logger->addError($errorLog);
             throw new \Exception($errorLog);
-        } elseif ($sResult['out'] != null) {
-            $infoLog = sprintf('%s [%s] Created Youtube Playlist %s for Tag with id %s', __CLASS__, __FUNCTION__, $sResult['out'], $tag->getId());
+        } elseif ($aResult['out'] != null) {
+            $infoLog = sprintf('%s [%s] Created Youtube Playlist %s for Tag with id %s', __CLASS__, __FUNCTION__, $aResult['out'], $tag->getId());
             $this->logger->addInfo($infoLog);
-            $playlistId = $sResult['out'];
+            $playlistId = $aResult['out'];
             $tag->setProperty('youtube', $playlistId);
             $tag->setProperty('customfield', 'youtube:text');
             $this->dm->persist($tag);
@@ -633,10 +633,10 @@ class YoutubeService
     {
         echo 'delete On Youtube: '.$youtubePlaylist['title']."\n";
 
-        $sResult = $this->youtubeProcessService->deletePlaylist($youtubePlaylist['id']);
-        if (!isset($sResult['out'])
-            && $sResult['error_out']['code'] != '404') {
-            $errorLog = sprintf('%s [%s] Error in deleting in Youtube the playlist with id %s: %s', __CLASS__, __FUNCTION__, $youtubePlaylist['id'], $sResult['error_out']);
+        $aResult = $this->youtubeProcessService->deletePlaylist($youtubePlaylist['id']);
+        if (!isset($aResult['out'])
+            && $aResult['error_out']['code'] != '404') {
+            $errorLog = sprintf('%s [%s] Error in deleting in Youtube the playlist with id %s: %s', __CLASS__, __FUNCTION__, $youtubePlaylist['id'], $aResult['error_out']);
             $this->logger->addError($errorLog);
             throw new \Exception($errorLog);
         }
@@ -687,13 +687,13 @@ class YoutubeService
         $res = array();
         $playlist = array();
 
-        $sResult = $this->youtubeProcessService->getAllPlaylist();
-        if ($sResult['error']) {
-            $errorLog = sprintf('%s [%s] Error in executing getAllPlaylists.py:', __CLASS__, __FUNCTION__, $sResult['error_out']);
+        $aResult = $this->youtubeProcessService->getAllPlaylist();
+        if ($aResult['error']) {
+            $errorLog = sprintf('%s [%s] Error in executing getAllPlaylists.py:', __CLASS__, __FUNCTION__, $aResult['error_out']);
             $this->logger->addError($errorLog);
             throw new \Exception($errorLog);
         }
-        foreach ($sResult['out'] as $response) {
+        foreach ($aResult['out'] as $response) {
             $playlist['id'] = $response['id'];
             $playlist['title'] = $response['snippet']['title'];
             $res[ $playlist['id'] ] = $playlist;
@@ -709,17 +709,14 @@ class YoutubeService
      */
     public function getAllYoutubePlaylistItems()
     {
-        $res = array();
-        $playlist = array();
-
-        $sResult = $this->youtubeProcessService->getAllPlaylist();
-        if ($sResult['error']) {
-            $errorLog = sprintf('%s [%s] Error in executing getAllPlaylists.py:', __CLASS__, __FUNCTION__, $sResult['error_out']);
+        $aResult = $this->youtubeProcessService->getAllPlaylist();
+        if ($aResult['error']) {
+            $errorLog = sprintf('%s [%s] Error in executing getAllPlaylists.py:', __CLASS__, __FUNCTION__, $aResult['error_out']);
             $this->logger->addError($errorLog);
             throw new \Exception($errorLog);
         }
 
-        return $sResult['out'];
+        return $aResult['out'];
     }
 
     /**
@@ -1086,11 +1083,11 @@ class YoutubeService
 
     private function deleteFromList($playlistItem, $youtube, $playlistId, $doFlush = true)
     {
-        $sResult = $this->youtubeProcessService->deleteFromList($playlistItem);
-        if ($sResult['error']) {
+        $aResult = $this->youtubeProcessService->deleteFromList($playlistItem);
+        if ($aResult['error']) {
             $errorLog = __CLASS__.' ['.__FUNCTION__
               ."] Error in deleting the Youtube video with id '".$youtube->getId()
-              ."' from playlist with id '".$playlistItem."': ".$sResult['error_out'];
+              ."' from playlist with id '".$playlistItem."': ".$aResult['error_out'];
             $this->logger->addError($errorLog);
             throw new \Exception($errorLog);
         }
