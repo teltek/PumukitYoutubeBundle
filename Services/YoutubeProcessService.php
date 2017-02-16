@@ -103,6 +103,7 @@ class YoutubeProcessService
 
     public function getData($sType, $sYoutubeId)
     {
+        // TODO: Unified getVideoStatus and getVideoMeta.
         switch ($sType) {
             case 'status':
                 $sFile = 'getVideoStatus.py';
@@ -142,9 +143,9 @@ class YoutubeProcessService
             $aResult = json_decode($pyProcess->getOutput(), true);
             if (JSON_ERROR_NONE !== json_last_error()) {
                 throw new UnexpectedValueException(json_last_error_msg());
-            } else {
-                return $aResult;
             }
+
+            return $aResult;
 
         } catch (ProcessFailedException $e) {
             echo $e->getMessage();
