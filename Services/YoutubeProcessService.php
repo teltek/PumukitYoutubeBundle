@@ -139,7 +139,13 @@ class YoutubeProcessService
                 throw new ProcessFailedException($pyProcess);
             }
 
-            return json_decode($pyProcess->getOutput(), true);
+            $aResult = json_decode($pyProcess->getOutput(), true);
+            if (JSON_ERROR_NONE !== json_last_error()) {
+                throw new UnexpectedValueException(json_last_error_msg());
+            } else {
+                return $aResult;
+            }
+
         } catch (ProcessFailedException $e) {
             echo $e->getMessage();
         }
