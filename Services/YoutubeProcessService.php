@@ -29,7 +29,7 @@ class YoutubeProcessService
         $aCommandArguments = array(
             '--file',
             $trackPath,
-            ' --title',
+            '--title',
             $title,
             '--description',
             $description,
