@@ -29,7 +29,7 @@ class YoutubeUpdateMetadataCommand extends ContainerAwareCommand
         $this
             ->setName('youtube:update:metadata')
             ->setDescription('Update Youtube metadata from Multimedia Objects')
-            ->setHelp(<<<EOT
+            ->setHelp(<<<'EOT'
 Command to upload a controlled videos to Youtube.
 
 EOT

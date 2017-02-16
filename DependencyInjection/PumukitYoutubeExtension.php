@@ -9,7 +9,7 @@ use Symfony\Component\DependencyInjection\Loader;
 use Symfony\Component\DependencyInjection\Extension\PrependExtensionInterface;
 
 /**
- * This is the class that loads and manages your bundle configuration
+ * This is the class that loads and manages your bundle configuration.
  *
  * To learn more see {@link http://symfony.com/doc/current/cookbook/bundles/extension.html}
  */
@@ -25,11 +25,11 @@ class PumukitYoutubeExtension extends Extension implements PrependExtensionInter
             'handlers' => array(
                 'youtube' => array(
                     'type' => 'stream',
-                    'path' => "%kernel.logs_dir%/youtube_%kernel.environment%.log",
+                    'path' => '%kernel.logs_dir%/youtube_%kernel.environment%.log',
                     'level' => 'info',
-                    'channels' => array('youtube')
-                )
-            )
+                    'channels' => array('youtube'),
+                ),
+            ),
         ));
     }
 
@@ -50,6 +50,7 @@ class PumukitYoutubeExtension extends Extension implements PrependExtensionInter
         $container->setParameter('pumukit_youtube.delete_playlists', $config['delete_playlists']);
         $container->setParameter('pumukit_youtube.locale', $config['locale']);
         $container->setParameter('pumukit_youtube.pub_channels_tags', $config['pub_channels_tags']);
+        $container->setParameter('pumukit_youtube.process_timeout', $config['process_timeout']);
 
         $loader = new Loader\XmlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
         $loader->load('services.xml');

@@ -12,10 +12,9 @@ use Symfony\Component\Config\Definition\ConfigurationInterface;
  */
 class Configuration implements ConfigurationInterface
 {
-
     private $locale = 'en';
 
-    public function  __construct($locale='en')
+    public function __construct($locale = 'en')
     {
         $this->locale = $locale;
     }
@@ -67,7 +66,11 @@ class Configuration implements ConfigurationInterface
             ->arrayNode('pub_channels_tags')
               ->prototype('scalar')->end()
               ->defaultValue(array('PUCHYOUTUBE'))
-              ->info("Tags necessary as a condition to be published on YouTube.")
+              ->info('Tags necessary as a condition to be published on YouTube.')
+            ->end()
+            ->scalarNode('process_timeout')
+                ->defaultValue(3600)
+                ->info('Time of the process timeout')
             ->end()
           ->end();
 

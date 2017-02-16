@@ -35,7 +35,7 @@ class YoutubeUploadCommand extends ContainerAwareCommand
         $this
             ->setName('youtube:upload')
             ->setDescription('Upload videos from Multimedia Objects to Youtube')
-            ->setHelp(<<<EOT
+            ->setHelp(<<<'EOT'
 Command to upload a controlled videos to Youtube.
 
 EOT
@@ -84,7 +84,7 @@ EOT
     {
         foreach ($mms as $mm) {
             try {
-                $infoLog = sprintf( '%s [%s] Started uploading to Youtube of MultimediaObject with id %s', __CLASS__, __FUNCTION__, $mm->getId() );
+                $infoLog = sprintf('%s [%s] Started uploading to Youtube of MultimediaObject with id %s', __CLASS__, __FUNCTION__, $mm->getId());
                 $this->logger->addInfo($infoLog);
                 $output->writeln($infoLog);
                 $outUpload = $this->youtubeService->upload($mm, 27, 'public', false);
@@ -98,7 +98,7 @@ EOT
                 }
                 $this->okUploads[] = $mm;
             } catch (\Exception $e) {
-                $errorLog = sprintf('%s [%s] The upload of the video from the Multimedia Object with id %s failed: %s', __CLASS__, __FUNCTION__, $mm->getId(), $e->getMessage() );
+                $errorLog = sprintf('%s [%s] The upload of the video from the Multimedia Object with id %s failed: %s', __CLASS__, __FUNCTION__, $mm->getId(), $e->getMessage());
                 $this->logger->addError($errorLog);
                 $output->writeln($errorLog);
                 $this->failedUploads[] = $mm;
@@ -109,7 +109,6 @@ EOT
 
     private function createMultimediaObjectsToUploadQueryBuilder()
     {
-
         $array_pub_tags = $this->getContainer()->getParameter('pumukit_youtube.pub_channels_tags');
 
         return $this->mmobjRepo->createQueryBuilder()
@@ -144,7 +143,7 @@ EOT
         if (null != $youtubeTag) {
             foreach ($this->okUploads as $mm) {
                 if (!$mm->containsTagWithCod(self::PUB_CHANNEL_YOUTUBE)) {
-                    $addedTags = $this->tagService->addTagToMultimediaObject($multimediaObject, $youtubeTag->getId(), false);
+                    $addedTags = $this->tagService->addTagToMultimediaObject($mm, $youtubeTag->getId(), false);
                 }
             }
             $this->dm->flush();

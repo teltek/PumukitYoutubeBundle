@@ -11,6 +11,7 @@
             <argument type="service" id="logger"/>
             <argument type="service" id="pumukit_notification.sender" on-invalid="ignore"/>
             <argument type="service" id="translator"/>
+            <argument type="service" id="pumukityoutube.youtubeprocess" />
             <argument>%pumukit_youtube.playlist_privacy_status%</argument>
             <argument>%pumukit_youtube.locale%</argument>
             <argument>%pumukit_youtube.use_default_playlist%</argument>
@@ -30,6 +31,12 @@
         <service id="pumukityoutube.remove" class="Pumukit\YoutubeBundle\EventListener\RemoveListener">
           <argument type="service" id="service_container"/>
           <tag name="doctrine_mongodb.odm.event_listener" event="preRemove"/>
+        </service>
+        <service id="pumukityoutube.youtubeprocess" class="Pumukit\YoutubeBundle\Services\YoutubeProcessService">
+            <argument type="service" id="doctrine_mongodb.odm.document_manager"/>
+            <argument type="service" id="router"/>
+            <argument type="service" id="logger"/>
+            <argument>%pumukit_youtube.process_timeout%</argument>
         </service>
     </services>
 </container>
