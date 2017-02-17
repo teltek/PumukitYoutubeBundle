@@ -45,7 +45,7 @@ class YoutubeProcessService
         $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--title', $title);
         $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--description', $description);
         $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--tag', $tags);
-        
+
         return $this->createProcess($sFile, $aCommandArguments);
     }
 
@@ -142,7 +142,6 @@ class YoutubeProcessService
             }
 
             return $aResult;
-
         } catch (ProcessFailedException $e) {
             echo $e->getMessage();
         }
@@ -150,7 +149,7 @@ class YoutubeProcessService
 
     private function createCommandArguments($aCommandArguments, $sOption, $sValue)
     {
-        if(!empty($sValue)) {
+        if (!empty($sValue)) {
             array_push($aCommandArguments, $sOption);
             array_push($aCommandArguments, $sValue);
         }
