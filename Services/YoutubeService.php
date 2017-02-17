@@ -990,7 +990,7 @@ class YoutubeService
      */
     private function getTagsForYoutube(MultimediaObject $multimediaObject)
     {
-        return $multimediaObject->getKeywords();
+        return $multimediaObject->getKeywords($this->ytLocale);
 
         /* Se matiene comentado el código por si en algún momento un usuario decide devolver por defecto ciertas keywords fijas a sus videos. */
         //$numbers = array('1', '2', '3', '4', '5', '6', '7', '8', '9', '0');
