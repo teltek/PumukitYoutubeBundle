@@ -26,20 +26,13 @@ class YoutubeProcessService
     public function upload($trackPath, $title, $description, $category, $tags, $privacy)
     {
         $sFile = 'upload.py';
-        $aCommandArguments = array(
-            '--file',
-            $trackPath,
-            '--title',
-            $title,
-            '--description',
-            $description,
-            '--category',
-            $category,
-            '--keywords',
-            $tags,
-            '--privacyStatus',
-            $privacy,
-        );
+        $aCommandArguments = array();
+        $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--file', $trackPath);
+        $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--title', $title);
+        $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--description', $description);
+        $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--category', $category);
+        $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--keywords', $tags);
+        $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--privacyStatus', $privacy);
 
         return $this->createProcess($sFile, $aCommandArguments);
     }
@@ -47,16 +40,11 @@ class YoutubeProcessService
     public function updateVideo($youtube, $title, $description, $tags)
     {
         $sFile = 'updateVideo.py';
-        $aCommandArguments = array(
-            '--videoid',
-            $youtube->getYoutubeId(),
-            '--title',
-            $title,
-            '--description',
-            $description,
-            '--tag',
-            $tags,
-        );
+        $aCommandArguments = array();
+        $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--videoid', $youtube->getYoutubeId());
+        $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--title', $title);
+        $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--description', $description);
+        $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--tag', $tags);
 
         return $this->createProcess($sFile, $aCommandArguments);
     }
@@ -64,7 +52,8 @@ class YoutubeProcessService
     public function deleteVideo($youtube)
     {
         $sFile = 'deleteVideo.py';
-        $aCommandArguments = array('--videoid', $youtube->getYoutubeId());
+        $aCommandArguments = array();
+        $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--videoid', $youtube->getYoutubeId());
 
         return $this->createProcess($sFile, $aCommandArguments);
     }
@@ -72,7 +61,9 @@ class YoutubeProcessService
     public function createPlaylist($sTitleTag, $playlistPrivacyStatus)
     {
         $sFile = 'createPlaylist.py';
-        $aCommandArguments = array('--title', $sTitleTag, '--privacyStatus', $playlistPrivacyStatus);
+        $aCommandArguments = array();
+        $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--title', $sTitleTag);
+        $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--privacyStatus', $playlistPrivacyStatus);
 
         return $this->createProcess($sFile, $aCommandArguments);
     }
@@ -80,7 +71,8 @@ class YoutubeProcessService
     public function deletePlaylist($youtubePlaylistId)
     {
         $sFile = 'deletePlaylist.py';
-        $aCommandArguments = array('--playlistid', $youtubePlaylistId);
+        $aCommandArguments = array();
+        $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--playlistid', $youtubePlaylistId);
 
         return $this->createProcess($sFile, $aCommandArguments);
     }
@@ -88,7 +80,9 @@ class YoutubeProcessService
     public function insertInToList($youtube, $youtubePlaylistId)
     {
         $sFile = 'insertInToList.py';
-        $aCommandArguments = array('--videoid', $youtube->getYoutubeId(), '--playlistid', $youtubePlaylistId);
+        $aCommandArguments = array();
+        $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--videoid', $youtube->getYoutubeId());
+        $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--playlistid', $youtubePlaylistId);
 
         return $this->createProcess($sFile, $aCommandArguments);
     }
@@ -96,7 +90,8 @@ class YoutubeProcessService
     public function deleteFromList($youtubePlaylistItem)
     {
         $sFile = 'deleteFromList.py';
-        $aCommandArguments = array('--id', $youtubePlaylistItem);
+        $aCommandArguments = array();
+        $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--id', $youtubePlaylistItem);
 
         return $this->createProcess($sFile, $aCommandArguments);
     }
@@ -112,7 +107,8 @@ class YoutubeProcessService
                 $sFile = 'getVideoMeta.py';
                 break;
         }
-        $aCommandArguments = array('--videoid', $sYoutubeId);
+        $aCommandArguments = array();
+        $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--videoid', $sYoutubeId);
 
         return $this->createProcess($sFile, $aCommandArguments);
     }
@@ -146,9 +142,18 @@ class YoutubeProcessService
             }
 
             return $aResult;
-
         } catch (ProcessFailedException $e) {
             echo $e->getMessage();
         }
+    }
+
+    private function createCommandArguments($aCommandArguments, $sOption, $sValue)
+    {
+        if (!empty($sValue)) {
+            array_push($aCommandArguments, $sOption);
+            array_push($aCommandArguments, $sValue);
+        }
+
+        return $aCommandArguments;
     }
 }
