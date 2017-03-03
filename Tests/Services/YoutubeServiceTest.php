@@ -55,6 +55,8 @@ class YoutubeServiceTest extends WebTestCase
         $this->multimediaobject_dispatcher = $kernel->getContainer()
           ->get('pumukitschema.multimediaobject_dispatcher');
         $this->tagService = new TagService($this->dm, $this->multimediaobject_dispatcher);
+        $this->youtubeProcessService = $kernel->getContainer()
+          ->get('pumukityoutube.youtubeprocess');
         $locale = 'en';
         $useDefaultPlaylist = false;
         $defaultPlaylistCod = 'YOUTUBECONFERENCES';
@@ -63,7 +65,7 @@ class YoutubeServiceTest extends WebTestCase
         $playlistMaster = array('pumukit', 'youtube');
         $deletePlaylists = false;
         $pumukitLocales = array('en');
-        $this->youtubeService = new YoutubeService($this->dm, $this->router, $this->tagService, $this->logger, $this->notificationSender, $this->translator, $this->playlistPrivacyStatus, $locale, $useDefaultPlaylist, $defaultPlaylistCod, $defaultPlaylistTitle, $metatagPlaylistCod, $playlistMaster, $deletePlaylists, $pumukitLocales);
+        $this->youtubeService = new YoutubeService($this->dm, $this->router, $this->tagService, $this->logger, $this->notificationSender, $this->translator, $this->youtubeProcessService, $this->playlistPrivacyStatus, $locale, $useDefaultPlaylist, $defaultPlaylistCod, $defaultPlaylistTitle, $metatagPlaylistCod, $playlistMaster, $deletePlaylists, $pumukitLocales);
         $this->resourcesDir = realpath(__DIR__.'/../Resources').'/';
     }
 
@@ -80,6 +82,7 @@ class YoutubeServiceTest extends WebTestCase
         $this->factoryService = null;
         $this->notificationSender = null;
         $this->translator = null;
+        $this->youtubeProcessService = null;
         $this->playlistPrivacyStatus = null;
         $this->multimediaobject_dispatcher = null;
         $this->youtubeService = null;

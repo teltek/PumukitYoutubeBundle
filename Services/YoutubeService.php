@@ -26,6 +26,7 @@ class YoutubeService
     private $youtubeRepo;
     private $tagRepo;
     private $mmobjRepo;
+    private $youtubeProcessService;
     private $playlistPrivacyStatus;
     private $ytLocale;
     private $USE_DEFAULT_PLAYLIST;
