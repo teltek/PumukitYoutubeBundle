@@ -124,7 +124,7 @@ if __name__ == "__main__":
   parser = OptionParser()
   parser.add_option("--videoid", dest="videoid",
     help="ID of video to update.")
-  parser.add_option("--tag", dest="tag", help="Additional tag to add to video.")
+  parser.add_option("--tag", dest="tag", help="Additional tag to add to video.", default="")
   parser.add_option("--description", dest="description", help="New video description.")
   parser.add_option("--title", dest="title", help="Video title")
 
