@@ -839,11 +839,12 @@ class YoutubeService
                 $template = 'PumukitNotificationBundle:Email:notification.html.twig';
                 $parameters = array('subject' => $subject, 'body' => $body, 'sender_name' => $this->senderService->getSenderName());
                 $output = $this->senderService->sendNotification($emailTo, $subject, $template, $parameters, $error);
-                if (0 < $output) {
+                if ($output["verified"]) {
                     $infoLog = __CLASS__.' ['.__FUNCTION__
                       .'] Sent notification email to "'.$emailTo.'"';
                     $this->logger->addInfo($infoLog);
-                } else {
+                }
+                if ($output["error"]) {
                     $infoLog = __CLASS__.' ['.__FUNCTION__
                       .'] Unable to send notification email to "'
                       .$emailTo.'", '.$output.'email(s) were sent.';
