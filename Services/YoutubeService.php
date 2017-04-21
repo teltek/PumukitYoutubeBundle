@@ -29,6 +29,7 @@ class YoutubeService
     private $youtubeProcessService;
     private $playlistPrivacyStatus;
     private $ytLocale;
+    private $syncStatus;
     private $USE_DEFAULT_PLAYLIST;
     private $DEFAULT_PLAYLIST_COD;
     private $DEFAULT_PLAYLIST_TITLE;
@@ -36,7 +37,7 @@ class YoutubeService
     private $PLAYLISTS_MASTER;
     private $DELETE_PLAYLISTS;
 
-    public function __construct(DocumentManager $documentManager, Router $router, TagService $tagService, LoggerInterface $logger, SenderService $senderService = null, TranslatorInterface $translator, YoutubeProcessService $youtubeProcessService, $playlistPrivacyStatus, $locale, $useDefaultPlaylist, $defaultPlaylistCod, $defaultPlaylistTitle, $metatagPlaylistCod, $playlistMaster, $deletePlaylists, $pumukitLocales)
+    public function __construct(DocumentManager $documentManager, Router $router, TagService $tagService, LoggerInterface $logger, SenderService $senderService = null, TranslatorInterface $translator, YoutubeProcessService $youtubeProcessService, $playlistPrivacyStatus, $locale, $useDefaultPlaylist, $defaultPlaylistCod, $defaultPlaylistTitle, $metatagPlaylistCod, $playlistMaster, $deletePlaylists, $pumukitLocales, $youtubeSyncStatus)
     {
         $this->dm = $documentManager;
         $this->router = $router;
@@ -50,6 +51,7 @@ class YoutubeService
         $this->mmobjRepo = $this->dm->getRepository('PumukitSchemaBundle:MultimediaObject');
         $this->playlistPrivacyStatus = $playlistPrivacyStatus;
         $this->ytLocale = $locale;
+        $this->syncStatus = $youtubeSyncStatus;
         $this->USE_DEFAULT_PLAYLIST = $useDefaultPlaylist;
         $this->DEFAULT_PLAYLIST_COD = $defaultPlaylistCod;
         $this->DEFAULT_PLAYLIST_TITLE = $defaultPlaylistTitle;
@@ -303,7 +305,12 @@ class YoutubeService
             $description = $this->getDescriptionForYoutube($multimediaObject);
             $tags = $this->getTagsForYoutube($multimediaObject);
 
-            $aResult = $this->youtubeProcessService->updateVideo($youtube, $title, $description, $tags);
+            $status = null;
+            if ($this->syncStatus) {
+                $status = $this->getStatusForYoutube($multimediaObject->getStatus());
+            }
+
+            $aResult = $this->youtubeProcessService->updateVideo($youtube, $title, $description, $tags, $status);
             if ($aResult['error']) {
                 $errorLog = __CLASS__.' ['.__FUNCTION__
                   ."] Error in updating metadata for Youtube video with id '"
@@ -641,7 +648,7 @@ class YoutubeService
             $this->logger->addError($errorLog);
             throw new \Exception($errorLog);
         }
-        $infoLog = sprintf('%s [%s] Deleted Youtube Playlist with id %s', __CLASS__, __FUNCTION__,  $youtubePlaylist['id']);
+        $infoLog = sprintf('%s [%s] Deleted Youtube Playlist with id %s', __CLASS__, __FUNCTION__, $youtubePlaylist['id']);
         $this->logger->addInfo($infoLog);
     }
 
@@ -673,6 +680,7 @@ class YoutubeService
     {
         echo 'update from Pumukit: '.$tag->getTitle($this->ytLocale)."\n";
     }
+
     private function updatePumukitPlaylist(Tag $tag, $youtubePlaylist = null)
     {
         echo 'update from Youtube: '.$tag->getTitle($this->ytLocale)."\n";
@@ -697,7 +705,7 @@ class YoutubeService
         foreach ($aResult['out'] as $response) {
             $playlist['id'] = $response['id'];
             $playlist['title'] = $response['snippet']['title'];
-            $res[ $playlist['id'] ] = $playlist;
+            $res[$playlist['id']] = $playlist;
         }
 
         return $res;
@@ -983,7 +991,7 @@ class YoutubeService
 
         if (MultimediaObject::STATUS_PUBLISHED == $multimediaObject->getStatus() && $multimediaObject->containsTagWithCod('PUCHWEBTV')) {
             $appInfoLink = $this->router->generate('pumukit_webtv_multimediaobject_index', array('id' => $multimediaObject->getId()), true);
-            $description .= '<br /> ' . $linkLabelI18n . ' '.$appInfoLink;
+            $description .= '<br /> '.$linkLabelI18n.' '.$appInfoLink;
         }
 
         return strip_tags($description);
@@ -1118,5 +1126,22 @@ class YoutubeService
     private function getEmbed($youtubeId)
     {
         return '<iframe width="853" height="480" src="http://www.youtube.com/embed/'.$youtubeId.'" frameborder="0" allowfullscreen></iframe>';
+    }
+
+    private function getStatusForYoutube($status)
+    {
+        switch ($status) {
+            case 0:
+                $sStatus = 'public';
+                break;
+            case 1:
+                $sStatus = 'private';
+                break;
+            case 2:
+                $sStatus = 'unlisted';
+                break;
+        }
+
+        return $sStatus;
     }
 }

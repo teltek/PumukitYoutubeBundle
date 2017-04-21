@@ -37,7 +37,7 @@ class YoutubeProcessService
         return $this->createProcess($sFile, $aCommandArguments);
     }
 
-    public function updateVideo($youtube, $title, $description, $tags)
+    public function updateVideo($youtube, $title, $description, $tags, $status = null)
     {
         $sFile = 'updateVideo.py';
         $aCommandArguments = array();
@@ -45,6 +45,9 @@ class YoutubeProcessService
         $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--title', $title);
         $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--description', $description);
         $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--tag', $tags);
+        if ($status) {
+            $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--status', $status);
+        }
 
         return $this->createProcess($sFile, $aCommandArguments);
     }

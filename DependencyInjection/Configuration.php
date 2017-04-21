@@ -72,6 +72,10 @@ class Configuration implements ConfigurationInterface
                 ->defaultValue(3600)
                 ->info('Time of the process timeout')
             ->end()
+            ->scalarNode('sync_status')
+                ->defaultValue(false)
+                ->info('Sync video status and upload video public, hidden or bloq')
+            ->end()
           ->end();
 
         return $treeBuilder;

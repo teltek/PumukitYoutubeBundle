@@ -30,6 +30,12 @@ class YoutubeUploadCommand extends ContainerAwareCommand
     private $failedUploads = array();
     private $errors = array();
 
+    private $status = array(
+        0 => 'public',
+        1 => 'private',
+        2 => 'unlisted',
+    );
+
     protected function configure()
     {
         $this
@@ -75,6 +81,8 @@ EOT
         $this->youtubeService = $container->get('pumukityoutube.youtube');
         $this->logger = $container->get('monolog.logger.youtube');
 
+        $this->syncStatus = $container->getParameter('pumukit_youtube.sync_status');
+
         $this->okUploads = array();
         $this->failedUploads = array();
         $this->errors = array();
@@ -87,7 +95,11 @@ EOT
                 $infoLog = sprintf('%s [%s] Started uploading to Youtube of MultimediaObject with id %s', __CLASS__, __FUNCTION__, $mm->getId());
                 $this->logger->addInfo($infoLog);
                 $output->writeln($infoLog);
-                $outUpload = $this->youtubeService->upload($mm, 27, 'public', false);
+                $status = 'public';
+                if($this->syncStatus) {
+                    $status = $this->status[$mm->getStatus()];
+                }
+                $outUpload = $this->youtubeService->upload($mm, 27, $status, false);
                 if (0 !== $outUpload) {
                     $errorLog = sprintf('%s [%s] Unknown error in the upload to Youtube of MultimediaObject with id %s: %s', __CLASS__, __FUNCTION__, $mm->getId(), $outUpload);
                     $this->logger->addError($errorLog);
@@ -111,10 +123,17 @@ EOT
     {
         $array_pub_tags = $this->getContainer()->getParameter('pumukit_youtube.pub_channels_tags');
 
+        $syncStatus = $this->getContainer()->getParameter('pumukit_youtube.sync_status');
+        if ($syncStatus) {
+            $aStatus = array(MultimediaObject::STATUS_PUBLISHED, MultimediaObject::STATUS_BLOQ, MultimediaObject::STATUS_HIDDEN);
+        } else {
+            $aStatus = array(MultimediaObject::STATUS_PUBLISHED);
+        }
+
         return $this->mmobjRepo->createQueryBuilder()
           ->field('properties.pumukit1id')->exists(false)
           ->field('properties.origin')->notEqual('youtube')
-          ->field('status')->equals(MultimediaObject::STATUS_PUBLISHED)
+          ->field('status')->in($aStatus)
           ->field('embeddedBroadcast.type')->equals('public')
           ->field('tags.cod')->all($array_pub_tags);
     }

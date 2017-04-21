@@ -21,6 +21,7 @@
             <argument>%pumukit_youtube.playlists_master%</argument>
             <argument>%pumukit_youtube.delete_playlists%</argument>
             <argument>%pumukit2.locales%</argument>
+            <argument>%pumukit_youtube.sync_status%</argument>
 
             <tag name="monolog.logger" channel="youtube"/>
         </service>

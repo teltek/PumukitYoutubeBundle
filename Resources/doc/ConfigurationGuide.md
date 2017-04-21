@@ -108,6 +108,15 @@ pumukit_youtube:
 If this parameter is not configured, the playlists will be created as public.
 
 
+### [OPTIONAL] Configure the sync status in `app/config/parameters.yml`
+
+```
+pumukit_youtube:
+    sync_status: false
+```
+
+If this parameter is true, videos with status public, blocked and private will be upload to Youtube, and they status will be change if you update on PuMuKIT.
+
 ### Clear cache
 
 ```
