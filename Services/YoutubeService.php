@@ -36,8 +36,9 @@ class YoutubeService
     private $METATAG_PLAYLIST_COD;
     private $PLAYLISTS_MASTER;
     private $DELETE_PLAYLISTS;
+    private $defaultTrackUpload;
 
-    public function __construct(DocumentManager $documentManager, Router $router, TagService $tagService, LoggerInterface $logger, SenderService $senderService = null, TranslatorInterface $translator, YoutubeProcessService $youtubeProcessService, $playlistPrivacyStatus, $locale, $useDefaultPlaylist, $defaultPlaylistCod, $defaultPlaylistTitle, $metatagPlaylistCod, $playlistMaster, $deletePlaylists, $pumukitLocales, $youtubeSyncStatus)
+    public function __construct(DocumentManager $documentManager, Router $router, TagService $tagService, LoggerInterface $logger, SenderService $senderService = null, TranslatorInterface $translator, YoutubeProcessService $youtubeProcessService, $playlistPrivacyStatus, $locale, $useDefaultPlaylist, $defaultPlaylistCod, $defaultPlaylistTitle, $metatagPlaylistCod, $playlistMaster, $deletePlaylists, $pumukitLocales, $youtubeSyncStatus, $defaultTrackUpload)
     {
         $this->dm = $documentManager;
         $this->router = $router;
@@ -59,6 +60,7 @@ class YoutubeService
         $this->PLAYLISTS_MASTER = $playlistMaster;
         $this->DELETE_PLAYLISTS = $deletePlaylists;
 
+        $this->defaultTrackUpload = $defaultTrackUpload;
         if (!in_array($this->ytLocale, $pumukitLocales)) {
             $this->ytLocale = $translator->getLocale();
         }
@@ -86,7 +88,7 @@ class YoutubeService
             $track = $multimediaObject->getFilteredTrackWithTags(array(), array('sbs'), array('html5'), array(), false);
         } //Or array('sbs','html5') ??
         else {
-            $track = $multimediaObject->getTrackWithTag('html5'); //TODO get Only the video track with tag html5
+            $track = $multimediaObject->getTrackWithTag($this->defaultTrackUpload); //TODO get Only the video track with tag html5
         }
         if ((null === $track) || ($track->isOnlyAudio())) {
             $track = $multimediaObject->getTrackWithTag('master');

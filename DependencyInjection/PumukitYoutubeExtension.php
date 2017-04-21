@@ -52,6 +52,7 @@ class PumukitYoutubeExtension extends Extension implements PrependExtensionInter
         $container->setParameter('pumukit_youtube.pub_channels_tags', $config['pub_channels_tags']);
         $container->setParameter('pumukit_youtube.process_timeout', $config['process_timeout']);
         $container->setParameter('pumukit_youtube.sync_status', $config['sync_status']);
+        $container->setParameter('pumukit_youtube.default_track_upload', $config['default_track_upload']);
 
         $loader = new Loader\XmlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
         $loader->load('services.xml');

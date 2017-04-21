@@ -117,6 +117,16 @@ pumukit_youtube:
 
 If this parameter is true, videos with status public, blocked and private will be upload to Youtube, and they status will be change if you update on PuMuKIT.
 
+### [OPTIONAL] Configure the sync status in `app/config/parameters.yml`
+
+```
+pumukit_youtube:
+    default_track_upload: 'master'
+```
+
+If this parameter is not configured, the track by default is master. 
+
+
 ### Clear cache
 
 ```

@@ -76,6 +76,10 @@ class Configuration implements ConfigurationInterface
                 ->defaultValue(false)
                 ->info('Sync video status and upload video public, hidden or bloq')
             ->end()
+            ->scalarNode('default_track_upload')
+                ->defaultValue('master')
+                ->info('Default track to youtube upload')
+            ->end()
           ->end();
 
         return $treeBuilder;
