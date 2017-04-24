@@ -107,15 +107,14 @@ class YoutubeService
             $this->logger->addError($errorLog);
             throw new \Exception($errorLog);
         }
-        if (null === $youtubeId = $multimediaObject->getProperty('youtube')) {
+        $youtube = $this->youtubeRepo->findOneByMultimediaObjectId($multimediaObject->getId());
+        if (!$youtube) {
             $youtube = new Youtube();
             $youtube->setMultimediaObjectId($multimediaObject->getId());
             $this->dm->persist($youtube);
-            $multimediaObject->setProperty('youtube', $youtube->getId());
-            $this->dm->persist($multimediaObject);
-        } else {
-            $youtube = $this->youtubeRepo->find($youtubeId);
         }
+        $multimediaObject->setProperty('youtube', $youtube->getId());
+        $this->dm->persist($multimediaObject);
 
         $title = $this->getTitleForYoutube($multimediaObject);
         $description = $this->getDescriptionForYoutube($multimediaObject);
@@ -241,6 +240,11 @@ class YoutubeService
         $youtube->setStatus(Youtube::STATUS_REMOVED);
         $youtube->setForce(false);
         $this->dm->persist($youtube);
+        $multimediaObject->removeProperty('youtube');
+        $multimediaObject->removeProperty('youtubeurl');
+
+        $this->dm->persist($multimediaObject);
+
         $this->dm->flush();
         $youtubeEduTag = $this->tagRepo->findOneByCod(self::PUB_CHANNEL_YOUTUBE);
         $youtubeTag = $this->tagRepo->findOneByCod(self::PUB_CHANNEL_YOUTUBE);
