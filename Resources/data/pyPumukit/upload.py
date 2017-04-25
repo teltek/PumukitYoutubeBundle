@@ -97,7 +97,7 @@ def initialize_upload(options):
 
   tags = None
   if options.keywords:
-    tags = options.keywords.replace(" ", "").split(",")
+    tags = [x.strip() for x in options.keywords.split(',')]
 
   insert_request = youtube.videos().insert(
     part="snippet,status",
