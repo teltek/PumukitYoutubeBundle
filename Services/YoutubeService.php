@@ -38,6 +38,12 @@ class YoutubeService
     private $DELETE_PLAYLISTS;
     private $defaultTrackUpload;
 
+    public static $status = array(
+        0 => 'public',
+        1 => 'private',
+        2 => 'unlisted',
+    );
+
     public function __construct(DocumentManager $documentManager, Router $router, TagService $tagService, LoggerInterface $logger, SenderService $senderService = null, TranslatorInterface $translator, YoutubeProcessService $youtubeProcessService, $playlistPrivacyStatus, $locale, $useDefaultPlaylist, $defaultPlaylistCod, $defaultPlaylistTitle, $metatagPlaylistCod, $playlistMaster, $deletePlaylists, $pumukitLocales, $youtubeSyncStatus, $defaultTrackUpload)
     {
         $this->dm = $documentManager;
@@ -313,7 +319,7 @@ class YoutubeService
 
             $status = null;
             if ($this->syncStatus) {
-                $status = $this->getStatusForYoutube($multimediaObject->getStatus());
+                $status = self::$status[$multimediaObject->getStatus()];
             }
 
             $aResult = $this->youtubeProcessService->updateVideo($youtube, $title, $description, $tags, $status);
@@ -1132,22 +1138,5 @@ class YoutubeService
     private function getEmbed($youtubeId)
     {
         return '<iframe width="853" height="480" src="http://www.youtube.com/embed/'.$youtubeId.'" frameborder="0" allowfullscreen></iframe>';
-    }
-
-    private function getStatusForYoutube($status)
-    {
-        switch ($status) {
-            case 0:
-                $sStatus = 'public';
-                break;
-            case 1:
-                $sStatus = 'private';
-                break;
-            case 2:
-                $sStatus = 'unlisted';
-                break;
-        }
-
-        return $sStatus;
     }
 }

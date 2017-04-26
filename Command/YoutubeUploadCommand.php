@@ -2,6 +2,7 @@
 
 namespace Pumukit\YoutubeBundle\Command;
 
+use Pumukit\YoutubeBundle\Services\YoutubeService;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
@@ -29,12 +30,6 @@ class YoutubeUploadCommand extends ContainerAwareCommand
     private $okUploads = array();
     private $failedUploads = array();
     private $errors = array();
-
-    private $status = array(
-        0 => 'public',
-        1 => 'private',
-        2 => 'unlisted',
-    );
 
     protected function configure()
     {
@@ -96,8 +91,8 @@ EOT
                 $this->logger->addInfo($infoLog);
                 $output->writeln($infoLog);
                 $status = 'public';
-                if($this->syncStatus) {
-                    $status = $this->status[$mm->getStatus()];
+                if ($this->syncStatus) {
+                    $status = YoutubeService::$status[$mm->getStatus()];
                 }
                 $outUpload = $this->youtubeService->upload($mm, 27, $status, false);
                 if (0 !== $outUpload) {
