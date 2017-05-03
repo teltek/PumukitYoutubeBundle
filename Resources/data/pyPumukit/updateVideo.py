@@ -87,7 +87,7 @@ def update_video(options):
     videos_list_snippet = videos_list_response["items"][0]["snippet"]
 
     if options.tag is not None:
-      videos_list_snippet["tags"] = options.tag.replace(" ", "").split(",")
+      videos_list_snippet["tags"] = [x.strip() for x in options.tag.split(',')]
 
     if options.description is not None:
       videos_list_snippet["description"] = options.description
