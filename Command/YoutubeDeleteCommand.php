@@ -28,6 +28,8 @@ class YoutubeDeleteCommand extends ContainerAwareCommand
 
     private $logger;
 
+    private $syncStatus;
+
     protected function configure()
     {
         $this
@@ -46,7 +48,12 @@ EOT
 
         $youtubeMongoIds = $this->youtubeRepo->getDistinctFieldWithStatusAndForce('_id', Youtube::STATUS_PUBLISHED, false);
         $publishedYoutubeIds = $this->getStringIds($youtubeMongoIds);
-        $notPublishedMms = $this->getMultimediaObjectsInYoutubeWithoutStatus($publishedYoutubeIds, MultimediaObject::STATUS_PUBLISHED);
+        if ($this->syncStatus) {
+            $status = array(MultimediaObject::STATUS_PUBLISHED, MultimediaObject::STATUS_BLOCKED, MultimediaObject::STATUS_HIDDEN);
+        } else {
+            $status = array(MultimediaObject::STATUS_PUBLISHED);
+        }
+        $notPublishedMms = $this->getMultimediaObjectsInYoutubeWithoutStatus($publishedYoutubeIds, $status);
         if (0 != count($notPublishedMms)) {
             $output->writeln('Removing '.count($notPublishedMms).' object(s) with status not published');
             $this->deleteVideosFromYoutube($notPublishedMms, $output);
@@ -87,7 +94,7 @@ EOT
         $this->tagRepo = $this->dm->getRepository('PumukitSchemaBundle:Tag');
         $this->mmobjRepo = $this->dm->getRepository('PumukitSchemaBundle:MultimediaObject');
         $this->youtubeRepo = $this->dm->getRepository('PumukitYoutubeBundle:Youtube');
-
+        $this->syncStatus = $this->getContainer()->getParameter('pumukit_youtube.sync_status');
         $this->youtubeService = $this->getContainer()->get('pumukityoutube.youtube');
 
         $this->okRemoved = array();
@@ -176,7 +183,7 @@ EOT
     private function getMultimediaObjectsInYoutubeWithoutStatus($youtubeIds, $status)
     {
         return $this->createYoutubeQueryBuilder($youtubeIds)
-            ->field('status')->notEqual($status)
+            ->field('status')->notIn($status)
             ->getQuery()
             ->execute();
     }

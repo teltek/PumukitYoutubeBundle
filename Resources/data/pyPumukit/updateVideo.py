@@ -75,7 +75,7 @@ def update_video(options):
   try:
     videos_list_response = youtube.videos().list(
       id=options.videoid,
-      part='snippet'
+      part='snippet,status'
       ).execute()
 
     if not videos_list_response["items"]:
@@ -95,9 +95,16 @@ def update_video(options):
     if options.title is not None:
       videos_list_snippet["title"] = options.title
 
+    videos_list_status = videos_list_response["items"][0]["status"]
+
+    if options.status is not None:
+      videos_list_status["privacyStatus"] = options.status
+
+
     videos_update_response = youtube.videos().update(
-      part='snippet',
+      part='snippet,status',
       body=dict(
+        status=videos_list_status,
         snippet=videos_list_snippet,
         id=options.videoid
         )).execute()
@@ -127,6 +134,8 @@ if __name__ == "__main__":
   parser.add_option("--tag", dest="tag", help="Additional tag to add to video.", default="")
   parser.add_option("--description", dest="description", help="New video description.")
   parser.add_option("--title", dest="title", help="Video title")
+  parser.add_option("--status", dest="status", help="new video status, values: public, private or unlisted")
+
 
   (options, args) = parser.parse_args()
 
@@ -138,5 +147,7 @@ if __name__ == "__main__":
     exit("Please specify a valid description using --description= parameter")
   if options.title is None:
      exit("Please specify a valid title using --title= parameter")
+  if not options.status in [None, "public", "private", "unlisted"]:
+     exit("Please specify a valid state: public, private or unlisted")
 
   update_video(options)
