@@ -2,16 +2,12 @@
 
 namespace Pumukit\YoutubeBundle\Command;
 
-use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 use Pumukit\SchemaBundle\Document\Tag;
-use Pumukit\SchemaBundle\Document\Broadcast;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\YoutubeBundle\Document\Youtube;
-use Psr\Log\LoggerInterface;
 
 class YoutubeDeleteCommand extends ContainerAwareCommand
 {
@@ -23,7 +19,6 @@ class YoutubeDeleteCommand extends ContainerAwareCommand
     private $tagRepo = null;
     private $mmobjRepo = null;
     private $youtubeRepo = null;
-    private $broadcastRepo = null;
 
     private $youtubeService;
 
@@ -33,12 +28,14 @@ class YoutubeDeleteCommand extends ContainerAwareCommand
 
     private $logger;
 
+    private $syncStatus;
+
     protected function configure()
     {
         $this
             ->setName('youtube:delete')
             ->setDescription('Delete videos from Youtube')
-            ->setHelp(<<<EOT
+            ->setHelp(<<<'EOT'
 Command to delete controlled videos from Youtube.
 
 EOT
@@ -49,34 +46,44 @@ EOT
     {
         $this->initParameters();
 
-        $youtubeMongoIds = $this->youtubeRepo->getDistinctFieldWithStatusAndForce("_id", Youtube::STATUS_PUBLISHED, false);
+        $youtubeMongoIds = $this->youtubeRepo->getDistinctFieldWithStatusAndForce('_id', Youtube::STATUS_PUBLISHED, false);
         $publishedYoutubeIds = $this->getStringIds($youtubeMongoIds);
-        $notPublishedMms = $this->getMultimediaObjectsInYoutubeWithoutStatus($publishedYoutubeIds, MultimediaObject::STATUS_PUBLISHED);
-        $this->deleteVideosFromYoutube($notPublishedMms, $output);
+        if ($this->syncStatus) {
+            $status = array(MultimediaObject::STATUS_PUBLISHED, MultimediaObject::STATUS_BLOCKED, MultimediaObject::STATUS_HIDDEN);
+        } else {
+            $status = array(MultimediaObject::STATUS_PUBLISHED);
+        }
+        $notPublishedMms = $this->getMultimediaObjectsInYoutubeWithoutStatus($publishedYoutubeIds, $status);
+        if (0 != count($notPublishedMms)) {
+            $output->writeln('Removing '.count($notPublishedMms).' object(s) with status not published');
+            $this->deleteVideosFromYoutube($notPublishedMms, $output);
+        }
 
-        $youtubeMongoIds = $this->youtubeRepo->getDistinctFieldWithStatusAndForce("_id", Youtube::STATUS_PUBLISHED, false);
-        $publishedYoutubeIds = $this->getStringIds($youtubeMongoIds);
-        $notWebTVMms = $this->getMultimediaObjectsInYoutubeWithoutTagCode($publishedYoutubeIds, self::PUB_CHANNEL_WEBTV);
-        $this->deleteVideosFromYoutube($notWebTVMms, $output);
+        $arrayPubTags = $this->getContainer()->getParameter('pumukit_youtube.pub_channels_tags');
+        foreach ($arrayPubTags as $tagCode) {
+            $youtubeMongoIds = $this->youtubeRepo->getDistinctFieldWithStatusAndForce('_id', Youtube::STATUS_PUBLISHED, false);
+            $publishedYoutubeIds = $this->getStringIds($youtubeMongoIds);
+            // TODO When tag IMPORTANT is defined as child of PUBLICATION DECISION Tag
+            $notCorrectTagMms = $this->getMultimediaObjectsInYoutubeWithoutTagCode($publishedYoutubeIds, $tagCode);
+            if (0 != count($notCorrectTagMms)) {
+                $output->writeln('Removing '.count($notCorrectTagMms).' object(s) w/o tag '.$tagCode);
+                $this->deleteVideosFromYoutube($notCorrectTagMms, $output);
+            }
+        }
 
-        $youtubeMongoIds = $this->youtubeRepo->getDistinctFieldWithStatusAndForce("_id", Youtube::STATUS_PUBLISHED, false);
+        $youtubeMongoIds = $this->youtubeRepo->getDistinctFieldWithStatusAndForce('_id', Youtube::STATUS_PUBLISHED, false);
         $publishedYoutubeIds = $this->getStringIds($youtubeMongoIds);
-        $notYoutubeEduMms = $this->getMultimediaObjectsInYoutubeWithoutTagCode($publishedYoutubeIds, self::PUB_CHANNEL_YOUTUBE);
-        $this->deleteVideosFromYoutube($notYoutubeEduMms, $output);
-
-        $youtubeMongoIds = $this->youtubeRepo->getDistinctFieldWithStatusAndForce("_id", Youtube::STATUS_PUBLISHED, false);
-        $publishedYoutubeIds = $this->getStringIds($youtubeMongoIds);
-        // TODO When tag IMPORTANT is defined as child of PUBLICATION DECISION Tag
-        $notImportantMms = $this->getMultimediaObjectsInYoutubeWithoutTagCode($publishedYoutubeIds, self::PUB_DECISION_AUTONOMOUS);
-        $this->deleteVideosFromYoutube($notImportantMms, $output);
-
-        $youtubeMongoIds = $this->youtubeRepo->getDistinctFieldWithStatusAndForce("_id", Youtube::STATUS_PUBLISHED, false);
-        $publishedYoutubeIds = $this->getStringIds($youtubeMongoIds);
-        $notPublicMms = $this->getMultimediaObjectsInYoutubeWithoutBroadcast($publishedYoutubeIds, Broadcast::BROADCAST_TYPE_PUB);
-        $this->deleteVideosFromYoutube($notPublicMms, $output);
+        $notPublicMms = $this->getMultimediaObjectsInYoutubeWithoutEmbeddedBroadcast($publishedYoutubeIds, 'public');
+        if (0 != count($notPublicMms)) {
+            $output->writeln('Removing '.count($notPublicMms).' object(s) with broadcast not public');
+            $this->deleteVideosFromYoutube($notPublicMms, $output);
+        }
 
         $orphanYoutubes = $this->youtubeRepo->findByStatus(Youtube::STATUS_TO_DELETE);
-        $this->deleteOrphanVideosFromYoutube($orphanYoutubes, $output);
+        if (0 != count($orphanYoutubes)) {
+            $output->writeln('Removing '.count($orphanYoutubes).' orphanYoutube(s) ');
+            $this->deleteOrphanVideosFromYoutube($orphanYoutubes, $output);
+        }
 
         $this->checkResultsAndSendEmail();
     }
@@ -84,11 +91,10 @@ EOT
     private function initParameters()
     {
         $this->dm = $this->getContainer()->get('doctrine_mongodb')->getManager();
-        $this->tagRepo = $this->dm->getRepository("PumukitSchemaBundle:Tag");
-        $this->mmobjRepo = $this->dm->getRepository("PumukitSchemaBundle:MultimediaObject");
-        $this->youtubeRepo = $this->dm->getRepository("PumukitYoutubeBundle:Youtube");
-        $this->broadcastRepo = $this->dm->getRepository("PumukitSchemaBundle:Broadcast");
-
+        $this->tagRepo = $this->dm->getRepository('PumukitSchemaBundle:Tag');
+        $this->mmobjRepo = $this->dm->getRepository('PumukitSchemaBundle:MultimediaObject');
+        $this->youtubeRepo = $this->dm->getRepository('PumukitYoutubeBundle:Youtube');
+        $this->syncStatus = $this->getContainer()->getParameter('pumukit_youtube.sync_status');
         $this->youtubeService = $this->getContainer()->get('pumukityoutube.youtube');
 
         $this->okRemoved = array();
@@ -100,8 +106,8 @@ EOT
 
     private function deleteVideosFromYoutube($mms, OutputInterface $output)
     {
-        foreach ($mms as $mm){
-            try{
+        foreach ($mms as $mm) {
+            try {
                 $infoLog = __CLASS__.' ['.__FUNCTION__
                   .'] Started removing video from Youtube of MultimediaObject with id "'
                   .$mm->getId().'"';
@@ -111,7 +117,7 @@ EOT
                 if (0 !== $outDelete) {
                     $errorLog = __CLASS__.' ['.__FUNCTION__
                       .'] Unknown error in the removal from Youtube of MultimediaObject with id "'
-                      .$mm->getId().'": ' . $outDelete;
+                      .$mm->getId().'": '.$outDelete;
                     $this->logger->addError($errorLog);
                     $output->writeln($errorLog);
                     $this->failedRemoved[] = $mm;
@@ -134,7 +140,7 @@ EOT
     private function deleteOrphanVideosFromYoutube($orphanYoutubes, OutputInterface $output)
     {
         foreach ($orphanYoutubes as $youtube) {
-            try{
+            try {
                 $infoLog = __CLASS__.' ['.__FUNCTION__
                   .'] Started removing orphan video from Youtube with id "'
                   .$youtube->getId().'"';
@@ -144,7 +150,7 @@ EOT
                 if (0 !== $outDelete) {
                     $errorLog = __CLASS__.' ['.__FUNCTION__
                       .'] Unknown error in the removal from Youtube id "'
-                      .$youtube->getId().'": ' . $outDelete;
+                      .$youtube->getId().'": '.$outDelete;
                     $this->logger->addError($errorLog);
                     $output->writeln($errorLog);
                     $this->failedRemoved[] = $youtube;
@@ -177,39 +183,32 @@ EOT
     private function getMultimediaObjectsInYoutubeWithoutStatus($youtubeIds, $status)
     {
         return $this->createYoutubeQueryBuilder($youtubeIds)
-            ->field('status')->notEqual($status)
+            ->field('status')->notIn($status)
             ->getQuery()
             ->execute();
     }
 
     private function getMultimediaObjectsInYoutubeWithoutTagCode($youtubeIds, $tagCode)
     {
-      return $this->createYoutubeQueryBuilder($youtubeIds)
+        return $this->createYoutubeQueryBuilder($youtubeIds)
             ->field('tags.cod')->notEqual($tagCode)
             ->getQuery()
             ->execute();
     }
 
-    private function getMultimediaObjectsInYoutubeWithoutBroadcast($youtubeIds, $broadcastTypeId)
+    private function getMultimediaObjectsInYoutubeWithoutEmbeddedBroadcast($youtubeIds, $broadcastTypeId)
     {
-        $mmsNoBroadcast = $this->createYoutubeQueryBuilder($youtubeIds)
+        return $this->createYoutubeQueryBuilder($youtubeIds)
+            ->field('embeddedBroadcast.type')->notEqual('public')
             ->getQuery()
             ->execute();
-
-        $mms = array();
-        foreach ($mmsNoBroadcast as $mm) {
-            if ($broadcastTypeId !== $mm->getBroadcast()->getBroadcastTypeId()) {
-                $mms[] = $mm;
-            }
-        }
-
-        return $mms;
     }
 
-    private function createYoutubeQueryBuilder($youtubeIds=array())
+    private function createYoutubeQueryBuilder($youtubeIds = array())
     {
         return $this->mmobjRepo->createQueryBuilder()
             ->field('properties.youtube')->in($youtubeIds)
+            ->field('properties.origin')->notEqual('youtube')
             ->field('properties.pumukit1id')->exists(false);
     }
 
@@ -217,7 +216,7 @@ EOT
     {
         $youtubeTag = $this->tagRepo->findByCod(self::PUB_CHANNEL_YOUTUBE);
         if (null != $youtubeTag) {
-            foreach ($this->okRemoved as $mm){
+            foreach ($this->okRemoved as $mm) {
                 if ($mm instanceof MultimediaObject) {
                     if ($mm->containsTagWithCod(self::PUB_CHANNEL_YOUTUBE)) {
                         $this->tagService->removeTagFromMultimediaObject($multimediaObject, $youtubeTag->getId(), false);

@@ -1,0 +1,60 @@
+<div class="modal-header">
+  <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+  <h4 class="modal-title" id="myModalLabel">{% trans %}Youtube Info For Multimedia Object: {% endtrans %} {{ mm.title }}</h4>
+</div>
+<div class="modal-body">
+  <div class="col-md-8 input-group">
+    <dl class="dl-horizontal">
+      <dt>{% trans %}Youtube Status{% endtrans %}</dt>
+      <dd style="overflow:hidden">
+        {% if youtube_status == 'error' or youtube_status == 'removed' or youtube_status == 'duplicated' %}
+          <span class="label label-dismissable label-danger">{{ youtube_status }} [{{youtube.status}}]</span>
+        {% elseif youtube_status == 'published'  %}
+          <span class="label label-dismissable label-success">{{ youtube_status }} [{{youtube.status}}]</span>
+        {% else %}
+          <span class="label label-dismissable label-warning">{{ youtube_status }} [{{youtube.status}}]</span>
+        {% endif %}
+      </dd>
+      <dt>{% trans %}Last Updated{% endtrans %}</dt>
+      <dd>{{ youtube.syncMetadataDate|localizeddate}}</dd>
+      <dt>{% trans %}Youtube Id{% endtrans %}</dt>
+      <dd>{{ youtube.id }}</dd>
+      {% if youtube_status in ['published', 'proccessing'] %}
+        <dt>{% trans %}Youtube Playlists{% endtrans %}:</dt>
+        {% for key, playlist in youtube.playlists %}
+          <dd>
+            <div class="input-group">
+              {{ playlist }}
+              <span class="input-group-addon">
+                <a href="{{ youtube.link }}&list={{ key}}" target="_blank">
+                  <i class="mdi-action-exit-to-app"></i>
+                </a>
+              </span>
+            </div>
+          </dd>
+        {% endfor %}
+        <dt>{% trans %}Youtube Link{% endtrans %}</dt>
+        <dd>
+          <div class="col-lg-10 input-group">
+            <div class="form-control-wrapper">
+              <input type="text" class="form-control" readonly onclick="select()" value="{{ youtube.link }}">
+              <span class="material-input"></span>
+            </div>
+            <span class="input-group-addon">
+              <a href="{{ youtube.link }}" target="_blank">
+                <i class="mdi-action-exit-to-app"></i>
+              </a>
+            </span>
+          </div>
+        </dd>
+        <dt>{% trans %}Youtube Embed{% endtrans %}</dt>
+        <dd>
+          <div class="form-control-wrapper">
+            <input type="text" class="form-control" readonly onclick="select()" value="{{ youtube.embed }}">
+            <span class="material-input"></span>
+          </div>
+        </dd>
+      {% endif %}
+    </dl>
+  </div>
+</div>

@@ -51,12 +51,12 @@ YOUTUBE_SCOPE = "https://www.googleapis.com/auth/youtube"
 YOUTUBE_API_SERVICE_NAME = "youtube"
 YOUTUBE_API_VERSION = "v3"
 
-def get_authenticated_service():
+def get_authenticated_service(id):
   flow = flow_from_clientsecrets(CLIENT_SECRETS_FILE,
                                  message=MISSING_CLIENT_SECRETS_MESSAGE,
                                  scope=YOUTUBE_SCOPE)
 
-  storage = Storage("pumukit-oauth2.json")
+  storage = Storage("pumukit-oauth%s.json" % id)
   credentials = storage.get()
 
   if credentials is None or credentials.invalid:
@@ -64,39 +64,40 @@ def get_authenticated_service():
     flags = argparser.parse_args(args=['--noauth_local_webserver'])
     credentials = run_flow(flow, storage, flags)
 
-
   return build(YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION,
                  http=credentials.authorize(httplib2.Http()))
 
 
-def create_playlist(options):
+def get_video_playlists(options):
   out = {'error': False, 'out': None}
 
   try:
-    youtube = get_authenticated_service()
-    playlists_insert_response = youtube.playlists().insert(
-      part="snippet,status",
-      body=dict(
-        snippet=dict(
-          title=options.title,
-          ),
-        status=dict(
-          privacyStatus=options.privacyStatus
-          )
-        )
-      ).execute()
+    page_token = None
+    allPlaylists = []
+    youtube = get_authenticated_service(options.ytid)
+    while True:
+      if page_token:
+        playlists_request = youtube.playlists().list(part = "snippet", mine = True, pageToken = page_token)
+      else:
+        playlists_request = youtube.playlists().list(part = "snippet", mine = True)
 
-    if playlists_insert_response is None:
-      out['error'] = True
-      out['error_out'] = "Error al crear la playlist"
-      print json.dumps(out)
-      return -1
-    else:
-      out['out'] = playlists_insert_response["id"]
-      print json.dumps(out)
-      return 0
+      playlists_response = playlists_request.execute()
 
-  except HttpError as e:
+
+      for playlist in playlists_response["items"]:
+        allPlaylists.append(playlist)
+
+      page_token = playlists_response.get('nextPageToken')
+      if not page_token:
+        break
+
+
+
+    out['out']= allPlaylists;
+    print json.dumps(out)
+    return 1
+
+  except HttpError,e:
     out['error'] = True
     out['error_out'] = "Http Error: %s" % e._get_reason()
     print json.dumps(out)
@@ -107,24 +108,20 @@ def create_playlist(options):
     print json.dumps(out)
     return -1
 
-
-
+  return 0
 
 
 
 
 if __name__ == '__main__':
   parser = OptionParser()
-  parser.add_option("--title", dest="title",
-    help="Title for the playlist.")
-  parser.add_option("--privacyStatus", dest="privacyStatus",
-    help="Privacy status for the playlist.")
+  parser.add_option("--ytid", dest="ytid",
+    help="Youtube account id.")
+
 
   (options, args) = parser.parse_args()
 
-  if options.title is None:
-   exit("Please specify a valid video using --title= parameter")
-  if options.privacyStatus is None:
-   exit("Please specify a valid video using --privacyStatus= parameter")
+  if options.ytid is None:
+    options.ytid = "2"
 
-  create_playlist(options)
+  get_video_playlists(options)

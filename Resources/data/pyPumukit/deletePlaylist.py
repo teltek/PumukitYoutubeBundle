@@ -16,6 +16,7 @@ from oauth2client.client import flow_from_clientsecrets
 from oauth2client.tools import run_flow
 from oauth2client.tools import argparser
 from optparse import OptionParser
+from pprint import pprint
 
 
 
@@ -52,11 +53,11 @@ https://developers.google.com/api-client-library/python/guide/aaa_client_secrets
 """ % os.path.abspath(os.path.join(os.path.dirname(__file__),
                                    CLIENT_SECRETS_FILE))
 
-def get_authenticated_service():
+def get_authenticated_service(id):
   flow = flow_from_clientsecrets(CLIENT_SECRETS_FILE, scope=YOUTUBE_SCOPE,
     message=MISSING_CLIENT_SECRETS_MESSAGE)
 
-  storage = Storage("pumukit-oauth2.json")
+  storage = Storage("pumukit-oauth%s.json" % id)
   credentials = storage.get()
 
   if credentials is None or credentials.invalid:
@@ -67,87 +68,47 @@ def get_authenticated_service():
   return build(YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION,
     http=credentials.authorize(httplib2.Http()))
 
-
-def update_video(options):
+def delete_playlist(options):
   out = {'error': False, 'out': None}
-  youtube = get_authenticated_service()
 
   try:
-    videos_list_response = youtube.videos().list(
-      id=options.videoid,
-      part='snippet,status'
+    youtube = get_authenticated_service(options.ytid)
+    playlists_list_response = youtube.playlists().list(
+      id=options.playlistid,
+      part='snippet'
       ).execute()
 
-    if not videos_list_response["items"]:
+    if not playlists_list_response["items"]:
       out['error'] = True
-      out['error_out'] = "Video '%s' was not found." % options.videoid
+      out['error_out'] = 'No se ha encontrado la playlist'
       print json.dumps(out)
-      return 1
+      return -1
 
-    videos_list_snippet = videos_list_response["items"][0]["snippet"]
+    playlist = playlists_list_response["items"][0]
 
-    if options.tag is not None:
-      videos_list_snippet["tags"] = [x.strip() for x in options.tag.split(',')]
+    out['out'] = youtube.playlists().delete(id=options.playlistid).execute()
 
-    if options.description is not None:
-      videos_list_snippet["description"] = options.description
-
-    if options.title is not None:
-      videos_list_snippet["title"] = options.title
-
-    videos_list_status = videos_list_response["items"][0]["status"]
-
-    if options.status is not None:
-      videos_list_status["privacyStatus"] = options.status
-
-
-    videos_update_response = youtube.videos().update(
-      part='snippet,status',
-      body=dict(
-        status=videos_list_status,
-        snippet=videos_list_snippet,
-        id=options.videoid
-        )).execute()
-
-    video_title = videos_update_response["snippet"]["title"]
-
-    out['out'] = "Video '%s' was updated." % (video_title)
     print json.dumps(out)
     return 0
-  except HttpError as e:
-    out['error'] = True
-    out['error_out'] = "Http Error: %s" % e._get_reason()
-    print json.dumps(out)
-    return -1
+
   except:
     out['error'] = True
     out['error_out'] = "Unexpected error: %s" % sys.exc_info()[0]
     print json.dumps(out)
     return -1
 
-
-
 if __name__ == "__main__":
   parser = OptionParser()
-  parser.add_option("--videoid", dest="videoid",
-    help="ID of video to update.")
-  parser.add_option("--tag", dest="tag", help="Additional tag to add to video.", default="")
-  parser.add_option("--description", dest="description", help="New video description.")
-  parser.add_option("--title", dest="title", help="Video title")
-  parser.add_option("--status", dest="status", help="new video status, values: public, private or unlisted")
-
+  parser.add_option("--playlistid", dest="playlistid",
+    help="ID of playlist to delete.")
+  parser.add_option("--ytid", dest="ytid",
+    help="Youtube account id.")
 
   (options, args) = parser.parse_args()
 
-  if options.videoid is None:
-   exit("Please specify a valid video using --videoid= parameter")
-  if options.tag is None:
-   exit("Please specify a valid tag using --tag= parameter")
-  if options.description is None:
-    exit("Please specify a valid description using --description= parameter")
-  if options.title is None:
-     exit("Please specify a valid title using --title= parameter")
-  if not options.status in [None, "public", "private", "unlisted"]:
-     exit("Please specify a valid state: public, private or unlisted")
+  if options.playlistid is None:
+   exit("Please specify a valid playlist using --playlistid= parameter")
+  if options.ytid is None:
+    options.ytid = "2"
 
-  update_video(options)
+  delete_playlist(options)

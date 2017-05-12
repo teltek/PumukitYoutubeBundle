@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+import httplib2_monkey_patch
+
 import httplib
 import httplib2
 import os
@@ -12,7 +14,8 @@ from apiclient.discovery import build
 from apiclient.errors import HttpError
 from oauth2client.file import Storage
 from oauth2client.client import flow_from_clientsecrets
-from oauth2client.tools import run
+from oauth2client.tools import run_flow
+from oauth2client.tools import argparser
 from optparse import OptionParser
 
 
@@ -66,7 +69,9 @@ def get_authenticated_service():
   credentials = storage.get()
 
   if credentials is None or credentials.invalid:
-    credentials = run(flow, storage)
+    print('No credentials, running authentication flow to get OAuth token')
+    flags = argparser.parse_args(args=['--noauth_local_webserver'])
+    credentials = run_flow(flow, storage, flags)
 
   return build(YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION,
     http=credentials.authorize(httplib2.Http()))
@@ -122,7 +127,7 @@ if __name__ == "__main__":
     help="video ID.")
   parser.add_option("--playlistid", dest="playlistid",
     help="playlist ID.")
- 
+
   (options, args) = parser.parse_args()
 
   if options.videoid is None:

@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+import httplib2_monkey_patch
+
 import httplib2
 import os
 import random
@@ -11,7 +13,8 @@ from apiclient.discovery import build
 from apiclient.errors import HttpError
 from oauth2client.file import Storage
 from oauth2client.client import flow_from_clientsecrets
-from oauth2client.tools import run
+from oauth2client.tools import argparser
+from oauth2client.tools import run_flow
 from optparse import OptionParser
 from pprint import pprint
 
@@ -58,14 +61,16 @@ def get_authenticated_service():
   credentials = storage.get()
 
   if credentials is None or credentials.invalid:
-    credentials = run(flow, storage)
+    print('No credentials, running authentication flow to get OAuth token')
+    flags = argparser.parse_args(args=['--noauth_local_webserver'])
+    credentials = run_flow(flow, storage, flags)
 
   return build(YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION,
     http=credentials.authorize(httplib2.Http()))
 
 def deleteFromPlaylist(itemId):
   out = {'error': False, 'out': None}
-  
+
   try:
     youtube = get_authenticated_service()
     out['out'] = youtube.playlistItems().delete(id=itemId).execute()
@@ -79,8 +84,8 @@ def deleteFromPlaylist(itemId):
     out['error_out'] = "Unexpected error: %s" % sys.exc_info()[0]
     print json.dumps(out)
     return -1
-    
-    
+
+
   print json.dumps(out)
   return 0
 
@@ -90,7 +95,7 @@ if __name__ == "__main__":
   parser = OptionParser()
   parser.add_option("--id", dest="id",
     help="ID of video playlist item to delete.")
-  
+
   (options, args) = parser.parse_args()
 
   if options.id is None:

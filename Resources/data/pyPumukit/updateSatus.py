@@ -1,5 +1,13 @@
 #!/usr/bin/python
 
+
+"""
+To be removed: Use getVideoStatus instead.
+Update prefix is used to post data into the youtube API. This command only get data.
+"""
+
+import httplib2_monkey_patch
+
 import httplib2
 import os
 import random
@@ -12,7 +20,8 @@ from apiclient.discovery import build
 from apiclient.errors import HttpError
 from oauth2client.file import Storage
 from oauth2client.client import flow_from_clientsecrets
-from oauth2client.tools import run
+from oauth2client.tools import run_flow
+from oauth2client.tools import argparser
 from optparse import OptionParser
 
 
@@ -58,7 +67,9 @@ def get_authenticated_service():
   credentials = storage.get()
 
   if credentials is None or credentials.invalid:
-    credentials = run(flow, storage)
+    print('No credentials, running authentication flow to get OAuth token')
+    flags = argparser.parse_args(args=['--noauth_local_webserver'])
+    credentials = run_flow(flow, storage, flags)
 
   return build(YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION,
     http=credentials.authorize(httplib2.Http()))
@@ -74,7 +85,7 @@ def update_video_status(options):
       id=options.videoid,
       part='status'
       ).execute()
-    
+
     if not videos_list_response["items"]:
       out['error'] = True
       out['error_out'] = "Video '%s' was not found." % options.videoid
@@ -90,8 +101,8 @@ def update_video_status(options):
     out['error_out'] = "Unexpected error: %s" % sys.exc_info()[0]
     print json.dumps(out)
     return -1
- 
- 
+
+
 #  exit
   out['out'] = videos_list_response["items"][0]["status"]["uploadStatus"]
   if out['out'] == 'rejected':

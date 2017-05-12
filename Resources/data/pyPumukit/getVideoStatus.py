@@ -8,6 +8,7 @@ import random
 import sys
 import time
 import json
+import pprint
 
 from apiclient.discovery import build
 from apiclient.errors import HttpError
@@ -68,14 +69,15 @@ def get_authenticated_service():
     http=credentials.authorize(httplib2.Http()))
 
 
-def update_video(options):
+def update_video_status(options):
   out = {'error': False, 'out': None}
-  youtube = get_authenticated_service()
 
   try:
+    youtube = get_authenticated_service()
+
     videos_list_response = youtube.videos().list(
       id=options.videoid,
-      part='snippet,status'
+      part='status'
       ).execute()
 
     if not videos_list_response["items"]:
@@ -83,37 +85,6 @@ def update_video(options):
       out['error_out'] = "Video '%s' was not found." % options.videoid
       print json.dumps(out)
       return 1
-
-    videos_list_snippet = videos_list_response["items"][0]["snippet"]
-
-    if options.tag is not None:
-      videos_list_snippet["tags"] = [x.strip() for x in options.tag.split(',')]
-
-    if options.description is not None:
-      videos_list_snippet["description"] = options.description
-
-    if options.title is not None:
-      videos_list_snippet["title"] = options.title
-
-    videos_list_status = videos_list_response["items"][0]["status"]
-
-    if options.status is not None:
-      videos_list_status["privacyStatus"] = options.status
-
-
-    videos_update_response = youtube.videos().update(
-      part='snippet,status',
-      body=dict(
-        status=videos_list_status,
-        snippet=videos_list_snippet,
-        id=options.videoid
-        )).execute()
-
-    video_title = videos_update_response["snippet"]["title"]
-
-    out['out'] = "Video '%s' was updated." % (video_title)
-    print json.dumps(out)
-    return 0
   except HttpError as e:
     out['error'] = True
     out['error_out'] = "Http Error: %s" % e._get_reason()
@@ -126,28 +97,26 @@ def update_video(options):
     return -1
 
 
+#  exit
+  out['out'] = videos_list_response["items"][0]["status"]["uploadStatus"]
+  if out['out'] == 'rejected':
+   out['rejectedReason'] = videos_list_response["items"][0]["status"]["rejectionReason"]
+
+  print json.dumps(out)
+  return 0
+
+
+
 
 if __name__ == "__main__":
   parser = OptionParser()
   parser.add_option("--videoid", dest="videoid",
     help="ID of video to update.")
-  parser.add_option("--tag", dest="tag", help="Additional tag to add to video.", default="")
-  parser.add_option("--description", dest="description", help="New video description.")
-  parser.add_option("--title", dest="title", help="Video title")
-  parser.add_option("--status", dest="status", help="new video status, values: public, private or unlisted")
-
 
   (options, args) = parser.parse_args()
 
   if options.videoid is None:
    exit("Please specify a valid video using --videoid= parameter")
-  if options.tag is None:
-   exit("Please specify a valid tag using --tag= parameter")
-  if options.description is None:
-    exit("Please specify a valid description using --description= parameter")
-  if options.title is None:
-     exit("Please specify a valid title using --title= parameter")
-  if not options.status in [None, "public", "private", "unlisted"]:
-     exit("Please specify a valid state: public, private or unlisted")
 
-  update_video(options)
+
+  update_video_status(options)

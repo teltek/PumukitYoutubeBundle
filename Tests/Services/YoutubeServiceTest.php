@@ -10,9 +10,7 @@ use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\SchemaBundle\Document\Track;
 use Pumukit\SchemaBundle\Services\TagService;
 use Pumukit\SchemaBundle\Services\FactoryService;
-use Doctrine\ODM\MongoDB\DocumentManager;
 use Symfony\Bundle\FrameworkBundle\Routing\Router;
-use Symfony\Component\HttpKernel\Log\LoggerInterface;
 
 class YoutubeServiceTest extends WebTestCase
 {
@@ -23,8 +21,9 @@ class YoutubeServiceTest extends WebTestCase
     private $logger;
     private $resourcesDir;
     private $playlistPrivacyStatus;
+    private $multimediaobject_dispatcher;
 
-    public function __construct()
+    public function setUp()
     {
         $options = array('environment' => 'test');
         $kernel = static::createKernel($options);
@@ -43,24 +42,53 @@ class YoutubeServiceTest extends WebTestCase
           ->get('logger');
         $this->factoryService = $kernel->getContainer()
           ->get('pumukitschema.factory');
-        $this->notificationSender = $kernel->getContainer()
-          ->get('pumukit_notification.sender');
+        $this->notificationSender = null;
         $this->translator = $kernel->getContainer()
           ->get('translator');
         $this->playlistPrivacyStatus = $kernel->getContainer()
           ->getParameter('pumukit_youtube.playlist_privacy_status');
-    }
-
-    public function setUp()
-    {
         $this->dm->getDocumentCollection('PumukitSchemaBundle:MultimediaObject')->remove(array());
         $this->dm->getDocumentCollection('PumukitSchemaBundle:Series')->remove(array());
         $this->dm->getDocumentCollection('PumukitSchemaBundle:Tag')->remove(array());
         $this->dm->getDocumentCollection('PumukitYoutubeBundle:Youtube')->remove(array());
         $this->dm->flush();
-        $this->tagService = new TagService($this->dm);
-        $this->youtubeService = new YoutubeService($this->dm, $this->router, $this->tagService, $this->logger, $this->notificationSender, $this->translator, $this->playlistPrivacyStatus);
+        $this->multimediaobject_dispatcher = $kernel->getContainer()
+          ->get('pumukitschema.multimediaobject_dispatcher');
+        $this->tagService = new TagService($this->dm, $this->multimediaobject_dispatcher);
+        $this->youtubeProcessService = $kernel->getContainer()
+          ->get('pumukityoutube.youtubeprocess');
+        $locale = 'en';
+        $useDefaultPlaylist = false;
+        $defaultPlaylistCod = 'YOUTUBECONFERENCES';
+        $defaultPlaylistTitle = 'Conferences';
+        $metatagPlaylistCod = 'YOUTUBE';
+        $playlistMaster = array('pumukit', 'youtube');
+        $deletePlaylists = false;
+        $pumukitLocales = array('en');
+        $this->youtubeService = new YoutubeService($this->dm, $this->router, $this->tagService, $this->logger, $this->notificationSender, $this->translator, $this->youtubeProcessService, $this->playlistPrivacyStatus, $locale, $useDefaultPlaylist, $defaultPlaylistCod, $defaultPlaylistTitle, $metatagPlaylistCod, $playlistMaster, $deletePlaylists, $pumukitLocales);
         $this->resourcesDir = realpath(__DIR__.'/../Resources').'/';
+    }
+
+    public function tearDown()
+    {
+        $this->dm->close();
+        $this->dm = null;
+        $this->youtubeRepo = null;
+        $this->tagRepo = null;
+        $this->mmobjRepo = null;
+        $this->tagService = null;
+        $this->router = null;
+        $this->logger = null;
+        $this->factoryService = null;
+        $this->notificationSender = null;
+        $this->translator = null;
+        $this->youtubeProcessService = null;
+        $this->playlistPrivacyStatus = null;
+        $this->multimediaobject_dispatcher = null;
+        $this->youtubeService = null;
+        $this->resourcesDir = null;
+        gc_collect_cycles();
+        parent::tearDown();
     }
 
     public function testYoutubeServiceFunctions()
@@ -124,9 +152,9 @@ class YoutubeServiceTest extends WebTestCase
         $out5 = $this->youtubeService->upload($multimediaObject, 27, 'private', false);
         $this->assertEquals(0, $out5);
 
-        $multimediaObject->setTitle("Test auth api");
-        $multimediaObject->setDescription("Testing the google auth api to upload videos");
-        $multimediaObject->setKeyword("testkeyword");
+        $multimediaObject->setTitle('Test auth api');
+        $multimediaObject->setDescription('Testing the google auth api to upload videos');
+        $multimediaObject->setKeyword('testkeyword');
         $this->dm->persist($multimediaObject);
         $this->dm->flush();
 
@@ -136,13 +164,12 @@ class YoutubeServiceTest extends WebTestCase
         $youtube = $this->youtubeRepo->findOneByMultimediaObjectId($multimediaObject->getId());
         $out7 = $this->youtubeService->updateStatus($youtube);
         $this->assertEquals(0, $out7);
-
     }
 
     private function createTagWithCode($code, $title, $tagParentCode = null, $metatag = false, $display = true)
     {
         if ($tag = $this->tagRepo->findOneByCod($code)) {
-            throw new \Exception("Nothing done - Tag retrieved from DB id: ".$tag->getId()." cod: ".$tag->getCod());
+            throw new \Exception('Nothing done - Tag retrieved from DB id: '.$tag->getId().' cod: '.$tag->getCod());
         }
         $tag = new Tag();
         $tag->setCod($code);
@@ -151,11 +178,11 @@ class YoutubeServiceTest extends WebTestCase
         $tag->setTitle($title, 'es');
         $tag->setTitle($title, 'gl');
         $tag->setTitle($title, 'en');
-        if ($tagParentCode){
+        if ($tagParentCode) {
             if ($parent = $this->tagRepo->findOneByCod($tagParentCode)) {
                 $tag->setParent($parent);
             } else {
-                throw new \Exception("Nothing done - There is no tag in the database with code ".$tagParentCode." to be the parent tag");
+                throw new \Exception('Nothing done - There is no tag in the database with code '.$tagParentCode.' to be the parent tag');
             }
         }
         $this->dm->persist($tag);

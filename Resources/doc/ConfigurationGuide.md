@@ -57,7 +57,7 @@ sudo apt-get install python python-setuptools python-argparse python-pip python-
 
 ```
 cd /tmp
-wget https://google-api-python-client.googlecode.com/files/google-api-python-client-1.2.zip
+wget https://pypi.python.org/packages/53/62/03612232bdf861b0a0a2e3ae44b3c555e8c8a50eb2d9e472bb29664c0772/google-api-python-client-1.2.zip#md5=451f35e22d107894826af4f8d3cab581
 unzip google-api-python-client-1.2.zip
 cd google-api-python-client-1.2
 sed -i "s/gflags.DEFINE_boolean('auth_local_webserver', True/gflags.DEFINE_boolean('auth_local_webserver', False/g" oauth2client/old_run.py
@@ -108,6 +108,25 @@ pumukit_youtube:
 If this parameter is not configured, the playlists will be created as public.
 
 
+### [OPTIONAL] Configure the sync status in `app/config/parameters.yml`
+
+```
+pumukit_youtube:
+    sync_status: false
+```
+
+If this parameter is true, videos with status public, blocked and private will be upload to Youtube, and they status will be change if you update on PuMuKIT.
+
+### [OPTIONAL] Configure the sync status in `app/config/parameters.yml`
+
+```
+pumukit_youtube:
+    default_track_upload: 'master'
+```
+
+If this parameter is not configured, the track by default is master. 
+
+
 ### Clear cache
 
 ```
@@ -134,4 +153,3 @@ The recommendation on a production environment is to run commands every day, e.g
 40 23 * * *     /usr/bin/php /var/www/pumukit2/app/console youtube:upload --env=prod
 40 23 * * *     /usr/bin/php /var/www/pumukit2/app/console youtube:delete --env=prod
 ```
-
