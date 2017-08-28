@@ -17,7 +17,7 @@
         </thead>
         <tbody>
             {% for account in youtubeAccounts %}
-                <tr class="active">
+                <tr class="active" role="button" data-toggle="collapse" href="#account_{{ account.getId() }}" aria-expanded="false" aria-controls="account_{{ account.getId() }}">
                     <td headers="th-checkbox" width="1%">
                         <div class="checkbox">
                             <label>
@@ -33,6 +33,17 @@
                     </td>
                     <td headers="th-account-login" width="40%">{{ account.getLogin() }}</td>
                     <td headers="th-multimedia-objects" width="10%">0</td>
+                </tr>
+                <tr class="collapse" id="account_{{ account.getId() }}">
+                    {% for playlist in account.getPlaylist() %}
+                        <td>&nbsp;</td>
+                        <td headers="th-icons" >{% include 'PumukitYoutubeBundle:Admin:updatemenuplaylist.html.twig' %}</td>
+                        <td headers="th-playlist-name" width="48%">
+                            {{ account.getName() }}
+                        </td>
+                        <td headers="th-playlist-name" width="40%">&nbsp;</td>
+                        <td headers="th-playlist-multimedia-objects" width="10%">0</td>
+                    {% endfor %}
                 </tr>
             {% endfor %}
         </tbody>

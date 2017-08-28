@@ -1,0 +1,20 @@
+<div class="dropdown">
+    <i class="mdi-navigation-menu" id="list_playlist_{{ playlist.id }}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></i>
+    <ul class="dropdown-menu" role="menu" aria-labelledby="list_playlist_{{ playlist.id }}">
+        <li>
+            <a title="{% trans %}Edit playlist{% endtrans %}" href="{{ path('pumukit_youtube_edit_playlist', {'id' : playlist.id }) }}" data-toggle="modal" data-backdrop="static" data-target="#myModal">
+                <i class="mdi-editor-mode-edit"></i> {% trans %}Edit playlist{% endtrans %}
+            </a>
+        </li>
+        <li>
+            <a href="#" title="{% trans %}Delete playlist{% endtrans %}" class="youtube_playlist_option" data-href="{{ path('pumukit_youtube_delete_playlist', {'id': playlist.id}) }}">
+                <i class="mdi-content-clear"></i> {% trans %}Delete playlist{% endtrans %}
+            </a>
+        </li>
+        <li>
+            <a href="#" onclick="return false;">
+                <strong>{% trans %}Cancel{% endtrans %}...</strong>
+            </a>
+        </li>
+    </ul>
+</div>

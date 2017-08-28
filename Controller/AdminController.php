@@ -35,6 +35,10 @@ class AdminController extends Controller
     }
 
     /**
+     * @param Request $request
+     *
+     * @return array|JsonResponse
+     *
      * @Route ("/create", name="pumukit_youtube_create_account")
      * @Template()
      */
@@ -109,7 +113,7 @@ class AdminController extends Controller
 
         return array(
             'form' => $form->createView(),
-            'account' => $youtubeAccount
+            'account' => $youtubeAccount,
         );
     }
 
