@@ -44,6 +44,14 @@ class Youtube
      */
     private $youtubeId;
 
+
+    /**
+     * @var string
+     *
+     * @MongoDB\String
+     */
+    private $youtubeAccount;
+
     /**
      * @var string
      *
@@ -385,4 +393,21 @@ class Youtube
     {
         return $this->uploadDate;
     }
+
+    /**
+     * @return string
+     */
+    public function getYoutubeAccount()
+    {
+        return $this->youtubeAccount;
+    }
+
+    /**
+     * @param string $youtubeAccount
+     */
+    public function setYoutubeAccount($youtubeAccount)
+    {
+        $this->youtubeAccount = $youtubeAccount;
+    }
+
 }

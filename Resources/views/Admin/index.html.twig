@@ -1,0 +1,45 @@
+{% extends 'PumukitNewAdminBundle::layout.html.twig' %}
+
+{% block body %}
+    <h1>{% trans %}Youtube{% endtrans %}</h1>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="well">
+                <div id="list_youtube_accounts">
+                    {% render(controller('PumukitYoutubeBundle:Admin:list')) %}
+                </div>
+
+                <a title="{% trans %}New account{% endtrans %}" href="{{ path('pumukit_youtube_create_account') }}" data-toggle="modal" data-backdrop="static" data-target="#myModal">
+                    <i class="mdi-editor-mode-edit"></i> {% trans %}New account{% endtrans %}
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        $('.youtube_account_option').on('click', function(event) {
+            event.preventDefault();
+            $.ajax({
+                url: $(this).data('href'),
+                method: 'POST',
+                success: function(response, textStatus, jqXHR){
+                    if (jqXHR.responseText.indexOf('modal-header') != -1){
+                        var message = '{% trans %}There was an error on deleting Youtube account.{% endtrans %}';
+                    no_success(message);
+                } else {
+                    var mm = "{{ path('pumukit_youtube_admin_list') }}";
+                    $('#list_youtube_accounts').load(mm);
+                    var message = '{% trans %}Youtube account was successfully deleted.{% endtrans %}';
+                    success(message);
+                }
+            },
+            error: function(jqXHR, textStatus, errorThrown){
+                no_success(errorThrown + ': ' + textStatus);
+            }
+        });
+            return false;
+        });
+    </script>
+
+{% endblock %}

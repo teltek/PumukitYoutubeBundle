@@ -1,0 +1,20 @@
+<div class="dropdown">
+    <i class="mdi-navigation-menu" id="list_account_{{ account.id }}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></i>
+    <ul class="dropdown-menu" role="menu" aria-labelledby="list_account_{{ account.id }}">
+        <li>
+            <a title="{% trans %}Edit account{% endtrans %}" href="{{ path('pumukit_youtube_edit_account', {'id' : account.id }) }}" data-toggle="modal" data-backdrop="static" data-target="#myModal">
+                <i class="mdi-editor-mode-edit"></i> {% trans %}Edit account{% endtrans %}
+            </a>
+        </li>
+        <li>
+            <a href="#" title="{% trans %}Delete account{% endtrans %}" class="youtube_account_option" data-href="{{ path('pumukit_youtube_delete_account', {'id': account.id}) }}">
+                <i class="mdi-content-clear"></i> {% trans %}Delete account{% endtrans %}
+            </a>
+        </li>
+        <li>
+            <a href="#" onclick="return false;">
+                <strong>{% trans %}Cancel{% endtrans %}...</strong>
+            </a>
+        </li>
+    </ul>
+</div>

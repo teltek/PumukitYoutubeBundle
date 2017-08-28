@@ -40,5 +40,10 @@
             <argument type="service" id="logger"/>
             <argument>%pumukit_youtube.process_timeout%</argument>
         </service>
+
+        <service id="pumukit_uned_web_tv.pumukit_youtube_menu" class="Pumukit\YoutubeBundle\Services\MenuService">
+            <tag name="pumukitnewadmin.menuitem"></tag>
+        </service>
+
     </services>
 </container>
