@@ -9,6 +9,8 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\Template;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Pumukit\SchemaBundle\Document\MultimediaObject;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 
 class AdminController extends Controller
 {
@@ -142,4 +144,40 @@ class AdminController extends Controller
             ));
         }
     }
+
+    /**
+     * @param MultimediaObject $multimediaObject
+     * @return array
+     *
+     * @Route ("/update/config/{id}", name="pumukityoutube_advance_configuration_index")
+     * @ParamConverter("multimediaObject", class="PumukitSchemaBundle:MultimediaObject", options={"id" = "id"})
+     * @Template()
+     */
+    public function updateYTAction(MultimediaObject $multimediaObject)
+    {
+        $dm = $this->get('doctrine_mongodb')->getManager();
+
+        $youtubeAccounts = $dm->getRepository('PumukitYoutubeBundle:YoutubeAccount')->findAll();
+
+        return array('youtubeAccounts' => $youtubeAccounts, 'multimediaObject' => $multimediaObject);
+    }
+
+    /**
+     * @param $id
+     * @return JsonResponse
+     *
+     * @Route ("/playlist/list/{id}", name="pumukityoutube_playlist_select")
+     */
+    public function playlistAccountAction($id = null)
+    {
+        if($id) {
+            $dm = $this->get('doctrine_mongodb')->getManager();
+            $youtubeAccount = $dm->getRepository('PumukitYoutubeBundle:YoutubeAccount')->findOneBy(array('_id' => $id));
+
+            return new JsonResponse(array('playlists' => $youtubeAccount->getPlaylist()));
+        } else {
+            return new JsonResponse(array());
+        }
+    }
+
 }

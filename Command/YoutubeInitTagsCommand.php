@@ -35,6 +35,7 @@ EOT
         if ($input->getOption('force')) {
             $youtubePublicationChannelTag = $this->createTagWithCode('PUCHYOUTUBE', 'YouTubeEDU', 'PUBCHANNELS', false);
             $youtubePublicationChannelTag->setProperty('modal_path', 'pumukityoutube_modal_index');
+            $youtubePublicationChannelTag->setProperty('advanced_configuration', 'pumukityoutube_advance_configuration_index');
             $this->dm->persist($youtubePublicationChannelTag);
             $this->dm->flush();
             $output->writeln('Tag persisted - new id: '.$youtubePublicationChannelTag->getId().' cod: '.$youtubePublicationChannelTag->getCod());

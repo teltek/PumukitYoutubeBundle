@@ -1,0 +1,39 @@
+<div class="form-group" id="pumukit_youtube_accounts">
+    <label for="youtube_label" class="control-label">{% trans %}Youtube accounts{% endtrans %}</label>
+    <br />
+    <div class="col-xs-6">
+        <select id="youtube_label" name="youtube_label" class="form-control" required>
+            <option value="">{% trans %}Select and account...{% endtrans %}</option>
+            {% for account in youtubeAccounts %}
+                <option class="account_option" value="{{ account.getName() }}" data-href="{{ path('pumukityoutube_playlist_select', {'id' : account.getId() }) }}">{{ account.getName() }}</option>
+            {% endfor %}
+        </select>
+        <div id="list_playlist">
+            {% render(controller('PumukitYoutubeBundle:Admin:playlistAccount')) %}
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    $('#account_option').on('focus', function(event) {
+        event.preventDefault();
+        $.ajax({
+            url: $(this).data('href'),
+            method: 'POST',
+            success: function (response, textStatus, jqXHR) {
+                if (jqXHR.responseText.indexOf('modal-header') != -1) {
+                    var message = '{% trans %}There was an error on deleting Youtube account.{% endtrans %}';
+                    no_success(message);
+                } else {
+                    var playlist = "{{ path('pumukityoutube_playlist_select') }}";
+                    $('#list_playlist').load(playlist);
+                    var message = '{% trans %}Youtube account was successfully deleted.{% endtrans %}';
+                    success(message);
+                }
+            },
+            error: function (jqXHR, textStatus, errorThrown) {
+                no_success(errorThrown + ': ' + textStatus);
+            }
+        });
+    });
+</script>
