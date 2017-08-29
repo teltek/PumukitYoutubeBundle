@@ -2,8 +2,9 @@
 
 namespace Pumukit\YoutubeBundle\Controller;
 
-use Pumukit\YoutubeBundle\Document\YoutubeAccount;
+use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\YoutubeBundle\Form\Type\AccountType;
+use Pumukit\YoutubeBundle\Form\Type\YoutubePlaylistType;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Template;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
@@ -14,6 +15,8 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 
 class AdminController extends Controller
 {
+    private $youtubeTag = 'YOUTUBE';
+
     /**
      * @Route ("/", name="pumukit_youtube_admin_index")
      * @Template()
@@ -31,9 +34,9 @@ class AdminController extends Controller
     {
         $dm = $this->get('doctrine_mongodb')->getManager();
 
-        $youtubeAccounts = $dm->getRepository('PumukitYoutubeBundle:YoutubeAccount')->findAll();
+        $youtubeAccounts = $dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(array('cod' => $this->youtubeTag));
 
-        return array('youtubeAccounts' => $youtubeAccounts);
+        return array('youtubeAccounts' => $youtubeAccounts->getChildren());
     }
 
     /**
@@ -55,12 +58,19 @@ class AdminController extends Controller
         $form->handleRequest($request);
         if ($request->getMethod() === 'POST' && $form->isValid()) {
             try {
+                $youtubeTag = $dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(array('cod' => $this->youtubeTag));
+
                 $data = $form->getData();
 
-                $youtubeAccount = new YoutubeAccount();
-                $youtubeAccount->setName($data['name']);
-                $youtubeAccount->setLogin($data['login']);
-                $dm->persist($youtubeAccount);
+                $tag = new Tag();
+                $tag->setCod($data['login']);
+                $tag->setMetatag(false);
+                $tag->setProperty('login', $data['login']);
+                $tag->setDisplay(true);
+                $tag->seti18nTitle($data['i18n_title']);
+                $tag->setParent($youtubeTag);
+
+                $dm->persist($tag);
                 $dm->flush();
 
                 return new JsonResponse(array('success'));
@@ -88,20 +98,22 @@ class AdminController extends Controller
     {
         $dm = $this->get('doctrine_mongodb')->getManager();
 
-        $youtubeAccount = $dm->getRepository('PumukitYoutubeBundle:YoutubeAccount')->findOneBy(array('_id' => new \MongoId($id)));
+        $youtubeAccount = $dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(array('_id' => new \MongoId($id)));
 
         $translator = $this->get('translator');
         $locale = $request->getLocale();
 
-        $form = $this->createForm(new AccountType($translator, $locale), $youtubeAccount);
+        $form = $this->createForm(new AccountType($translator, $locale));
+        $form->get('i18n_title')->setData($youtubeAccount->getI18nTitle());
+        $form->get('login')->setData($youtubeAccount->getProperty('login'));
 
         $form->handleRequest($request);
         if ($request->getMethod() === 'POST' && $form->isValid()) {
             try {
                 $data = $form->getData();
 
-                $youtubeAccount->setName($data->getName());
-                $youtubeAccount->setLogin($data->getLogin());
+                $youtubeAccount->setI18nTitle($data['i18n_title']);
+                $youtubeAccount->setProperty('login', $data['login']);
                 $dm->flush();
 
                 return new JsonResponse(array('success'));
@@ -126,15 +138,15 @@ class AdminController extends Controller
      *
      * @return JsonResponse
      *
-     * @Route ("/delete/{id}", name="pumukit_youtube_delete_account")
+     * @Route ("/delete/{id}", name="pumukit_youtube_delete_tag")
      */
     public function deleteAction($id)
     {
+        $tagService = $this->container->get('pumukitschema.tag');
         try {
             $dm = $this->get('doctrine_mongodb')->getManager();
-            $youtubeAccount = $dm->getRepository('PumukitYoutubeBundle:YoutubeAccount')->findOneBy(array('_id' => new \MongoId($id)));
-            $dm->remove($youtubeAccount);
-            $dm->flush();
+            $youtubeAccount = $dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(array('_id' => new \MongoId($id)));
+            $tagService->deleteTag($youtubeAccount);
 
             return new JsonResponse(array('success'));
         } catch (\Exception $exception) {
@@ -146,7 +158,111 @@ class AdminController extends Controller
     }
 
     /**
+     * @route("/children/{id}", name="pumukit_youtube_children_tag")
+     * @ParamConverter("tag", class="PumukitSchemaBundle:Tag")
+     * @Template()
+     */
+    public function childrenAction(Tag $tag, Request $request)
+    {
+        return array(
+            'tag' => $tag,
+            'youtubeAccounts' => $tag->getChildren(),
+            'isPlaylist' => true,
+        );
+    }
+
+    /**
+     * @param $id
+     * @param Request $request
+     *
+     * @return array|JsonResponse
+     *
+     * @Route ("/create/playlist/{id}", name="pumukit_youtube_create_playlist")
+     * @Template()
+     */
+    public function createPlaylistAction(Request $request, $id)
+    {
+        $dm = $this->get('doctrine_mongodb')->getManager();
+        $translator = $this->get('translator');
+        $locale = $request->getLocale();
+
+        $form = $this->createForm(new YoutubePlaylistType($translator, $locale));
+
+        $form->handleRequest($request);
+        if ($request->getMethod() === 'POST' && $form->isValid()) {
+            try {
+                $data = $form->getData();
+
+                $playlist = new Tag();
+                $playlist->setI18nTitle($data['i18n_title']);
+                $dm->persist($playlist);
+
+                $playlist->setCod($playlist->getId());
+
+                $account = $dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(array('_id' => new \MongoId($id)));
+                $playlist->setParent($account);
+
+                $dm->flush();
+
+                return new JsonResponse(array('success'));
+            } catch (\Exception $exception) {
+                return new JsonResponse(array(
+                    'error',
+                    'message' => $exception->getMessage(),
+                ));
+            }
+        }
+
+        return array(
+            'form' => $form->createView(),
+            'account' => $id,
+        );
+    }
+
+    /**
+     * @param $id
+     * @param Request $request
+     *
+     * @return array|JsonResponse
+     *
+     * @Route ("/edit/playlist/{id}", name="pumukit_youtube_edit_playlist")
+     * @Template()
+     */
+    public function editPlaylistAction(Request $request, $id)
+    {
+        $dm = $this->get('doctrine_mongodb')->getManager();
+        $translator = $this->get('translator');
+        $locale = $request->getLocale();
+
+        $playlist = $dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(array('_id' => new \MongoId($id)));
+
+        $form = $this->createForm(new YoutubePlaylistType($translator, $locale), $playlist);
+
+        $form->handleRequest($request);
+        if ($request->getMethod() === 'POST' && $form->isValid()) {
+            try {
+                $data = $form->getData();
+                $playlist->setI18nTitle($data->getI18nTitle());
+                $dm->flush();
+
+                return new JsonResponse(array('success'));
+            } catch (\Exception $exception) {
+                return new JsonResponse(array(
+                    'error',
+                    'message' => $exception->getMessage(),
+                ));
+            }
+        }
+
+        return array(
+            'form' => $form->createView(),
+            'playlist' => $playlist,
+        );
+    }
+
+    /**
      * @param MultimediaObject $multimediaObject
+     *
      * @return array
      *
      * @Route ("/update/config/{id}", name="pumukityoutube_advance_configuration_index")
@@ -159,18 +275,22 @@ class AdminController extends Controller
 
         $youtubeAccounts = $dm->getRepository('PumukitYoutubeBundle:YoutubeAccount')->findAll();
 
-        return array('youtubeAccounts' => $youtubeAccounts, 'multimediaObject' => $multimediaObject);
+        return array(
+            'youtubeAccounts' => $youtubeAccounts,
+            'multimediaObject' => $multimediaObject,
+        );
     }
 
     /**
      * @param $id
+     *
      * @return JsonResponse
      *
      * @Route ("/playlist/list/{id}", name="pumukityoutube_playlist_select")
      */
     public function playlistAccountAction($id = null)
     {
-        if($id) {
+        if ($id) {
             $dm = $this->get('doctrine_mongodb')->getManager();
             $youtubeAccount = $dm->getRepository('PumukitYoutubeBundle:YoutubeAccount')->findOneBy(array('_id' => $id));
 
@@ -179,5 +299,4 @@ class AdminController extends Controller
             return new JsonResponse(array());
         }
     }
-
 }

@@ -7,8 +7,13 @@
             </a>
         </li>
         <li>
-            <a href="#" title="{% trans %}Delete account{% endtrans %}" class="youtube_account_option" data-href="{{ path('pumukit_youtube_delete_account', {'id': account.id}) }}">
+            <a href="#" title="{% trans %}Delete account{% endtrans %}" class="youtube_account_option" data-href="{{ path('pumukit_youtube_delete_tag', {'id': account.id}) }}">
                 <i class="mdi-content-clear"></i> {% trans %}Delete account{% endtrans %}
+            </a>
+        </li>
+        <li>
+            <a title="{% trans %}Add new playlist{% endtrans %}" href="{{ path('pumukit_youtube_create_playlist', {'id': account.id}) }}"  data-toggle="modal" data-backdrop="static" data-target="#myModal">
+                <i class="mdi-content-clear"></i> {% trans %}Add new playlist{% endtrans %}
             </a>
         </li>
         <li>

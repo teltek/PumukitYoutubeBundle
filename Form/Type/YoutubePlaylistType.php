@@ -2,13 +2,12 @@
 
 namespace Pumukit\YoutubeBundle\Form\Type;
 
-use Pumukit\NewAdminBundle\Form\Type\Base\TextI18nType;
 use Symfony\Component\Form\AbstractType;
-use Symfony\Component\Form\Extension\Core\Type\TextType;
+use Pumukit\NewAdminBundle\Form\Type\Base\TextI18nType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Translation\TranslatorInterface;
 
-class AccountType extends AbstractType
+class YoutubePlaylistType extends AbstractType
 {
     private $translator;
     private $locale;
@@ -21,13 +20,8 @@ class AccountType extends AbstractType
 
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
-        $builder
-            ->add('i18n_title', TextI18nType::class, array(
-                'attr' => array('aria-label' => $this->translator->trans('Title', array(), null, $this->locale)),
-                'label' => $this->translator->trans('Title', array(), null, $this->locale),
-            ))
-            ->add('login', TextType::class, array(
-            'label' => $this->translator->trans('login', array(), null, $this->locale),
+        $builder->add('i18n_title', TextI18nType::class, array(
+            'label' => $this->translator->trans('Title', array(), null, $this->locale),
             'attr' => array('class' => 'form-control'),
             'required' => true,
         ));
@@ -35,6 +29,6 @@ class AccountType extends AbstractType
 
     public function getName()
     {
-        return 'pumukit_youtube_account';
+        return 'pumukit_youtube_playlist';
     }
 }

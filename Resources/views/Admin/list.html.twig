@@ -1,51 +1,29 @@
 <div class="well">
-    <table class="table table-responsive">
+    <table class="table table-striped table-hover pmk-tag-tree">
         <thead>
-        <tr>
-            <th id="th-checkbox" width="1%">
-                <div class="checkbox">
-                    <label>
-                        <input type="checkbox" onclick="window.click_checkbox_all('youtube_account', this.checked)">
-                    </label>
-                </div>
-            </th>
-            <th id="th-icons" width="1%">&nbsp;</th>
-            <th id="th-account-name" width="48%">{% trans %}Name{% endtrans %}</th>
-            <th id="th-account-login" width="40%">{% trans %}Login{% endtrans %}</th>
-            <th id="th-multimedia-objects" width="10%">{% trans %}Multimedia objects{% endtrans %}</th>
-        </tr>
+            <tr>
+                <th id="th-checkbox" width="1%">
+                    <div class="checkbox">
+                        <label>
+                            <input type="checkbox" onclick="window.click_checkbox_all('tag', this.checked)">
+                        </label>
+                    </div>
+                </th>
+                <th id="th-icons" colspan="3" width="3%"></th>
+                <th id="th-id" width="1%">{% trans %}Id{% endtrans %}</th>
+                <th id="th-code-name">{% trans %}Name{% endtrans %} - {% trans %}Login{% endtrans %}</th>
+                <th id="th-num">{% trans %}MM. Obj.{% endtrans %}</th>
+            </tr>
         </thead>
         <tbody>
-            {% for account in youtubeAccounts %}
-                <tr class="active" role="button" data-toggle="collapse" href="#account_{{ account.getId() }}" aria-expanded="false" aria-controls="account_{{ account.getId() }}">
-                    <td headers="th-checkbox" width="1%">
-                        <div class="checkbox">
-                            <label>
-                                <input type="checkbox" class="youtube_account_checkbox" name="youtube_account_checkbox[]" value="{{ account.getId() }}">
-                            </label>
-                        </div>
-                    </td>
-                    <td headers="th-icons" width="1%">
-                        {% include 'PumukitYoutubeBundle:Admin:updatemenu.html.twig' %}
-                    </td>
-                    <td headers="th-account-name" width="48%">
-                        {{ account.getName() }}
-                    </td>
-                    <td headers="th-account-login" width="40%">{{ account.getLogin() }}</td>
-                    <td headers="th-multimedia-objects" width="10%">0</td>
-                </tr>
-                <tr class="collapse" id="account_{{ account.getId() }}">
-                    {% for playlist in account.getPlaylist() %}
-                        <td>&nbsp;</td>
-                        <td headers="th-icons" >{% include 'PumukitYoutubeBundle:Admin:updatemenuplaylist.html.twig' %}</td>
-                        <td headers="th-playlist-name" width="48%">
-                            {{ account.getName() }}
-                        </td>
-                        <td headers="th-playlist-name" width="40%">&nbsp;</td>
-                        <td headers="th-playlist-multimedia-objects" width="10%">0</td>
-                    {% endfor %}
-                </tr>
-            {% endfor %}
+            {% include 'PumukitYoutubeBundle:Admin:children.html.twig' %}
         </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="8" class="foot-td">
+                    &nbsp;
+                </th>
+            </tr>
+        </tfoot>
     </table>
 </div>
