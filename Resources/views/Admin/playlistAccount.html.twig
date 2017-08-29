@@ -1,5 +1,0 @@
-<select id="youtube_playlist_label" name="youtube_playlist_label" class="form-control" required>
-    {% for item in playlist if playlist is not empty %}
-        <option value="{{ item.getId() }}">{{ item.getName() }}</option>
-    {% endfor %}
-</select>

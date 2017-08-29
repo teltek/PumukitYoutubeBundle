@@ -63,7 +63,6 @@ class AdminController extends Controller
                 $data = $form->getData();
 
                 $tag = new Tag();
-                $tag->setCod($data['login']);
                 $tag->setMetatag(false);
                 $tag->setProperty('login', $data['login']);
                 $tag->setDisplay(true);
@@ -71,6 +70,8 @@ class AdminController extends Controller
                 $tag->setParent($youtubeTag);
 
                 $dm->persist($tag);
+                $tag->setCod($tag->getId());
+
                 $dm->flush();
 
                 return new JsonResponse(array('success'));
@@ -112,6 +113,7 @@ class AdminController extends Controller
             try {
                 $data = $form->getData();
 
+                $youtubeAccount->setCod($youtubeAccount->getId());
                 $youtubeAccount->setI18nTitle($data['i18n_title']);
                 $youtubeAccount->setProperty('login', $data['login']);
                 $dm->flush();
@@ -273,10 +275,10 @@ class AdminController extends Controller
     {
         $dm = $this->get('doctrine_mongodb')->getManager();
 
-        $youtubeAccounts = $dm->getRepository('PumukitYoutubeBundle:YoutubeAccount')->findAll();
+        $youtubeAccounts = $dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(array('cod' => $this->youtubeTag));
 
         return array(
-            'youtubeAccounts' => $youtubeAccounts,
+            'youtubeAccounts' => $youtubeAccounts->getChildren(),
             'multimediaObject' => $multimediaObject,
         );
     }
@@ -290,11 +292,17 @@ class AdminController extends Controller
      */
     public function playlistAccountAction($id = null)
     {
-        if ($id) {
+        if (isset($id)) {
             $dm = $this->get('doctrine_mongodb')->getManager();
-            $youtubeAccount = $dm->getRepository('PumukitYoutubeBundle:YoutubeAccount')->findOneBy(array('_id' => $id));
+            $youtubeAccount = $dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(array('_id' => $id));
 
-            return new JsonResponse(array('playlists' => $youtubeAccount->getPlaylist()));
+            $children = array();
+            foreach($youtubeAccount->getChildren() as $child) {
+                $children[] = array('id' => $child->getId(), 'text' => $child->getTitle());
+            }
+
+            $children = json_encode($children);
+            return new JsonResponse($children);
         } else {
             return new JsonResponse(array());
         }
