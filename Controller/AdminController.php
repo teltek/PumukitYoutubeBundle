@@ -297,11 +297,12 @@ class AdminController extends Controller
             $youtubeAccount = $dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(array('_id' => $id));
 
             $children = array();
-            foreach($youtubeAccount->getChildren() as $child) {
+            foreach ($youtubeAccount->getChildren() as $child) {
                 $children[] = array('id' => $child->getId(), 'text' => $child->getTitle());
             }
 
             $children = json_encode($children);
+
             return new JsonResponse($children);
         } else {
             return new JsonResponse(array());

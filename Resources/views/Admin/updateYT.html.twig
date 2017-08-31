@@ -39,7 +39,6 @@
             method: 'POST',
             success: function (response) {
                 var data = jQuery.parseJSON(response);
-                console.log(response);
                 $("#youtube_playlist_label").select2({
                     data: data
                 });
