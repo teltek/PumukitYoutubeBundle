@@ -43,7 +43,6 @@ class AdminController extends Controller
      * @param Request $request
      *
      * @return array|JsonResponse
-     *
      * @Route ("/create", name="pumukit_youtube_create_account")
      * @Template()
      */
@@ -88,10 +87,9 @@ class AdminController extends Controller
 
     /**
      * @param Request $request
-     * @param $id
+     * @param         $id
      *
      * @return array|JsonResponse
-     *
      * @Route ("/edit/{id}", name="pumukit_youtube_edit_account")
      * @Template()
      */
@@ -139,7 +137,6 @@ class AdminController extends Controller
      * @throws \Exception
      *
      * @return JsonResponse
-     *
      * @Route ("/delete/{id}", name="pumukit_youtube_delete_tag")
      */
     public function deleteAction($id)
@@ -160,11 +157,14 @@ class AdminController extends Controller
     }
 
     /**
+     * @param Tag $tag
      * @route("/children/{id}", name="pumukit_youtube_children_tag")
      * @ParamConverter("tag", class="PumukitSchemaBundle:Tag")
      * @Template()
+     *
+     * @return array
      */
-    public function childrenAction(Tag $tag, Request $request)
+    public function childrenAction(Tag $tag)
     {
         return array(
             'tag' => $tag,
@@ -174,11 +174,10 @@ class AdminController extends Controller
     }
 
     /**
-     * @param $id
+     * @param         $id
      * @param Request $request
      *
      * @return array|JsonResponse
-     *
      * @Route ("/create/playlist/{id}", name="pumukit_youtube_create_playlist")
      * @Template()
      */
@@ -197,6 +196,7 @@ class AdminController extends Controller
 
                 $playlist = new Tag();
                 $playlist->setI18nTitle($data['i18n_title']);
+                $playlist->setProperty('youtube_playlist', true);
                 $dm->persist($playlist);
 
                 $playlist->setCod($playlist->getId());
@@ -222,11 +222,10 @@ class AdminController extends Controller
     }
 
     /**
-     * @param $id
+     * @param         $id
      * @param Request $request
      *
      * @return array|JsonResponse
-     *
      * @Route ("/edit/playlist/{id}", name="pumukit_youtube_edit_playlist")
      * @Template()
      */
@@ -266,7 +265,6 @@ class AdminController extends Controller
      * @param MultimediaObject $multimediaObject
      *
      * @return array
-     *
      * @Route ("/update/config/{id}", name="pumukityoutube_advance_configuration_index")
      * @ParamConverter("multimediaObject", class="PumukitSchemaBundle:MultimediaObject", options={"id" = "id"})
      * @Template()
@@ -287,7 +285,6 @@ class AdminController extends Controller
      * @param $id
      *
      * @return JsonResponse
-     *
      * @Route ("/playlist/list/{id}", name="pumukityoutube_playlist_select")
      */
     public function playlistAccountAction($id = null)
@@ -298,7 +295,10 @@ class AdminController extends Controller
 
             $children = array();
             foreach ($youtubeAccount->getChildren() as $child) {
-                $children[] = array('id' => $child->getId(), 'text' => $child->getTitle());
+                $children[] = array(
+                    'id' => $child->getId(),
+                    'text' => $child->getTitle(),
+                );
             }
 
             $children = json_encode($children);

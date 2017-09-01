@@ -27,7 +27,6 @@ class UpdateListener
             ->getSingleResult();
 
         if (null != $youtube) {
-
             $youtube->setMultimediaObjectUpdateDate(new \DateTime('now'));
             $dm->persist($youtube);
             $dm->flush();

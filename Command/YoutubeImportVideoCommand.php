@@ -28,16 +28,7 @@ class YoutubeImportVideoCommand extends ContainerAwareCommand
 
     protected function configure()
     {
-        $this
-            ->setName('youtube:import:video')
-            ->setDescription('Create a multimedia object from Youtube')
-            ->addArgument('yid', InputArgument::REQUIRED, 'YouTube ID')
-            ->addArgument('series', InputArgument::OPTIONAL, 'Series id where the object is created or path where the master is located')
-            ->addOption('status', null, InputOption::VALUE_OPTIONAL, 'Status of the new multimedia object (published, blocked or hidden)', 'published')
-            ->addOption('step', 'S', InputOption::VALUE_REQUIRED, 'Step of the importation. See help for more info', -99)
-            ->addOption('tags', null, InputOption::VALUE_IS_ARRAY | InputOption::VALUE_OPTIONAL, 'Youtube tags to add in the object', array())
-            ->addOption('force', null, InputOption::VALUE_NONE, 'Set this parameter force the execution of this action')
-            ->setHelp(<<<EOT
+        $this->setName('youtube:import:video')->setDescription('Create a multimedia object from Youtube')->addArgument('login', InputArgument::REQUIRED, 'YouTube Login')->addArgument('yid', InputArgument::REQUIRED, 'YouTube ID')->addArgument('series', InputArgument::OPTIONAL, 'Series id where the object is created or path where the master is located')->addOption('status', null, InputOption::VALUE_OPTIONAL, 'Status of the new multimedia object (published, blocked or hidden)', 'published')->addOption('step', 'S', InputOption::VALUE_REQUIRED, 'Step of the importation. See help for more info', -99)->addOption('tags', null, InputOption::VALUE_IS_ARRAY | InputOption::VALUE_OPTIONAL, 'Youtube tags to add in the object', array())->addOption('force', null, InputOption::VALUE_NONE, 'Set this parameter force the execution of this action')->setHelp(<<<EOT
 Command to create a multimedia object from Youtube.
 
 Steps:
@@ -75,98 +66,99 @@ Steps:
 
 
 EOT
-          );
+            );
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $this->initParameters();
 
+        $login = $input->getArgument('login');
         $yid = $input->getArgument('yid');
         $step = $input->getOption('step');
         switch ($step) {
-        case 1:
-            //Check if exists
-            $status = $this->getStatus($input->getOption('status'));
+            case 1:
+                //Check if exists
+                $status = $this->getStatus($input->getOption('status'));
 
-            if ($this->getMmObjFromYid($yid)) {
-                $output->writeln('<error>Already exists a mmobj from Youtube video with id '.$yid.'</error>');
+                if ($this->getMmObjFromYid($yid)) {
+                    $output->writeln('<error>Already exists a mmobj from Youtube video with id '.$yid.'</error>');
 
-                return false;
-            }
-
-            $series = $this->getSeries($input->getArgument('series'));
-            $output->writeln(sprintf(' * Creating multimedia object from id %s in series %s', $yid, $series->getId()));
-            $mmobj = $this->createMultimediaObject($series, $yid, $status, $output);
-
-            if ($tags = $input->getOption('tags')) {
-                $output->writeln(' * Tagging multimedia object ');
-                $this->tagMultimediaObject($mmobj, $tags);
-            }
-            break;
-        case 2:
-            if ('all' == $yid) {
-                $mmobjs = $this->mmobjRepo->findBy(array('properties.origin' => 'youtube'));
-                foreach ($mmobjs as $mmobj) {
-                    $output->writeln(' * Downloading image for multimedia object with id '.$mmobj->getId());
-                    try {
-                        $this->downloadPic($mmobj, $input->getArgument('series'), $input->getOption('force'));
-                    } catch (\Exception $e) {
-                        $output->writeln('<error>'.$e->getMessage().'</error>');
-                    }
+                    return false;
                 }
-            } else {
+
+                $series = $this->getSeries($input->getArgument('series'));
+                $output->writeln(sprintf(' * Creating multimedia object from id %s in series %s', $yid, $series->getId()));
+                $mmobj = $this->createMultimediaObject($series, $yid, $status, $login, $output);
+
+                if ($tags = $input->getOption('tags')) {
+                    $output->writeln(' * Tagging multimedia object ');
+                    $this->tagMultimediaObject($mmobj, $tags);
+                }
+                break;
+            case 2:
+                if ('all' == $yid) {
+                    $mmobjs = $this->mmobjRepo->findBy(array('properties.origin' => 'youtube'));
+                    foreach ($mmobjs as $mmobj) {
+                        $output->writeln(' * Downloading image for multimedia object with id '.$mmobj->getId());
+                        try {
+                            $this->downloadPic($mmobj, $input->getArgument('series'), $input->getOption('force'));
+                        } catch (\Exception $e) {
+                            $output->writeln('<error>'.$e->getMessage().'</error>');
+                        }
+                    }
+                } else {
+                    $mmobj = $this->getMmObjFromYid($yid);
+                    if (!$mmobj) {
+                        throw new \Exception('No mmobj from Youtube video with id '.$yid);
+                    }
+                    $output->writeln(' * Downloading image for multimedia object with YouTube id '.$yid);
+                    $this->downloadPic($mmobj, $input->getArgument('series'), $input->getOption('force'));
+                }
+                break;
+            case 3:
                 $mmobj = $this->getMmObjFromYid($yid);
                 if (!$mmobj) {
                     throw new \Exception('No mmobj from Youtube video with id '.$yid);
                 }
-                $output->writeln(' * Downloading image for multimedia object with YouTube id '.$yid);
-                $this->downloadPic($mmobj, $input->getArgument('series'), $input->getOption('force'));
-            }
-            break;
-        case 3:
-            $mmobj = $this->getMmObjFromYid($yid);
-            if (!$mmobj) {
-                throw new \Exception('No mmobj from Youtube video with id '.$yid);
-            }
-            $output->writeln(' * Moving tracks for multimedia object ');
-            $this->moveTracks($mmobj, $input->getArgument('series'));
-            break;
-        case 4:
-            $mmobj = $this->getMmObjFromYid($yid);
-            if (!$mmobj) {
-                throw new \Exception('No mmobj from Youtube video with id '.$yid);
-            }
-            $output->writeln(' * Tagging multimedia object ');
-            $this->tagMultimediaObject($mmobj, $input->getOption('tags'));
-            break;
-        case 5:
-            $dispatcher = $this->getContainer()->get('pumukitschema.multimediaobject_dispatcher');
-            if ('all' == $yid) {
-                $mmobjs = $this->mmobjRepo->findBy(array('properties.origin' => 'youtube'));
-                foreach ($mmobjs as $mmobj) {
-                    $output->writeln(' * Publishing multimedia object '.$mmobj->getId());
-                    try {
-                        $this->tagService->addTagByCodToMultimediaObject($mmobj, 'PUCHWEBTV');
-                    } catch (\Exception $e) {
-                        $output->writeln('<error>'.$e->getMessage().'</error>');
-                    }
+                $output->writeln(' * Moving tracks for multimedia object ');
+                $this->moveTracks($mmobj, $input->getArgument('series'));
+                break;
+            case 4:
+                $mmobj = $this->getMmObjFromYid($yid);
+                if (!$mmobj) {
+                    throw new \Exception('No mmobj from Youtube video with id '.$yid);
                 }
-                foreach ($mmobjs as $mmobj) {
+                $output->writeln(' * Tagging multimedia object ');
+                $this->tagMultimediaObject($mmobj, $input->getOption('tags'));
+                break;
+            case 5:
+                $dispatcher = $this->getContainer()->get('pumukitschema.multimediaobject_dispatcher');
+                if ('all' == $yid) {
+                    $mmobjs = $this->mmobjRepo->findBy(array('properties.origin' => 'youtube'));
+                    foreach ($mmobjs as $mmobj) {
+                        $output->writeln(' * Publishing multimedia object '.$mmobj->getId());
+                        try {
+                            $this->tagService->addTagByCodToMultimediaObject($mmobj, 'PUCHWEBTV');
+                        } catch (\Exception $e) {
+                            $output->writeln('<error>'.$e->getMessage().'</error>');
+                        }
+                    }
+                    foreach ($mmobjs as $mmobj) {
+                        $dispatcher->dispatchUpdate($mmobj);
+                    }
+                } else {
+                    $mmobj = $this->getMmObjFromYid($yid);
+                    if (!$mmobj) {
+                        throw new \Exception('No mmobj from Youtube video with id '.$yid);
+                    }
+                    $output->writeln(' * Publishing multimedia object '.$mmobj->getId());
+                    $this->tagService->addTagByCodToMultimediaObject($mmobj, 'PUCHWEBTV');
                     $dispatcher->dispatchUpdate($mmobj);
                 }
-            } else {
-                $mmobj = $this->getMmObjFromYid($yid);
-                if (!$mmobj) {
-                    throw new \Exception('No mmobj from Youtube video with id '.$yid);
-                }
-                $output->writeln(' * Publishing multimedia object '.$mmobj->getId());
-                $this->tagService->addTagByCodToMultimediaObject($mmobj, 'PUCHWEBTV');
-                $dispatcher->dispatchUpdate($mmobj);
-            }
-            break;
-        default:
-            $output->writeln('<error>Select a valid step</error>');
+                break;
+            default:
+                $output->writeln('<error>Select a valid step</error>');
         }
     }
 
@@ -217,9 +209,7 @@ EOT
         $meta = $mmobj->getProperty('youtubemeta');
 
         if (!$quality) {
-            $picUrl = isset($meta['snippet']['thumbnails']['standard']['url']) ?
-                    $meta['snippet']['thumbnails']['standard']['url'] :
-                    $meta['snippet']['thumbnails']['default']['url'];
+            $picUrl = isset($meta['snippet']['thumbnails']['standard']['url']) ? $meta['snippet']['thumbnails']['standard']['url'] : $meta['snippet']['thumbnails']['default']['url'];
         } else {
             if (!isset($meta['snippet']['thumbnails'][$quality]['url'])) {
                 throw new \Exception('Object "'.$mmobj->getId().'" doesn\'t have image with "'.$quality.'" quality');
@@ -261,15 +251,12 @@ EOT
 
     private function tagMultimediaObject(MultimediaObject $mmobj, $tagIds)
     {
-        $tags = $this->tagRepo->findBy(array('properties.origin' => 'youtube', 'properties.youtube' => array('$in' => $tagIds)));
+        $tags = $this->tagRepo->findBy(array(
+            'properties.origin' => 'youtube',
+            'properties.youtube' => array('$in' => $tagIds),
+        ));
         if (count($tagIds) != count($tags)) {
-            throw new \Exception(
-                sprintf(
-                    'No all tags found with this Youtube ids, input has %d id(s) and only %d tag(s) found',
-                    count($tagIds),
-                    count($tags)
-                )
-            );
+            throw new \Exception(sprintf('No all tags found with this Youtube ids, input has %d id(s) and only %d tag(s) found', count($tagIds), count($tags)));
         }
 
         foreach ($tags as $tag) {
@@ -277,10 +264,10 @@ EOT
         }
     }
 
-    private function createMultimediaObject(Series $series, $yid, $status, OutputInterface $output)
+    private function createMultimediaObject(Series $series, $yid, $status, $login, OutputInterface $output)
     {
         try {
-            $meta = $this->youtubeService->getVideoMeta($yid);
+            $meta = $this->youtubeService->getVideoMeta($yid, $login);
         } catch (\Exception $e) {
             throw new \Exception('No Youtube video with id '.$yid);
         }
@@ -314,11 +301,7 @@ EOT
             return $mmobj;
         }
 
-        $yt = $this->youtubeRepo
-            ->createQueryBuilder()
-            ->field('youtubeId')->equals($yid)
-            ->getQuery()
-            ->getSingleResult();
+        $yt = $this->youtubeRepo->createQueryBuilder()->field('youtubeId')->equals($yid)->getQuery()->getSingleResult();
 
         if (!$yt) {
             return null;
@@ -340,7 +323,10 @@ EOT
             return $series;
         }
 
-        $series = $this->seriesRepo->findOneBy(array('properties.origin' => 'youtube', 'properties.fromyoutubetag' => $seriesId));
+        $series = $this->seriesRepo->findOneBy(array(
+            'properties.origin' => 'youtube',
+            'properties.fromyoutubetag' => $seriesId,
+        ));
         if ($series) {
             $this->logger->info(sprintf('Using series with YouTube property %s', $seriesId));
 
@@ -348,7 +334,10 @@ EOT
         }
 
         //tag with youtube
-        $tag = $this->tagRepo->findOneBy(array('properties.origin' => 'youtube', 'properties.youtube' => $seriesId));
+        $tag = $this->tagRepo->findOneBy(array(
+            'properties.origin' => 'youtube',
+            'properties.youtube' => $seriesId,
+        ));
         if ($tag) {
             $this->logger->info(sprintf('Creating series from YouTube property %s', $seriesId));
             $series = $this->factoryService->createSeries();
@@ -368,7 +357,15 @@ EOT
     private function getStatus($status)
     {
         $status = strtolower($status);
-        $validStatus = array('published', 'pub', 'block', 'bloq', 'blocked', 'hide', 'hidden');
+        $validStatus = array(
+            'published',
+            'pub',
+            'block',
+            'bloq',
+            'blocked',
+            'hide',
+            'hidden',
+        );
         if (!in_array($status, $validStatus)) {
             throw new \Exception('Status "'.$status.'" not in '.implode(', ', $validStatus));
         }

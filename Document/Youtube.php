@@ -44,7 +44,6 @@ class Youtube
      */
     private $youtubeId;
 
-
     /**
      * @var string
      *
@@ -409,5 +408,4 @@ class Youtube
     {
         $this->youtubeAccount = $youtubeAccount;
     }
-
 }

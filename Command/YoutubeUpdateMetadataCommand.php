@@ -5,9 +5,6 @@ namespace Pumukit\YoutubeBundle\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
-use Pumukit\SchemaBundle\Document\Tag;
-use Pumukit\SchemaBundle\Document\MultimediaObject;
-use Pumukit\YoutubeBundle\Document\Youtube;
 
 class YoutubeUpdateMetadataCommand extends ContainerAwareCommand
 {
@@ -26,14 +23,11 @@ class YoutubeUpdateMetadataCommand extends ContainerAwareCommand
 
     protected function configure()
     {
-        $this
-            ->setName('youtube:update:metadata')
-            ->setDescription('Update Youtube metadata from Multimedia Objects')
-            ->setHelp(<<<'EOT'
+        $this->setName('youtube:update:metadata')->setDescription('Update Youtube metadata from Multimedia Objects')->setHelp(<<<'EOT'
 Command to upload a controlled videos to Youtube.
 
 EOT
-          );
+            );
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
@@ -65,16 +59,12 @@ EOT
     {
         foreach ($mms as $mm) {
             try {
-                $infoLog = __CLASS__.' ['.__FUNCTION__
-                  .'] Started updating Youtube video of MultimediaObject with id "'
-                  .$mm->getId().'"';
+                $infoLog = __CLASS__.' ['.__FUNCTION__.'] Started updating Youtube video of MultimediaObject with id "'.$mm->getId().'"';
                 $this->logger->addInfo($infoLog);
                 $output->writeln($infoLog);
                 $outUpdate = $this->youtubeService->updateMetadata($mm);
                 if (0 !== $outUpdate) {
-                    $errorLog = __CLASS__.' ['.__FUNCTION__
-                      .'] Uknown output on the update in Youtube video of MultimediaObject with id "'
-                      .$mm->getId().'": '.$outUpdate;
+                    $errorLog = __CLASS__.' ['.__FUNCTION__.'] Uknown output on the update in Youtube video of MultimediaObject with id "'.$mm->getId().'": '.$outUpdate;
                     $this->logger->addError($errorLog);
                     $output->writeln($errorLog);
                     $this->failedUpdates[] = $mm;
@@ -82,9 +72,7 @@ EOT
                 }
                 $this->okUpdates[] = $mm;
             } catch (\Exception $e) {
-                $errorLog = __CLASS__.' ['.__FUNCTION__
-                  .'] The update of the video from the Multimedia Object with id "'
-                  .$mm->getId().'" failed: '.$e->getMessage();
+                $errorLog = __CLASS__.' ['.__FUNCTION__.'] The update of the video from the Multimedia Object with id "'.$mm->getId().'" failed: '.$e->getMessage();
                 $this->logger->addError($errorLog);
                 $output->writeln($errorLog);
                 $this->failedUpdates[] = $mm;
@@ -101,12 +89,7 @@ EOT
             $youtubeIds[] = $mongoObjectId->__toString();
         }
 
-        $mms = $this->mmobjRepo->createQueryBuilder()
-          ->field('properties.pumukit1id')->exists(false)
-          ->field('properties.origin')->notEqual('youtube')
-          ->field('properties.youtube')->in($youtubeIds)
-          ->getQuery()
-          ->execute();
+        $mms = $this->mmobjRepo->createQueryBuilder()->field('properties.pumukit1id')->exists(false)->field('properties.origin')->notEqual('youtube')->field('properties.youtube')->in($youtubeIds)->getQuery()->execute();
 
         return $mms;
     }
