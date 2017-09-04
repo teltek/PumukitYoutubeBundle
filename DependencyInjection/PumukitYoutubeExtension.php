@@ -7,6 +7,7 @@ use Symfony\Component\Config\FileLocator;
 use Symfony\Component\HttpKernel\DependencyInjection\Extension;
 use Symfony\Component\DependencyInjection\Loader;
 use Symfony\Component\DependencyInjection\Extension\PrependExtensionInterface;
+use Symfony\Component\Yaml\Yaml;
 
 /**
  * This is the class that loads and manages your bundle configuration.
@@ -53,6 +54,28 @@ class PumukitYoutubeExtension extends Extension implements PrependExtensionInter
         $container->setParameter('pumukit_youtube.process_timeout', $config['process_timeout']);
         $container->setParameter('pumukit_youtube.sync_status', $config['sync_status']);
         $container->setParameter('pumukit_youtube.default_track_upload', $config['default_track_upload']);
+        $container->setParameter('pumukit_youtube.default_image_for_audio', $config['default_image_for_audio']);
+
+        $bundleConfiguration = Yaml::parse(file_get_contents(__DIR__.'/../Resources/config/parameters.yml'));
+        if (!$config['profiles'] && $bundleConfiguration['pumukit_youtube']['profiles']) {
+            $config['profiles'] = $bundleConfiguration['pumukit_youtube']['profiles'];
+        }
+        $container->setParameter('pumukit_youtube.profilelist', $config['profiles']);
+
+        $encoderBundleProfiles = $container->getParameter('pumukitencode.profilelist');
+        $profilesToMerge = array();
+        foreach ($config['profiles'] as $name => $profile) {
+            $image = '"'.$container->getParameter('pumukit_youtube.default_image_for_audio').'"';
+            $profile['bat'] = str_replace('__IMAGE__', $image, $profile['bat']);
+            $config['profiles'][$name] = $profile;
+
+            if (!isset($encoderBundleProfiles[$name])) {
+                $profilesToMerge[$name] = $profile;
+            }
+        }
+        $newProfiles = array_merge($encoderBundleProfiles, $profilesToMerge);
+
+        $container->setParameter('pumukitencode.profilelist', $newProfiles);
 
         $loader = new Loader\XmlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
         $loader->load('services.xml');
