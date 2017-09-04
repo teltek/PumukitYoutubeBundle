@@ -57,7 +57,9 @@ class AdminController extends Controller
         $form->handleRequest($request);
         if ($request->getMethod() === 'POST' && $form->isValid()) {
             try {
-                $youtubeTag = $dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(array('cod' => $this->youtubeTag));
+                $youtubeTag = $dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(
+                    array('cod' => $this->youtubeTag)
+                );
 
                 $data = $form->getData();
 
@@ -75,10 +77,12 @@ class AdminController extends Controller
 
                 return new JsonResponse(array('success'));
             } catch (\Exception $exception) {
-                return new JsonResponse(array(
-                    'error',
-                    'message' => $exception->getMessage(),
-                ));
+                return new JsonResponse(
+                    array(
+                        'error',
+                        'message' => $exception->getMessage(),
+                    )
+                );
             }
         }
 
@@ -118,10 +122,12 @@ class AdminController extends Controller
 
                 return new JsonResponse(array('success'));
             } catch (\Exception $exception) {
-                return new JsonResponse(array(
-                    'error',
-                    'message' => $exception->getMessage(),
-                ));
+                return new JsonResponse(
+                    array(
+                        'error',
+                        'message' => $exception->getMessage(),
+                    )
+                );
             }
         }
 
@@ -135,7 +141,6 @@ class AdminController extends Controller
      * @param $id
      *
      * @throws \Exception
-     *
      * @return JsonResponse
      * @Route ("/delete/{id}", name="pumukit_youtube_delete_tag")
      */
@@ -144,15 +149,19 @@ class AdminController extends Controller
         $tagService = $this->container->get('pumukitschema.tag');
         try {
             $dm = $this->get('doctrine_mongodb')->getManager();
-            $youtubeAccount = $dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(array('_id' => new \MongoId($id)));
+            $youtubeAccount = $dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(
+                array('_id' => new \MongoId($id))
+            );
             $tagService->deleteTag($youtubeAccount);
 
             return new JsonResponse(array('success'));
         } catch (\Exception $exception) {
-            return new JsonResponse(array(
-                'error',
-                'message' => $exception->getMessage(),
-            ));
+            return new JsonResponse(
+                array(
+                    'error',
+                    'message' => $exception->getMessage(),
+                )
+            );
         }
     }
 
@@ -208,10 +217,12 @@ class AdminController extends Controller
 
                 return new JsonResponse(array('success'));
             } catch (\Exception $exception) {
-                return new JsonResponse(array(
-                    'error',
-                    'message' => $exception->getMessage(),
-                ));
+                return new JsonResponse(
+                    array(
+                        'error',
+                        'message' => $exception->getMessage(),
+                    )
+                );
             }
         }
 
@@ -248,10 +259,12 @@ class AdminController extends Controller
 
                 return new JsonResponse(array('success'));
             } catch (\Exception $exception) {
-                return new JsonResponse(array(
-                    'error',
-                    'message' => $exception->getMessage(),
-                ));
+                return new JsonResponse(
+                    array(
+                        'error',
+                        'message' => $exception->getMessage(),
+                    )
+                );
             }
         }
 

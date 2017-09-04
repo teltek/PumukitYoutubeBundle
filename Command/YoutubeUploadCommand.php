@@ -33,14 +33,12 @@ class YoutubeUploadCommand extends ContainerAwareCommand
 
     protected function configure()
     {
-        $this
-            ->setName('youtube:upload')
-            ->setDescription('Upload videos from Multimedia Objects to Youtube')
-            ->setHelp(<<<'EOT'
+        $this->setName('youtube:upload')->setDescription('Upload videos from Multimedia Objects to Youtube')->setHelp(
+                <<<'EOT'
 Command to upload a controlled videos to Youtube.
 
 EOT
-          );
+            );
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
@@ -51,10 +49,10 @@ EOT
         $this->uploadVideosToYoutube($newMultimediaObjects, $output);
 
         $errorStatus = array(
-                             Youtube::STATUS_HTTP_ERROR,
-                             Youtube::STATUS_ERROR,
-                             Youtube::STATUS_UPDATE_ERROR,
-                             );
+            Youtube::STATUS_HTTP_ERROR,
+            Youtube::STATUS_ERROR,
+            Youtube::STATUS_UPDATE_ERROR,
+        );
         $failureMultimediaObjects = $this->getUploadsByStatus($errorStatus);
         $this->uploadVideosToYoutube($failureMultimediaObjects, $output);
 
@@ -87,7 +85,12 @@ EOT
     {
         foreach ($mms as $mm) {
             try {
-                $infoLog = sprintf('%s [%s] Started uploading to Youtube of MultimediaObject with id %s', __CLASS__, __FUNCTION__, $mm->getId());
+                $infoLog = sprintf(
+                    '%s [%s] Started uploading to Youtube of MultimediaObject with id %s',
+                    __CLASS__,
+                    __FUNCTION__,
+                    $mm->getId()
+                );
                 $this->logger->addInfo($infoLog);
                 $output->writeln($infoLog);
                 $status = 'public';
@@ -96,7 +99,13 @@ EOT
                 }
                 $outUpload = $this->youtubeService->upload($mm, 27, $status, false);
                 if (0 !== $outUpload) {
-                    $errorLog = sprintf('%s [%s] Unknown error in the upload to Youtube of MultimediaObject with id %s: %s', __CLASS__, __FUNCTION__, $mm->getId(), $outUpload);
+                    $errorLog = sprintf(
+                        '%s [%s] Unknown error in the upload to Youtube of MultimediaObject with id %s: %s',
+                        __CLASS__,
+                        __FUNCTION__,
+                        $mm->getId(),
+                        $outUpload
+                    );
                     $this->logger->addError($errorLog);
                     $output->writeln($errorLog);
                     $this->failedUploads[] = $mm;
@@ -105,7 +114,13 @@ EOT
                 }
                 $this->okUploads[] = $mm;
             } catch (\Exception $e) {
-                $errorLog = sprintf('%s [%s] The upload of the video from the Multimedia Object with id %s failed: %s', __CLASS__, __FUNCTION__, $mm->getId(), $e->getMessage());
+                $errorLog = sprintf(
+                    '%s [%s] The upload of the video from the Multimedia Object with id %s failed: %s',
+                    __CLASS__,
+                    __FUNCTION__,
+                    $mm->getId(),
+                    $e->getMessage()
+                );
                 $this->logger->addError($errorLog);
                 $output->writeln($errorLog);
                 $this->failedUploads[] = $mm;
@@ -120,35 +135,35 @@ EOT
 
         $syncStatus = $this->getContainer()->getParameter('pumukit_youtube.sync_status');
         if ($syncStatus) {
-            $aStatus = array(MultimediaObject::STATUS_PUBLISHED, MultimediaObject::STATUS_BLOQ, MultimediaObject::STATUS_HIDDEN);
+            $aStatus = array(
+                MultimediaObject::STATUS_PUBLISHED,
+                MultimediaObject::STATUS_BLOQ,
+                MultimediaObject::STATUS_HIDDEN,
+            );
         } else {
             $aStatus = array(MultimediaObject::STATUS_PUBLISHED);
         }
 
-        return $this->mmobjRepo->createQueryBuilder()
-          ->field('properties.pumukit1id')->exists(false)
-          ->field('properties.origin')->notEqual('youtube')
-          ->field('status')->in($aStatus)
-          ->field('embeddedBroadcast.type')->equals('public')
-          ->field('tags.cod')->all($array_pub_tags);
+        return $this->mmobjRepo->createQueryBuilder()->field('properties.pumukit1id')->exists(false)->field(
+                'properties.origin'
+            )->notEqual('youtube')->field('status')->in($aStatus)->field('embeddedBroadcast.type')->equals(
+                'public'
+            )->field('tags.cod')->all($array_pub_tags);
     }
 
     private function getNewMultimediaObjectsToUpload()
     {
-        return $this->createMultimediaObjectsToUploadQueryBuilder()
-          ->field('properties.youtube')->exists(false)
-          ->getQuery()
-          ->execute();
+        return $this->createMultimediaObjectsToUploadQueryBuilder()->field('properties.youtube')->exists(
+                false
+            )->getQuery()->execute();
     }
 
     private function getUploadsByStatus($statusArray = array())
     {
         $mmIds = $this->youtubeRepo->getDistinctMultimediaObjectIdsWithAnyStatus($statusArray);
 
-        return $this->createMultimediaObjectsToUploadQueryBuilder()
-          ->field('_id')->in($mmIds->toArray())
-          ->getQuery()
-          ->execute();
+        return $this->createMultimediaObjectsToUploadQueryBuilder()->field('_id')->in($mmIds->toArray())->getQuery(
+            )->execute();
     }
 
     private function checkResultsAndSendEmail()

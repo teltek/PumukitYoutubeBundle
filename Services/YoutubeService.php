@@ -118,9 +118,10 @@ class YoutubeService
 
             $youtubeTag = $this->dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(array('cod' => 'YOUTUBE'));
             foreach ($multimediaObject->getTags() as $tag) {
-                if ($youtubeTag->getId() === $tag->getParent()) {
-                    $youtube->setYoutubeAccount($youtubeTag->getProperty('login'));
-                    $youtubeTagAccount = $youtubeTag;
+                if ($tag->isChildOf($youtubeTag)) {
+                    $tagAccount = $this->dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(array('cod' => $tag->getCod()));
+                    $youtube->setYoutubeAccount($tagAccount->getProperty('login'));
+                    $youtubeTagAccount = $tagAccount;
                 }
             }
 
@@ -424,6 +425,7 @@ class YoutubeService
      * Update Status.
      *
      * @param $yid
+     * @param $login
      *
      * @return mixed
      *
@@ -510,6 +512,8 @@ class YoutubeService
      * on existent tags. If the master is Youtube, it deletes/creates/updates_metadata of all tags in PuMuKIT based on
      * existent Youtube playlists.
      *
+     * @param null $login
+     *
      * @return int
      */
     public function syncPlaylistsRelations($login = null)
@@ -590,7 +594,7 @@ class YoutubeService
     {
         echo 'create On Youtube: '.$tag->getTitle($this->ytLocale)."\n";
 
-        $aResult = $this->youtubeProcessService->createPlaylist($tag->getTitle($this->ytLocale), $this->playlistPrivacyStatus, $tag->getParent()->getProperty('login'));
+        $aResult = $this->youtubeProcessService->createPlaylist($tag->getTitle($this->ytLocale), $this->playlistPrivacyStatus, $tag->getProperty('login'));
         if ($aResult['error']) {
             $errorLog = sprintf('%s [%s] Error in creating in Youtube the playlist from tag with id %s: %s', __CLASS__, __FUNCTION__, $tag->getId(), $aResult['error_out']);
             $this->logger->addError($errorLog);
@@ -690,7 +694,7 @@ class YoutubeService
         echo 'update from Pumukit: '.$tag->getTitle($this->ytLocale)."\n";
     }
 
-    private function updatePumukitPlaylist(Tag $tag, $youtubePlaylist = null)
+    private function updatePumukitPlaylist(Tag $tag)
     {
         echo 'update from Youtube: '.$tag->getTitle($this->ytLocale)."\n";
     }
@@ -698,6 +702,12 @@ class YoutubeService
     /**
      * Gets an array of 'playlists' with all youtube playlists data.
      * returns array.
+     *
+     * @param null $login
+     *
+     * @return array
+     *
+     * @throws \Exception
      */
     public function getAllYoutubePlaylists($login = null)
     {
@@ -722,6 +732,10 @@ class YoutubeService
     /**
      * Gets an array of 'playlisitems.
      * returns array.
+     *
+     * @return mixed
+     *
+     * @throws \Exception
      */
     public function getAllYoutubePlaylistItems()
     {
@@ -871,6 +885,11 @@ class YoutubeService
         return false;
     }
 
+    /**
+     * @param string $cause
+     *
+     * @return string
+     */
     private function buildEmailSubject($cause = '')
     {
         $subject = ucfirst($cause).' of YouTube video(s)';
@@ -878,6 +897,14 @@ class YoutubeService
         return $subject;
     }
 
+    /**
+     * @param string $cause
+     * @param array  $succeed
+     * @param array  $failed
+     * @param array  $errors
+     *
+     * @return string
+     */
     private function buildEmailBody($cause = '', $succeed = array(), $failed = array(), $errors = array())
     {
         $statusUpdate = array(
@@ -917,6 +944,12 @@ class YoutubeService
         return $body;
     }
 
+    /**
+     * @param string $cause
+     * @param array  $succeed
+     *
+     * @return string
+     */
     private function buildStatusUpdateBody($cause = '', $succeed = array())
     {
         $body = '';
@@ -951,6 +984,11 @@ class YoutubeService
         return $body;
     }
 
+    /**
+     * @param array $errors
+     *
+     * @return bool
+     */
     private function getError($errors = array())
     {
         if (!empty($errors)) {
@@ -962,6 +1000,11 @@ class YoutubeService
 
     /**
      * Get title for youtube.
+     *
+     * @param MultimediaObject $multimediaObject
+     * @param int              $limit
+     *
+     * @return bool|string
      */
     private function getTitleForYoutube(MultimediaObject $multimediaObject, $limit = 100)
     {
@@ -989,6 +1032,10 @@ class YoutubeService
 
     /**
      * Get description for youtube.
+     *
+     * @param MultimediaObject $multimediaObject
+     *
+     * @return string
      */
     private function getDescriptionForYoutube(MultimediaObject $multimediaObject)
     {
@@ -1012,6 +1059,10 @@ class YoutubeService
 
     /**
      * Get tags for youtube.
+     *
+     * @param MultimediaObject $multimediaObject
+     *
+     * @return array
      */
     private function getTagsForYoutube(MultimediaObject $multimediaObject)
     {

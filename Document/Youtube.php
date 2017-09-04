@@ -6,7 +6,6 @@ use Doctrine\ODM\MongoDB\Mapping\Annotations as MongoDB;
 
 /**
  * Pumukit\YoutubeBundle\Document\Youtube.
- *
  * @MongoDB\Document(repositoryClass="Pumukit\YoutubeBundle\Repository\YoutubeRepository")
  */
 class Youtube
@@ -25,91 +24,78 @@ class Youtube
 
     /**
      * @var string
-     *
      * @MongoDB\Id
      */
     private $id;
 
     /**
      * @var string
-     *
      * @MongoDB\String
      */
     private $multimediaObjectId;
 
     /**
      * @var string
-     *
      * @MongoDB\String
      */
     private $youtubeId;
 
     /**
      * @var string
-     *
      * @MongoDB\String
      */
     private $youtubeAccount;
 
     /**
      * @var string
-     *
      * @MongoDB\String
      */
     private $link = '';
 
     /**
      * @var string
-     *
      * @MongoDB\String
      */
     private $embed = '';
 
     /**
      * @var int
-     *
      * @MongoDB\Int
      */
     private $status = self::STATUS_DEFAULT;
 
     /**
      * @var array
-     *
      * @MongoDB\Raw
      */
     private $playlists = array();
 
     /**
      * @var bool
-     *
      * @MongoDB\Boolean
      */
     private $force = false;
 
     /**
      * @var bool
-     *
      * @MongoDB\Boolean
      */
     private $updatePlaylist = false;
 
     /**
      * @var date
-     *
      * @MongoDB\Date
      */
     private $multimediaObjectUpdateDate;
 
     /**
      * @var date
-     *
      * @MongoDB\Date
      */
     private $syncMetadataDate;
 
     /**
      * @var date
-     *
      * @MongoDB\Date
      */
     private $uploadDate;

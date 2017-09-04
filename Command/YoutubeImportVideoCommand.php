@@ -28,7 +28,39 @@ class YoutubeImportVideoCommand extends ContainerAwareCommand
 
     protected function configure()
     {
-        $this->setName('youtube:import:video')->setDescription('Create a multimedia object from Youtube')->addArgument('login', InputArgument::REQUIRED, 'YouTube Login')->addArgument('yid', InputArgument::REQUIRED, 'YouTube ID')->addArgument('series', InputArgument::OPTIONAL, 'Series id where the object is created or path where the master is located')->addOption('status', null, InputOption::VALUE_OPTIONAL, 'Status of the new multimedia object (published, blocked or hidden)', 'published')->addOption('step', 'S', InputOption::VALUE_REQUIRED, 'Step of the importation. See help for more info', -99)->addOption('tags', null, InputOption::VALUE_IS_ARRAY | InputOption::VALUE_OPTIONAL, 'Youtube tags to add in the object', array())->addOption('force', null, InputOption::VALUE_NONE, 'Set this parameter force the execution of this action')->setHelp(<<<EOT
+        $this->setName('youtube:import:video')->setDescription('Create a multimedia object from Youtube')->addArgument(
+            'login',
+            InputArgument::REQUIRED,
+            'YouTube Login'
+        )->addArgument('yid', InputArgument::REQUIRED, 'YouTube ID')->addArgument(
+            'series',
+            InputArgument::OPTIONAL,
+            'Series id where the object is created or path where the master is located'
+        )->addOption(
+            'status',
+            null,
+            InputOption::VALUE_OPTIONAL,
+            'Status of the new multimedia object (published, blocked or hidden)',
+            'published'
+        )->addOption(
+            'step',
+            'S',
+            InputOption::VALUE_REQUIRED,
+            'Step of the importation. See help for more info',
+            -99
+        )->addOption(
+            'tags',
+            null,
+            InputOption::VALUE_IS_ARRAY | InputOption::VALUE_OPTIONAL,
+            'Youtube tags to add in the object',
+            array()
+        )->addOption(
+            'force',
+            null,
+            InputOption::VALUE_NONE,
+            'Set this parameter force the execution of this action'
+        )->setHelp(
+            <<<EOT
 Command to create a multimedia object from Youtube.
 
 Steps:
@@ -66,7 +98,7 @@ Steps:
 
 
 EOT
-            );
+        );
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
@@ -88,7 +120,9 @@ EOT
                 }
 
                 $series = $this->getSeries($input->getArgument('series'));
-                $output->writeln(sprintf(' * Creating multimedia object from id %s in series %s', $yid, $series->getId()));
+                $output->writeln(
+                    sprintf(' * Creating multimedia object from id %s in series %s', $yid, $series->getId())
+                );
                 $mmobj = $this->createMultimediaObject($series, $yid, $status, $login, $output);
 
                 if ($tags = $input->getOption('tags')) {
@@ -218,9 +252,12 @@ EOT
         }
 
         if ($force) {
-            $picIds = array_map(function ($p) {
-                return $p->getId();
-            }, $mmobj->getPics()->toArray());
+            $picIds = array_map(
+                function ($p) {
+                    return $p->getId();
+                },
+                $mmobj->getPics()->toArray()
+            );
             foreach ($picIds as $picId) {
                 $picService->removePicFromMultimediaObject($mmobj, $picId);
             }
@@ -251,12 +288,20 @@ EOT
 
     private function tagMultimediaObject(MultimediaObject $mmobj, $tagIds)
     {
-        $tags = $this->tagRepo->findBy(array(
-            'properties.origin' => 'youtube',
-            'properties.youtube' => array('$in' => $tagIds),
-        ));
+        $tags = $this->tagRepo->findBy(
+            array(
+                'properties.origin' => 'youtube',
+                'properties.youtube' => array('$in' => $tagIds),
+            )
+        );
         if (count($tagIds) != count($tags)) {
-            throw new \Exception(sprintf('No all tags found with this Youtube ids, input has %d id(s) and only %d tag(s) found', count($tagIds), count($tags)));
+            throw new \Exception(
+                sprintf(
+                    'No all tags found with this Youtube ids, input has %d id(s) and only %d tag(s) found',
+                    count($tagIds),
+                    count($tags)
+                )
+            );
         }
 
         foreach ($tags as $tag) {
@@ -323,10 +368,12 @@ EOT
             return $series;
         }
 
-        $series = $this->seriesRepo->findOneBy(array(
-            'properties.origin' => 'youtube',
-            'properties.fromyoutubetag' => $seriesId,
-        ));
+        $series = $this->seriesRepo->findOneBy(
+            array(
+                'properties.origin' => 'youtube',
+                'properties.fromyoutubetag' => $seriesId,
+            )
+        );
         if ($series) {
             $this->logger->info(sprintf('Using series with YouTube property %s', $seriesId));
 
@@ -334,10 +381,12 @@ EOT
         }
 
         //tag with youtube
-        $tag = $this->tagRepo->findOneBy(array(
-            'properties.origin' => 'youtube',
-            'properties.youtube' => $seriesId,
-        ));
+        $tag = $this->tagRepo->findOneBy(
+            array(
+                'properties.origin' => 'youtube',
+                'properties.youtube' => $seriesId,
+            )
+        );
         if ($tag) {
             $this->logger->info(sprintf('Creating series from YouTube property %s', $seriesId));
             $series = $this->factoryService->createSeries();

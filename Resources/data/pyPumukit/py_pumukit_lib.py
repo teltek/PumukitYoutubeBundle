@@ -15,11 +15,11 @@ YOUTUBE_API_VERSION = "v3"
 
 
 def get_authenticated_service(account=None):
-  storage = Storage("pumukit-oauth%s.json" % account)
+  storage = Storage("../accounts/%s.json" % account)
   credentials = storage.get()
 
   if credentials is None or credentials.invalid:
-    raise Exception('No credential with login %s (file: pumukit-oauth%s.json)' % (account, account))
+    raise Exception('No credential with login %s (file: Resources/data/accounts/%s.json)' % (account, account))
 
   return build(YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION,
                http=credentials.authorize(httplib2.Http()))

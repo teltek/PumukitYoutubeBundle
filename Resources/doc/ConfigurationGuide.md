@@ -22,14 +22,14 @@ cd /path/to/pumukit2/
 cd vendor/teltek/pmk2-youtube-bundle/
 ```
 
-Go to Resources/data/pyPumukit and create the file:
+Go to Resources/data/create and create the file:
 
 ```
-cd Resources/data/pyPumukit
+cd Resources/data/create
 emacs client_secrets.json
 ```
 
-You will have a client_secrets.json file like this placed in Resources/data/pyPumukit:
+You will have a client_secrets.json file like this placed in Resources/data/create:
 
 ```
 {
@@ -70,16 +70,17 @@ python setup.py install
 ```
 cd /path/to/pumukit2/
 cd vendor/teltek/pmk2-youtube-bundle/
-cd Resources/data/pyPumukit
+cd Resources/data/create
 python createAccount.py
 ```
 
-This script launches the login page for acepting the access to our account. We should be logged in to the Youtube account used for publication. Otherwise, the script will launch first the loggin page for credentials. If the script doesn't launch the web page, copy the url given, paste it on a web explorer, login with your account, copy the key given and paste it on the script prompt.
+This script launches the login page for accepting the access to our account. We should be logged in to the Youtube account used for publication. Otherwise, the script will launch first the loggin page for credentials. If the script doesn't launch the web page, copy the url given, paste it on a web explorer, login with your account, copy the key given and paste it on the script prompt.
 
-Once acepted the access, an oauth2.json file will be created in Resources/data. We should rename it to pumukit-oauth2.json.
+Once acepted the access, an oauth2.json file will be created in Resources/data. We should rename it to a file with the login name. Ex: yourlogin.json on the accounts directory
 
 ```
-mv oauth2.json pumukit-oauth2.json
+mkdir ../accounts
+mv oauth2.json ../accounts/{login}.json
 ```
 
 #### Undo modifications:
