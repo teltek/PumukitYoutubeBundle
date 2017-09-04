@@ -70,13 +70,14 @@ if __name__ == "__main__":
   parser.add_option("--playlistid", dest="playlistid",
     help="playlist ID.")
   parser.add_option("--account", dest="account",
-    help="Youtube account id.")
+    help="Youtube account login.")
 
   (options, args) = parser.parse_args()
 
+  if options.account is None:
+    exit("Please specify a valid account using the --account= parameter.")
   if options.videoid is None:
    exit("Please specify a valid video using --videoid= parameter")
-
   if options.playlistid is None:
    exit("Please specify a valid playlist using --playlistid= parameter")
 

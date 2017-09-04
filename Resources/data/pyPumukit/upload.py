@@ -129,11 +129,13 @@ if __name__ == '__main__':
     help="Video privacy status: public, private or unlisted",
     default="public")
   parser.add_option("--account", dest="account",
-    help="Youtube account id.")
+    help="Youtube account login.")
 
   (options, args) = parser.parse_args()
 
+  if options.account is None:
+    exit("Please specify a valid account using the --account= parameter.")
   if options.file is None or not os.path.exists(options.file):
     exit("Please specify a valid file using the --file= parameter.")
-  else:
-    initialize_upload(options)
+
+  initialize_upload(options)

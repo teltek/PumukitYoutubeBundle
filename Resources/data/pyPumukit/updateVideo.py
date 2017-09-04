@@ -62,8 +62,9 @@ def update_video(options):
     print json.dumps(out)
     return -1
   except:
+    sys_exc_info = sys.exc_info()
     out['error'] = True
-    out['error_out'] = "Unexpected error: %s" % sys.exc_info()[0]
+    out['error_out'] = "Unexpected error: (%s) %s" % (sys_exc_info[0], sys_exc_info[1])
     print json.dumps(out)
     return -1
 
@@ -76,10 +77,12 @@ if __name__ == "__main__":
   parser.add_option("--description", dest="description", help="New video description.")
   parser.add_option("--title", dest="title", help="Video title")
   parser.add_option("--status", dest="status", help="new video status, values: public, private or unlisted")
-  parser.add_option("--account", dest="account", help="Youtube account id.")
+  parser.add_option("--account", dest="account", help="Youtube account login.")
 
   (options, args) = parser.parse_args()
 
+  if options.account is None:
+    exit("Please specify a valid account using the --account= parameter.")
   if options.videoid is None:
    exit("Please specify a valid video using --videoid= parameter")
   if options.tag is None:
