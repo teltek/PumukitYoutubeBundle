@@ -44,8 +44,9 @@ def get_video_playlist(options):
     print json.dumps(out)
     return -1
   except:
+    sys_exc_info = sys.exc_info()
     out['error'] = True
-    out['error_out'] = "Unexpected error: %s" % sys.exc_info()[0]
+    out['error_out'] = "Unexpected error: (%s) %s" % (sys_exc_info[0], sys_exc_info[1])
     print json.dumps(out)
     return -1
 
@@ -57,10 +58,12 @@ if __name__ == '__main__':
   parser.add_option("--videoid", dest="videoid",
     help="ID of video to update.")
   parser.add_option("--account", dest="account",
-    help="Youtube account id.")
+    help="Youtube account login.")
 
   (options, args) = parser.parse_args()
 
+  if options.account is None:
+    exit("Please specify a valid account using the --account= parameter.")
   if options.videoid is None:
    exit("Please specify a valid video using --videoid= parameter")
 
