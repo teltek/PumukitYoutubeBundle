@@ -38,10 +38,6 @@ EOT
                 'advanced_configuration',
                 'pumukityoutube_advance_configuration_index'
             );
-            $youtubePublicationChannelTag->setProperty(
-                'path_controller',
-                'PumukitYoutubeBundle:Admin:updateYT'
-            );
             $this->dm->persist($youtubePublicationChannelTag);
             $this->dm->flush();
             $output->writeln(
