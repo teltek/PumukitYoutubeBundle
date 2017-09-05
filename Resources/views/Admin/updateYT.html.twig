@@ -32,7 +32,27 @@
 
 
 <script type="text/javascript">
+
+    $('.form-group').on('click', function() {
+        var active = $('#pub_channels_PUCHYOUTUBE:checked');
+
+        if(active.length >= 1) {
+            $('#youtube_advanced_configuration').show();
+        } else {
+            $('#youtube_advanced_configuration').hide();
+        }
+    });
+
     $(document).ready( function(event) {
+
+        var active = $('#pub_channels_PUCHYOUTUBE:checked');
+
+        if(active.length >= 1) {
+            $('#youtube_advanced_configuration').show();
+        } else {
+            $('#youtube_advanced_configuration').hide();
+        }
+
         var href = $( "#youtube_label option:first-child" ).data('href');
         $.ajax({
             url: href,
@@ -54,6 +74,7 @@
         var href = $( "#youtube_label option:selected" ).data('href');
 
         if($(this).val() != '') {
+            $('#youtube_playlist_label').empty();
             $.ajax({
                 url: href,
                 method: 'POST',
