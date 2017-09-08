@@ -20,10 +20,16 @@ class BackofficeListener
         $multimediaObject = $event->getMultimediaObject();
         $request = $event->getRequest();
 
-        $youtubeAccountTag = $dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(array('_id' => new \MongoId($request->request->get('youtube_label'))));
-        $youtubePlaylistTag = $dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(array('_id' => new \MongoId($request->request->get('youtube_playlist_label'))));
-        $multimediaObject->addTag($youtubeAccountTag);
-        $multimediaObject->addTag($youtubePlaylistTag);
-        $dm->flush();
+        if ($request->request->has('youtube_label') and $request->request->has('youtube_playlist_label')) {
+            $youtubeAccountTag = $dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(
+                array('_id' => new \MongoId($request->request->get('youtube_label')))
+            );
+            $youtubePlaylistTag = $dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(
+                array('_id' => new \MongoId($request->request->get('youtube_playlist_label')))
+            );
+            $multimediaObject->addTag($youtubeAccountTag);
+            $multimediaObject->addTag($youtubePlaylistTag);
+            $dm->flush();
+        }
     }
 }
