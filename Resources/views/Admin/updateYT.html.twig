@@ -54,19 +54,21 @@
         }
 
         var href = $( "#youtube_label option:first-child" ).data('href');
-        $.ajax({
-            url: href,
-            method: 'POST',
-            success: function (response) {
-                var data = jQuery.parseJSON(response);
-                $("#youtube_playlist_label").select2({
-                    data: data
-                });
-            },
-            error: function (jqXHR, textStatus, errorThrown) {
-                no_success(errorThrown + ': ' + textStatus);
-            }
-        })
+        if(href) {
+            $.ajax({
+                url: href,
+                method: 'POST',
+                success: function (response) {
+                    var data = jQuery.parseJSON(response);
+                    $("#youtube_playlist_label").select2({
+                        data: data
+                    });
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    no_success(errorThrown + ': ' + textStatus);
+                }
+            })
+        }
     });
 
     $('#youtube_label').on('change', function(event) {
