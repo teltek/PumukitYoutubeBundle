@@ -144,26 +144,38 @@ EOT
             $aStatus = array(MultimediaObject::STATUS_PUBLISHED);
         }
 
-        return $this->mmobjRepo->createQueryBuilder()->field('properties.pumukit1id')->exists(false)->field(
-                'properties.origin'
-            )->notEqual('youtube')->field('status')->in($aStatus)->field('embeddedBroadcast.type')->equals(
-                'public'
-            )->field('tags.cod')->all($array_pub_tags);
+        return $this->mmobjRepo
+            ->createQueryBuilder()
+            ->field('properties.pumukit1id')
+            ->exists(false)
+            ->field('properties.origin')
+            ->notEqual('youtube')
+            ->field('status')
+            ->in($aStatus)
+            ->field('embeddedBroadcast.type')
+            ->equals('public')
+            ->field('tags.cod')
+            ->all($array_pub_tags);
     }
 
     private function getNewMultimediaObjectsToUpload()
     {
-        return $this->createMultimediaObjectsToUploadQueryBuilder()->field('properties.youtube')->exists(
-                false
-            )->getQuery()->execute();
+        return $this->createMultimediaObjectsToUploadQueryBuilder()
+            ->field('properties.youtube')
+            ->exists(false)
+            ->getQuery()
+            ->execute();
     }
 
     private function getUploadsByStatus($statusArray = array())
     {
         $mmIds = $this->youtubeRepo->getDistinctMultimediaObjectIdsWithAnyStatus($statusArray);
 
-        return $this->createMultimediaObjectsToUploadQueryBuilder()->field('_id')->in($mmIds->toArray())->getQuery(
-            )->execute();
+        return $this->createMultimediaObjectsToUploadQueryBuilder()
+            ->field('_id')
+            ->in($mmIds->toArray())
+            ->getQuery()
+            ->execute();
     }
 
     private function checkResultsAndSendEmail()

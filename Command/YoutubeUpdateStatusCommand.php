@@ -74,14 +74,16 @@ EOT
                 continue;
             }
             try {
-                $infoLog = __CLASS__.' ['.__FUNCTION__.'] Started updating internal YouTube status video "'.$youtube->getId(
-                    ).'"';
+                $infoLog = __CLASS__.
+                    ' ['.__FUNCTION__.'] Started updating internal YouTube status video "'.
+                    $youtube->getId().'"';
                 $this->logger->addInfo($infoLog);
                 $output->writeln($infoLog);
                 $outUpdate = $this->youtubeService->updateStatus($youtube);
                 if (0 !== $outUpdate) {
-                    $errorLog = __CLASS__.' ['.__FUNCTION__.'] Unknown error on the update in Youtube status video "'.$youtube->getId(
-                        ).'": '.$outUpdate;
+                    $errorLog = __CLASS__.
+                        ' ['.__FUNCTION__.'] Unknown error on the update in Youtube status video "'.
+                        $youtube->getId().'": '.$outUpdate;
                     $this->logger->addError($errorLog);
                     $output->writeln($errorLog);
                     $this->errors[] = $errorLog;
@@ -91,8 +93,9 @@ EOT
                     $this->okUpdates[] = $multimediaObject;
                 }
             } catch (\Exception $e) {
-                $errorLog = __CLASS__.' ['.__FUNCTION__.'] The update of the Youtube status video "'.$youtube->getId(
-                    ).'" failed: '.$e->getMessage();
+                $errorLog = __CLASS__.
+                    ' ['.__FUNCTION__.'] The update of the Youtube status video "'.
+                    $youtube->getId().'" failed: '.$e->getMessage();
                 $this->logger->addError($errorLog);
                 $output->writeln($errorLog);
                 if ($multimediaObject) {
@@ -112,8 +115,15 @@ EOT
 
     private function findByYoutubeIdAndPumukit1Id(Youtube $youtube, $pumukit1Id = false)
     {
-        return $this->mmobjRepo->createQueryBuilder()->field('properties.youtube')->equals($youtube->getId())->field(
-                'properties.origin'
-            )->notEqual('youtube')->field('properties.pumukit1id')->exists($pumukit1Id)->getQuery()->getSingleResult();
+        return $this->mmobjRepo
+            ->createQueryBuilder()
+            ->field('properties.youtube')
+            ->equals($youtube->getId())
+            ->field('properties.origin')
+            ->notEqual('youtube')
+            ->field('properties.pumukit1id')
+            ->exists($pumukit1Id)
+            ->getQuery()
+            ->getSingleResult();
     }
 }

@@ -243,7 +243,9 @@ EOT
         $meta = $mmobj->getProperty('youtubemeta');
 
         if (!$quality) {
-            $picUrl = isset($meta['snippet']['thumbnails']['standard']['url']) ? $meta['snippet']['thumbnails']['standard']['url'] : $meta['snippet']['thumbnails']['default']['url'];
+            $picUrl = isset($meta['snippet']['thumbnails']['standard']['url']) ?
+                $meta['snippet']['thumbnails']['standard']['url'] :
+                $meta['snippet']['thumbnails']['default']['url'];
         } else {
             if (!isset($meta['snippet']['thumbnails'][$quality]['url'])) {
                 throw new \Exception('Object "'.$mmobj->getId().'" doesn\'t have image with "'.$quality.'" quality');
@@ -346,7 +348,11 @@ EOT
             return $mmobj;
         }
 
-        $yt = $this->youtubeRepo->createQueryBuilder()->field('youtubeId')->equals($yid)->getQuery()->getSingleResult();
+        $yt = $this->youtubeRepo->createQueryBuilder()
+            ->field('youtubeId')
+            ->equals($yid)
+            ->getQuery()
+            ->getSingleResult();
 
         if (!$yt) {
             return null;

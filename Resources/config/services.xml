@@ -46,7 +46,7 @@
             <tag name="kernel.event_listener" event="publication.submit" method="onPublicationSubmit"/>
         </service>
 
-        <service id="pumukit_uned_web_tv.pumukit_youtube_menu" class="Pumukit\YoutubeBundle\Services\MenuService">
+        <service id="pumukityoutube.menu" class="Pumukit\YoutubeBundle\Services\MenuService">
             <tag name="pumukitnewadmin.menuitem"></tag>
         </service>
 

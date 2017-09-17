@@ -41,8 +41,8 @@ EOT
             $this->dm->persist($youtubePublicationChannelTag);
             $this->dm->flush();
             $output->writeln(
-                'Tag persisted - new id: '.$youtubePublicationChannelTag->getId(
-                ).' cod: '.$youtubePublicationChannelTag->getCod()
+                'Tag persisted - new id: '.$youtubePublicationChannelTag->getId().
+                ' cod: '.$youtubePublicationChannelTag->getCod()
             );
             $youtubePlaylistTag = $this->createTagWithCode('YOUTUBE', 'YouTube Playlists', 'ROOT', true);
             $output->writeln(
