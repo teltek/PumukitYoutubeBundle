@@ -19,7 +19,7 @@ class YoutubeProcessService
         $this->dm = $documentManager;
         $this->router = $router;
         $this->logger = $logger;
-        $this->pythonDirectory = __DIR__.'/../Resources/data/pyPumukit/';
+        $this->pythonDirectory = __DIR__.'/../Resources/data/lib/';
         $this->process_timeout = $process_timeout;
     }
 

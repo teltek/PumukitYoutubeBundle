@@ -22,14 +22,14 @@ cd /path/to/pumukit2/
 cd vendor/teltek/pmk2-youtube-bundle/
 ```
 
-Go to Resources/data/create and create the file:
+Go to Resources/data/createAccount and create the file:
 
 ```
-cd Resources/data/create
+cd Resources/data/createAccount
 emacs client_secrets.json
 ```
 
-You will have a client_secrets.json file like this placed in Resources/data/create:
+You will have a client_secrets.json file like this placed in Resources/data/createAccount:
 
 ```
 {
@@ -70,7 +70,7 @@ python setup.py install
 ```
 cd /path/to/pumukit2/
 cd vendor/teltek/pmk2-youtube-bundle/
-cd Resources/data/create
+cd Resources/data/createAccount
 python createAccount.py
 ```
 
@@ -122,10 +122,10 @@ If this parameter is true, videos with status public, blocked and private will b
 
 ```
 pumukit_youtube:
-    default_track_upload: 'master'
+    default_track_upload: 'youtube'
 ```
 
-If this parameter is not configured, the track by default is master. 
+If this parameter is not configured, the track by default is the track with the tag youtube. 
 
 
 ### Clear cache
