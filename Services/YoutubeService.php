@@ -99,17 +99,15 @@ class YoutubeService
         if ((null === $track) || ($track->isOnlyAudio())) {
             $track = $multimediaObject->getTrackWithTag('master');
         }
+
         if ((null === $track) || ($track->isOnlyAudio())) {
-            $errorLog = __CLASS__.' ['.__FUNCTION__
-                       ."] Error, the Multimedia Object with id '"
-                       .$multimediaObject->getId()."' has no video master.";
+            $errorLog = __CLASS__.' ['.__FUNCTION__."] Error, the Multimedia Object with id '".$multimediaObject->getId()."' has no video master.";
             $this->logger->addError($errorLog);
             throw new \Exception($errorLog);
         }
         $trackPath = $track->getPath();
         if (!file_exists($trackPath)) {
-            $errorLog = __CLASS__.' ['.__FUNCTION__
-                       .'] Error, there is no file '.$trackPath;
+            $errorLog = __CLASS__.' ['.__FUNCTION__.'] Error, there is no file '.$trackPath;
             $this->logger->addError($errorLog);
             throw new \Exception($errorLog);
         }
@@ -117,6 +115,21 @@ class YoutubeService
         if (!$youtube) {
             $youtube = new Youtube();
             $youtube->setMultimediaObjectId($multimediaObject->getId());
+
+            $youtubeTag = $this->dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(array('cod' => 'YOUTUBE'));
+            foreach ($multimediaObject->getTags() as $tag) {
+                if ($tag->isChildOf($youtubeTag)) {
+                    $tagAccount = $this->dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(array('cod' => $tag->getCod()));
+                    $youtube->setYoutubeAccount($tagAccount->getProperty('login'));
+                    $youtubeTagAccount = $tagAccount;
+                }
+            }
+
+            if (!$youtubeTagAccount) {
+                $errorLog = __CLASS__.' ['.__FUNCTION__.'] Error, there aren\'t account on '.$multimediaObject->getId();
+                $this->logger->addError($errorLog);
+                throw new \Exception($errorLog);
+            }
             $this->dm->persist($youtube);
         }
         $multimediaObject->setProperty('youtube', $youtube->getId());
@@ -126,13 +139,12 @@ class YoutubeService
         $description = $this->getDescriptionForYoutube($multimediaObject);
         $tags = $this->getTagsForYoutube($multimediaObject);
 
-        $aResult = $this->youtubeProcessService->upload($trackPath, $title, $description, $category, $tags, $privacy);
+        $aResult = $this->youtubeProcessService->upload($trackPath, $title, $description, $category, $tags, $privacy, $youtubeTagAccount->getProperty('login'));
         if ($aResult['error']) {
             $youtube->setStatus(Youtube::STATUS_ERROR);
             $this->dm->persist($youtube);
             $this->dm->flush();
-            $errorLog = __CLASS__.' ['.__FUNCTION__
-                       .'] Error in the upload: '.$aResult['error_out'];
+            $errorLog = __CLASS__.' ['.__FUNCTION__.'] Error in the upload: '.$aResult['error_out'];
             $this->logger->addError($errorLog);
             throw new \Exception($errorLog);
         }
@@ -157,8 +169,7 @@ class YoutubeService
         if (null != $youtubeTag) {
             $addedTags = $this->tagService->addTagToMultimediaObject($multimediaObject, $youtubeTag->getId());
         } else {
-            $errorLog = __CLASS__.' ['.__FUNCTION__
-                       .'] There is no Youtube tag defined with code PUCHYOUTUBE.';
+            $errorLog = __CLASS__.' ['.__FUNCTION__.'] There is no Youtube tag defined with code PUCHYOUTUBE.';
             $this->logger->addError($errorLog);
             throw new \Exception($errorLog);
         }
@@ -170,7 +181,7 @@ class YoutubeService
      * Move to list.
      *
      * @param MultimediaObject $multimediaObject
-     * @param $playlistTagId
+     * @param                  $playlistTagId
      *
      * @return int
      *
@@ -181,9 +192,7 @@ class YoutubeService
         $youtube = $this->getYoutubeDocument($multimediaObject);
 
         if (null === $playlistTag = $this->tagRepo->find($playlistTagId)) {
-            $errorLog = __CLASS__.' ['.__FUNCTION__
-                       ."] Error! The tag with id '".$playlistTagId
-                       ."' for Youtube Playlist does not exist";
+            $errorLog = __CLASS__.' ['.__FUNCTION__."] Error! The tag with id '".$playlistTagId."' for Youtube Playlist does not exist";
             $this->logger->addError($errorLog);
             throw new \Exception($errorLog);
         }
@@ -193,11 +202,9 @@ class YoutubeService
             throw new \Exception();
         }
 
-        $aResult = $this->youtubeProcessService->insertInToList($youtube, $playlistId);
+        $aResult = $this->youtubeProcessService->insertInToList($youtube, $playlistId, $youtube->getYoutubeAccount());
         if ($aResult['error']) {
-            $errorLog = __CLASS__.' ['.__FUNCTION__
-                       ."] Error in moving the Multimedia Object '".$multimediaObject->getId()
-              ."' to Youtube playlist with id '".$playlistId."': ".$aResult['error_out'];
+            $errorLog = __CLASS__.' ['.__FUNCTION__."] Error in moving the Multimedia Object '".$multimediaObject->getId()."' to Youtube playlist with id '".$playlistId."': ".$aResult['error_out'];
             $this->logger->addError($errorLog);
             throw new \Exception($errorLog);
         }
@@ -209,9 +216,7 @@ class YoutubeService
             $this->dm->persist($youtube);
             $this->dm->flush();
         } else {
-            $errorLog = __CLASS__.' ['.__FUNCTION__
-              ."] Error in moving the Multimedia Object '".$multimediaObject->getId()
-              ."' to Youtube playlist with id '".$playlistId."'";
+            $errorLog = __CLASS__.' ['.__FUNCTION__."] Error in moving the Multimedia Object '".$multimediaObject->getId()."' to Youtube playlist with id '".$playlistId."'";
             $this->logger->addError($errorLog);
             throw new \Exception($errorLog);
         }
@@ -235,11 +240,9 @@ class YoutubeService
         foreach ($youtube->getPlaylists() as $playlistId => $playlistItem) {
             $this->deleteFromList($playlistItem, $youtube, $playlistId);
         }
-        $aResult = $this->youtubeProcessService->deleteVideo($youtube);
+        $aResult = $this->youtubeProcessService->deleteVideo($youtube, $youtube->getYoutubeAccount());
         if ($aResult['error']) {
-            $errorLog = __CLASS__.' ['.__FUNCTION__
-              ."] Error in deleting the YouTube video with id '".$youtube->getYoutubeId()
-              ."' and mongo id '".$youtube->getId()."': ".$aResult['error_out'];
+            $errorLog = __CLASS__.' ['.__FUNCTION__."] Error in deleting the YouTube video with id '".$youtube->getYoutubeId()."' and mongo id '".$youtube->getId()."': ".$aResult['error_out'];
             $this->logger->addError($errorLog);
             throw new \Exception($errorLog);
         }
@@ -259,8 +262,7 @@ class YoutubeService
                 $this->tagService->removeTagFromMultimediaObject($multimediaObject, $youtubeEduTag->getId());
             }
         } else {
-            $errorLog = __CLASS__.' ['.__FUNCTION__
-              ."] There is no Youtube tag defined with code '".self::PUB_CHANNEL_YOUTUBE."'";
+            $errorLog = __CLASS__.' ['.__FUNCTION__."] There is no Youtube tag defined with code '".self::PUB_CHANNEL_YOUTUBE."'";
             $this->logger->addError($errorLog);
             throw new \Exception($errorLog);
         }
@@ -283,11 +285,9 @@ class YoutubeService
             $this->deleteFromList($playlistItem, $youtube, $playlistId);
         }
 
-        $aResult = $this->youtubeProcessService->deleteVideo($youtube);
+        $aResult = $this->youtubeProcessService->deleteVideo($youtube, $youtube->getYoutubeAccount());
         if ($aResult['error']) {
-            $errorLog = __CLASS__.' ['.__FUNCTION__
-              ."] Error in deleting the YouTube video with id '".$youtube->getYoutubeId()
-              ."' and mongo id '".$youtube->getId()."': ".$aResult['error_out'];
+            $errorLog = __CLASS__.' ['.__FUNCTION__."] Error in deleting the YouTube video with id '".$youtube->getYoutubeId()."' and mongo id '".$youtube->getId()."': ".$aResult['error_out'];
             $this->logger->addError($errorLog);
             throw new \Exception($errorLog);
         }
@@ -322,11 +322,9 @@ class YoutubeService
                 $status = self::$status[$multimediaObject->getStatus()];
             }
 
-            $aResult = $this->youtubeProcessService->updateVideo($youtube, $title, $description, $tags, $status);
+            $aResult = $this->youtubeProcessService->updateVideo($youtube, $title, $description, $tags, $status, $youtube->getYoutubeAccount());
             if ($aResult['error']) {
-                $errorLog = __CLASS__.' ['.__FUNCTION__
-                  ."] Error in updating metadata for Youtube video with id '"
-                  .$youtube->getId()."': ".$aResult['error_out'];
+                $errorLog = __CLASS__.' ['.__FUNCTION__."] Error in updating metadata for Youtube video with id '".$youtube->getId()."': ".$aResult['error_out'];
                 $this->logger->addError($errorLog);
                 throw new \Exception($errorLog);
             }
@@ -352,9 +350,7 @@ class YoutubeService
         $multimediaObject = $this->mmobjRepo->find($youtube->getMultimediaObjectId());
         if (null == $multimediaObject) {
             // TODO remove Youtube Document ?????
-            $errorLog = __CLASS__.' ['.__FUNCTION__
-              ."] Error, there is no MultimediaObject referenced from YouTube document with id '"
-              .$youtube->getId()."'";
+            $errorLog = __CLASS__.' ['.__FUNCTION__."] Error, there is no MultimediaObject referenced from YouTube document with id '".$youtube->getId()."'";
             $this->logger->addError($errorLog);
             throw new \Exception($errorLog);
         }
@@ -363,17 +359,19 @@ class YoutubeService
             $youtube->setStatus(Youtube::STATUS_ERROR);
             $this->dm->persist($youtube);
             $this->dm->flush();
-            $errorLog = __CLASS__.' ['.__FUNCTION__
-                       .'] The object Youtube with id: '.$youtube->getId().' does not have a Youtube ID variable set.';
+            $errorLog = __CLASS__.' ['.__FUNCTION__.'] The object Youtube with id: '.$youtube->getId().' does not have a Youtube ID variable set.';
             $this->logger->addError($errorLog);
             throw new \Exception($errorLog);
         }
 
-        $aResult = $this->youtubeProcessService->getData('status', $youtube->getYoutubeId());
+        $aResult = $this->youtubeProcessService->getData('status', $youtube->getYoutubeId(), $youtube->getYoutubeAccount());
         // NOTE: If the video has been removed, it returns 404 instead of 200 with 'not found Video'
         if ($aResult['error']) {
             if (strpos($aResult['error_out'], 'was not found.')) {
-                $data = array('multimediaObject' => $multimediaObject, 'youtube' => $youtube);
+                $data = array(
+                    'multimediaObject' => $multimediaObject,
+                    'youtube' => $youtube,
+                );
                 $this->sendEmail('status removed', $data, array(), array());
                 $youtube->setStatus(Youtube::STATUS_REMOVED);
                 $this->dm->persist($youtube);
@@ -383,8 +381,7 @@ class YoutubeService
                         $this->tagService->removeTagFromMultimediaObject($multimediaObject, $youtubeEduTag->getId());
                     }
                 } else {
-                    $errorLog = __CLASS__.' ['.__FUNCTION__
-                      ."] There is no Youtube tag defined with code '".self::PUB_CHANNEL_YOUTUBE."'";
+                    $errorLog = __CLASS__.' ['.__FUNCTION__."] There is no Youtube tag defined with code '".self::PUB_CHANNEL_YOUTUBE."'";
                     $this->logger->addWarning($errorLog);
                     /*throw new \Exception($errorLog);*/
                 }
@@ -392,10 +389,7 @@ class YoutubeService
 
                 return 0;
             } else {
-                $errorLog = __CLASS__.' ['.__FUNCTION__
-                  ."] Error in verifying the status of the video from youtube with id '"
-                  .$youtube->getYoutubeId()."' and mongo id '".$youtube->getId()
-                  ."':  ".$aResult['error_out'];
+                $errorLog = __CLASS__.' ['.__FUNCTION__."] Error in verifying the status of the video from youtube with id '".$youtube->getYoutubeId()."' and mongo id '".$youtube->getId()."':  ".$aResult['error_out'];
                 $this->logger->addError($errorLog);
                 throw new \Exception($errorLog);
             }
@@ -404,7 +398,10 @@ class YoutubeService
             $youtube->setStatus(Youtube::STATUS_PUBLISHED);
             $this->dm->persist($youtube);
             $this->dm->flush();
-            $data = array('multimediaObject' => $multimediaObject, 'youtube' => $youtube);
+            $data = array(
+                'multimediaObject' => $multimediaObject,
+                'youtube' => $youtube,
+            );
             $this->sendEmail('finished publication', $data, array(), array());
         } elseif ($aResult['out'] == 'uploaded') {
             $youtube->setStatus(Youtube::STATUS_PROCESSING);
@@ -414,7 +411,10 @@ class YoutubeService
             $youtube->setStatus(Youtube::STATUS_DUPLICATED);
             $this->dm->persist($youtube);
             $this->dm->flush();
-            $data = array('multimediaObject' => $multimediaObject, 'youtube' => $youtube);
+            $data = array(
+                'multimediaObject' => $multimediaObject,
+                'youtube' => $youtube,
+            );
             $this->sendEmail('duplicated', $data, array(), array());
         }
 
@@ -425,18 +425,17 @@ class YoutubeService
      * Update Status.
      *
      * @param $yid
+     * @param $login
      *
      * @return mixed
      *
      * @throws \Exception
      */
-    public function getVideoMeta($yid)
+    public function getVideoMeta($yid, $login)
     {
-        $aResult = $this->youtubeProcessService->getData('status', $yid);
+        $aResult = $this->youtubeProcessService->getData('status', $yid, $login);
         if ($aResult['error']) {
-            $errorLog = __CLASS__.' ['.__FUNCTION__
-                .'] Error getting meta from YouTube id'
-                .$yid.': '.$aResult['error_out'];
+            $errorLog = __CLASS__.' ['.__FUNCTION__.'] Error getting meta from YouTube id'.$yid.': '.$aResult['error_out'];
             $this->logger->error($errorLog);
             throw new \Exception($errorLog);
         }
@@ -456,13 +455,18 @@ class YoutubeService
     public function updatePlaylists(MultimediaObject $multimediaObject)
     {
         $youtube = $this->getYoutubeDocument($multimediaObject);
-        if (!isset($youtube)
-            || $youtube->getStatus() !== Youtube::STATUS_PUBLISHED) {
+        if (!isset($youtube) || $youtube->getStatus() !== Youtube::STATUS_PUBLISHED) {
             return 0;
         }
         $this->checkAndAddDefaultPlaylistTag($multimediaObject);
         $has_playlist = false;
         foreach ($multimediaObject->getTags() as $embedTag) {
+            /*
+             * if (!$embedTag->getProperty('youtube_playlist')) {
+                    //This is not the tag you are looking for
+                    continue;
+                }
+             */
             if (!$embedTag->isDescendantOfByCod($this->METATAG_PLAYLIST_COD)) {
                 //This is not the tag you are looking for
                 continue;
@@ -471,8 +475,7 @@ class YoutubeService
             $playlistTag = $this->tagRepo->findOneByCod($embedTag->getCod());
             $playlistId = $playlistTag->getProperty('youtube');
 
-            if (!isset($playlistId)
-                || !array_key_exists($playlistId, $youtube->getPlaylists())) {
+            if (!isset($playlistId) || !array_key_exists($playlistId, $youtube->getPlaylists())) {
                 //If the tag doesn't exist on youtube playlists
                 $this->moveToList($multimediaObject, $playlistTag->getId());
             }
@@ -504,26 +507,25 @@ class YoutubeService
     }
 
     /**
-     * Updates the relationship between Tags and Youtube Playlists according to the $this->PLAYLISTS_MASTER configuration.
-     * If the master is PuMuKIT, it deletes/creates/updates_metadata of all playlists in Youtube based on existent tags.
-     * If the master is Youtube, it deletes/creates/updates_metadata of all tags in PuMuKIT based on existent Youtube playlists.
+     * Updates the relationship between Tags and Youtube Playlists according to the $this->PLAYLISTS_MASTER
+     * configuration. If the master is PuMuKIT, it deletes/creates/updates_metadata of all playlists in Youtube based
+     * on existent tags. If the master is Youtube, it deletes/creates/updates_metadata of all tags in PuMuKIT based on
+     * existent Youtube playlists.
+     *
+     * @param null $login
      *
      * @return int
      */
-    public function syncPlaylistsRelations()
+    public function syncPlaylistsRelations($login = null)
     {
         if ($this->USE_DEFAULT_PLAYLIST) {
             $this->getOrCreateDefaultTag();
         }
         $playlistMetaTag = $this->getPlaylistMetaTag();
         //$allPlaylistTags = $playlistMetaTag->getChildren(); //Doctrine ODM bug reapeat last element
-        $allPlaylistTags = $this->dm
-            ->createQueryBuilder('PumukitSchemaBundle:Tag')
-            ->field('parent')->references($playlistMetaTag)
-            ->getQuery()
-            ->execute();
+        $allPlaylistTags = $this->dm->createQueryBuilder('PumukitSchemaBundle:Tag')->field('parent')->references($playlistMetaTag)->getQuery()->execute();
 
-        $allYoutubePlaylists = $this->getAllYoutubePlaylists(); //Returns array with all neccessary, list(['id','title'])
+        $allYoutubePlaylists = $this->getAllYoutubePlaylists($login); //Returns array with all neccessary, list(['id','title'])
         //REFACTOR THIS ARRAY_MAP >>
         $allYoutubePlaylistsIds = array_map(function ($n) {
             return $n['id'];
@@ -592,7 +594,7 @@ class YoutubeService
     {
         echo 'create On Youtube: '.$tag->getTitle($this->ytLocale)."\n";
 
-        $aResult = $this->youtubeProcessService->createPlaylist($tag->getTitle($this->ytLocale), $this->playlistPrivacyStatus);
+        $aResult = $this->youtubeProcessService->createPlaylist($tag->getTitle($this->ytLocale), $this->playlistPrivacyStatus, $tag->getProperty('login'));
         if ($aResult['error']) {
             $errorLog = sprintf('%s [%s] Error in creating in Youtube the playlist from tag with id %s: %s', __CLASS__, __FUNCTION__, $tag->getId(), $aResult['error_out']);
             $this->logger->addError($errorLog);
@@ -654,8 +656,7 @@ class YoutubeService
         echo 'delete On Youtube: '.$youtubePlaylist['title']."\n";
 
         $aResult = $this->youtubeProcessService->deletePlaylist($youtubePlaylist['id']);
-        if (!isset($aResult['out'])
-            && $aResult['error_out']['code'] != '404') {
+        if (!isset($aResult['out']) && $aResult['error_out']['code'] != '404') {
             $errorLog = sprintf('%s [%s] Error in deleting in Youtube the playlist with id %s: %s', __CLASS__, __FUNCTION__, $youtubePlaylist['id'], $aResult['error_out']);
             $this->logger->addError($errorLog);
             throw new \Exception($errorLog);
@@ -693,22 +694,27 @@ class YoutubeService
         echo 'update from Pumukit: '.$tag->getTitle($this->ytLocale)."\n";
     }
 
-    private function updatePumukitPlaylist(Tag $tag, $youtubePlaylist = null)
+    private function updatePumukitPlaylist(Tag $tag)
     {
         echo 'update from Youtube: '.$tag->getTitle($this->ytLocale)."\n";
     }
 
     /**
      * Gets an array of 'playlists' with all youtube playlists data.
+     * returns array.
      *
-     * returns array
+     * @param null $login
+     *
+     * @return array
+     *
+     * @throws \Exception
      */
-    public function getAllYoutubePlaylists()
+    public function getAllYoutubePlaylists($login = null)
     {
         $res = array();
         $playlist = array();
 
-        $aResult = $this->youtubeProcessService->getAllPlaylist();
+        $aResult = $this->youtubeProcessService->getAllPlaylist($login);
         if ($aResult['error']) {
             $errorLog = sprintf('%s [%s] Error in executing getAllPlaylists.py:', __CLASS__, __FUNCTION__, $aResult['error_out']);
             $this->logger->addError($errorLog);
@@ -725,8 +731,11 @@ class YoutubeService
 
     /**
      * Gets an array of 'playlisitems.
+     * returns array.
      *
-     * returns array
+     * @return mixed
+     *
+     * @throws \Exception
      */
     public function getAllYoutubePlaylistItems()
     {
@@ -833,9 +842,7 @@ class YoutubeService
     private function getTagByYoutubeProperty($playlistId)
     {
         //return $this->tagRepo->getTagByProperty('youtube', $playlistId); //I like this option more (yet unimplemented)
-        return $this->tagRepo->createQueryBuilder()
-                    ->field('properties.youtube')->equals($playlistId)
-                    ->getQuery()->getSingleResult();
+        return $this->tagRepo->createQueryBuilder()->field('properties.youtube')->equals($playlistId)->getQuery()->getSingleResult();
     }
 
     /**
@@ -857,16 +864,17 @@ class YoutubeService
                 $error = $this->getError($errors);
                 $emailTo = $this->senderService->getSenderEmail();
                 $template = 'PumukitNotificationBundle:Email:notification.html.twig';
-                $parameters = array('subject' => $subject, 'body' => $body, 'sender_name' => $this->senderService->getSenderName());
+                $parameters = array(
+                    'subject' => $subject,
+                    'body' => $body,
+                    'sender_name' => $this->senderService->getSenderName(),
+                );
                 $output = $this->senderService->sendNotification($emailTo, $subject, $template, $parameters, $error);
                 if (0 < $output) {
-                    $infoLog = __CLASS__.' ['.__FUNCTION__
-                      .'] Sent notification email to "'.$emailTo.'"';
+                    $infoLog = __CLASS__.' ['.__FUNCTION__.'] Sent notification email to "'.$emailTo.'"';
                     $this->logger->addInfo($infoLog);
                 } else {
-                    $infoLog = __CLASS__.' ['.__FUNCTION__
-                      .'] Unable to send notification email to "'
-                      .$emailTo.'", '.$output.'email(s) were sent.';
+                    $infoLog = __CLASS__.' ['.__FUNCTION__.'] Unable to send notification email to "'.$emailTo.'", '.$output.'email(s) were sent.';
                     $this->logger->addInfo($infoLog);
                 }
 
@@ -877,6 +885,11 @@ class YoutubeService
         return false;
     }
 
+    /**
+     * @param string $cause
+     *
+     * @return string
+     */
     private function buildEmailSubject($cause = '')
     {
         $subject = ucfirst($cause).' of YouTube video(s)';
@@ -884,9 +897,21 @@ class YoutubeService
         return $subject;
     }
 
+    /**
+     * @param string $cause
+     * @param array  $succeed
+     * @param array  $failed
+     * @param array  $errors
+     *
+     * @return string
+     */
     private function buildEmailBody($cause = '', $succeed = array(), $failed = array(), $errors = array())
     {
-        $statusUpdate = array('finished publication', 'status removed', 'duplicated');
+        $statusUpdate = array(
+            'finished publication',
+            'status removed',
+            'duplicated',
+        );
         $body = '';
         if (!empty($succeed)) {
             if (in_array($cause, $statusUpdate)) {
@@ -919,6 +944,12 @@ class YoutubeService
         return $body;
     }
 
+    /**
+     * @param string $cause
+     * @param array  $succeed
+     *
+     * @return string
+     */
     private function buildStatusUpdateBody($cause = '', $succeed = array())
     {
         $body = '';
@@ -953,6 +984,11 @@ class YoutubeService
         return $body;
     }
 
+    /**
+     * @param array $errors
+     *
+     * @return bool
+     */
     private function getError($errors = array())
     {
         if (!empty($errors)) {
@@ -964,6 +1000,11 @@ class YoutubeService
 
     /**
      * Get title for youtube.
+     *
+     * @param MultimediaObject $multimediaObject
+     * @param int              $limit
+     *
+     * @return bool|string
      */
     private function getTitleForYoutube(MultimediaObject $multimediaObject, $limit = 100)
     {
@@ -991,11 +1032,18 @@ class YoutubeService
 
     /**
      * Get description for youtube.
+     *
+     * @param MultimediaObject $multimediaObject
+     *
+     * @return string
      */
     private function getDescriptionForYoutube(MultimediaObject $multimediaObject)
     {
         $series = $multimediaObject->getSeries();
-        $break = array('<br />', '<br/>');
+        $break = array(
+            '<br />',
+            '<br/>',
+        );
         $linkLabel = 'Video available at:';
         $linkLabelI18n = $this->translator->trans($linkLabel, array(), null, $this->ytLocale);
 
@@ -1011,6 +1059,10 @@ class YoutubeService
 
     /**
      * Get tags for youtube.
+     *
+     * @param MultimediaObject $multimediaObject
+     *
+     * @return array
      */
     private function getTagsForYoutube(MultimediaObject $multimediaObject)
     {
@@ -1041,9 +1093,7 @@ class YoutubeService
             $youtube = $this->fixRemovedYoutubeDocument($multimediaObject);
             $trace = debug_backtrace();
             $caller = $trace[1];
-            $errorLog = 'Error, there was no YouTube data of the Multimedia Object '
-                      .$multimediaObject->getId().' Created new Youtube document with id "'
-                      .$youtube->getId().'"';
+            $errorLog = 'Error, there was no YouTube data of the Multimedia Object '.$multimediaObject->getId().' Created new Youtube document with id "'.$youtube->getId().'"';
             $errorLog = __CLASS__.' ['.__FUNCTION__."] <-Called by: {$caller['function']}".$errorLog;
             $this->logger->addWarning($errorLog);
         }
@@ -1090,6 +1140,14 @@ class YoutubeService
         $youtube->setLink($youtubeUrl);
         $youtube->setEmbed($this->getEmbed($youtubeId));
         $youtube->setYoutubeId($youtubeId);
+
+        $youtubeTag = $this->dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(array('cod' => 'YOUTUBE'));
+        foreach ($multimediaObject->getTags() as $tag) {
+            if ($youtubeTag->getId() === $tag->getParent()) {
+                $youtube->setYoutubeAccount($youtubeTag->getProperty('login'));
+            }
+        }
+
         $file_headers = @get_headers($multimediaObject->getProperty('youtubeurl'));
         if ($file_headers[0] === 'HTTP/1.0 200 OK') {
             $youtube->setStatus(Youtube::STATUS_PUBLISHED);
@@ -1107,11 +1165,9 @@ class YoutubeService
 
     private function deleteFromList($playlistItem, $youtube, $playlistId, $doFlush = true)
     {
-        $aResult = $this->youtubeProcessService->deleteFromList($playlistItem);
+        $aResult = $this->youtubeProcessService->deleteFromList($playlistItem, $youtube->getYoutubeAccount());
         if ($aResult['error']) {
-            $errorLog = __CLASS__.' ['.__FUNCTION__
-              ."] Error in deleting the Youtube video with id '".$youtube->getId()
-              ."' from playlist with id '".$playlistItem."': ".$aResult['error_out'];
+            $errorLog = __CLASS__.' ['.__FUNCTION__."] Error in deleting the Youtube video with id '".$youtube->getId()."' from playlist with id '".$playlistItem."': ".$aResult['error_out'];
             $this->logger->addError($errorLog);
             throw new \Exception($errorLog);
         }
@@ -1120,10 +1176,7 @@ class YoutubeService
         if ($doFlush) {
             $this->dm->flush();
         }
-        $infoLog = __CLASS__.' ['.__FUNCTION__
-          ."] Removed playlist with youtube id '".$playlistId
-          ."' and relation of playlist item id '".$playlistItem
-          ."' from Youtube document with Mongo id '".$youtube->getId()."'";
+        $infoLog = __CLASS__.' ['.__FUNCTION__."] Removed playlist with youtube id '".$playlistId."' and relation of playlist item id '".$playlistItem."' from Youtube document with Mongo id '".$youtube->getId()."'";
         $this->logger->addInfo($infoLog);
     }
 

@@ -5,9 +5,6 @@ namespace Pumukit\YoutubeBundle\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
-use Pumukit\SchemaBundle\Document\Tag;
-use Pumukit\SchemaBundle\Document\MultimediaObject;
-use Pumukit\YoutubeBundle\Document\Youtube;
 
 class YoutubeUpdatePlaylistCommand extends ContainerAwareCommand
 {
@@ -49,7 +46,11 @@ EOT
             ->getQuery()
             ->execute();
 
-        $this->youtubeService->syncPlaylistsRelations();
+        $youtubeTag = $this->dm->getRepository('PumukitSchemaBundle:Tag')->findOneByCod('YOUTUBE');
+        foreach ($youtubeTag->getChildren() as $child) {
+            $this->youtubeService->syncPlaylistsRelations($child->getProperty('login'));
+        }
+
         foreach ($multimediaObjects as $multimediaObject) {
             try {
                 $outUpdatePlaylists = $this->youtubeService->updatePlaylists($multimediaObject);

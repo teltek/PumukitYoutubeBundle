@@ -1,0 +1,86 @@
+{% extends 'PumukitNewAdminBundle::layout.html.twig' %}
+
+{% block body %}
+    <h1>{% trans %}Youtube{% endtrans %}</h1>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="well">
+                <div id="list_youtube_accounts">
+                    {% render(controller('PumukitYoutubeBundle:Admin:list')) %}
+                </div>
+
+                <div class="text-right">
+                    <a class="btn btn-pumukit btn-raised" title="{% trans %}New account{% endtrans %}" href="{{ path('pumukit_youtube_create_account') }}" data-toggle="modal" data-backdrop="static" data-target="#myModal">
+                        <i class="mdi-editor-mode-edit"></i> {% trans %}New account{% endtrans %}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        $('.youtube_account_option').on('click', function(event) {
+            event.preventDefault();
+            $.ajax({
+                url: $(this).data('href'),
+                method: 'POST',
+                success: function(response, textStatus, jqXHR){
+                    if (jqXHR.responseText.indexOf('modal-header') != -1){
+                        var message = '{% trans %}There was an error on deleting Youtube account.{% endtrans %}';
+                    no_success(message);
+                } else {
+                    var mm = "{{ path('pumukit_youtube_admin_list') }}";
+                    $('#list_youtube_accounts').load(mm);
+                    var message = '{% trans %}Youtube account was successfully deleted.{% endtrans %}';
+                    success(message);
+                }
+            },
+            error: function(jqXHR, textStatus, errorThrown){
+                no_success(errorThrown + ': ' + textStatus);
+            }
+        });
+            return false;
+        });
+
+        function toggle_youtube_tag(id, element, level, cod) {
+
+            if(element.parentElement.classList.contains("expanded")){
+                $(".c_" + cod).hide();
+                $(".c_" + cod + " .expanded").removeClass("expanded").addClass("collapsed");
+            }else{
+                if(element.parentElement.classList.contains("noload")) {
+                    element.parentElement.classList.remove("noload");
+                    load_youtube_children_tag(id, cod);
+                }else {
+                    $(".d_" + cod).show();
+                }
+            }
+            element.parentElement.classList.toggle("collapsed");
+            element.parentElement.classList.toggle("expanded");
+        }
+
+        function load_youtube_children_tag(id, cod) {
+            $(".c_" + cod).remove();
+            var tr = $('#row_tag_' +id);
+            var level = tr.data('level');
+            var url = '{{ path('pumukit_youtube_children_tag', {'id': '___id___'}) }}';
+            $.ajax(url.replace('___id___', id) , {
+                type: 'GET',
+                success: function(response) {
+                    var t = tr.closest('tbody');
+                    var ss = t.children();
+                    tr.after(response);
+                    if ($('.d_' + cod).length != 0) {
+                        $('#row_tag_' + id + ' .collapsed').addClass("expanded").removeClass("collapsed");
+                    }
+                }
+            });
+
+        }
+
+
+
+    </script>
+
+{% endblock %}

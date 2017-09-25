@@ -1,0 +1,63 @@
+{% if isPlaylist is defined and isPlaylist == true %}
+    {% set playlist = true %}
+{% else %}
+    {% set playlist = false %}
+{% endif %}
+
+{% for tag in youtubeAccounts %}
+    {% set has_children = tag.children|length %}
+
+    {% if playlist == true %}
+        {% set editPath = path('pumukit_youtube_edit_playlist', {'id' : tag.id }) %}
+    {% else %}
+        {% set editPath = path('pumukit_youtube_edit_account', {'id' : tag.id }) %}
+        {% set createPath = path('pumukit_youtube_create_playlist', {'id': tag.id}) %}
+    {% endif %}
+    {% set deletePath = path('pumukit_youtube_delete_tag', {'id': tag.id}) %}
+
+
+    <tr class="tv_admin_row_0 c_{{ tag.path|replace({ ("|" ~ tag.cod ~ "|"): '', '|': ' c_'}) }} d_{{ tag.parent.cod|default("") }}" id="row_tag_{{ tag.id }}" data-level="{{ tag.level }}">
+        <td headers="th-checkbox">
+            <div class="checkbox">
+                <label>
+                    <input id="{{ tag.id }}" class="tag_checkbox" type="checkbox">
+                </label>
+            </div>
+        </td>
+        <td headers="th-icons">
+            <a href="#" title="{% trans %}Delete account{% endtrans %}" class="youtube_account_option" onclick="return tag_delete('{{ tag.id }}', '{{ tag.cod }}', '{{ tag.parent.id }}', parseInt('{{ tag.getNumberMultimediaObjects() }}'));">
+                <i class="mdi-content-clear"></i>
+            </a>
+        </td>
+
+        <td headers="th-icons">
+            <a title="{% trans %}Edit account{% endtrans %}" href="{{ editPath }}" data-toggle="modal" data-backdrop="static" data-target="#myModal">
+                <i class="mdi-editor-mode-edit"></i>
+            </a>
+        </td>
+        <td headers="th-icons">
+            {% if playlist == false %}
+                <a title="{% trans %}Add new playlist{% endtrans %}" href="{{ createPath }}" data-toggle="modal" data-backdrop="static" data-target="#myModal">
+                    <i class="mdi-image-add-to-photos"></i>
+                </a>
+            {% endif %}
+        </td>
+        <td headers="th-id">
+            {{ tag.id }}
+        </td>
+        <td headers="th-code-name" class="{{ has_children?'collapsed noload':'element' }}">
+        <span style="padding-left:{{ 10 * tag.level }}px" onclick="javascript:toggle_youtube_tag('{{ tag.id }}', this, {{ tag.level }}, '{{ tag.cod }}')">
+          <i class="mdi- tag_icon"></i>
+        </span>
+            {% if playlist == true %}
+                {% trans %}PLAYLIST - {% endtrans %} {{ tag.getTitle() }}
+            {% else %}
+                {{ tag.getTitle() }} - {{ tag.getProperty('login') }}
+            {% endif %}
+        </td>
+        <td headers="th-num">
+            {{ tag.getNumberMultimediaObjects() }}
+        </td>
+    </tr>
+
+{% endfor %}

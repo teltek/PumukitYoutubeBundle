@@ -19,11 +19,11 @@ class YoutubeProcessService
         $this->dm = $documentManager;
         $this->router = $router;
         $this->logger = $logger;
-        $this->pythonDirectory = __DIR__.'/../Resources/data/pyPumukit/';
+        $this->pythonDirectory = __DIR__.'/../Resources/data/lib/';
         $this->process_timeout = $process_timeout;
     }
 
-    public function upload($trackPath, $title, $description, $category, $tags, $privacy)
+    public function upload($trackPath, $title, $description, $category, $tags, $privacy, $login = null)
     {
         $sFile = 'upload.py';
         $aCommandArguments = array();
@@ -33,11 +33,14 @@ class YoutubeProcessService
         $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--category', $category);
         $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--keywords', $tags);
         $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--privacyStatus', $privacy);
+        if ($login) {
+            $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--account', $login);
+        }
 
         return $this->createProcess($sFile, $aCommandArguments);
     }
 
-    public function updateVideo($youtube, $title, $description, $tags, $status = null)
+    public function updateVideo($youtube, $title, $description, $tags, $status = null, $login = null)
     {
         $sFile = 'updateVideo.py';
         $aCommandArguments = array();
@@ -48,58 +51,76 @@ class YoutubeProcessService
         if ($status) {
             $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--status', $status);
         }
+        if ($login) {
+            $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--account', $login);
+        }
 
         return $this->createProcess($sFile, $aCommandArguments);
     }
 
-    public function deleteVideo($youtube)
+    public function deleteVideo($youtube, $login = null)
     {
         $sFile = 'deleteVideo.py';
         $aCommandArguments = array();
         $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--videoid', $youtube->getYoutubeId());
+        if ($login) {
+            $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--account', $login);
+        }
 
         return $this->createProcess($sFile, $aCommandArguments);
     }
 
-    public function createPlaylist($sTitleTag, $playlistPrivacyStatus)
+    public function createPlaylist($sTitleTag, $playlistPrivacyStatus, $login = null)
     {
         $sFile = 'createPlaylist.py';
         $aCommandArguments = array();
         $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--title', $sTitleTag);
         $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--privacyStatus', $playlistPrivacyStatus);
+        if ($login) {
+            $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--account', $login);
+        }
 
         return $this->createProcess($sFile, $aCommandArguments);
     }
 
-    public function deletePlaylist($youtubePlaylistId)
+    public function deletePlaylist($youtubePlaylistId, $login = null)
     {
         $sFile = 'deletePlaylist.py';
         $aCommandArguments = array();
         $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--playlistid', $youtubePlaylistId);
+        if ($login) {
+            $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--account', $login);
+        }
 
         return $this->createProcess($sFile, $aCommandArguments);
     }
 
-    public function insertInToList($youtube, $youtubePlaylistId)
+    public function insertInToList($youtube, $youtubePlaylistId, $login = null)
     {
         $sFile = 'insertInToList.py';
         $aCommandArguments = array();
         $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--videoid', $youtube->getYoutubeId());
         $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--playlistid', $youtubePlaylistId);
+        if ($login) {
+            $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--account', $login);
+        }
 
         return $this->createProcess($sFile, $aCommandArguments);
     }
 
-    public function deleteFromList($youtubePlaylistItem)
+    public function deleteFromList($youtubePlaylistItem, $login = null)
     {
         $sFile = 'deleteFromList.py';
         $aCommandArguments = array();
         $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--id', $youtubePlaylistItem);
+        if ($login) {
+            $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--account', $login);
+        }
 
         return $this->createProcess($sFile, $aCommandArguments);
     }
 
-    public function getData($sType, $sYoutubeId)
+    public function getData($sType, $sYoutubeId, $login = null)
     {
         // TODO: Unified getVideoStatus and getVideoMeta.
         switch ($sType) {
@@ -112,15 +133,22 @@ class YoutubeProcessService
         }
         $aCommandArguments = array();
         $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--videoid', $sYoutubeId);
+        if ($login) {
+            $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--account', $login);
+        }
 
         return $this->createProcess($sFile, $aCommandArguments);
     }
 
-    public function getAllPlaylist()
+    public function getAllPlaylist($login)
     {
         $sFile = 'getAllPlaylists.py';
+        $aCommandArguments = array();
+        if ($login) {
+            $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--account', $login);
+        }
 
-        return $this->createProcess($sFile);
+        return $this->createProcess($sFile, $aCommandArguments);
     }
 
     private function createProcess($sFile, $aCommandArguments = array())
