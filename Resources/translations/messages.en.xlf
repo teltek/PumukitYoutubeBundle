@@ -38,6 +38,10 @@
         <source>Video available at:</source>
         <target>Video available at:</target>
       </trans-unit>
+      <trans-unit id="22" resname="Youtube">
+        <source>Youtube</source>
+        <target>Youtube</target>
+      </trans-unit>
     </body>
   </file>
 </xliff>

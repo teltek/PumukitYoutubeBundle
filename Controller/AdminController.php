@@ -12,6 +12,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class AdminController extends Controller
 {
@@ -33,8 +34,12 @@ class AdminController extends Controller
     public function listAction()
     {
         $dm = $this->get('doctrine_mongodb')->getManager();
+        $translator = $this->get('translator');
 
         $youtubeAccounts = $dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(array('cod' => $this->youtubeTag));
+        if (!$youtubeAccounts) {
+            throw new NotFoundHttpException($translator->trans('Youtube tag not defined'));
+        }
 
         return array('youtubeAccounts' => $youtubeAccounts->getChildren());
     }
@@ -141,6 +146,7 @@ class AdminController extends Controller
      * @param $id
      *
      * @throws \Exception
+     *
      * @return JsonResponse
      * @Route ("/delete/{id}", name="pumukit_youtube_delete_tag")
      */
