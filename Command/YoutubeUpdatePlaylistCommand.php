@@ -46,10 +46,7 @@ EOT
             ->getQuery()
             ->execute();
 
-        $youtubeTag = $this->dm->getRepository('PumukitSchemaBundle:Tag')->findOneByCod('YOUTUBE');
-        foreach ($youtubeTag->getChildren() as $child) {
-            $this->youtubeService->syncPlaylistsRelations($child->getProperty('login'));
-        }
+        $this->youtubeService->syncPlaylistsRelations();
 
         foreach ($multimediaObjects as $multimediaObject) {
             try {

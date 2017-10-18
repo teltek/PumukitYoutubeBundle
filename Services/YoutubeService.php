@@ -516,70 +516,106 @@ class YoutubeService
      * on existent tags. If the master is Youtube, it deletes/creates/updates_metadata of all tags in PuMuKIT based on
      * existent Youtube playlists.
      *
-     * @param string $login
-     *
      * @return int
      */
-    public function syncPlaylistsRelations($login)
+    public function syncPlaylistsRelations()
     {
         if ($this->USE_DEFAULT_PLAYLIST) {
             $this->getOrCreateDefaultTag();
         }
-        $playlistMetaTag = $this->getPlaylistMetaTag();
-        //$allPlaylistTags = $playlistMetaTag->getChildren(); //Doctrine ODM bug reapeat last element
-        $allPlaylistTags = $this->dm->createQueryBuilder('PumukitSchemaBundle:Tag')->field('parent')->references($playlistMetaTag)->getQuery()->execute();
 
-        $allYoutubePlaylists = $this->getAllYoutubePlaylists($login); //Returns array with all neccessary, list(['id','title'])
-        //REFACTOR THIS ARRAY_MAP >>
-        $allYoutubePlaylistsIds = array_map(function ($n) {
-            return $n['id'];
-        }, $allYoutubePlaylists);
-        $master = $this->PLAYLISTS_MASTER;
-        $allTagsYtId = array();
+        $youtubeAccount = $this->dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(array('cod' => 'YOUTUBE'));
+        foreach ($youtubeAccount->getChildren() as $account) {
+            $allPlaylistTags = $account->getChildren();
+            $login = $account->getProperty('login');
 
-        foreach ($allPlaylistTags as $tag) {
-            $ytPlaylistId = $tag->getProperty('youtube');
-            $allTagsYtId[] = $ytPlaylistId;
+            /*$currentDir = __DIR__.'/../Resources/data/accounts/';
+            if(!file_exists($currentDir. $login .'.json')) {
+                $this->logger->error("There aren't file for account $login");
+                continue;
+            }*/
 
-            if ($ytPlaylistId === null || !in_array($ytPlaylistId, $allYoutubePlaylistsIds)) {
-                //If a playlist on PuMuKIT doesn't exist on Youtube, create it.
-                if ($master == 'pumukit') {
-                    $msg = sprintf('Creating YouTube playlist from tag "%s" (%s) because it doesn\'t exist locally', $tag->getTitle(), $tag->getCod());
-                    echo $msg;
-                    $this->logger->info($msg);
-                    $this->createYoutubePlaylist($tag);
-                } elseif ($this->DELETE_PLAYLISTS) {
-                    $msg = sprintf('Deleting tag "%s" (%s) because it doesn\'t exist on YouTube', $tag->getTitle(), $tag->getCod());
-                    echo $msg;
-                    $this->logger->alert($msg);
-                    $this->deletePumukitPlaylist($tag);
-                }
-            } else {
-                if ($master == 'pumukit') {
-                    $msg = sprintf('Updating YouTube playlist from tag "%s" (%s)', $tag->getTitle(), $tag->getCod());
-                    echo $msg;
-                    $this->logger->info($msg);
-                    $this->updateYoutubePlaylist($tag);
+            $allYoutubePlaylists = $this->getAllYoutubePlaylists(
+                $login
+            ); //Returns array with all neccessary, list(['id','title'])
+            //REFACTOR THIS ARRAY_MAP >>
+            $allYoutubePlaylistsIds = array_map(
+                function ($n) {
+                    return $n['id'];
+                },
+                $allYoutubePlaylists
+            );
+            $master = $this->PLAYLISTS_MASTER;
+            $allTagsYtId = array();
+
+            foreach ($allPlaylistTags as $tag) {
+                $ytPlaylistId = $tag->getProperty('youtube');
+                $allTagsYtId[] = $ytPlaylistId;
+
+                if ($ytPlaylistId === null || !in_array($ytPlaylistId, $allYoutubePlaylistsIds)) {
+                    //If a playlist on PuMuKIT doesn't exist on Youtube, create it.
+                    if ($master == 'pumukit') {
+                        $msg = sprintf(
+                            'Creating YouTube playlist from tag "%s" (%s) because it doesn\'t exist locally',
+                            $tag->getTitle(),
+                            $tag->getCod()
+                        );
+                        echo $msg;
+                        $this->logger->info($msg);
+                        $this->createYoutubePlaylist($tag);
+                    } elseif ($this->DELETE_PLAYLISTS) {
+                        $msg = sprintf(
+                            'Deleting tag "%s" (%s) because it doesn\'t exist on YouTube',
+                            $tag->getTitle(),
+                            $tag->getCod()
+                        );
+                        echo $msg;
+                        $this->logger->alert($msg);
+                        $this->deletePumukitPlaylist($tag);
+                    }
                 } else {
-                    $msg = sprintf('Updating tag from YouTube playlist "%s" (%s)', $tag->getTitle(), $tag->getCod());
-                    echo $msg;
-                    $this->logger->info($msg);
-                    $this->updatePumukitPlaylist($tag);
+                    if ($master == 'pumukit') {
+                        $msg = sprintf(
+                            'Updating YouTube playlist from tag "%s" (%s)',
+                            $tag->getTitle(),
+                            $tag->getCod()
+                        );
+                        echo $msg;
+                        $this->logger->info($msg);
+                        $this->updateYoutubePlaylist($tag);
+                    } else {
+                        $msg = sprintf(
+                            'Updating tag from YouTube playlist "%s" (%s)',
+                            $tag->getTitle(),
+                            $tag->getCod()
+                        );
+                        echo $msg;
+                        $this->logger->info($msg);
+                        $this->updatePumukitPlaylist($tag);
+                    }
                 }
             }
-        }
-        foreach ($allYoutubePlaylists as $ytPlaylist) {
-            if (!in_array($ytPlaylist['id'], $allTagsYtId)) {
-                if ($master == 'youtube') {
-                    $msg = sprintf('Creating tag using YouTube playlist "%s" (%s)', $ytPlaylist['title'], $ytPlaylist['id']);
-                    echo $msg;
-                    $this->logger->info($msg);
-                    $this->createPumukitPlaylist($ytPlaylist);
-                } elseif ($this->DELETE_PLAYLISTS) {
-                    $msg = sprintf('Deleting YouTube playlist "%s" (%s) because it doesn\'t exist locally', $ytPlaylist['title'], $ytPlaylist['id']);
-                    echo $msg;
-                    $this->logger->alert($msg);
-                    $this->deleteYoutubePlaylist($ytPlaylist, $login);
+            foreach ($allYoutubePlaylists as $ytPlaylist) {
+                if (!in_array($ytPlaylist['id'], $allTagsYtId)) {
+                    if ($master == 'youtube') {
+                        $msg = sprintf(
+                            'Creating tag using YouTube playlist "%s" (%s)',
+                            $ytPlaylist['title'],
+                            $ytPlaylist['id']
+                        );
+                        echo $msg;
+                        $this->logger->info($msg);
+                        $this->createPumukitPlaylist($ytPlaylist);
+                    } elseif ($this->DELETE_PLAYLISTS) {
+                        $msg = sprintf(
+                            'Deleting YouTube playlist "%s" (%s) because it doesn\'t exist locally',
+                            $ytPlaylist['title'],
+                            $ytPlaylist['id']
+                        );
+                        echo $msg;
+                        $this->logger->alert($msg);
+                        $this->deleteYoutubePlaylist($ytPlaylist, $login);
+                    }
                 }
             }
         }
@@ -598,7 +634,7 @@ class YoutubeService
     {
         echo 'create On Youtube: '.$tag->getTitle($this->ytLocale)."\n";
 
-        $aResult = $this->youtubeProcessService->createPlaylist($tag->getTitle($this->ytLocale), $this->playlistPrivacyStatus, $tag->getProperty('login'));
+        $aResult = $this->youtubeProcessService->createPlaylist($tag->getTitle($this->ytLocale), $this->playlistPrivacyStatus, $tag->getParent()->getProperty('login'));
         if ($aResult['error']) {
             $errorLog = sprintf('%s [%s] Error in creating in Youtube the playlist from tag with id %s: %s', __CLASS__, __FUNCTION__, $tag->getId(), $aResult['error_out']);
             $this->logger->addError($errorLog);
