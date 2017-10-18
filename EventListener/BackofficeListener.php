@@ -38,7 +38,7 @@ class BackofficeListener
 
         $pubChannels = array_keys($request->request->get('pub_channels'));
         if (!in_array('PUCHYOUTUBE', $pubChannels)) {
-            return;
+            return false;
         }
 
         if ($request->request->has('youtube_label') and $request->request->has('youtube_playlist_label')) {
