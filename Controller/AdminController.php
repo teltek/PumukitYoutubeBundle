@@ -71,7 +71,7 @@ class AdminController extends Controller
                 $tag = new Tag();
                 $tag->setMetatag(false);
                 $tag->setProperty('login', $data['login']);
-                $tag->setDisplay(true);
+                $tag->setDisplay(false);
                 $tag->seti18nTitle($data['i18n_title']);
                 $tag->setParent($youtubeTag);
 

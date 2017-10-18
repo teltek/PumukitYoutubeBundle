@@ -42,7 +42,8 @@
         </service>
 
         <service id="pumukityoutube.backoffice" class="Pumukit\YoutubeBundle\EventListener\BackofficeListener">
-            <argument type="service" id="service_container" />
+            <argument type="service" id="doctrine_mongodb.odm.document_manager"/>
+            <argument type="service" id="pumukitschema.tag" />
             <tag name="kernel.event_listener" event="publication.submit" method="onPublicationSubmit"/>
         </service>
 
