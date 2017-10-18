@@ -2,34 +2,57 @@
 
 namespace Pumukit\YoutubeBundle\EventListener;
 
+use Doctrine\ODM\MongoDB\DocumentManager;
 use Pumukit\NewAdminBundle\Event\PublicationSubmitEvent;
-use Symfony\Component\DependencyInjection\ContainerInterface;
+use Pumukit\SchemaBundle\Services\TagService;
 
 class BackofficeListener
 {
-    private $container;
+    private $dm;
+    private $tagService;
 
-    public function __construct(ContainerInterface $container)
+    public function __construct(DocumentManager $documentManager, TagService $tagService)
     {
-        $this->container = $container;
+        $this->dm = $documentManager;
+        $this->tagService = $tagService;
     }
 
     public function onPublicationSubmit(PublicationSubmitEvent $event)
     {
-        $dm = $this->container->get('doctrine_mongodb.odm.document_manager');
-        $multimediaObject = $event->getMultimediaObject();
         $request = $event->getRequest();
+        $multimediaObject = $event->getMultimediaObject();
+        $youtubeTag = $this->dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(array('cod' => 'YOUTUBE'));
+        if (!$youtubeTag) {
+            return false;
+        }
+
+        foreach ($multimediaObject->getTags() as $embedTag) {
+            if ($embedTag->isDescendantOf($youtubeTag)) {
+                $this->tagService->removeTagFromMultimediaObject($multimediaObject, $embedTag->getId());
+            }
+        }
+
+        if (!$request->request->has('pub_channels')) {
+            return false;
+        }
+
+        $pubChannels = array_keys($request->request->get('pub_channels'));
+        if (!in_array('PUCHYOUTUBE', $pubChannels)) {
+            return false;
+        }
 
         if ($request->request->has('youtube_label') and $request->request->has('youtube_playlist_label')) {
-            $youtubeAccountTag = $dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(
-                array('_id' => new \MongoId($request->request->get('youtube_label')))
-            );
-            $youtubePlaylistTag = $dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(
-                array('_id' => new \MongoId($request->request->get('youtube_playlist_label')))
-            );
-            $multimediaObject->addTag($youtubeAccountTag);
-            $multimediaObject->addTag($youtubePlaylistTag);
-            $dm->flush();
+            // Youtube parent tag
+            $this->tagService->addTagToMultimediaObject($multimediaObject, $youtubeTag->getId());
+            // Youtube account
+            $this->tagService->addTagToMultimediaObject($multimediaObject, new \MongoId($request->request->get('youtube_label')));
+            // Youtube playlist
+            if ('any' !== $request->request->get('youtube_playlist_label')) {
+                $this->tagService->addTagToMultimediaObject(
+                    $multimediaObject,
+                    new \MongoId($request->request->get('youtube_playlist_label'))
+                );
+            }
         }
     }
 }
