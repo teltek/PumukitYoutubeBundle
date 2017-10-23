@@ -1092,7 +1092,35 @@ class YoutubeService
         $linkLabel = 'Video available at:';
         $linkLabelI18n = $this->translator->trans($linkLabel, array(), null, $this->ytLocale);
 
-        $description = $series->getTitle($this->ytLocale).' - '.$multimediaObject->getTitle($this->ytLocale)."\n".$multimediaObject->getSubtitle($this->ytLocale)."\n".str_replace($break, "\n", $multimediaObject->getDescription($this->ytLocale));
+        $recDateLabel = 'Recording date';
+        $recDateI18N = $this->translator->trans($recDateLabel, array(), null, $this->ytLocale);
+
+        $peopleIds = $multimediaObject->findPeopleWithRoleCode('part');
+        $addPeople = '';
+        foreach ($peopleIds as $personId) {
+            $person = $this->dm->getRepository('PumukitSchemaBundle:Person')->findOneById(new \MongoId($personId));
+            $addPeople .= $person->getHonorific($this->ytLocale).' '.$person->getInfo()."\n";
+        }
+
+        $recDate = $multimediaObject->getRecordDate()->format('d-m-Y');
+        if ($series->isHide()) {
+            $description = $multimediaObject->getTitle($this->ytLocale)."\n".
+                $multimediaObject->getSubtitle($this->ytLocale)."\n".
+                $recDateI18N.': '.$recDate.'\n'.
+                str_replace($break, "\n", $multimediaObject->getDescription($this->ytLocale)).'\n'
+            ;
+        } else {
+            $description = $multimediaObject->getTitle($this->ytLocale)."\n".
+                $multimediaObject->getSubtitle($this->ytLocale)."\n".
+                $this->translator->trans('i18n.one.Series', array(), null, $this->ytLocale).': '.$series->getTitle($this->ytLocale).'\n'.
+                $recDateI18N.': '.$recDate.'\n'.
+                str_replace($break, "\n", $multimediaObject->getDescription($this->ytLocale)).'\n'
+                ;
+        }
+
+        if ('' != $addPeople) {
+            $description .= $addPeople.'\n';
+        }
 
         if (MultimediaObject::STATUS_PUBLISHED == $multimediaObject->getStatus() && $multimediaObject->containsTagWithCod('PUCHWEBTV')) {
             $appInfoLink = $this->router->generate('pumukit_webtv_multimediaobject_index', array('id' => $multimediaObject->getId()), true);
