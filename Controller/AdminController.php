@@ -301,9 +301,23 @@ class AdminController extends Controller
 
         $youtubeAccounts = $dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(array('cod' => $this->youtubeTag));
 
+        $accountSelectedTag = '';
+        $playlistSelectedTag = '';
+        foreach ($multimediaObject->getTags() as $tag) {
+            if ($tag->isDescendantOf($youtubeAccounts)) {
+                if ($tag->getLevel() == 3) {
+                    $accountSelectedTag = $tag->getId();
+                } elseif ($tag->getLevel() == 4) {
+                    $playlistSelectedTag = $tag->getId();
+                }
+            }
+        }
+
         return array(
             'youtubeAccounts' => $youtubeAccounts->getChildren(),
             'multimediaObject' => $multimediaObject,
+            'accountId' => $accountSelectedTag,
+            'playlistId' => $playlistSelectedTag,
         );
     }
 
