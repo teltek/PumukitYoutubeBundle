@@ -6,6 +6,7 @@ use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\YoutubeBundle\Form\Type\AccountType;
 use Pumukit\YoutubeBundle\Form\Type\YoutubePlaylistType;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Template;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -14,6 +15,12 @@ use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
+/**
+ * Class AdminController.
+ *
+ *
+ * @Security("is_granted('ROLE_ACCESS_YOUTUBE')")
+ */
 class AdminController extends Controller
 {
     private $youtubeTag = 'YOUTUBE';
