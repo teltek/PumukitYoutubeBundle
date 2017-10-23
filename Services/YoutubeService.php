@@ -466,17 +466,14 @@ class YoutubeService
         }
         $this->checkAndAddDefaultPlaylistTag($multimediaObject);
         foreach ($multimediaObject->getTags() as $embedTag) {
-            /*
-             * if (!$embedTag->getProperty('youtube_playlist')) {
-                    //This is not the tag you are looking for
-                    continue;
-                }
-             */
             if (!$embedTag->isDescendantOfByCod($this->METATAG_PLAYLIST_COD)) {
                 //This is not the tag you are looking for
                 continue;
             }
             $playlistTag = $this->tagRepo->findOneByCod($embedTag->getCod());
+            if (!$playlistTag->getProperty('youtube_playlist')) {
+                continue;
+            }
             $playlistId = $playlistTag->getProperty('youtube');
 
             if (!isset($playlistId) || !array_key_exists($playlistId, $youtube->getPlaylists())) {
@@ -529,11 +526,12 @@ class YoutubeService
             $allPlaylistTags = $account->getChildren();
             $login = $account->getProperty('login');
 
-            /*$currentDir = __DIR__.'/../Resources/data/accounts/';
-            if(!file_exists($currentDir. $login .'.json')) {
+            /* If these condition is deleted, syncPlaylistRelations brokes and all videos will be without playlist */
+            $currentDir = __DIR__.'/../Resources/data/accounts/';
+            if (!file_exists($currentDir.$login.'.json')) {
                 $this->logger->error("There aren't file for account $login");
                 continue;
-            }*/
+            }
 
             $allYoutubePlaylists = $this->getAllYoutubePlaylists(
                 $login
