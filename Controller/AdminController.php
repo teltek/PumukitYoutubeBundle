@@ -6,6 +6,7 @@ use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\YoutubeBundle\Form\Type\AccountType;
 use Pumukit\YoutubeBundle\Form\Type\YoutubePlaylistType;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Template;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -14,6 +15,12 @@ use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
+/**
+ * Class AdminController.
+ *
+ *
+ * @Security("is_granted('ROLE_ACCESS_YOUTUBE')")
+ */
 class AdminController extends Controller
 {
     private $youtubeTag = 'YOUTUBE';
@@ -294,9 +301,23 @@ class AdminController extends Controller
 
         $youtubeAccounts = $dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(array('cod' => $this->youtubeTag));
 
+        $accountSelectedTag = '';
+        $playlistSelectedTag = '';
+        foreach ($multimediaObject->getTags() as $tag) {
+            if ($tag->isDescendantOf($youtubeAccounts)) {
+                if ($tag->getLevel() == 3) {
+                    $accountSelectedTag = $tag->getId();
+                } elseif ($tag->getLevel() == 4) {
+                    $playlistSelectedTag = $tag->getId();
+                }
+            }
+        }
+
         return array(
             'youtubeAccounts' => $youtubeAccounts->getChildren(),
             'multimediaObject' => $multimediaObject,
+            'accountId' => $accountSelectedTag,
+            'playlistId' => $playlistSelectedTag,
         );
     }
 

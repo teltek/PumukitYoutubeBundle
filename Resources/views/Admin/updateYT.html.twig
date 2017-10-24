@@ -7,6 +7,7 @@
     }
 </style>
 
+{% set selectedAccount = false %}
 <div class="form-group" id="pumukit_youtube_accounts">
     <label for="youtube_label" class="control-label">{% trans %}Youtube accounts{% endtrans %}</label>
     <br />
@@ -15,20 +16,26 @@
             {% trans %}Please, create a new youtube account{% endtrans %}
         </div>
     {% else %}
-    <div class="col-xs-6">
-        <select id="youtube_label" name="youtube_label" class="form-control" required>
-            {% for account in youtubeAccounts %}
-                <option class="account_option" value="{{ account.getId() }}" data-href="{{ path('pumukityoutube_playlist_select', {'id' : account.getId() }) }}">{{ account.getTitle() }}</option>
-            {% endfor %}
-        </select>
-    </div>
-    <div class="col-xs-6">
-        <div id="list_playlist">
-            <select id="youtube_playlist_label" name="youtube_playlist_label" class="form-control" required>
-                <option value="any">&nbsp;</option>
+        <div class="col-xs-6">
+            <select id="youtube_label" name="youtube_label" class="form-control" required>
+                {% for account in youtubeAccounts %}
+                    <option class="account_option" value="{{ account.getId() }}"  {% if accountId == account.getId() %}selected{% endif %} data-href="{{ path('pumukityoutube_playlist_select', {'id' : account.getId() }) }}">{{ account.getTitle() }}</option>
+                    {% if accountId == account.getId() %}
+                        {% set selectedAccount = account %}
+                    {% endif %}
+                {% endfor %}
             </select>
         </div>
-    </div>
+        <div class="col-xs-6">
+            <div id="list_playlist">
+                <select id="youtube_playlist_label" name="youtube_playlist_label" class="form-control" required>
+                    <option value="any">&nbsp;</option>
+                    {% for playlist in selectedAccount.getChildren() %}
+                        <option value="{{ playlist.getId() }}" {% if playlistId == playlist.getId() %}selected{% endif %}>{{ playlist.getTitle(app.request.getLocale()) }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
     {% endif %}
 </div>
 
@@ -84,6 +91,9 @@
                 method: 'POST',
                 success: function (response) {
                     var data = jQuery.parseJSON(response);
+
+                    var newOption = new Option('','any',false,false);
+                    $('#youtube_playlist_label').append(newOption).trigger('change');
                     $("#youtube_playlist_label").select2({
                         data: data
                     });

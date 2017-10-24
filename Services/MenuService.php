@@ -18,6 +18,6 @@ class MenuService implements ItemInterface
 
     public function getAccessRole()
     {
-        return 'ROLE_SUPER_ADMIN';
+        return 'ROLE_ACCESS_YOUTUBE';
     }
 }
