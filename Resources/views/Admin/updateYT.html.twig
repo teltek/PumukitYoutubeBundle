@@ -30,9 +30,11 @@
             <div id="list_playlist">
                 <select id="youtube_playlist_label" name="youtube_playlist_label" class="form-control" required>
                     <option value="any">&nbsp;</option>
-                    {% for playlist in selectedAccount.getChildren() %}
-                        <option value="{{ playlist.getId() }}" {% if playlistId == playlist.getId() %}selected{% endif %}>{{ playlist.getTitle(app.request.getLocale()) }}</option>
-                    {% endfor %}
+                    {% if selectedAccount %}
+                        {% for playlist in selectedAccount.getChildren() %}
+                            <option value="{{ playlist.getId() }}" {% if playlistId == playlist.getId() %}selected{% endif %}>{{ playlist.getTitle(app.request.getLocale()) }}</option>
+                        {% endfor %}
+                    {% endif %}
                 </select>
             </div>
         </div>
