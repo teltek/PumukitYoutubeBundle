@@ -17,15 +17,13 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
  * Class AdminController.
- *
- *
- * @Security("is_granted('ROLE_ACCESS_YOUTUBE')")
  */
 class AdminController extends Controller
 {
     private $youtubeTag = 'YOUTUBE';
 
     /**
+     * @Security("is_granted('ROLE_ACCESS_YOUTUBE')")
      * @Route ("/", name="pumukit_youtube_admin_index")
      * @Template()
      */
@@ -35,6 +33,7 @@ class AdminController extends Controller
     }
 
     /**
+     * @Security("is_granted('ROLE_ACCESS_YOUTUBE')")
      * @Route ("/list", name="pumukit_youtube_admin_list")
      * @Template()
      */
@@ -55,6 +54,8 @@ class AdminController extends Controller
      * @param Request $request
      *
      * @return array|JsonResponse
+     *
+     * @Security("is_granted('ROLE_ACCESS_YOUTUBE')")
      * @Route ("/create", name="pumukit_youtube_create_account")
      * @Template()
      */
@@ -106,6 +107,8 @@ class AdminController extends Controller
      * @param         $id
      *
      * @return array|JsonResponse
+     *
+     * @Security("is_granted('ROLE_ACCESS_YOUTUBE')")
      * @Route ("/edit/{id}", name="pumukit_youtube_edit_account")
      * @Template()
      */
@@ -155,6 +158,8 @@ class AdminController extends Controller
      * @throws \Exception
      *
      * @return JsonResponse
+     *
+     * @Security("is_granted('ROLE_ACCESS_YOUTUBE')")
      * @Route ("/delete/{id}", name="pumukit_youtube_delete_tag")
      */
     public function deleteAction($id)
@@ -180,6 +185,8 @@ class AdminController extends Controller
 
     /**
      * @param Tag $tag
+     *
+     * @Security("is_granted('ROLE_ACCESS_YOUTUBE')")
      * @route("/children/{id}", name="pumukit_youtube_children_tag")
      * @ParamConverter("tag", class="PumukitSchemaBundle:Tag")
      * @Template()
@@ -200,6 +207,7 @@ class AdminController extends Controller
      * @param Request $request
      *
      * @return array|JsonResponse
+     * @Security("is_granted('ROLE_ACCESS_YOUTUBE')")
      * @Route ("/create/playlist/{id}", name="pumukit_youtube_create_playlist")
      * @Template()
      */
@@ -250,6 +258,7 @@ class AdminController extends Controller
      * @param Request $request
      *
      * @return array|JsonResponse
+     * @Security("is_granted('ROLE_ACCESS_YOUTUBE')")
      * @Route ("/edit/playlist/{id}", name="pumukit_youtube_edit_playlist")
      * @Template()
      */
