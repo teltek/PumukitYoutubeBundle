@@ -195,7 +195,6 @@ class YoutubeService
      */
     public function moveToList(MultimediaObject $multimediaObject, $playlistTagId)
     {
-        var_dump($playlistTagId);
         $youtube = $this->getYoutubeDocument($multimediaObject);
 
         if (null === $playlistTag = $this->tagRepo->find($playlistTagId)) {
