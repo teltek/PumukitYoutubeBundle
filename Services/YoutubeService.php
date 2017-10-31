@@ -195,6 +195,7 @@ class YoutubeService
      */
     public function moveToList(MultimediaObject $multimediaObject, $playlistTagId)
     {
+        var_dump($playlistTagId);
         $youtube = $this->getYoutubeDocument($multimediaObject);
 
         if (null === $playlistTag = $this->tagRepo->find($playlistTagId)) {
@@ -471,6 +472,7 @@ class YoutubeService
                 continue;
             }
             $playlistTag = $this->tagRepo->findOneByCod($embedTag->getCod());
+
             if (!$playlistTag->getProperty('youtube_playlist')) {
                 continue;
             }
@@ -1093,10 +1095,11 @@ class YoutubeService
         $recDateLabel = 'Recording date';
         $recDateI18N = $this->translator->trans($recDateLabel, array(), null, $this->ytLocale);
 
-        $peopleIds = $multimediaObject->findPeopleWithRoleCode('part');
+        $role = $this->dm->getRepository('PumukitSchemaBundle:Role')->findOneBy(array('cod' => 'part'));
+        $people = $multimediaObject->getPeopleByRole($role);
         $addPeople = '';
-        foreach ($peopleIds as $personId) {
-            $person = $this->dm->getRepository('PumukitSchemaBundle:Person')->findOneById(new \MongoId($personId));
+        foreach ($people as $person) {
+            $person = $this->dm->getRepository('PumukitSchemaBundle:Person')->findOneById(new \MongoId($person->getId()));
             $addPeople .= $person->getHonorific($this->ytLocale).' '.$person->getInfo()."\n";
         }
 
@@ -1104,20 +1107,20 @@ class YoutubeService
         if ($series->isHide()) {
             $description = $multimediaObject->getTitle($this->ytLocale)."\n".
                 $multimediaObject->getSubtitle($this->ytLocale)."\n".
-                $recDateI18N.': '.$recDate.'\n'.
-                str_replace($break, "\n", $multimediaObject->getDescription($this->ytLocale)).'\n'
+                $recDateI18N.': '.$recDate."\n".
+                str_replace($break, "\n", $multimediaObject->getDescription($this->ytLocale))."\n"
             ;
         } else {
             $description = $multimediaObject->getTitle($this->ytLocale)."\n".
                 $multimediaObject->getSubtitle($this->ytLocale)."\n".
-                $this->translator->trans('i18n.one.Series', array(), null, $this->ytLocale).': '.$series->getTitle($this->ytLocale).'\n'.
-                $recDateI18N.': '.$recDate.'\n'.
-                str_replace($break, "\n", $multimediaObject->getDescription($this->ytLocale)).'\n'
+                $this->translator->trans('i18n.one.Series', array(), null, $this->ytLocale).': '.$series->getTitle($this->ytLocale)."\n".
+                $recDateI18N.': '.$recDate."\n".
+                str_replace($break, "\n", $multimediaObject->getDescription($this->ytLocale))."\n"
                 ;
         }
 
         if ('' != $addPeople) {
-            $description .= $addPeople.'\n';
+            $description .= $addPeople."\n";
         }
 
         if (MultimediaObject::STATUS_PUBLISHED == $multimediaObject->getStatus() && $multimediaObject->containsTagWithCod('PUCHWEBTV')) {
