@@ -42,6 +42,30 @@
         <source>Youtube</source>
         <target>Youtube</target>
       </trans-unit>
+      <trans-unit id="23" resname="Delete account">
+        <source>Delete account</source>
+        <target>Delete account</target>
+      </trans-unit>
+      <trans-unit id="24" resname="Edit account">
+        <source>Edit account</source>
+        <target>Edit account</target>
+      </trans-unit>
+      <trans-unit id="25" resname="Add new playlist">
+        <source>Add new playlist</source>
+        <target>Add new playlist</target>
+      </trans-unit>
+      <trans-unit id="26" resname="New account">
+        <source>New account</source>
+        <target>New account</target>
+      </trans-unit>
+      <trans-unit id="27" resname="There was an error on deleting Youtube account.">
+        <source>There was an error on deleting Youtube account.</source>
+        <target>There was an error on deleting Youtube account.</target>
+      </trans-unit>
+      <trans-unit id="28" resname="	Youtube account was successfully deleted.">
+        <source>Youtube account was successfully deleted.</source>
+        <target>Youtube account was successfully deleted.</target>
+      </trans-unit>
     </body>
   </file>
 </xliff>
