@@ -906,7 +906,7 @@ class YoutubeService
             $body = $this->buildEmailBody($cause, $succeed, $failed, $errors);
             if ($body) {
                 $error = $this->getError($errors);
-                $emailTo = $this->senderService->getSenderEmail();
+                $emailTo = $this->senderService->getAdminEmail();
                 $template = 'PumukitNotificationBundle:Email:notification.html.twig';
                 $parameters = array(
                     'subject' => $subject,
