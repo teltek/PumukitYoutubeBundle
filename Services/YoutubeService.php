@@ -1099,7 +1099,7 @@ class YoutubeService
         $addPeople = '';
         foreach ($people as $person) {
             $person = $this->dm->getRepository('PumukitSchemaBundle:Person')->findOneById(new \MongoId($person->getId()));
-            $addPeople .= $person->getHonorific($this->ytLocale).' '.$person->getInfo()."\n";
+            $addPeople .= $person->getHonorific($this->ytLocale).' '.$person->getInfo()."\n".$person->getName()."\n";
         }
 
         $recDate = $multimediaObject->getRecordDate()->format('d-m-Y');
