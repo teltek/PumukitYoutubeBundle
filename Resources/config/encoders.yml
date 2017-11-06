@@ -1,8 +1,8 @@
 pumukit_youtube:
     profiles:
         video_youtube:
-            display: true
-            wizard: true
+            display: false
+            wizard: false
             master: false
             tags: youtube html5
             target: PUCHYOUTUBE
@@ -28,4 +28,4 @@ pumukit_youtube:
             app: ffmpeg
             rel_duration_size: 1
             rel_duration_trans: 1
-            downloadable: false
+            downloadable: true
