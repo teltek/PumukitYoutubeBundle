@@ -1,8 +1,8 @@
 pumukit_youtube:
     profiles:
         video_youtube:
-            display: true
-            wizard: true
+            display: false
+            wizard: false
             master: false
             tags: youtube html5
             target: PUCHYOUTUBE
