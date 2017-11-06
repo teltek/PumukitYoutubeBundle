@@ -371,6 +371,7 @@ class YoutubeService
         }
 
         $aResult = $this->youtubeProcessService->getData('status', $youtube->getYoutubeId(), $youtube->getYoutubeAccount());
+
         // NOTE: If the video has been removed, it returns 404 instead of 200 with 'not found Video'
         if ($aResult['error']) {
             if (strpos($aResult['error_out'], 'was not found.')) {
@@ -382,6 +383,7 @@ class YoutubeService
                 $youtube->setStatus(Youtube::STATUS_REMOVED);
                 $this->dm->persist($youtube);
                 $youtubeEduTag = $this->tagRepo->findOneByCod(self::PUB_CHANNEL_YOUTUBE);
+
                 if (null !== $youtubeEduTag) {
                     if ($multimediaObject->containsTag($youtubeEduTag)) {
                         $this->tagService->removeTagFromMultimediaObject($multimediaObject, $youtubeEduTag->getId());
@@ -915,8 +917,15 @@ class YoutubeService
                 );
                 $output = $this->senderService->sendNotification($emailTo, $subject, $template, $parameters, $error);
                 if (0 < $output) {
-                    $infoLog = __CLASS__.' ['.__FUNCTION__.'] Sent notification email to "'.$emailTo.'"';
-                    $this->logger->addInfo($infoLog);
+                    if (is_array($emailTo)) {
+                        foreach ($emailTo as $email) {
+                            $infoLog = __CLASS__.' ['.__FUNCTION__.'] Sent notification email to "'.$email.'"';
+                            $this->logger->addInfo($infoLog);
+                        }
+                    } else {
+                        $infoLog = __CLASS__.' ['.__FUNCTION__.'] Sent notification email to "'.$emailTo.'"';
+                        $this->logger->addInfo($infoLog);
+                    }
                 } else {
                     $infoLog = __CLASS__.' ['.__FUNCTION__.'] Unable to send notification email to "'.$emailTo.'", '.$output.'email(s) were sent.';
                     $this->logger->addInfo($infoLog);
