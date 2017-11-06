@@ -28,4 +28,4 @@ pumukit_youtube:
             app: ffmpeg
             rel_duration_size: 1
             rel_duration_trans: 1
-            downloadable: false
+            downloadable: true
