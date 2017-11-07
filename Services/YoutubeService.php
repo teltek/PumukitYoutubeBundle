@@ -858,9 +858,15 @@ class YoutubeService
                 $parameters = array('subject' => $subject, 'body' => $body, 'sender_name' => $this->senderService->getSenderName());
                 $output = $this->senderService->sendNotification($emailTo, $subject, $template, $parameters, $error);
                 if (0 < $output) {
-                    $infoLog = __CLASS__.' ['.__FUNCTION__
-                      .'] Sent notification email to "'.$emailTo.'"';
-                    $this->logger->addInfo($infoLog);
+                    if (is_array($emailTo)) {
+                        foreach ($emailTo as $email) {
+                            $infoLog = __CLASS__.' ['.__FUNCTION__.'] Sent notification email to "'.$email.'"';
+                            $this->logger->addInfo($infoLog);
+                        }
+                    } else {
+                        $infoLog = __CLASS__.' ['.__FUNCTION__.'] Sent notification email to "'.$emailTo.'"';
+                        $this->logger->addInfo($infoLog);
+                    }
                 } else {
                     $infoLog = __CLASS__.' ['.__FUNCTION__
                       .'] Unable to send notification email to "'
