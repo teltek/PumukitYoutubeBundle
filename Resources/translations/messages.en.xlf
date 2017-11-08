@@ -66,6 +66,14 @@
         <source>Youtube account was successfully deleted.</source>
         <target>Youtube account was successfully deleted.</target>
       </trans-unit>
+      <trans-unit id="29" resname="Youtube accounts">
+        <source>Youtube accounts</source>
+        <target>Youtube accounts</target>
+      </trans-unit>
+      <trans-unit id="30" resname="YouTubeEDU">
+        <source>YouTubeEDU</source>
+        <target>YouTubeEDU</target>
+      </trans-unit>
     </body>
   </file>
 </xliff>
