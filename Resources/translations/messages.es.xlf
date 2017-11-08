@@ -66,6 +66,14 @@
         <source>Youtube account was successfully deleted.</source>
         <target>La cuenta de Youtube ha sido borrada satisfactoriamente.</target>
       </trans-unit>
+      <trans-unit id="29" resname="Youtube accounts">
+        <source>Youtube accounts</source>
+        <target>Cuentas de Youtube</target>
+      </trans-unit>
+      <trans-unit id="30" resname="YouTubeEDU">
+        <source>YouTubeEDU</source>
+        <target>YouTubeEDU</target>
+      </trans-unit>
     </body>
   </file>
 </xliff>
