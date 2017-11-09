@@ -219,7 +219,7 @@ EOT
             foreach ($this->okRemoved as $mm) {
                 if ($mm instanceof MultimediaObject) {
                     if ($mm->containsTagWithCod(self::PUB_CHANNEL_YOUTUBE)) {
-                        $this->tagService->removeTagFromMultimediaObject($multimediaObject, $youtubeTag->getId(), false);
+                        $this->tagService->removeTagFromMultimediaObject($mm, $youtubeTag->getId(), false);
                     }
                 }
             }
