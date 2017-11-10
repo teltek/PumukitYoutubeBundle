@@ -74,6 +74,10 @@
         <source>YouTubeEDU</source>
         <target>YouTubeEDU</target>
       </trans-unit>
+      <trans-unit id="31" resname="Participating">
+        <source>Participating</source>
+        <target>Participating</target>
+      </trans-unit>
     </body>
   </file>
 </xliff>
