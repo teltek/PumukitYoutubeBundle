@@ -1103,13 +1103,20 @@ class YoutubeService
         $recDateLabel = 'Recording date';
         $recDateI18N = $this->translator->trans($recDateLabel, array(), null, $this->ytLocale);
 
-        $role = $this->dm->getRepository('PumukitSchemaBundle:Role')->findOneBy(array('cod' => 'part'));
-        $people = $multimediaObject->getPeopleByRole($role);
-        $addPeople = '';
-        foreach ($people as $person) {
-            $person = $this->dm->getRepository('PumukitSchemaBundle:Person')->findOneById(new \MongoId($person->getId()));
-            $person->setLocale($this->ytLocale);
-            $addPeople .= $person->getHName().' '.$person->getInfo()."\n";
+        $roles = $multimediaObject->getRoles();
+        $addPeople = $this->translator->trans('Participating').':'."\n";
+        $bPeople = false;
+        foreach ($roles as $role) {
+            if ($role->getDisplay()) {
+                foreach ($role->getPeople() as $person) {
+                    $person = $this->dm->getRepository('PumukitSchemaBundle:Person')->findOneById(
+                        new \MongoId($person->getId())
+                    );
+                    $person->setLocale($this->ytLocale);
+                    $addPeople .= $person->getHName().' '.$person->getInfo()."\n";
+                    $bPeople = true;
+                }
+            }
         }
 
         $recDate = $multimediaObject->getRecordDate()->format('d-m-Y');
@@ -1128,7 +1135,7 @@ class YoutubeService
                 ;
         }
 
-        if ('' != $addPeople) {
+        if ($bPeople) {
             $description .= $addPeople."\n";
         }
 
