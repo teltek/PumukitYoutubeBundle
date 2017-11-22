@@ -63,7 +63,9 @@
         } else {
             $('#youtube_advanced_configuration').hide();
         }
-
+        {% if selectedAccount %}
+        $("#youtube_playlist_label").select2();
+        {% else %}
         var href = $( "#youtube_label option:first-child" ).data('href');
         if(href) {
             $.ajax({
@@ -79,6 +81,8 @@
                 }
             })
         }
+        {% endif %}
+
     });
 
     $('#youtube_label').on('change', function(event) {
