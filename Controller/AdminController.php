@@ -336,25 +336,27 @@ class AdminController extends Controller
      * @return JsonResponse
      * @Route ("/playlist/list/{id}", name="pumukityoutube_playlist_select")
      */
-    public function playlistAccountAction($id = null)
+    public function playlistAccountAction($id)
     {
-        if (isset($id)) {
-            $dm = $this->get('doctrine_mongodb')->getManager();
-            $youtubeAccount = $dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(array('_id' => $id));
-
-            $children = array();
-            foreach ($youtubeAccount->getChildren() as $child) {
-                $children[] = array(
-                    'id' => $child->getId(),
-                    'text' => $child->getTitle(),
-                );
-            }
-
-            $children = json_encode($children);
-
-            return new JsonResponse($children);
-        } else {
+        if (!$id) {
             return new JsonResponse(array());
         }
+
+        $dm = $this->get('doctrine_mongodb')->getManager();
+        $youtubeAccount = $dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(array('_id' => $id));
+
+        if (!$youtubeAccount) {
+            return new JsonResponse(array());
+        }
+
+        $children = array();
+        foreach ($youtubeAccount->getChildren() as $child) {
+            $children[] = array(
+                'id' => $child->getId(),
+                'text' => $child->getTitle(),
+            );
+        }
+        
+        return new JsonResponse($children);
     }
 }

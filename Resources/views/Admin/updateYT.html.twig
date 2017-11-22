@@ -70,9 +70,8 @@
                 url: href,
                 method: 'POST',
                 success: function (response) {
-                    var data = jQuery.parseJSON(response);
                     $("#youtube_playlist_label").select2({
-                        data: data
+                        data: response
                     });
                 },
                 error: function (jqXHR, textStatus, errorThrown) {
@@ -92,12 +91,9 @@
                 url: href,
                 method: 'POST',
                 success: function (response) {
-                    var data = jQuery.parseJSON(response);
-
-                    var newOption = new Option('','any',false,false);
-                    $('#youtube_playlist_label').append(newOption).trigger('change');
+                    $('#youtube_playlist_label').append($('<option value="any">&nbsp;</option>'));
                     $("#youtube_playlist_label").select2({
-                        data: data
+                        data: response
                     });
                 },
                 error: function (jqXHR, textStatus, errorThrown) {
