@@ -91,7 +91,7 @@ class YoutubeService
         $track = null;
         $opencastId = $multimediaObject->getProperty('opencast');
         if ($opencastId !== null) {
-            $track = $multimediaObject->getFilteredTrackWithTags(array(), array('sbs'), array('html5'), array(), false);
+            $track = $multimediaObject->getFilteredTrackWithTags(array(), array('sbs'), array(), array(), false);
         } //Or array('sbs','html5') ??
         else {
             $track = $multimediaObject->getTrackWithTag($this->defaultTrackUpload); //TODO get Only the video track with tag html5
