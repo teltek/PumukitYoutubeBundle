@@ -78,6 +78,14 @@
         <source>Participating</source>
         <target>Participan</target>
       </trans-unit>
+      <trans-unit id="32" resname="Add new Youtube account">
+        <source>Add new Youtube account</source>
+        <target>Añadir cuenta de Youtube</target>
+      </trans-unit>
+      <trans-unit id="33" resname="Add new Youtube account playlist">
+        <source>Add new Youtube account playlist</source>
+        <target>Añadir nueva playlist de Youtube</target>
+      </trans-unit>
     </body>
   </file>
 </xliff>
