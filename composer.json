@@ -4,7 +4,7 @@
     "description": "Youtube bundle for Symfony2 to upload videos to Youtube and other features",
     "keywords": ["youtube", "uploader", "upload", "videos", "symfony2", "bundle", "pumukit", "teltek"],
     "homepage": "https://github.com/teltek/PuMuKIT2-youtube-bundle",
-    "license": "Copyright",
+    "license": "proprietary",
     "authors": [
         {
             "name": "Teltek Team",
