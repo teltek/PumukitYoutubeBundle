@@ -70,9 +70,12 @@ EOT
         foreach ($youtubes as $youtube) {
             $multimediaObject = $this->findByYoutubeIdAndPumukit1Id($youtube, false);
             if ($multimediaObject == null) {
-                $msg = sprintf("No multimedia object for YouTube document %s\n", $youtube->getId());
-                echo $msg;
-                $this->logger->addInfo($msg);
+                $multimediaObject = $this->findByYoutubeId($youtube);
+                if ($multimediaObject == null) {
+                    $msg = sprintf("No multimedia object for YouTube document %s\n", $youtube->getId());
+                    echo $msg;
+                    $this->logger->addInfo($msg);
+                }
                 continue;
             }
             try {
@@ -120,6 +123,14 @@ EOT
             ->field('properties.youtube')->equals($youtube->getId())
             ->field('properties.origin')->notEqual('youtube')
             ->field('properties.pumukit1id')->exists($pumukit1Id)
+            ->getQuery()
+            ->getSingleResult();
+    }
+
+    private function findByYoutubeId(Youtube $youtube)
+    {
+        return $this->mmobjRepo->createQueryBuilder()
+            ->field('properties.youtube')->equals($youtube->getId())
             ->getQuery()
             ->getSingleResult();
     }

@@ -91,7 +91,7 @@ class YoutubeService
         $track = null;
         $opencastId = $multimediaObject->getProperty('opencast');
         if ($opencastId !== null) {
-            $track = $multimediaObject->getFilteredTrackWithTags(array(), array('sbs'), array('html5'), array(), false);
+            $track = $multimediaObject->getFilteredTrackWithTags(array(), array('sbs'), array(), array(), false);
         } //Or array('sbs','html5') ??
         else {
             $track = $multimediaObject->getTrackWithTag($this->defaultTrackUpload); //TODO get Only the video track with tag html5
@@ -155,7 +155,7 @@ class YoutubeService
         $this->dm->flush();
         $youtubeTag = $this->tagRepo->findOneByCod(self::PUB_CHANNEL_YOUTUBE);
         if (null != $youtubeTag) {
-            $addedTags = $this->tagService->addTagToMultimediaObject($multimediaObject, $youtubeTag->getId());
+            $this->tagService->addTagToMultimediaObject($multimediaObject, $youtubeTag->getId());
         } else {
             $errorLog = __CLASS__.' ['.__FUNCTION__
                        .'] There is no Youtube tag defined with code PUCHYOUTUBE.';
@@ -204,7 +204,7 @@ class YoutubeService
         if ($aResult['out'] != null) {
             $youtube->setPlaylist($playlistId, $aResult['out']);
             if (!$multimediaObject->containsTagWithCod($playlistTag->getCod())) {
-                $addedTags = $this->tagService->addTagToMultimediaObject($multimediaObject, $playlistTag->getId(), false);
+                $this->tagService->addTagToMultimediaObject($multimediaObject, $playlistTag->getId(), false);
             }
             $this->dm->persist($youtube);
             $this->dm->flush();
@@ -461,13 +461,11 @@ class YoutubeService
             return 0;
         }
         $this->checkAndAddDefaultPlaylistTag($multimediaObject);
-        $has_playlist = false;
         foreach ($multimediaObject->getTags() as $embedTag) {
             if (!$embedTag->isDescendantOfByCod($this->METATAG_PLAYLIST_COD)) {
                 //This is not the tag you are looking for
                 continue;
             }
-            $has_playlist = true;
             $playlistTag = $this->tagRepo->findOneByCod($embedTag->getCod());
             $playlistId = $playlistTag->getProperty('youtube');
 
@@ -545,7 +543,7 @@ class YoutubeService
                 } elseif ($this->DELETE_PLAYLISTS) {
                     $msg = sprintf('Deleting tag "%s" (%s) because it doesn\'t exist on YouTube', $tag->getTitle(), $tag->getCod());
                     echo $msg;
-                    $this->logger->warn($msg);
+                    $this->logger->warning($msg);
                     $this->deletePumukitPlaylist($tag);
                 }
             } else {
@@ -572,7 +570,7 @@ class YoutubeService
                 } elseif ($this->DELETE_PLAYLISTS) {
                     $msg = sprintf('Deleting YouTube playlist "%s" (%s) because it doesn\'t exist locally', $ytPlaylist['title'], $ytPlaylist['id']);
                     echo $msg;
-                    $this->logger->warn($msg);
+                    $this->logger->warning($msg);
                     $this->deleteYoutubePlaylist($ytPlaylist);
                 }
             }
@@ -855,14 +853,20 @@ class YoutubeService
             $body = $this->buildEmailBody($cause, $succeed, $failed, $errors);
             if ($body) {
                 $error = $this->getError($errors);
-                $emailTo = $this->senderService->getSenderEmail();
+                $emailTo = $this->senderService->getAdminEmail();
                 $template = 'PumukitNotificationBundle:Email:notification.html.twig';
                 $parameters = array('subject' => $subject, 'body' => $body, 'sender_name' => $this->senderService->getSenderName());
                 $output = $this->senderService->sendNotification($emailTo, $subject, $template, $parameters, $error);
                 if (0 < $output) {
-                    $infoLog = __CLASS__.' ['.__FUNCTION__
-                      .'] Sent notification email to "'.$emailTo.'"';
-                    $this->logger->addInfo($infoLog);
+                    if (is_array($emailTo)) {
+                        foreach ($emailTo as $email) {
+                            $infoLog = __CLASS__.' ['.__FUNCTION__.'] Sent notification email to "'.$email.'"';
+                            $this->logger->addInfo($infoLog);
+                        }
+                    } else {
+                        $infoLog = __CLASS__.' ['.__FUNCTION__.'] Sent notification email to "'.$emailTo.'"';
+                        $this->logger->addInfo($infoLog);
+                    }
                 } else {
                     $infoLog = __CLASS__.' ['.__FUNCTION__
                       .'] Unable to send notification email to "'
@@ -964,6 +968,11 @@ class YoutubeService
 
     /**
      * Get title for youtube.
+     *
+     * @param MultimediaObject $multimediaObject
+     * @param int              $limit
+     *
+     * @return bool|string
      */
     private function getTitleForYoutube(MultimediaObject $multimediaObject, $limit = 100)
     {
@@ -991,6 +1000,10 @@ class YoutubeService
 
     /**
      * Get description for youtube.
+     *
+     * @param MultimediaObject $multimediaObject
+     *
+     * @return string
      */
     private function getDescriptionForYoutube(MultimediaObject $multimediaObject)
     {
@@ -1011,6 +1024,10 @@ class YoutubeService
 
     /**
      * Get tags for youtube.
+     *
+     * @param MultimediaObject $multimediaObject
+     *
+     * @return array
      */
     private function getTagsForYoutube(MultimediaObject $multimediaObject)
     {
@@ -1131,7 +1148,7 @@ class YoutubeService
      * GetEmbed
      * Returns the html embed (iframe) code for a given youtubeId.
      *
-     * @param string youtubeId
+     * @param string $youtubeId
      *
      * @return string
      */
