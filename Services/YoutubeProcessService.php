@@ -159,8 +159,8 @@ class YoutubeProcessService
         $builder->setPrefix('python');
         array_unshift($aCommandArguments, $sFile);
 
-        array_push($aCommandArguments, "--account");
-        array_push($aCommandArguments, "pumukit-oauth2");
+        array_push($aCommandArguments, '--account');
+        array_push($aCommandArguments, 'pumukit-oauth2');
 
         $builder->setArguments($aCommandArguments);
         $builder->setTimeout($this->process_timeout);
