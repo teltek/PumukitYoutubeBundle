@@ -3,6 +3,7 @@
 namespace Pumukit\YoutubeBundle\Tests\Document;
 
 use Pumukit\YoutubeBundle\Document\Youtube;
+use Pumukit\YoutubeBundle\Document\Caption;
 
 class YoutubeTest extends \PHPUnit_Framework_TestCase
 {
@@ -19,6 +20,14 @@ class YoutubeTest extends \PHPUnit_Framework_TestCase
         $multimediaObjectUpdateDate = new \DateTime('2015-08-14 03:05');
         $syncMetadataDate = new \DateTime('2015-08-14 04:05');
 
+        $caption = new Caption();
+        $language = 'es';
+        $name = 'test';
+        $materialId = 'materialId';
+        $caption->setLanguage($language);
+        $caption->setName($name);
+        $caption->setMaterialId($materialId);
+
         $youtube = new Youtube();
 
         $youtube->setYoutubeId($youtubeId);
@@ -30,6 +39,7 @@ class YoutubeTest extends \PHPUnit_Framework_TestCase
         $youtube->setUpdatePlaylist($updatePlaylist);
         $youtube->setMultimediaObjectUpdateDate($multimediaObjectUpdateDate);
         $youtube->setSyncMetadataDate($syncMetadataDate);
+        $youtube->addCaption($caption);
 
         $this->assertEquals($youtubeId, $youtube->getYoutubeId());
         $this->assertEquals($link, $youtube->getLink());
@@ -40,5 +50,6 @@ class YoutubeTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($updatePlaylist, $youtube->getUpdatePlaylist());
         $this->assertEquals($multimediaObjectUpdateDate, $youtube->getMultimediaObjectUpdateDate());
         $this->assertEquals($syncMetadataDate, $youtube->getSyncMetadataDate());
+        $this->assertEquals($caption, $youtube->getCaptionWithLanguage($language));
     }
 }
