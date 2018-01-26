@@ -123,6 +123,36 @@ class YoutubeProcessService
         return $this->createProcess($sFile);
     }
 
+    public function listCaptions($youtube)
+    {
+        $sFile = 'listCaptions.py';
+        $aCommandArguments = array();
+        $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--videoid', $youtube->getYoutubeId());
+
+        return $this->createProcess($sFile, $aCommandArguments);
+    }
+
+    public function insertCaption($youtube, $name, $language, $file)
+    {
+        $sFile = 'insertCaption.py';
+        $aCommandArguments = array();
+        $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--videoid', $youtube->getYoutubeId());
+        $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--name', $name);
+        $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--language', $language);
+        $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--file', $file);
+
+        return $this->createProcess($sFile, $aCommandArguments);
+    }
+
+    public function deleteCaption($captionId)
+    {
+        $sFile = 'deleteCaption.py';
+        $aCommandArguments = array();
+        $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--captionid', $captionId);
+
+        return $this->createProcess($sFile, $aCommandArguments);
+    }
+
     private function createProcess($sFile, $aCommandArguments = array())
     {
         $builder = new ProcessBuilder();
