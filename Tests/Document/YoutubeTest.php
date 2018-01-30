@@ -21,12 +21,16 @@ class YoutubeTest extends \PHPUnit_Framework_TestCase
         $syncMetadataDate = new \DateTime('2015-08-14 04:05');
 
         $caption = new Caption();
+        $materialId = 'materialId';
+        $captionId = 'PLP01yHXb6beuKo1OkzvMyosKpseuN9eXPRaaOFlurh_9QaY6CXRXQ==';
         $language = 'es';
         $name = 'test';
-        $materialId = 'materialId';
+        $isDraft = false;
+        $caption->setMaterialId($materialId);
+        $caption->setCaptionId($captionId);
         $caption->setLanguage($language);
         $caption->setName($name);
-        $caption->setMaterialId($materialId);
+        $caption->setIsDraft($isDraft);
 
         $youtube = new Youtube();
 
@@ -51,5 +55,14 @@ class YoutubeTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($multimediaObjectUpdateDate, $youtube->getMultimediaObjectUpdateDate());
         $this->assertEquals($syncMetadataDate, $youtube->getSyncMetadataDate());
         $this->assertEquals($caption, $youtube->getCaptionWithLanguage($language));
+
+        $yCaption = $youtube->getCaptions()[0];
+
+        $this->assertEquals($caption, $yCaption);
+        $this->assertEquals($materialId, $yCaption->getMaterialId());
+        $this->assertEquals($captionId, $yCaption->getCaptionId());
+        $this->assertEquals($language, $yCaption->getLanguage());
+        $this->assertEquals($name, $yCaption->getName());
+        $this->assertEquals($isDraft, $yCaption->getIsDraft());
     }
 }
