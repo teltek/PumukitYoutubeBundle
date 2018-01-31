@@ -10,7 +10,6 @@ from optparse import OptionParser
 
 from py_pumukit_lib import get_authenticated_service
 
-
 # NOTE: Issue #16756
 # Youtube insert Captions API accepts Media MIME types: text/xml, application/octet-stream, */*
 # Python discovery.py from google-api-python-client-1.2 uses mimetypes to check the MIME type
@@ -26,6 +25,17 @@ mimetypes.add_type('application/octet-stream', '.ttml')
 def upload_caption(youtube, video_id, language, name, file):
     """
     Call the API's captions.insert method to upload a caption track in published status.
+    Output format example:
+    {
+        "out": {
+            "captionid": "XYZ-Youtube-Caption-Id",
+            "name": "Subtitles in English",
+            "language": "en",
+            "is_draft": False,
+            "last_updated": "2018-01-31 09:00:00"
+        },
+        "error": False
+    }
     """
     out = {'error': False, 'out': None}
     insert_result = youtube.captions().insert(
@@ -41,11 +51,13 @@ def upload_caption(youtube, video_id, language, name, file):
         media_body=file
     ).execute()
 
-    id = insert_result["id"]
-    name = insert_result["snippet"]["name"]
-    language = insert_result["snippet"]["language"]
-    status = insert_result["snippet"]["status"]
-    out['out'] = "Uploaded caption track '%s(%s) in '%s' language, '%s' status." % (name, id, language, status)
+    out['out'] = {
+        'captionid': insert_result["id"],
+        'name': insert_result["snippet"]["name"],
+        'language': insert_result["snippet"]["language"],
+        'is_draft': insert_result["snippet"]["isDraft"],
+        'last_updated': insert_result["snippet"]["lastUpdated"]
+    }
 
     return out
 

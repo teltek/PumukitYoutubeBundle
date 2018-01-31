@@ -26,6 +26,30 @@ mimetypes.add_type('application/octet-stream', '.ttml')
 def list_captions(youtube, video_id):
     """
     Call the API's captions.list method to list the existing caption tracks.
+    Output format example:
+    {
+        "out": {
+            "XYZ-Youtube-Caption-Id-1": {
+                "name": "Subtitles in English",
+                "language": "en",
+                "is_draft": False,
+                "last_updated": "2018-01-31 09:00:00"
+            },
+            "XYZ-Youtube-Caption-Id-2": {
+                "name": "Subtitles in Spanish",
+                "language": "es",
+                "is_draft": False,
+                "last_updated": "2018-01-31 09:01:00"
+            },
+            "XYZ-Youtube-Caption-Id-3": {
+                "name": "Subtitles in French",
+                "language": "fr",
+                "is_draft": False,
+                "last_updated": "2018-01-31 09:02:00"
+            }
+        },
+        "error": False
+    }
     """
     out = {'error': False, 'out': None}
     results = youtube.captions().list(
@@ -35,10 +59,12 @@ def list_captions(youtube, video_id):
 
     out['out'] = {}
     for item in results["items"]:
-        id = item["id"]
-        name = item["snippet"]["name"]
-        language = item["snippet"]["language"]
-        out['out'][id] = "Caption track '%s(%s)' in '%s' language." % (name, id, language)
+        caption_id = item["id"]
+        out['out'][caption_id] = {}
+        out['out'][caption_id]['name'] = item["snippet"]["name"]
+        out['out'][caption_id]['language'] = item["snippet"]["language"]
+        out['out'][caption_id]['is_draft'] = item["snippet"]["isDraft"]
+        out['out'][caption_id]['last_updated'] = item["snippet"]["lastUpdated"]
 
     return out
 
