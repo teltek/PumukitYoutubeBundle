@@ -17,26 +17,26 @@ class YoutubeService
     const YOUTUBE_PLAYLIST_URL = 'https://www.youtube.com/playlist?list=';
     const PUB_CHANNEL_YOUTUBE = 'PUCHYOUTUBE';
 
-    private $dm;
-    private $router;
-    private $tagService;
-    private $logger;
-    private $senderService;
-    private $translator;
-    private $youtubeRepo;
-    private $tagRepo;
-    private $mmobjRepo;
-    private $youtubeProcessService;
-    private $playlistPrivacyStatus;
-    private $ytLocale;
-    private $syncStatus;
-    private $USE_DEFAULT_PLAYLIST;
-    private $DEFAULT_PLAYLIST_COD;
-    private $DEFAULT_PLAYLIST_TITLE;
-    private $METATAG_PLAYLIST_COD;
-    private $PLAYLISTS_MASTER;
-    private $DELETE_PLAYLISTS;
-    private $defaultTrackUpload;
+    protected $dm;
+    protected $router;
+    protected $tagService;
+    protected $logger;
+    protected $senderService;
+    protected $translator;
+    protected $youtubeRepo;
+    protected $tagRepo;
+    protected $mmobjRepo;
+    protected $youtubeProcessService;
+    protected $playlistPrivacyStatus;
+    protected $ytLocale;
+    protected $syncStatus;
+    protected $USE_DEFAULT_PLAYLIST;
+    protected $DEFAULT_PLAYLIST_COD;
+    protected $DEFAULT_PLAYLIST_TITLE;
+    protected $METATAG_PLAYLIST_COD;
+    protected $PLAYLISTS_MASTER;
+    protected $DELETE_PLAYLISTS;
+    protected $defaultTrackUpload;
 
     public static $status = array(
         0 => 'public',
@@ -586,7 +586,7 @@ class YoutubeService
      *
      * @throws \Exception
      */
-    private function createYoutubePlaylist(Tag $tag)
+    protected function createYoutubePlaylist(Tag $tag)
     {
         echo 'create On Youtube: '.$tag->getTitle($this->ytLocale)."\n";
 
@@ -619,7 +619,7 @@ class YoutubeService
      *
      * @return Tag
      */
-    private function createPumukitPlaylist($youtubePlaylist)
+    protected function createPumukitPlaylist($youtubePlaylist)
     {
         echo 'create On Pumukit: '.$youtubePlaylist['title']."\n";
         $metatag = $this->getPlaylistMetaTag();
@@ -647,7 +647,7 @@ class YoutubeService
      *
      * @throws \Exception
      */
-    private function deleteYoutubePlaylist($youtubePlaylist)
+    protected function deleteYoutubePlaylist($youtubePlaylist)
     {
         echo 'delete On Youtube: '.$youtubePlaylist['title']."\n";
 
@@ -667,7 +667,7 @@ class YoutubeService
      *
      * @param Tag $tag
      */
-    private function deletePumukitPlaylist(Tag $tag)
+    protected function deletePumukitPlaylist(Tag $tag)
     {
         echo 'delete On Pumukit: '.$tag->getTitle($this->ytLocale)."\n";
         $multimediaObjects = $this->mmobjRepo->findWithTag($tag);
@@ -686,12 +686,12 @@ class YoutubeService
     }
 
     //TODO Update Scripts:
-    private function updateYoutubePlaylist(Tag $tag)
+    protected function updateYoutubePlaylist(Tag $tag)
     {
         echo 'update from Pumukit: '.$tag->getTitle($this->ytLocale)."\n";
     }
 
-    private function updatePumukitPlaylist(Tag $tag, $youtubePlaylist = null)
+    protected function updatePumukitPlaylist(Tag $tag, $youtubePlaylist = null)
     {
         echo 'update from Youtube: '.$tag->getTitle($this->ytLocale)."\n";
     }
@@ -749,7 +749,7 @@ class YoutubeService
      *
      * @throws \Exception
      */
-    private function checkAndAddDefaultPlaylistTag(MultimediaObject $multimediaObject)
+    protected function checkAndAddDefaultPlaylistTag(MultimediaObject $multimediaObject)
     {
         if (!$this->USE_DEFAULT_PLAYLIST) {
             return 0;
@@ -779,7 +779,7 @@ class YoutubeService
      *
      * @return Tag
      */
-    private function getOrCreateDefaultTag()
+    protected function getOrCreateDefaultTag()
     {
         $playlistTag = $this->tagRepo->findOneByCod($this->DEFAULT_PLAYLIST_COD);
         if (isset($playlistTag)) {
@@ -804,7 +804,7 @@ class YoutubeService
      *
      * @throws \Exception
      */
-    private function getPlaylistMetaTag()
+    protected function getPlaylistMetaTag()
     {
         static $metatag = null;
         if (!is_null($metatag)) {
@@ -828,7 +828,7 @@ class YoutubeService
      *
      * @return Tag
      */
-    private function getTagByYoutubeProperty($playlistId)
+    protected function getTagByYoutubeProperty($playlistId)
     {
         //return $this->tagRepo->getTagByProperty('youtube', $playlistId); //I like this option more (yet unimplemented)
         return $this->tagRepo->createQueryBuilder()
@@ -881,14 +881,14 @@ class YoutubeService
         return false;
     }
 
-    private function buildEmailSubject($cause = '')
+    protected function buildEmailSubject($cause = '')
     {
         $subject = ucfirst($cause).' of YouTube video(s)';
 
         return $subject;
     }
 
-    private function buildEmailBody($cause = '', $succeed = array(), $failed = array(), $errors = array())
+    protected function buildEmailBody($cause = '', $succeed = array(), $failed = array(), $errors = array())
     {
         $statusUpdate = array('finished publication', 'status removed', 'duplicated');
         $body = '';
@@ -923,7 +923,7 @@ class YoutubeService
         return $body;
     }
 
-    private function buildStatusUpdateBody($cause = '', $succeed = array())
+    protected function buildStatusUpdateBody($cause = '', $succeed = array())
     {
         $body = '';
         if ((array_key_exists('multimediaObject', $succeed)) && (array_key_exists('youtube', $succeed))) {
@@ -957,7 +957,7 @@ class YoutubeService
         return $body;
     }
 
-    private function getError($errors = array())
+    protected function getError($errors = array())
     {
         if (!empty($errors)) {
             return true;
@@ -974,7 +974,7 @@ class YoutubeService
      *
      * @return bool|string
      */
-    private function getTitleForYoutube(MultimediaObject $multimediaObject, $limit = 100)
+    protected function getTitleForYoutube(MultimediaObject $multimediaObject, $limit = 100)
     {
         $title = $multimediaObject->getTitle($this->ytLocale);
 
@@ -1005,7 +1005,7 @@ class YoutubeService
      *
      * @return string
      */
-    private function getDescriptionForYoutube(MultimediaObject $multimediaObject)
+    protected function getDescriptionForYoutube(MultimediaObject $multimediaObject)
     {
         $series = $multimediaObject->getSeries();
         $break = array('<br />', '<br/>');
@@ -1029,7 +1029,7 @@ class YoutubeService
      *
      * @return array
      */
-    private function getTagsForYoutube(MultimediaObject $multimediaObject)
+    protected function getTagsForYoutube(MultimediaObject $multimediaObject)
     {
         return $multimediaObject->getKeywords($this->ytLocale);
 
@@ -1051,7 +1051,7 @@ class YoutubeService
      *
      * @return Youtube
      */
-    private function getYoutubeDocument(MultimediaObject $multimediaObject)
+    protected function getYoutubeDocument(MultimediaObject $multimediaObject)
     {
         $youtube = $this->youtubeRepo->findOneByMultimediaObjectId($multimediaObject->getId());
         if ($youtube === null) {
@@ -1079,7 +1079,7 @@ class YoutubeService
      *
      * @throws \Exception
      */
-    private function fixRemovedYoutubeDocument(MultimediaObject $multimediaObject)
+    protected function fixRemovedYoutubeDocument(MultimediaObject $multimediaObject)
     {
         //Tries to find the 'youtubeurl' property to recreate the Youtube Document
         $youtubeUrl = $multimediaObject->getProperty('youtubeurl');
@@ -1122,7 +1122,7 @@ class YoutubeService
         return $youtube;
     }
 
-    private function deleteFromList($playlistItem, $youtube, $playlistId, $doFlush = true)
+    protected function deleteFromList($playlistItem, $youtube, $playlistId, $doFlush = true)
     {
         $aResult = $this->youtubeProcessService->deleteFromList($playlistItem);
         if ($aResult['error']) {
@@ -1152,7 +1152,7 @@ class YoutubeService
      *
      * @return string
      */
-    private function getEmbed($youtubeId)
+    protected function getEmbed($youtubeId)
     {
         return '<iframe width="853" height="480" src="http://www.youtube.com/embed/'.$youtubeId.'" frameborder="0" allowfullscreen></iframe>';
     }

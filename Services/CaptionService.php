@@ -2,49 +2,51 @@
 
 namespace Pumukit\YoutubeBundle\Services;
 
-use Doctrine\ODM\MongoDB\DocumentManager;
-use Symfony\Bundle\FrameworkBundle\Routing\Router;
-use Symfony\Component\HttpKernel\Log\LoggerInterface;
-use Symfony\Component\Translation\TranslatorInterface;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\YoutubeBundle\Document\Youtube;
-use Pumukit\NotificationBundle\Services\SenderService;
+use Pumukit\YoutubeBundle\Document\Caption;
 
-class YoutubeService
+class CaptionService extends YoutubeService
 {
-    private $dm;
-    private $router;
-    private $logger;
-    private $senderService;
-    private $translator;
-    private $youtubeRepo;
-    private $mmobjRepo;
-    private $youtubeProcessService;
-
-    public function __construct(DocumentManager $documentManager, Router $router, LoggerInterface $logger, SenderService $senderService = null, TranslatorInterface $translator, YoutubeProcessService $youtubeProcessService, $locale, $pumukitLocales)
-    {
-        $this->dm = $documentManager;
-        $this->router = $router;
-        $this->logger = $logger;
-        $this->senderService = $senderService;
-        $this->translator = $translator;
-        $this->youtubeProcessService = $youtubeProcessService;
-        $this->youtubeRepo = $this->dm->getRepository('PumukitYoutubeBundle:Youtube');
-        $this->mmobjRepo = $this->dm->getRepository('PumukitSchemaBundle:MultimediaObject');
-    }
-
-    public function listAll(MultimediaObject $multimediaObject)
+    public function listAllCaptions(MultimediaObject $multimediaObject)
     {
         $youtube = $this->getYoutubeDocument($multimediaObject);
         $result = $this->youtubeProcessService->listCaptions($youtube);
-        // TODO
+        if ($result['error']) {
+            $errorLog = __CLASS__.' ['.__FUNCTION__
+                       .'] Error in retrieve captions list: '.$result['error_out'];
+            $this->logger->addError($errorLog);
+            throw new \Exception($errorLog);
+        }
+
+        return $result['out'];
     }
 
-    public function upload(MultimediaObject $multimediaObject)
+    public function uploadCaption(MultimediaObject $multimediaObject, array $materialIds = array())
     {
         $youtube = $this->getYoutubeDocument($multimediaObject);
-        // TODO
-        /* $result = $this->youtubeProcessService->insertCaption($youtube, $name, $language, $file); */
+        $uploaded = array();
+        foreach ($materialIds as $materialId) {
+            $material = $multimediaObject->getMaterialById($materialId);
+            if ($material) {
+                $result = $this->youtubeProcessService->insertCaption($youtube, $material->getName(), $material->getLanguage(), $material->getPath());
+            }
+            if ($result['error']) {
+                $errorLog = __CLASS__.' ['.__FUNCTION__
+                  ."] Error in uploading Caption for Youtube video with id '"
+                  .$youtube->getId()."' and material Id '"
+                  .$materialId."': ".$result['error_out'];
+                $this->logger->addError($errorLog);
+                throw new \Exception($errorLog);
+            }
+            $caption = $this->createCaption($material, $result['out']);
+            $youtube->addCaption($caption);
+            $uploaded[] = $result['out'];
+        }
+        $this->dm->persist($youtube);
+        $this->dm->flush();
+
+        return $uploaded;
     }
 
     /**
@@ -56,9 +58,35 @@ class YoutubeService
      *
      * @throws \Exception
      */
-    public function delete(MultimediaObject $multimediaObject)
+    public function deleteCaption(MultimediaObject $multimediaObject, array $captionIds = array())
     {
         $youtube = $this->getYoutubeDocument($multimediaObject);
-        // TODO
-        /* $result = $this->youtubeProcessService->deleteCaption($captionId); */
+        foreach ($captionIds as $captionId) {
+            $result = $this->youtubeProcessService->deleteCaption($captionId);
+            if ($result['error']) {
+                $errorLog = __CLASS__.' ['.__FUNCTION__
+                  ."] Error in deleting Caption for Youtube video with id '"
+                  .$youtube->getId()."' and Caption id '"
+                  .$captionId."': ".$result['error_out'];
+                $this->logger->addError($errorLog);
+                throw new \Exception($errorLog);
+            }
+            $youtube->removeCaptionByCaptionId($captionId);
+        }
+        $this->dm->persist($youtube);
+        $this->dm->flush();
     }
+
+    protected function createCaption($material, $output)
+    {
+        $caption = new Caption();
+        $caption->setMaterialId($material->getId());
+        $caption->setCaptionId($output['captionid']);
+        $caption->setName($output['name']);
+        $caption->setLanguage($output['language']);
+        $caption->setLastUpdated(new \DateTime($output['last_updated']));
+        $caption->setIsDraft($output['is_draft']);
+
+        return $caption;
+    }
+}
