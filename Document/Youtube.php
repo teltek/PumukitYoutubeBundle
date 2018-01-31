@@ -420,12 +420,38 @@ class Youtube
     /**
      * Remove caption by id.
      *
+     * @param string $id
+     */
+    public function removeCaptionById($id)
+    {
+        $this->captions = $this->captions->filter(function ($caption) use ($id) {
+            return $caption->getId() !== $id;
+        });
+        $this->captions = new ArrayCollection(array_values($this->captions->toArray()));
+    }
+
+    /**
+     * Remove caption by caption id.
+     *
      * @param string $captionId
      */
-    public function removeCaptionById($captionId)
+    public function removeCaptionByCaptionId($captionId)
     {
         $this->captions = $this->captions->filter(function ($caption) use ($captionId) {
-            return $caption->getId() !== $captionId;
+            return $caption->getCaptionId() !== $captionId;
+        });
+        $this->captions = new ArrayCollection(array_values($this->captions->toArray()));
+    }
+
+    /**
+     * Remove caption by material id.
+     *
+     * @param string $materialId
+     */
+    public function removeCaptionByMaterialId($materialId)
+    {
+        $this->captions = $this->captions->filter(function ($caption) use ($materialId) {
+            return $caption->getMaterialId() !== $materialId;
         });
         $this->captions = new ArrayCollection(array_values($this->captions->toArray()));
     }
@@ -455,14 +481,14 @@ class Youtube
     /**
      * Get caption by id.
      *
-     * @param $captionId
+     * @param $id
      *
      * @return Caption|null
      */
-    public function getCaptionById($captionId)
+    public function getCaptionById($id)
     {
         foreach ($this->captions as $caption) {
-            if ($caption->getId() == $captionId) {
+            if ($caption->getId() == $id) {
                 return $caption;
             }
         }
@@ -471,13 +497,49 @@ class Youtube
     }
 
     /**
-     * Get captions with language.
+     * Get caption by caption id.
+     *
+     * @param $captionId
+     *
+     * @return Caption|null
+     */
+    public function getCaptionByCaptionId($captionId)
+    {
+        foreach ($this->captions as $caption) {
+            if ($caption->getCaptionId() == $captionId) {
+                return $caption;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Get caption by material id.
+     *
+     * @param $materialId
+     *
+     * @return Caption|null
+     */
+    public function getCaptionByMaterialId($materialId)
+    {
+        foreach ($this->captions as $caption) {
+            if ($caption->getMaterialId() == $materialId) {
+                return $caption;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Get captions by language.
      *
      * @param string $language
      *
      * @return array
      */
-    public function getCaptionsWithLanguage($language)
+    public function getCaptionsByLanguage($language)
     {
         $r = array();
 
@@ -491,13 +553,13 @@ class Youtube
     }
 
     /**
-     * Get caption with language.
+     * Get caption by language.
      *
      * @param string $language
      *
      * @return Caption|null
      */
-    public function getCaptionWithLanguage($language)
+    public function getCaptionByLanguage($language)
     {
         foreach ($this->captions as $caption) {
             if ($caption->getLanguage() === $language) {

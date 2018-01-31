@@ -47,11 +47,28 @@ class Caption
     private $name;
 
     /**
+     * @var date
+     *
+     * @MongoDB\Date
+     */
+    private $lastUpdated;
+
+    /**
      * @var bool
      *
      * @MongoDB\Boolean
      */
     private $isDraft = false;
+
+    /**
+     * Get id.
+     *
+     * @param string
+     */
+    public function getId()
+    {
+        return $this->id;
+    }
 
     /**
      * Set materialId.
@@ -131,6 +148,26 @@ class Caption
     public function getName()
     {
         return $this->name;
+    }
+
+    /**
+     * Set lastUpdated.
+     *
+     * @param string $lastUpdated
+     */
+    public function setLastUpdated($lastUpdated)
+    {
+        $this->lastUpdated = $lastUpdated;
+    }
+
+    /**
+     * Get lastUpdated.
+     *
+     * @return string
+     */
+    public function getLastUpdated()
+    {
+        return $this->lastUpdated;
     }
 
     /**
