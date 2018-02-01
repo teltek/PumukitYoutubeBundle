@@ -75,6 +75,8 @@ class CaptionService extends YoutubeService
         }
         $this->dm->persist($youtube);
         $this->dm->flush();
+
+        return 0;
     }
 
     protected function createCaption($material, $output)
