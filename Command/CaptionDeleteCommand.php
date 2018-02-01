@@ -67,8 +67,7 @@ EOT
                 if ($youtube == null) {
                     continue;
                 }
-                $mmMaterialIds = $this->getMmMaterialIds($multimediaObject);
-                $deleteCaptionIds = $this->getDeleteCaptionIds($youtube, $mmMaterialIds);
+                $deleteCaptionIds = $this->getDeleteCaptionIds($youtube, $multimediaObject);
                 $outDelete = $this->captionService->deleteCaption($multimediaObject, $deleteCaptionIds);
                 if (0 !== $outDelete) {
                     $errorLog = sprintf('%s [%s] Unknown error in deleting caption from Youtube of MultimediaObject with id %s: %s', __CLASS__, __FUNCTION__, $multimediaObject->getId(), $outDelete);
@@ -126,11 +125,13 @@ EOT
         return $materialIds;
     }
 
-    private function getDeleteCaptionIds(Youtube $youtube, array $materialIds = array())
+    private function getDeleteCaptionIds(Youtube $youtube, MultimediaObject $multimediaObject)
     {
+        $materialIds = $this->getMmMaterialIds($multimediaObject);
         $deleteCaptionIds = array();
         foreach ($youtube->getCaptions() as $caption) {
-            if (in_array($caption->getMaterialId(), $materialIds)) {
+            $material = $multimediaObject->getMaterialById($caption->getMaterialId());
+            if (in_array($caption->getMaterialId(), $materialIds) && !$material->isHide()) {
                 continue;
             }
             $deleteCaptionIds[] = $caption->getCaptionId();
