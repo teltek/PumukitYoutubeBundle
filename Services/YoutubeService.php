@@ -1051,7 +1051,7 @@ class YoutubeService
      *
      * @return Youtube
      */
-    protected function getYoutubeDocument(MultimediaObject $multimediaObject)
+    public function getYoutubeDocument(MultimediaObject $multimediaObject)
     {
         $youtube = $this->youtubeRepo->findOneByMultimediaObjectId($multimediaObject->getId());
         if ($youtube === null) {
