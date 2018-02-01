@@ -19,6 +19,7 @@ class YoutubeTest extends \PHPUnit_Framework_TestCase
         $updatePlaylist = true;
         $multimediaObjectUpdateDate = new \DateTime('2015-08-14 03:05');
         $syncMetadataDate = new \DateTime('2015-08-14 04:05');
+        $syncCaptionsDate = new \DateTime('2015-08-14 04:15');
 
         $caption = new Caption();
         $materialId = 'materialId';
@@ -45,6 +46,7 @@ class YoutubeTest extends \PHPUnit_Framework_TestCase
         $youtube->setUpdatePlaylist($updatePlaylist);
         $youtube->setMultimediaObjectUpdateDate($multimediaObjectUpdateDate);
         $youtube->setSyncMetadataDate($syncMetadataDate);
+        $youtube->setSyncCaptionsDate($syncCaptionsDate);
         $youtube->addCaption($caption);
 
         $this->assertEquals($youtubeId, $youtube->getYoutubeId());
@@ -56,6 +58,7 @@ class YoutubeTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($updatePlaylist, $youtube->getUpdatePlaylist());
         $this->assertEquals($multimediaObjectUpdateDate, $youtube->getMultimediaObjectUpdateDate());
         $this->assertEquals($syncMetadataDate, $youtube->getSyncMetadataDate());
+        $this->assertEquals($syncCaptionsDate, $youtube->getSyncCaptionsDate());
         $this->assertEquals($caption, $youtube->getCaptionByLanguage($language));
 
         $yCaption = $youtube->getCaptions()[0];

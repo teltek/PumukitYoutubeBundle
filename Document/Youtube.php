@@ -106,6 +106,13 @@ class Youtube
      *
      * @MongoDB\Date
      */
+    private $syncCaptionsDate;
+
+    /**
+     * @var date
+     *
+     * @MongoDB\Date
+     */
     private $uploadDate;
 
     /**
@@ -131,6 +138,7 @@ class Youtube
     {
         $this->multimediaObjectUpdateDate = new \DateTime('1970-01-01 09:00');
         $this->syncMetadataDate = new \DateTime('1980-01-01 10:00');
+        $this->syncCaptionsDate = new \DateTime('1980-01-01 10:00');
         $this->uploadDate = new \DateTime('1980-01-01 10:00');
         $this->captions = new ArrayCollection();
     }
@@ -372,6 +380,26 @@ class Youtube
     public function getSyncMetadataDate()
     {
         return $this->syncMetadataDate;
+    }
+
+    /**
+     * Set syncCaptionsDate.
+     *
+     * @param DateTime $syncCaptionsDate
+     */
+    public function setSyncCaptionsDate($syncCaptionsDate)
+    {
+        $this->syncCaptionsDate = $syncCaptionsDate;
+    }
+
+    /**
+     * Get syncCaptionsDate.
+     *
+     * @return datetime
+     */
+    public function getSyncCaptionsDate()
+    {
+        return $this->syncCaptionsDate;
     }
 
     /**
