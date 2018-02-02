@@ -50,7 +50,7 @@ EOT
             try {
                 $this->youtubeService->getAllYoutubePlaylists($login);
             } catch (\Exception $e) {
-                throw new \Exception(sprintf('Error getting playlist of account %s. To debug it execute `python getAllPlaylists.py --login %s`', $login, $login));
+                throw new \Exception(sprintf('Error getting playlist of account %s. To debug it execute `python getAllPlaylists.py --account %s`', $login, $login));
             }
         }
     }
