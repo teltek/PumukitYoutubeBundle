@@ -17,6 +17,7 @@ class YoutubeCheckCommand extends ContainerAwareCommand
     private $youtubeRepo = null;
 
     private $youtubeService;
+    private $youtubeProcessService;
     private $youtubeTag;
 
     private $logger;
@@ -28,8 +29,10 @@ class YoutubeCheckCommand extends ContainerAwareCommand
             ->setDescription('Check the YouTube configuration and API status')
             ->setHelp(
                 <<<'EOT'
-Check all the accounts configured into in PuMuKIT.
+Check:
 
+ - All the accounts configured into in PuMuKIT.
+ - The stats of all youtube videos in the platform.
 
 EOT
             );
@@ -38,6 +41,54 @@ EOT
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $this->checkAccounts();
+        $output->writeln('<info>* Youtube accounts checked</info>');
+        $result = $this->checkMultimediaObjects();
+        $output->writeln('<info>* Multimedia object statuses checked</info>');
+        $output->writeln(
+            sprintf(
+                '<info>    %s no_mm, %s from_pmk1, %s error_api, %s ok</info>',
+                $result['no_mm'], $result['from_pmk1'], $result['error_api'], $result['ok'])
+        );
+    }
+
+    private function checkMultimediaObjects()
+    {
+        $result = array(
+            'no_mm' => 0,
+            'from_pmk1' => 0,
+            'error_api' => 0,
+            'ok' => 0,
+        );
+
+        $statusArray = array(Youtube::STATUS_REMOVED, Youtube::STATUS_NOTIFIED_ERROR, Youtube::STATUS_DUPLICATED);
+        $youtubes = $this->youtubeRepo->getWithoutAnyStatus($statusArray);
+
+        foreach ($youtubes as $youtube) {
+            $multimediaObject = $this->findByYoutubeIdAndPumukit1Id($youtube, false);
+            if ($multimediaObject == null) {
+                $multimediaObject = $this->findByYoutubeId($youtube);
+                if ($multimediaObject == null) {
+                    ++$result['no_mm'];
+                } else {
+                    ++$result['from_pmk1'];
+                }
+                continue;
+            }
+
+            $processResult = $this->youtubeProcessService->getData(
+                'status',
+                $youtube->getYoutubeId(),
+                $youtube->getYoutubeAccount()
+            );
+
+            if ($processResult['error']) {
+                ++$result['error_api'];
+            } else {
+                ++$result['ok'];
+            }
+        }
+
+        return $result;
     }
 
     private function checkAccounts()
@@ -68,7 +119,30 @@ EOT
         }
 
         $this->youtubeService = $this->getContainer()->get('pumukityoutube.youtube');
+        $this->youtubeProcessService = $this->getContainer()->get('pumukityoutube.youtubeprocess');
 
         $this->logger = $this->getContainer()->get('monolog.logger.youtube');
+    }
+
+    private function findByYoutubeIdAndPumukit1Id(Youtube $youtube, $pumukit1Id = false)
+    {
+        return $this->mmobjRepo
+            ->createQueryBuilder()
+            ->field('properties.youtube')
+            ->equals($youtube->getId())
+            ->field('properties.origin')
+            ->notEqual('youtube')
+            ->field('properties.pumukit1id')
+            ->exists($pumukit1Id)
+            ->getQuery()
+            ->getSingleResult();
+    }
+
+    private function findByYoutubeId(Youtube $youtube)
+    {
+        return $this->mmobjRepo->createQueryBuilder()
+            ->field('properties.youtube')->equals($youtube->getId())
+            ->getQuery()
+            ->getSingleResult();
     }
 }
