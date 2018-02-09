@@ -568,6 +568,9 @@ class YoutubeService
                     $this->logger->info($msg);
                     $this->createPumukitPlaylist($ytPlaylist);
                 } elseif ($this->DELETE_PLAYLISTS) {
+                    if ($ytPlaylist['title'] == 'Favorites') {
+                        continue;
+                    }
                     $msg = sprintf('Deleting YouTube playlist "%s" (%s) because it doesn\'t exist locally', $ytPlaylist['title'], $ytPlaylist['id']);
                     echo $msg;
                     $this->logger->warning($msg);
