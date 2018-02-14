@@ -73,6 +73,44 @@ class YoutubeService
     }
 
     /**
+     * Check pending encoder jobs for a multimedia object.
+     *
+     * @param MultimediaObject $multimediaObject
+     *
+     * @return bool
+     */
+    public function hasPendingJobs(MultimediaObject $multimediaObject)
+    {
+        $repo = $this->dm->getRepository('PumukitEncoderBundle:Job');
+        $jobs = $repo->findNotFinishedByMultimediaObjectId($multimediaObject->getId());
+
+        return count($jobs) != 0;
+    }
+
+    /**
+     * Get track to upload into YouTube.
+     *
+     * @param MultimediaObject $multimediaObject
+     *
+     * @return null|Track
+     */
+    public function getTrack(MultimediaObject $multimediaObject)
+    {
+        $track = null;
+        $opencastId = $multimediaObject->getProperty('opencast');
+        if ($opencastId !== null) {
+            $track = $multimediaObject->getFilteredTrackWithTags(array(), array('sbs'), array(), array(), false);
+        } else {
+            $track = $multimediaObject->getTrackWithTag($this->defaultTrackUpload);
+        }
+        if ((null === $track) || ($track->isOnlyAudio())) {
+            $track = $multimediaObject->getTrackWithTag('master');
+        }
+
+        return $track;
+    }
+
+    /**
      * Upload
      * Given a multimedia object,
      * upload one track to Youtube.
@@ -88,18 +126,7 @@ class YoutubeService
      */
     public function upload(MultimediaObject $multimediaObject, $category = 27, $privacy = 'private', $force = false)
     {
-        $track = null;
-        $opencastId = $multimediaObject->getProperty('opencast');
-        if ($opencastId !== null) {
-            $track = $multimediaObject->getFilteredTrackWithTags(array(), array('sbs'), array(), array(), false);
-        } //Or array('sbs','html5') ??
-        else {
-            $track = $multimediaObject->getTrackWithTag($this->defaultTrackUpload); //TODO get Only the video track with tag html5
-        }
-        if ((null === $track) || ($track->isOnlyAudio())) {
-            $track = $multimediaObject->getTrackWithTag('master');
-        }
-
+        $track = $this->getTrack($multimediaObject);
         if ((null === $track) || ($track->isOnlyAudio())) {
             $errorLog = __CLASS__.' ['.__FUNCTION__."] Error, the Multimedia Object with id '".$multimediaObject->getId()."' has no track master.";
             $this->logger->addError($errorLog);
