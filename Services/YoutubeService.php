@@ -101,7 +101,7 @@ class YoutubeService
         }
 
         if ((null === $track) || ($track->isOnlyAudio())) {
-            $errorLog = __CLASS__.' ['.__FUNCTION__."] Error, the Multimedia Object with id '".$multimediaObject->getId()."' has no video master.";
+            $errorLog = __CLASS__.' ['.__FUNCTION__."] Error, the Multimedia Object with id '".$multimediaObject->getId()."' has no track master.";
             $this->logger->addError($errorLog);
             throw new \Exception($errorLog);
         }
