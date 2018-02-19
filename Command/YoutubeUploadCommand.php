@@ -85,7 +85,6 @@ EOT
     {
         foreach ($mms as $mm) {
             try {
-
                 if (!$this->youtubeService->getTrack($mm) && $this->youtubeService->hasPendingJobs($mm)) {
                     //TODO add log
                     continue;
