@@ -6,7 +6,6 @@ use Pumukit\YoutubeBundle\Services\YoutubeService;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
-use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\YoutubeBundle\Document\Youtube;
 
@@ -86,7 +85,7 @@ EOT
         foreach ($mms as $mm) {
             try {
                 if (!$this->youtubeService->getTrack($mm) && $this->youtubeService->hasPendingJobs($mm)) {
-                    //TODO add log
+                    $this->logger->addInfo("MultimediaObject with id $mm->getId() have pending jobs.");
                     continue;
                 }
 
