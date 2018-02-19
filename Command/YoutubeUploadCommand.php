@@ -6,7 +6,6 @@ use Pumukit\YoutubeBundle\Services\YoutubeService;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
-use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\YoutubeBundle\Document\Youtube;
 
@@ -85,6 +84,11 @@ EOT
     {
         foreach ($mms as $mm) {
             try {
+                if (!$this->youtubeService->getTrack($mm) && $this->youtubeService->hasPendingJobs($mm)) {
+                    $this->logger->addInfo("MultimediaObject with id $mm->getId() haven't valid track for Youtube and have pending jobs .");
+                    continue;
+                }
+
                 $infoLog = sprintf(
                     '%s [%s] Started uploading to Youtube of MultimediaObject with id %s',
                     __CLASS__,
