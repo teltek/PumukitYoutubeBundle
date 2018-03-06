@@ -10,7 +10,9 @@ from oauth2client.tools import argparser
 
 CLIENT_SECRETS_FILE = "client_secrets.json"
 OAUTH_TOKEN_FILE = "oauth2.json"
-SCOPE = "https://www.googleapis.com/auth/youtube"
+SCOPE_YOUTUBE = "https://www.googleapis.com/auth/youtube"
+SCOPE_YOUTUBE_MANAGE = "https://www.googleapis.com/auth/youtubepartner"
+SCOPE = [SCOPE_YOUTUBE, SCOPE_YOUTUBE_MANAGE]
 
 flow = flow_from_clientsecrets(CLIENT_SECRETS_FILE,
                         scope=SCOPE,

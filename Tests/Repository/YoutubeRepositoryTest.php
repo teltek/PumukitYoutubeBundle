@@ -4,6 +4,7 @@ namespace Pumukit\YoutubeBundle\Tests\Repository;
 
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Pumukit\YoutubeBundle\Document\Youtube;
+use Pumukit\YoutubeBundle\Document\Caption;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 
 class YoutubeRepositoryTest extends WebTestCase
@@ -371,5 +372,32 @@ class YoutubeRepositoryTest extends WebTestCase
         $this->assertFalse(in_array($youtube2->getId(), $youtubeIdsArray));
         $this->assertTrue(in_array($youtube3->getId(), $youtubeIdsArray));
         $this->assertTrue(in_array($youtube4->getId(), $youtubeIdsArray));
+    }
+
+    public function testRemoveCaptionById()
+    {
+        $caption1 = new Caption();
+        $caption2 = new Caption();
+        $caption3 = new Caption();
+
+        $youtube = new Youtube();
+        $youtube->addCaption($caption1);
+        $youtube->addCaption($caption2);
+        $youtube->addCaption($caption3);
+
+        $this->dm->persist($youtube);
+        $this->dm->flush();
+
+        $this->assertEquals($caption1, $youtube->getCaptionById($caption1->getId()));
+        $this->assertEquals($caption2, $youtube->getCaptionById($caption2->getId()));
+        $this->assertEquals($caption3, $youtube->getCaptionById($caption3->getId()));
+
+        $youtube->removeCaptionById($caption1->getId());
+        $this->dm->persist($youtube);
+        $this->dm->flush();
+
+        $this->assertNull($youtube->getCaptionById($caption1->getId()));
+        $this->assertEquals($caption2, $youtube->getCaptionById($caption2->getId()));
+        $this->assertEquals($caption3, $youtube->getCaptionById($caption3->getId()));
     }
 }

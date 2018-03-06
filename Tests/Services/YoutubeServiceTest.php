@@ -65,7 +65,9 @@ class YoutubeServiceTest extends WebTestCase
         $playlistMaster = array('pumukit', 'youtube');
         $deletePlaylists = false;
         $pumukitLocales = array('en');
-        $this->youtubeService = new YoutubeService($this->dm, $this->router, $this->tagService, $this->logger, $this->notificationSender, $this->translator, $this->youtubeProcessService, $this->playlistPrivacyStatus, $locale, $useDefaultPlaylist, $defaultPlaylistCod, $defaultPlaylistTitle, $metatagPlaylistCod, $playlistMaster, $deletePlaylists, $pumukitLocales);
+        $youtubeSyncStatus = false;
+        $defaultTrackUpload = 'master';
+        $this->youtubeService = new YoutubeService($this->dm, $this->router, $this->tagService, $this->logger, $this->notificationSender, $this->translator, $this->youtubeProcessService, $this->playlistPrivacyStatus, $locale, $useDefaultPlaylist, $defaultPlaylistCod, $defaultPlaylistTitle, $metatagPlaylistCod, $playlistMaster, $deletePlaylists, $pumukitLocales, $youtubeSyncStatus, $defaultTrackUpload);
         $this->resourcesDir = realpath(__DIR__.'/../Resources').'/';
     }
 

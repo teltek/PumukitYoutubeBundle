@@ -126,6 +126,18 @@ pumukit_youtube:
 
 If this parameter is not configured, the track by default is master. 
 
+### [OPTIONAL] Configure the allowed caption formats in `app/config/parameters.yml`
+
+```
+pumukit_youtube:
+    allowed_caption_mimetypes:
+        - vtt
+        - srt
+        - dfxp
+```
+
+If this parameter is not configured, the track by default is `vtt`.
+
 
 ### Clear cache
 
@@ -152,4 +164,6 @@ The recommendation on a production environment is to run commands every day, e.g
 40 23 * * *     /usr/bin/php /var/www/pumukit2/app/console youtube:update:status --env=prod
 40 23 * * *     /usr/bin/php /var/www/pumukit2/app/console youtube:upload --env=prod
 40 23 * * *     /usr/bin/php /var/www/pumukit2/app/console youtube:delete --env=prod
+40 23 * * *     /usr/bin/php /var/www/pumukit2/app/console youtube:caption:upload --env=prod
+40 23 * * *     /usr/bin/php /var/www/pumukit2/app/console youtube:caption:delete --env=prod
 ```

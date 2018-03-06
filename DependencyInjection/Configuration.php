@@ -80,6 +80,11 @@ class Configuration implements ConfigurationInterface
                 ->defaultValue('master')
                 ->info('Default track to youtube upload')
             ->end()
+            ->arrayNode('allowed_caption_mimetypes')
+                ->info('Determines allowed caption mimetypes to upload to Youtube. Default value: [vtt, dfxp]')
+              ->prototype('scalar')->end()
+              ->defaultValue(array('vtt'))
+            ->end()
           ->end();
 
         return $treeBuilder;
