@@ -64,7 +64,7 @@
         if(href) {
             $.ajax({
                 url: href,
-                method: 'POST',
+                method: 'GET',
                 success: function (response) {
                     $("#youtube_playlist_label").select2({
                         width: 'resolve',
@@ -88,7 +88,7 @@
             $('#youtube_playlist_label').empty();
             $.ajax({
                 url: href,
-                method: 'POST',
+                method: 'GET',
                 success: function (response) {
                     $('#youtube_playlist_label').append($('<option value="any">&nbsp;</option>'));
                     $("#youtube_playlist_label").select2({
