@@ -3,6 +3,7 @@
 namespace Pumukit\YoutubeBundle\Command;
 
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 
@@ -19,13 +20,17 @@ class YoutubeUpdateMetadataCommand extends ContainerAwareCommand
     private $failedUpdates = array();
     private $errors = array();
 
+    private $usePumukit1 = false;
+
     private $logger;
 
     protected function configure()
     {
-        $this->setName('youtube:update:metadata')->setDescription(
-            'Update Youtube metadata from Multimedia Objects'
-        )->setHelp(
+        $this
+            ->setName('youtube:update:metadata')
+            ->addOption('use-pmk1', null, InputOption::VALUE_NONE, 'Use multimedia objects from PuMuKIT1')
+            ->setDescription('Update Youtube metadata from Multimedia Objects')
+            ->setHelp(
             <<<'EOT'
 Command to upload a controlled videos to Youtube.
 
@@ -35,14 +40,12 @@ EOT
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $this->initParameters();
-
         $mms = $this->getMultimediaObjectsInYoutubeToUpdate();
         $this->updateVideosInYoutube($mms, $output);
         $this->checkResultsAndSendEmail();
     }
 
-    private function initParameters()
+    protected function initialize(InputInterface $input, OutputInterface $output)
     {
         $this->dm = $this->getContainer()->get('doctrine_mongodb')->getManager();
         $this->tagRepo = $this->dm->getRepository('PumukitSchemaBundle:Tag');
@@ -56,6 +59,8 @@ EOT
         $this->errors = array();
 
         $this->logger = $this->getContainer()->get('monolog.logger.youtube');
+
+        $this->usePumukit1 = $input->getOption('use-pmk1');
     }
 
     private function updateVideosInYoutube($mms, OutputInterface $output)
@@ -99,17 +104,20 @@ EOT
         }
 
         $mms = $this->mmobjRepo
-            ->createQueryBuilder()
-            ->field('properties.pumukit1id')
-            ->exists(false)
-            ->field('properties.origin')
-            ->notEqual('youtube')
-            ->field('properties.youtube')
-            ->in($youtubeIds)
+             ->createQueryBuilder()
+             ->field('properties.origin')
+             ->notEqual('youtube')
+             ->field('properties.youtube')
+             ->in($youtubeIds);
+
+        if (!$this->usePumukit1) {
+            $mms->field('properties.pumukit1id')
+                ->exists(false);
+        }
+
+        return $mms
             ->getQuery()
             ->execute();
-
-        return $mms;
     }
 
     private function checkResultsAndSendEmail()

@@ -2,12 +2,13 @@
 
 namespace Pumukit\YoutubeBundle\Command;
 
-use Pumukit\YoutubeBundle\Services\YoutubeService;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\YoutubeBundle\Document\Youtube;
+use Pumukit\YoutubeBundle\Services\YoutubeService;
 
 class YoutubeUploadCommand extends ContainerAwareCommand
 {
@@ -23,6 +24,8 @@ class YoutubeUploadCommand extends ContainerAwareCommand
     private $mmobjRepo = null;
     private $youtubeRepo = null;
 
+    private $usePumukit1 = false;
+
     private $logger;
     private $youtubeService;
 
@@ -32,7 +35,11 @@ class YoutubeUploadCommand extends ContainerAwareCommand
 
     protected function configure()
     {
-        $this->setName('youtube:upload')->setDescription('Upload videos from Multimedia Objects to Youtube')->setHelp(
+        $this
+            ->setName('youtube:upload')
+            ->addOption('use-pmk1', null, InputOption::VALUE_NONE, 'Use multimedia objects from PuMuKIT1')
+            ->setDescription('Upload videos from Multimedia Objects to Youtube')
+            ->setHelp(
                 <<<'EOT'
 Command to upload a controlled videos to Youtube.
 
@@ -42,8 +49,6 @@ EOT
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $this->initParameters();
-
         $newMultimediaObjects = $this->getNewMultimediaObjectsToUpload();
         $this->uploadVideosToYoutube($newMultimediaObjects, $output);
 
@@ -62,7 +67,7 @@ EOT
         $this->checkResultsAndSendEmail();
     }
 
-    private function initParameters()
+    protected function initialize(InputInterface $input, OutputInterface $output)
     {
         $this->dm = $this->getContainer()->get('doctrine_mongodb')->getManager();
         $this->tagRepo = $this->dm->getRepository('PumukitSchemaBundle:Tag');
@@ -78,6 +83,8 @@ EOT
         $this->okUploads = array();
         $this->failedUploads = array();
         $this->errors = array();
+
+        $this->usePumukit1 = $input->getOption('use-pmk1');
     }
 
     private function uploadVideosToYoutube($mms, OutputInterface $output)
@@ -148,11 +155,13 @@ EOT
             $aStatus = array(MultimediaObject::STATUS_PUBLISHED);
         }
 
-        return $this->mmobjRepo
-            ->createQueryBuilder()
-            ->field('properties.pumukit1id')
-            ->exists(false)
-            ->field('properties.origin')
+        $qb = $this->mmobjRepo->createQueryBuilder();
+
+        if (!$this->usePumukit1) {
+            $qb->field('properties.pumukit1id')->exists(false);
+        }
+
+        return $qb->field('properties.origin')
             ->notEqual('youtube')
             ->field('status')
             ->in($aStatus)

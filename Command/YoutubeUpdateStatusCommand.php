@@ -3,6 +3,7 @@
 namespace Pumukit\YoutubeBundle\Command;
 
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 use Pumukit\SchemaBundle\Document\Tag;
@@ -22,11 +23,17 @@ class YoutubeUpdateStatusCommand extends ContainerAwareCommand
     private $failedUpdates = array();
     private $errors = array();
 
+    private $usePumukit1 = false;
+
     private $logger;
 
     protected function configure()
     {
-        $this->setName('youtube:update:status')->setDescription('Update local YouTube status of the video')->setHelp(
+        $this
+            ->setName('youtube:update:status')
+            ->addOption('use-pmk1', null, InputOption::VALUE_NONE, 'Use multimedia objects from PuMuKIT1')
+            ->setDescription('Update local YouTube status of the video')
+            ->setHelp(
                 <<<'EOT'
 Update the YouTube status in PuMuKIT YouTube collection using the YouTube API. If enabled it send an email with a summary.
 
@@ -38,8 +45,6 @@ EOT
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $this->initParameters();
-
         $statusArray = array(Youtube::STATUS_REMOVED, Youtube::STATUS_NOTIFIED_ERROR, Youtube::STATUS_DUPLICATED);
         $youtubes = $this->youtubeRepo->getWithoutAnyStatus($statusArray);
 
@@ -47,7 +52,7 @@ EOT
         $this->checkResultsAndSendEmail();
     }
 
-    private function initParameters()
+    protected function initialize(InputInterface $input, OutputInterface $output)
     {
         $this->dm = $this->getContainer()->get('doctrine_mongodb')->getManager();
         $this->tagRepo = $this->dm->getRepository('PumukitSchemaBundle:Tag');
@@ -61,6 +66,8 @@ EOT
         $this->errors = array();
 
         $this->logger = $this->getContainer()->get('monolog.logger.youtube');
+
+        $this->usePumukit1 = $input->getOption('use-pmk1');
     }
 
     private function updateVideoStatusInYoutube($youtubes, OutputInterface $output)
@@ -118,14 +125,19 @@ EOT
 
     private function findByYoutubeIdAndPumukit1Id(Youtube $youtube, $pumukit1Id = false)
     {
-        return $this->mmobjRepo
+        $qb = $this->mmobjRepo
             ->createQueryBuilder()
             ->field('properties.youtube')
             ->equals($youtube->getId())
             ->field('properties.origin')
-            ->notEqual('youtube')
-            ->field('properties.pumukit1id')
-            ->exists($pumukit1Id)
+            ->notEqual('youtube');
+
+        if (!$this->usePumukit1) {
+            $qb->field('properties.pumukit1id')
+                ->exists($pumukit1Id);
+        }
+
+        return $qb
             ->getQuery()
             ->getSingleResult();
     }
