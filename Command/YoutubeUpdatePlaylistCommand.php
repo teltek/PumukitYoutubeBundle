@@ -3,6 +3,7 @@
 namespace Pumukit\YoutubeBundle\Command;
 
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 
@@ -24,12 +25,15 @@ class YoutubeUpdatePlaylistCommand extends ContainerAwareCommand
     private $failedUpdates = array();
     private $errors = array();
 
+    private $usePumukit1 = false;
+
     private $logger;
 
     protected function configure()
     {
         $this
             ->setName('youtube:update:playlist')
+            ->addOption('use-pmk1', null, InputOption::VALUE_NONE, 'Use multimedia objects from PuMuKIT1')
             ->setDescription('Update Youtube playlists from Multimedia Objects')
             ->setHelp(<<<'EOT'
 Command to update playlist in Youtube.
@@ -40,7 +44,6 @@ EOT
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $this->initParameters();
         $multimediaObjects = $this->createYoutubeQueryBuilder()
             ->field('properties.youtube')->exists(true)
             ->getQuery()
@@ -74,7 +77,7 @@ EOT
         $this->checkResultsAndSendEmail();
     }
 
-    private function initParameters()
+    protected function initialize(InputInterface $input, OutputInterface $output)
     {
         $this->dm = $this->getContainer()->get('doctrine_mongodb')->getManager();
         $this->tagRepo = $this->dm->getRepository('PumukitSchemaBundle:Tag');
@@ -88,13 +91,20 @@ EOT
         $this->errors = array();
 
         $this->logger = $this->getContainer()->get('monolog.logger.youtube');
+
+        $this->usePumukit1 = $input->getOption('use-pmk1');
     }
 
     private function createYoutubeQueryBuilder()
     {
-        return $this->mmobjRepo->createQueryBuilder()
-            ->field('properties.origin')->notEqual('youtube')
-            ->field('properties.pumukit1id')->exists(false);
+        $qb = $this->mmobjRepo->createQueryBuilder()
+            ->field('properties.origin')->notEqual('youtube');
+
+        if (!$this->usePumukit1) {
+            $qb->field('properties.pumukit1id')->exists(false);
+        }
+
+        return $qb;
     }
 
     private function checkResultsAndSendEmail()

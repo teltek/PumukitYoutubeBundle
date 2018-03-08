@@ -3,6 +3,7 @@
 namespace Pumukit\YoutubeBundle\Command;
 
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 use Pumukit\SchemaBundle\Document\Tag;
@@ -26,6 +27,8 @@ class YoutubeDeleteCommand extends ContainerAwareCommand
     private $failedRemoved = array();
     private $errors = array();
 
+    private $usePumukit1 = false;
+
     private $logger;
 
     private $syncStatus;
@@ -34,6 +37,7 @@ class YoutubeDeleteCommand extends ContainerAwareCommand
     {
         $this
             ->setName('youtube:delete')
+            ->addOption('use-pmk1', null, InputOption::VALUE_NONE, 'Use multimedia objects from PuMuKIT1')
             ->setDescription('Delete videos from Youtube')
             ->setHelp(<<<'EOT'
 Command to delete controlled videos from Youtube.
@@ -44,8 +48,6 @@ EOT
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $this->initParameters();
-
         $youtubeMongoIds = $this->youtubeRepo->getDistinctFieldWithStatusAndForce('_id', Youtube::STATUS_PUBLISHED, false);
         $publishedYoutubeIds = $this->getStringIds($youtubeMongoIds);
         if ($this->syncStatus) {
@@ -88,7 +90,7 @@ EOT
         $this->checkResultsAndSendEmail();
     }
 
-    private function initParameters()
+    protected function initialize(InputInterface $input, OutputInterface $output)
     {
         $this->dm = $this->getContainer()->get('doctrine_mongodb')->getManager();
         $this->tagRepo = $this->dm->getRepository('PumukitSchemaBundle:Tag');
@@ -102,6 +104,8 @@ EOT
         $this->errors = array();
 
         $this->logger = $this->getContainer()->get('monolog.logger.youtube');
+
+        $this->usePumukit1 = $input->getOption('use-pmk1');
     }
 
     private function deleteVideosFromYoutube($mms, OutputInterface $output)
@@ -206,10 +210,16 @@ EOT
 
     private function createYoutubeQueryBuilder($youtubeIds = array())
     {
-        return $this->mmobjRepo->createQueryBuilder()
-            ->field('properties.youtube')->in($youtubeIds)
-            ->field('properties.origin')->notEqual('youtube')
-            ->field('properties.pumukit1id')->exists(false);
+        $qb = $this->mmobjRepo
+           ->createQueryBuilder()
+           ->field('properties.youtube')->in($youtubeIds)
+           ->field('properties.origin')->notEqual('youtube');
+
+        if (!$this->usePumukit1) {
+            $qb->field('properties.pumukit1id')->exists(false);
+        }
+
+        return $qb;
     }
 
     private function checkResultsAndSendEmail()

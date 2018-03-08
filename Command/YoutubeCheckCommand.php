@@ -3,6 +3,7 @@
 namespace Pumukit\YoutubeBundle\Command;
 
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 use Pumukit\SchemaBundle\Document\Tag;
@@ -20,12 +21,15 @@ class YoutubeCheckCommand extends ContainerAwareCommand
     private $youtubeProcessService;
     private $youtubeTag;
 
+    private $usePumukit1 = false;
+
     private $logger;
 
     protected function configure()
     {
         $this
             ->setName('youtube:check')
+            ->addOption('use-pmk1', null, InputOption::VALUE_NONE, 'Use multimedia objects from PuMuKIT1')
             ->setDescription('Check the YouTube configuration and API status')
             ->setHelp(
                 <<<'EOT'
@@ -122,18 +126,25 @@ EOT
         $this->youtubeProcessService = $this->getContainer()->get('pumukityoutube.youtubeprocess');
 
         $this->logger = $this->getContainer()->get('monolog.logger.youtube');
+
+        $this->usePumukit1 = $input->getOption('use-pmk1');
     }
 
     private function findByYoutubeIdAndPumukit1Id(Youtube $youtube, $pumukit1Id = false)
     {
-        return $this->mmobjRepo
+        $qb = $this->mmobjRepo
             ->createQueryBuilder()
             ->field('properties.youtube')
             ->equals($youtube->getId())
             ->field('properties.origin')
-            ->notEqual('youtube')
-            ->field('properties.pumukit1id')
-            ->exists($pumukit1Id)
+            ->notEqual('youtube');
+
+        if (!$this->usePumukit1) {
+            $qb->field('properties.pumukit1id')
+                ->exists($pumukit1Id);
+        }
+
+        return $qb
             ->getQuery()
             ->getSingleResult();
     }
