@@ -69,16 +69,18 @@ EOT
                 }
                 $captionMaterialIds = $this->getCaptionsMaterialIds($youtube);
                 $newMaterialIds = $this->getNewMaterialIds($multimediaObject, $captionMaterialIds);
-                $outUpload = $this->captionService->uploadCaption($multimediaObject, $newMaterialIds);
-                if (!is_array($outUpload)) {
-                    $errorLog = sprintf('%s [%s] Unknown error in the upload caption to Youtube of MultimediaObject with id %s: %s', __CLASS__, __FUNCTION__, $multimediaObject->getId(), $outUpload);
-                    $this->logger->addError($errorLog);
-                    $this->output->writeln($errorLog);
-                    $this->failedUploads[] = $multimediaObject;
-                    $this->errors[] = $errorLog;
-                    continue;
+                if ($newMaterialIds) {
+                    $outUpload = $this->captionService->uploadCaption($multimediaObject, $newMaterialIds);
+                    if (!is_array($outUpload)) {
+                        $errorLog = sprintf('%s [%s] Unknown error in the upload caption to Youtube of MultimediaObject with id %s: %s', __CLASS__, __FUNCTION__, $multimediaObject->getId(), $outUpload);
+                        $this->logger->addError($errorLog);
+                        $this->output->writeln($errorLog);
+                        $this->failedUploads[] = $multimediaObject;
+                        $this->errors[] = $errorLog;
+                        continue;
+                    }
+                    $this->okUploads[] = $multimediaObject;
                 }
-                $this->okUploads[] = $multimediaObject;
             } catch (\Exception $e) {
                 $errorLog = sprintf('%s [%s] The upload of the caption from the Multimedia Object with id %s failed: %s', __CLASS__, __FUNCTION__, $multimediaObject->getId(), $e->getMessage());
                 $this->logger->addError($errorLog);
