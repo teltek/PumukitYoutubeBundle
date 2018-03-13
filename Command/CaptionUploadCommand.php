@@ -29,7 +29,8 @@ class CaptionUploadCommand extends ContainerAwareCommand
         $this
             ->setName('youtube:caption:upload')
             ->setDescription('Upload captions from Multimedia Objects Materials to Youtube')
-            ->setHelp(<<<'EOT'
+            ->setHelp(
+                <<<'EOT'
 Command to upload a controlled set of captions to Youtube.
 
 EOT

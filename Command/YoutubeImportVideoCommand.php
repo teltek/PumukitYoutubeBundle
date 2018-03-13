@@ -37,7 +37,8 @@ class YoutubeImportVideoCommand extends ContainerAwareCommand
             ->addOption('step', 'S', InputOption::VALUE_REQUIRED, 'Step of the importation. See help for more info', -99)
             ->addOption('tags', null, InputOption::VALUE_IS_ARRAY | InputOption::VALUE_OPTIONAL, 'Youtube tags to add in the object', array())
             ->addOption('force', null, InputOption::VALUE_NONE, 'Set this parameter force the execution of this action')
-            ->setHelp(<<<EOT
+            ->setHelp(
+                <<<EOT
 Command to create a multimedia object from Youtube.
 
 Steps:

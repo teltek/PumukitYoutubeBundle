@@ -29,7 +29,8 @@ class CaptionDeleteCommand extends ContainerAwareCommand
         $this
             ->setName('youtube:caption:delete')
             ->setDescription('Delete captions from Youtube')
-            ->setHelp(<<<'EOT'
+            ->setHelp(
+                <<<'EOT'
 Command to delete a controlled set of captions from Youtube.
 
 EOT
