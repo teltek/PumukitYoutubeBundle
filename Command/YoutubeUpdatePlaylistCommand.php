@@ -34,7 +34,8 @@ class YoutubeUpdatePlaylistCommand extends ContainerAwareCommand
         $this
             ->setName('youtube:update:playlist')
             ->setDescription('Update Youtube playlists from Multimedia Objects')
-            ->setHelp(<<<'EOT'
+            ->setHelp(
+                <<<'EOT'
 Command to update playlist in Youtube.
 
 EOT

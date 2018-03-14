@@ -35,7 +35,8 @@ class YoutubeDeleteCommand extends ContainerAwareCommand
         $this
             ->setName('youtube:delete')
             ->setDescription('Delete videos from Youtube')
-            ->setHelp(<<<'EOT'
+            ->setHelp(
+                <<<'EOT'
 Command to delete controlled videos from Youtube.
 
 EOT

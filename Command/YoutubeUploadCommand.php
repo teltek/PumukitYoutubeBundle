@@ -36,7 +36,8 @@ class YoutubeUploadCommand extends ContainerAwareCommand
         $this
             ->setName('youtube:upload')
             ->setDescription('Upload videos from Multimedia Objects to Youtube')
-            ->setHelp(<<<'EOT'
+            ->setHelp(
+                <<<'EOT'
 Command to upload a controlled videos to Youtube.
 
 EOT

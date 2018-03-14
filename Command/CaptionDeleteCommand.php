@@ -29,7 +29,8 @@ class CaptionDeleteCommand extends ContainerAwareCommand
         $this
             ->setName('youtube:caption:delete')
             ->setDescription('Delete captions from Youtube')
-            ->setHelp(<<<'EOT'
+            ->setHelp(
+                <<<'EOT'
 Command to delete a controlled set of captions from Youtube.
 
 EOT
@@ -68,16 +69,18 @@ EOT
                     continue;
                 }
                 $deleteCaptionIds = $this->getDeleteCaptionIds($youtube, $multimediaObject);
-                $outDelete = $this->captionService->deleteCaption($multimediaObject, $deleteCaptionIds);
-                if (0 !== $outDelete) {
-                    $errorLog = sprintf('%s [%s] Unknown error in deleting caption from Youtube of MultimediaObject with id %s: %s', __CLASS__, __FUNCTION__, $multimediaObject->getId(), $outDelete);
-                    $this->logger->addError($errorLog);
-                    $this->output->writeln($errorLog);
-                    $this->failedDelete[] = $multimediaObject;
-                    $this->errors[] = $errorLog;
-                    continue;
+                if ($deleteCaptionIds) {
+                    $outDelete = $this->captionService->deleteCaption($multimediaObject, $deleteCaptionIds);
+                    if (0 !== $outDelete) {
+                        $errorLog = sprintf('%s [%s] Unknown error in deleting caption from Youtube of MultimediaObject with id %s: %s', __CLASS__, __FUNCTION__, $multimediaObject->getId(), $outDelete);
+                        $this->logger->addError($errorLog);
+                        $this->output->writeln($errorLog);
+                        $this->failedDelete[] = $multimediaObject;
+                        $this->errors[] = $errorLog;
+                        continue;
+                    }
+                    $this->okDelete[] = $multimediaObject;
                 }
-                $this->okDelete[] = $multimediaObject;
             } catch (\Exception $e) {
                 $errorLog = sprintf('%s [%s] The deletion of the cpation from Youtube of MultimediaObject with id %s failed: %s', __CLASS__, __FUNCTION__, $multimediaObject->getId(), $e->getMessage());
                 $this->logger->addError($errorLog);
@@ -145,8 +148,8 @@ EOT
 
     private function checkResultsAndSendEmail()
     {
-        if (!empty($this->okUploads) || !empty($this->failedUploads)) {
-            $this->captionService->sendEmail('caption delete', $this->okUploads, $this->failedUploads, $this->errors);
+        if (!empty($this->okDelete) || !empty($this->failedDelete)) {
+            $this->captionService->sendEmail('caption delete', $this->okDelete, $this->failedDelete, $this->errors);
         }
     }
 }
