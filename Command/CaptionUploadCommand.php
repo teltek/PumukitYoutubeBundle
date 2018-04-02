@@ -149,7 +149,7 @@ EOT
 
     private function checkResultsAndSendEmail()
     {
-        if (!empty($this->okUploads) || !empty($this->failedUploads)) {
+        if (!empty($this->failedUploads)) {
             $this->captionService->sendEmail('caption upload', $this->okUploads, $this->failedUploads, $this->errors);
         }
     }
