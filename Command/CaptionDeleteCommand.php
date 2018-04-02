@@ -148,7 +148,7 @@ EOT
 
     private function checkResultsAndSendEmail()
     {
-        if (!empty($this->okDelete) || !empty($this->failedDelete)) {
+        if (!empty($this->failedDelete)) {
             $this->captionService->sendEmail('caption delete', $this->okDelete, $this->failedDelete, $this->errors);
         }
     }
