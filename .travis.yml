@@ -8,7 +8,6 @@ php:
 before_script:
   - composer self-update
   - composer -V
-  - composer install
   - composer require --dev friendsofphp/php-cs-fixer
 
 script:

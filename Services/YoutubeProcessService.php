@@ -38,7 +38,7 @@ class YoutubeProcessService
         return $this->createProcess($sFile, $aCommandArguments);
     }
 
-    public function updateVideo($youtube, $title, $description, $tags, $status = null, $login)
+    public function updateVideo($youtube, $title, $description, $tags, $status, $login)
     {
         $sFile = 'updateVideo.py';
         $aCommandArguments = array();
