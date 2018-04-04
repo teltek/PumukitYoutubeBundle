@@ -8,7 +8,7 @@ php:
 before_script:
   - composer self-update
   - composer -V
-  - composer require --dev friendsofphp/php-cs-fixer
+  - composer require --dev friendsofphp/php-cs-fixer --ignore-platform-reqs
 
 script:
     - find . -path ./vendor -prune -o -type f -name "*.php" -print0 | xargs -0 -n1 -P8 php -l
