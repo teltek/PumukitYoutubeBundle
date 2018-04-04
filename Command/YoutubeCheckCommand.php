@@ -69,9 +69,9 @@ EOT
 
         foreach ($youtubes as $youtube) {
             $multimediaObject = $this->findByYoutubeIdAndPumukit1Id($youtube, false);
-            if ($multimediaObject == null) {
+            if (null == $multimediaObject) {
                 $multimediaObject = $this->findByYoutubeId($youtube);
-                if ($multimediaObject == null) {
+                if (null == $multimediaObject) {
                     ++$result['no_mm'];
                 } else {
                     ++$result['from_pmk1'];
