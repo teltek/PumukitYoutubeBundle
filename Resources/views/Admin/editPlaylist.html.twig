@@ -1,5 +1,7 @@
 <div class="modal-header">
-    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+    </button>
     <h3 class="modal-title pumukitnewadmin-modal-title-margin" id="myModalLabel">{% trans %}Edit Youtube playlist {% endtrans %}</h3>
 </div>
 
@@ -17,15 +19,15 @@
 </div>
 
 <script type="text/javascript">
-    $('#pumukit_youtube_edit_playlist').on('submit', function(event) {
+    $('#pumukit_youtube_edit_playlist').on('submit', function (event) {
         event.preventDefault();
         $('#myModal').modal('hide');
         $.ajax({
             url: '{{ path('pumukit_youtube_edit_playlist', {'id': playlist.getId()}) }}',
             method: 'POST',
             data: $('#pumukit_youtube_edit_playlist').serialize(),
-            success: function(response, textStatus, jqXHR){
-                if (jqXHR.responseText.indexOf('modal-header') != -1){
+            success: function (response, textStatus, jqXHR) {
+                if (jqXHR.responseText.indexOf('modal-header') != -1) {
                     var message = '{% trans %}There was an error on editing Youtube playlist.{% endtrans %}';
                     no_success(message);
                 } else {
@@ -36,7 +38,7 @@
                     success(message);
                 }
             },
-            error: function(jqXHR, textStatus, errorThrown){
+            error: function (jqXHR, textStatus, errorThrown) {
                 no_success(errorThrown + ': ' + textStatus);
             }
         });

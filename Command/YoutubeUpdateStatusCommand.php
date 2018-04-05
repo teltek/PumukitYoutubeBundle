@@ -74,9 +74,9 @@ EOT
     {
         foreach ($youtubes as $youtube) {
             $multimediaObject = $this->findByYoutubeIdAndPumukit1Id($youtube, false);
-            if ($multimediaObject == null) {
+            if (null == $multimediaObject) {
                 $multimediaObject = $this->findByYoutubeId($youtube);
-                if ($multimediaObject == null) {
+                if (null == $multimediaObject) {
                     $msg = sprintf("No multimedia object for YouTube document %s\n", $youtube->getId());
                     echo $msg;
                     $this->logger->addInfo($msg);
