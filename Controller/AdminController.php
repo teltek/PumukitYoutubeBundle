@@ -68,7 +68,7 @@ class AdminController extends Controller
         $form = $this->createForm(new AccountType($translator, $locale));
 
         $form->handleRequest($request);
-        if ($request->getMethod() === 'POST' && $form->isValid()) {
+        if ('POST' === $request->getMethod() && $form->isValid()) {
             try {
                 $youtubeTag = $dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(
                     array('cod' => $this->youtubeTag)
@@ -126,7 +126,7 @@ class AdminController extends Controller
         $form->get('login')->setData($youtubeAccount->getProperty('login'));
 
         $form->handleRequest($request);
-        if ($request->getMethod() === 'POST' && $form->isValid()) {
+        if ('POST' === $request->getMethod() && $form->isValid()) {
             try {
                 $data = $form->getData();
 
@@ -220,7 +220,7 @@ class AdminController extends Controller
         $form = $this->createForm(new YoutubePlaylistType($translator, $locale));
 
         $form->handleRequest($request);
-        if ($request->getMethod() === 'POST' && $form->isValid()) {
+        if ('POST' === $request->getMethod() && $form->isValid()) {
             try {
                 $data = $form->getData();
 
@@ -273,7 +273,7 @@ class AdminController extends Controller
         $form = $this->createForm(new YoutubePlaylistType($translator, $locale), $playlist);
 
         $form->handleRequest($request);
-        if ($request->getMethod() === 'POST' && $form->isValid()) {
+        if ('POST' === $request->getMethod() && $form->isValid()) {
             try {
                 $data = $form->getData();
                 $playlist->setI18nTitle($data->getI18nTitle());
@@ -314,9 +314,9 @@ class AdminController extends Controller
         $playlistSelectedTag = '';
         foreach ($multimediaObject->getTags() as $tag) {
             if ($tag->isDescendantOf($youtubeAccounts)) {
-                if ($tag->getLevel() == 3) {
+                if (3 == $tag->getLevel()) {
                     $accountSelectedTag = $tag->getId();
-                } elseif ($tag->getLevel() == 4) {
+                } elseif (4 == $tag->getLevel()) {
                     $playlistSelectedTag = $tag->getId();
                 }
             }
@@ -356,7 +356,7 @@ class AdminController extends Controller
                 'text' => $child->getTitle(),
             );
         }
-        
+
         return new JsonResponse($children);
     }
 }

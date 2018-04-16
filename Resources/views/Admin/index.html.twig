@@ -25,39 +25,39 @@
     </div>
 
     <script type="text/javascript">
-        $('.youtube_account_option').on('click', function(event) {
+        $('.youtube_account_option').on('click', function (event) {
             event.preventDefault();
             $.ajax({
                 url: $(this).data('href'),
                 method: 'POST',
-                success: function(response, textStatus, jqXHR){
-                    if (jqXHR.responseText.indexOf('modal-header') != -1){
+                success: function (response, textStatus, jqXHR) {
+                    if (jqXHR.responseText.indexOf('modal-header') != -1) {
                         var message = '{% trans %}There was an error on deleting Youtube account.{% endtrans %}';
-                    no_success(message);
-                } else {
-                    var mm = "{{ path('pumukit_youtube_admin_list') }}";
-                    $('#list_youtube_accounts').load(mm);
-                    var message = '{% trans %}Youtube account was successfully deleted.{% endtrans %}';
-                    success(message);
+                        no_success(message);
+                    } else {
+                        var mm = "{{ path('pumukit_youtube_admin_list') }}";
+                        $('#list_youtube_accounts').load(mm);
+                        var message = '{% trans %}Youtube account was successfully deleted.{% endtrans %}';
+                        success(message);
+                    }
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    no_success(errorThrown + ': ' + textStatus);
                 }
-            },
-            error: function(jqXHR, textStatus, errorThrown){
-                no_success(errorThrown + ': ' + textStatus);
-            }
-        });
+            });
             return false;
         });
 
         function toggle_youtube_tag(id, element, level, cod) {
 
-            if(element.parentElement.classList.contains("expanded")){
+            if (element.parentElement.classList.contains("expanded")) {
                 $(".c_" + cod).hide();
                 $(".c_" + cod + " .expanded").removeClass("expanded").addClass("collapsed");
-            }else{
-                if(element.parentElement.classList.contains("noload")) {
+            } else {
+                if (element.parentElement.classList.contains("noload")) {
                     element.parentElement.classList.remove("noload");
                     load_youtube_children_tag(id, cod);
-                }else {
+                } else {
                     $(".d_" + cod).show();
                 }
             }
@@ -67,12 +67,12 @@
 
         function load_youtube_children_tag(id, cod) {
             $(".c_" + cod).remove();
-            var tr = $('#row_tag_' +id);
+            var tr = $('#row_tag_' + id);
             var level = tr.data('level');
             var url = '{{ path('pumukit_youtube_children_tag', {'id': '___id___'}) }}';
-            $.ajax(url.replace('___id___', id) , {
+            $.ajax(url.replace('___id___', id), {
                 type: 'GET',
-                success: function(response) {
+                success: function (response) {
                     var t = tr.closest('tbody');
                     var ss = t.children();
                     tr.after(response);
@@ -83,7 +83,6 @@
             });
 
         }
-
 
 
     </script>

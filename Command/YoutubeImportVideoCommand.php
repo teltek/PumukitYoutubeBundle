@@ -470,7 +470,7 @@ EOT
         }
 
         $file = fopen($directory.'/'.$filename, 'w+');
-        $output = fputs($file, $data);
+        $output = fwrite($file, $data);
         $output2 = fclose($file);
 
         if (!$output || !$output2) {
