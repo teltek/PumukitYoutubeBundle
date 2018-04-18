@@ -64,12 +64,14 @@ class CaptionService extends YoutubeService
         foreach ($captionIds as $captionId) {
             $result = $this->youtubeProcessService->deleteCaption($captionId);
             if ($result['error']) {
-                $errorLog = __CLASS__.' ['.__FUNCTION__
-                  ."] Error in deleting Caption for Youtube video with id '"
-                  .$youtube->getId()."' and Caption id '"
-                  .$captionId."': ".$result['error_out'];
-                $this->logger->addError($errorLog);
-                throw new \Exception($errorLog);
+                if (strpos($result['error_out'], 'caption track could not be found') === false) {
+                    $errorLog = __CLASS__.' ['.__FUNCTION__
+                        ."] Error in deleting Caption for Youtube video with id '"
+                        .$youtube->getId()."' and Caption id '"
+                        .$captionId."': ".$result['error_out'];
+                    $this->logger->addError($errorLog);
+                    throw new \Exception($errorLog);
+                }
             }
             $youtube->removeCaptionByCaptionId($captionId);
         }
