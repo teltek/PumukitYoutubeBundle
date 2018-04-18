@@ -42,8 +42,8 @@
                 </a>
             {% endif %}
         </td>
-        <td headers="th-id">
-            {{ tag.id }}
+        <td headers="th-code">
+            {{ tag.getCod() }}
         </td>
         <td headers="th-code-name" class="{{ has_children?'collapsed noload':'element' }}">
         <span style="padding-left:{{ 10 * tag.level }}px" onclick="javascript:toggle_youtube_tag('{{ tag.id }}', this, {{ tag.level }}, '{{ tag.cod }}')">
