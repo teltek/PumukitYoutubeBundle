@@ -82,7 +82,7 @@ EOT
                     $this->okDelete[] = $multimediaObject;
                 }
             } catch (\Exception $e) {
-                $errorLog = sprintf('%s [%s] The deletion of the cpation from Youtube of MultimediaObject with id %s failed: %s', __CLASS__, __FUNCTION__, $multimediaObject->getId(), $e->getMessage());
+                $errorLog = sprintf('%s [%s] The deletion of the caption from Youtube of MultimediaObject with id %s failed: %s', __CLASS__, __FUNCTION__, $multimediaObject->getId(), $e->getMessage());
                 $this->logger->addError($errorLog);
                 $this->output->writeln($errorLog);
                 $this->failedDelete[] = $multimediaObject;
