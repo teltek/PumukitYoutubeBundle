@@ -39,7 +39,8 @@ class YoutubeDeleteCommand extends ContainerAwareCommand
             ->setName('youtube:delete')
             ->addOption('use-pmk1', null, InputOption::VALUE_NONE, 'Use multimedia objects from PuMuKIT1')
             ->setDescription('Delete videos from Youtube')
-            ->setHelp(<<<'EOT'
+            ->setHelp(
+                <<<'EOT'
 Command to delete controlled videos from Youtube.
 
 EOT

@@ -55,6 +55,7 @@ class PumukitYoutubeExtension extends Extension implements PrependExtensionInter
         $container->setParameter('pumukit_youtube.sync_status', $config['sync_status']);
         $container->setParameter('pumukit_youtube.default_track_upload', $config['default_track_upload']);
         $container->setParameter('pumukit_youtube.default_image_for_audio', $config['default_image_for_audio']);
+        $container->setParameter('pumukit_youtube.allowed_caption_mimetypes', $config['allowed_caption_mimetypes']);
 
         $bundleConfiguration = Yaml::parse(file_get_contents(__DIR__.'/../Resources/config/encoders.yml'));
         if (!$config['profiles'] && $bundleConfiguration['pumukit_youtube']['profiles']) {

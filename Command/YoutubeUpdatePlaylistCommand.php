@@ -35,7 +35,8 @@ class YoutubeUpdatePlaylistCommand extends ContainerAwareCommand
             ->setName('youtube:update:playlist')
             ->addOption('use-pmk1', null, InputOption::VALUE_NONE, 'Use multimedia objects from PuMuKIT1')
             ->setDescription('Update Youtube playlists from Multimedia Objects')
-            ->setHelp(<<<'EOT'
+            ->setHelp(
+                <<<'EOT'
 Command to update playlist in Youtube.
 
 EOT

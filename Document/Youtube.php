@@ -3,6 +3,7 @@
 namespace Pumukit\YoutubeBundle\Document;
 
 use Doctrine\ODM\MongoDB\Mapping\Annotations as MongoDB;
+use Doctrine\Common\Collections\ArrayCollection;
 
 /**
  * Pumukit\YoutubeBundle\Document\Youtube.
@@ -99,7 +100,20 @@ class Youtube
      * @var date
      * @MongoDB\Date
      */
+    private $syncCaptionsDate;
+
+    /**
+     * @var date
+     *
+     * @MongoDB\Date
+     */
     private $uploadDate;
+
+    /**
+     * @var ArrayCollection
+     * @MongoDB\EmbedMany(targetDocument="Caption")
+     */
+    private $captions;
 
     /**
      * Get id.
@@ -118,7 +132,9 @@ class Youtube
     {
         $this->multimediaObjectUpdateDate = new \DateTime('1970-01-01 09:00');
         $this->syncMetadataDate = new \DateTime('1980-01-01 10:00');
+        $this->syncCaptionsDate = new \DateTime('1980-01-01 10:00');
         $this->uploadDate = new \DateTime('1980-01-01 10:00');
+        $this->captions = new ArrayCollection();
     }
 
     /**
@@ -361,6 +377,26 @@ class Youtube
     }
 
     /**
+     * Set syncCaptionsDate.
+     *
+     * @param DateTime $syncCaptionsDate
+     */
+    public function setSyncCaptionsDate($syncCaptionsDate)
+    {
+        $this->syncCaptionsDate = $syncCaptionsDate;
+    }
+
+    /**
+     * Get syncCaptionsDate.
+     *
+     * @return datetime
+     */
+    public function getSyncCaptionsDate()
+    {
+        return $this->syncCaptionsDate;
+    }
+
+    /**
      * Set uploadDate.
      *
      * @param DateTime $uploadDate
@@ -395,4 +431,182 @@ class Youtube
     {
         $this->youtubeAccount = $youtubeAccount;
     }
+
+    // Caption getter section
+
+    /**
+     * Add caption.
+     *
+     * @param Caption $caption
+     */
+    public function addCaption(Caption $caption)
+    {
+        $this->captions->add($caption);
+    }
+
+    /**
+     * Remove caption.
+     *
+     * @param Caption $caption
+     */
+    public function removeCaption(Caption $caption)
+    {
+        $this->captions->removeElement($caption);
+        $this->captions = new ArrayCollection(array_values($this->captions->toArray()));
+    }
+
+    /**
+     * Remove caption by id.
+     *
+     * @param string $id
+     */
+    public function removeCaptionById($id)
+    {
+        $this->captions = $this->captions->filter(function ($caption) use ($id) {
+            return $caption->getId() !== $id;
+        });
+        $this->captions = new ArrayCollection(array_values($this->captions->toArray()));
+    }
+
+    /**
+     * Remove caption by caption id.
+     *
+     * @param string $captionId
+     */
+    public function removeCaptionByCaptionId($captionId)
+    {
+        $this->captions = $this->captions->filter(function ($caption) use ($captionId) {
+            return $caption->getCaptionId() !== $captionId;
+        });
+        $this->captions = new ArrayCollection(array_values($this->captions->toArray()));
+    }
+
+    /**
+     * Remove caption by material id.
+     *
+     * @param string $materialId
+     */
+    public function removeCaptionByMaterialId($materialId)
+    {
+        $this->captions = $this->captions->filter(function ($caption) use ($materialId) {
+            return $caption->getMaterialId() !== $materialId;
+        });
+        $this->captions = new ArrayCollection(array_values($this->captions->toArray()));
+    }
+
+    /**
+     * Contains caption.
+     *
+     * @param Caption $caption
+     *
+     * @return bool
+     */
+    public function containsCaption(Caption $caption)
+    {
+        return $this->captions->contains($caption);
+    }
+
+    /**
+     * Get captions.
+     *
+     * @return ArrayCollection
+     */
+    public function getCaptions()
+    {
+        return $this->captions;
+    }
+
+    /**
+     * Get caption by id.
+     *
+     * @param $id
+     *
+     * @return Caption|null
+     */
+    public function getCaptionById($id)
+    {
+        foreach ($this->captions as $caption) {
+            if ($caption->getId() == $id) {
+                return $caption;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Get caption by caption id.
+     *
+     * @param $captionId
+     *
+     * @return Caption|null
+     */
+    public function getCaptionByCaptionId($captionId)
+    {
+        foreach ($this->captions as $caption) {
+            if ($caption->getCaptionId() == $captionId) {
+                return $caption;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Get caption by material id.
+     *
+     * @param $materialId
+     *
+     * @return Caption|null
+     */
+    public function getCaptionByMaterialId($materialId)
+    {
+        foreach ($this->captions as $caption) {
+            if ($caption->getMaterialId() == $materialId) {
+                return $caption;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Get captions by language.
+     *
+     * @param string $language
+     *
+     * @return array
+     */
+    public function getCaptionsByLanguage($language)
+    {
+        $r = array();
+
+        foreach ($this->captions as $caption) {
+            if ($caption->getLanguage() === $language) {
+                $r[] = $caption;
+            }
+        }
+
+        return $r;
+    }
+
+    /**
+     * Get caption by language.
+     *
+     * @param string $language
+     *
+     * @return Caption|null
+     */
+    public function getCaptionByLanguage($language)
+    {
+        foreach ($this->captions as $caption) {
+            if ($caption->getLanguage() === $language) {
+                return $caption;
+            }
+        }
+
+        return null;
+    }
+
+    // End of Caption getter - setter etc methods section
 }
