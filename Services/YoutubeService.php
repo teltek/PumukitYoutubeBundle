@@ -723,7 +723,7 @@ class YoutubeService
      *
      * @throws \Exception
      */
-    protected function deleteYoutubePlaylist($youtubePlaylist)
+    protected function deleteYoutubePlaylist($youtubePlaylist, $login)
     {
         echo 'delete On Youtube: '.$youtubePlaylist['title']."\n";
 
