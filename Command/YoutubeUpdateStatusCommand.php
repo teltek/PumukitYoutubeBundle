@@ -149,12 +149,4 @@ EOT
             ->getQuery()
             ->getSingleResult();
     }
-
-    private function findByYoutubeId(Youtube $youtube)
-    {
-        return $this->mmobjRepo->createQueryBuilder()
-            ->field('properties.youtube')->equals($youtube->getId())
-            ->getQuery()
-            ->getSingleResult();
-    }
 }
