@@ -133,16 +133,17 @@ class YoutubeProcessService
         return $this->createProcess($sFile, $aCommandArguments);
     }
 
-    public function listCaptions($youtube)
+    public function listCaptions($youtube, $login)
     {
         $sFile = 'listCaptions.py';
         $aCommandArguments = array();
         $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--videoid', $youtube->getYoutubeId());
+        $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--account', $login);
 
         return $this->createProcess($sFile, $aCommandArguments);
     }
 
-    public function insertCaption($youtube, $name, $language, $file)
+    public function insertCaption($youtube, $name, $language, $file, $login)
     {
         $sFile = 'insertCaption.py';
         $aCommandArguments = array();
@@ -150,15 +151,17 @@ class YoutubeProcessService
         $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--name', $name);
         $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--language', $language);
         $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--file', $file);
+        $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--account', $login);
 
         return $this->createProcess($sFile, $aCommandArguments);
     }
 
-    public function deleteCaption($captionId)
+    public function deleteCaption($captionId, $login)
     {
         $sFile = 'deleteCaption.py';
         $aCommandArguments = array();
         $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--captionid', $captionId);
+        $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--account', $login);
 
         return $this->createProcess($sFile, $aCommandArguments);
     }
@@ -168,26 +171,19 @@ class YoutubeProcessService
         $builder = new ProcessBuilder();
         $builder->setPrefix('python');
         array_unshift($aCommandArguments, $sFile);
-
-        array_push($aCommandArguments, '--account');
-        array_push($aCommandArguments, 'pumukit-oauth2');
-
         $builder->setArguments($aCommandArguments);
         $builder->setTimeout($this->process_timeout);
         $builder->setWorkingDirectory($this->pythonDirectory);
-
         $pyProcess = $builder->getProcess();
         try {
             $pyProcess->mustRun();
             if (!$pyProcess->isSuccessful()) {
                 throw new ProcessFailedException($pyProcess);
             }
-
             $aResult = json_decode($pyProcess->getOutput(), true);
             if (JSON_ERROR_NONE !== json_last_error()) {
                 throw new UnexpectedValueException(json_last_error_msg());
             }
-
             return $aResult;
         } catch (ProcessFailedException $e) {
             echo $e->getMessage();
