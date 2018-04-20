@@ -43,8 +43,6 @@ EOT
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $this->initParameters();
-
         $statusArray = array(Youtube::STATUS_REMOVED, Youtube::STATUS_NOTIFIED_ERROR, Youtube::STATUS_DUPLICATED);
         $youtubes = $this->youtubeRepo->getWithoutAnyStatus($statusArray);
 
@@ -52,7 +50,7 @@ EOT
         $this->checkResultsAndSendEmail();
     }
 
-    private function initParameters()
+    protected function initialize(InputInterface $input, OutputInterface $output)
     {
         $this->dm = $this->getContainer()->get('doctrine_mongodb')->getManager();
         $this->tagRepo = $this->dm->getRepository('PumukitSchemaBundle:Tag');
