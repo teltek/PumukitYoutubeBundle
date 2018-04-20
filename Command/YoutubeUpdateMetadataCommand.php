@@ -30,8 +30,10 @@ class YoutubeUpdateMetadataCommand extends ContainerAwareCommand
             ->setName('youtube:update:metadata')
             ->setDescription('Update Youtube metadata from Multimedia Objects')
             ->setHelp(
-                <<<'EOT'
-Command to upload a controlled videos to Youtube.
+            <<<'EOT'
+Sync YouTube Service metadata with local metadata(title, description...). Meaning, update the metadata of the YouTube service getting the info from the local multimedia objects.
+
+PERFORMANCE NOTE: This command has a good performance because only use the multimedia objects updated from the last synchronization.
 
 EOT
           );
