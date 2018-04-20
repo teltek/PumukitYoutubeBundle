@@ -11,18 +11,18 @@ use Pumukit\YoutubeBundle\Document\Youtube;
 
 class YoutubeUpdateStatusCommand extends ContainerAwareCommand
 {
-    private $dm = null;
-    private $tagRepo = null;
-    private $mmobjRepo = null;
-    private $youtubeRepo = null;
+    protected $dm = null;
+    protected $tagRepo = null;
+    protected $mmobjRepo = null;
+    protected $youtubeRepo = null;
 
-    private $youtubeService;
+    protected $youtubeService;
 
-    private $okUpdates = array();
-    private $failedUpdates = array();
-    private $errors = array();
+    protected $okUpdates = array();
+    protected $failedUpdates = array();
+    protected $errors = array();
 
-    private $logger;
+    protected $logger;
 
     protected function configure()
     {
@@ -31,9 +31,11 @@ class YoutubeUpdateStatusCommand extends ContainerAwareCommand
             ->setDescription('Update local YouTube status of the video')
             ->setHelp(
                 <<<'EOT'
-Update the YouTube status in PuMuKIT YouTube collection using the YouTube API. If enabled it send an email with a summary.
+Update the local YouTube status stored in PuMuKIT YouTube collection, getting the info from the YouTube service using the API. If enabled it sends an email with a summary.
 
 The statuses removed, notified error and duplicated are not updated.
+
+PERFORMANCE NOTE: This command has a bad performance because use all the multimedia objects uploaded in Youtube Service. (See youtube:update:pendingstatus)
 
 EOT
           );
@@ -66,7 +68,7 @@ EOT
         $this->logger = $this->getContainer()->get('monolog.logger.youtube');
     }
 
-    private function updateVideoStatusInYoutube($youtubes, OutputInterface $output)
+    protected function updateVideoStatusInYoutube($youtubes, OutputInterface $output)
     {
         foreach ($youtubes as $youtube) {
             $multimediaObject = $this->findByYoutubeIdAndPumukit1Id($youtube, false);
@@ -111,14 +113,14 @@ EOT
         }
     }
 
-    private function checkResultsAndSendEmail()
+    protected function checkResultsAndSendEmail()
     {
         if (!empty($this->errors)) {
             $this->youtubeService->sendEmail('status update', $this->okUpdates, $this->failedUpdates, $this->errors);
         }
     }
 
-    private function findByYoutubeIdAndPumukit1Id(Youtube $youtube, $pumukit1Id = false)
+    protected function findByYoutubeIdAndPumukit1Id(Youtube $youtube, $pumukit1Id = false)
     {
         return $this->mmobjRepo->createQueryBuilder()
             ->field('properties.youtube')->equals($youtube->getId())
@@ -128,7 +130,7 @@ EOT
             ->getSingleResult();
     }
 
-    private function findByYoutubeId(Youtube $youtube)
+    protected function findByYoutubeId(Youtube $youtube)
     {
         return $this->mmobjRepo->createQueryBuilder()
             ->field('properties.youtube')->equals($youtube->getId())
