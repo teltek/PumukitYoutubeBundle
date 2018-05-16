@@ -89,9 +89,11 @@ class YoutubeService
     public function upload(MultimediaObject $multimediaObject, $category = 27, $privacy = 'private', $force = false)
     {
         $track = null;
-        $opencastId = $multimediaObject->getProperty('opencast');
-        if ($opencastId !== null) {
+        if ($multimediaObject->isMultistream()) {
             $track = $multimediaObject->getFilteredTrackWithTags(array(), array('sbs'), array(), array(), false);
+            if (null == $track) {
+                // TODO: Generate sbs track for Opencast or other kind of sources different than Opencast.
+            }
         } //Or array('sbs','html5') ??
         else {
             $track = $multimediaObject->getTrackWithTag($this->defaultTrackUpload); //TODO get Only the video track with tag html5
