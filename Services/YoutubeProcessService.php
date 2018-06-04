@@ -54,6 +54,12 @@ class YoutubeProcessService
 
     public function deleteVideo($youtube)
     {
+        if (!$youtube->getYoutubeId()) {
+            return array(
+                'error' => True,
+                'error_out' => 'No se ha encontrado el video',
+            );
+        }
         $sFile = 'deleteVideo.py';
         $aCommandArguments = array();
         $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--videoid', $youtube->getYoutubeId());
