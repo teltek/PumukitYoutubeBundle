@@ -56,7 +56,7 @@ class YoutubeProcessService
     {
         if (!$youtube->getYoutubeId()) {
             return array(
-                'error' => True,
+                'error' => true,
                 'error_out' => 'No se ha encontrado el video',
             );
         }
