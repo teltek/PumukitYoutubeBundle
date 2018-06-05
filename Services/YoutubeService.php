@@ -37,6 +37,9 @@ class YoutubeService
     protected $PLAYLISTS_MASTER;
     protected $DELETE_PLAYLISTS;
     protected $defaultTrackUpload;
+    protected $generateSbs;
+    protected $sbsProfileName;
+    protected $jobService;
 
     public static $status = array(
         0 => 'public',
@@ -44,7 +47,7 @@ class YoutubeService
         2 => 'unlisted',
     );
 
-    public function __construct(DocumentManager $documentManager, Router $router, TagService $tagService, LoggerInterface $logger, SenderService $senderService = null, TranslatorInterface $translator, YoutubeProcessService $youtubeProcessService, $playlistPrivacyStatus, $locale, $useDefaultPlaylist, $defaultPlaylistCod, $defaultPlaylistTitle, $metatagPlaylistCod, $playlistMaster, $deletePlaylists, $pumukitLocales, $youtubeSyncStatus, $defaultTrackUpload)
+    public function __construct(DocumentManager $documentManager, Router $router, TagService $tagService, LoggerInterface $logger, SenderService $senderService = null, TranslatorInterface $translator, YoutubeProcessService $youtubeProcessService, $playlistPrivacyStatus, $locale, $useDefaultPlaylist, $defaultPlaylistCod, $defaultPlaylistTitle, $metatagPlaylistCod, $playlistMaster, $deletePlaylists, $pumukitLocales, $youtubeSyncStatus, $defaultTrackUpload, $generateSbs, $sbsProfileName, $jobService)
     {
         $this->dm = $documentManager;
         $this->router = $router;
@@ -65,6 +68,9 @@ class YoutubeService
         $this->METATAG_PLAYLIST_COD = $metatagPlaylistCod;
         $this->PLAYLISTS_MASTER = $playlistMaster;
         $this->DELETE_PLAYLISTS = $deletePlaylists;
+        $this->generateSbs = $generateSbs;
+        $this->sbsProfileName = $sbsProfileName;
+        $this->jobService = $jobService;
 
         $this->defaultTrackUpload = $defaultTrackUpload;
         if (!in_array($this->ytLocale, $pumukitLocales)) {
@@ -89,9 +95,11 @@ class YoutubeService
     public function upload(MultimediaObject $multimediaObject, $category = 27, $privacy = 'private', $force = false)
     {
         $track = null;
-        $opencastId = $multimediaObject->getProperty('opencast');
-        if ($opencastId !== null) {
-            $track = $multimediaObject->getFilteredTrackWithTags(array(), array('sbs'), array(), array(), false);
+        if ($multimediaObject->isMultistream()) {
+            $track = $multimediaObject->getFilteredTrackWithTags(array(), array($this->sbsProfileName), array(), array(), false);
+            if (!$track) {
+                return $this->generateSbsTrack($multimediaObject);
+            }
         } //Or array('sbs','html5') ??
         else {
             $track = $multimediaObject->getTrackWithTag($this->defaultTrackUpload); //TODO get Only the video track with tag html5
@@ -1158,5 +1166,24 @@ class YoutubeService
     protected function getEmbed($youtubeId)
     {
         return '<iframe width="853" height="480" src="http://www.youtube.com/embed/'.$youtubeId.'" frameborder="0" allowfullscreen></iframe>';
+    }
+
+    protected function generateSbsTrack(MultimediaObject $multimediaObject)
+    {
+        if ($this->generateSbs && $this->sbsProfileName) {
+            if ($multimediaObject->getProperty('opencast')) {
+                return 0;
+            }
+            $tracks = $multimediaObject->getTracks();
+            if (!$tracks) {
+                return 0;
+            }
+            $track = $tracks[0];
+            $path = $track->getPath();
+            $language = $track->getLanguage() ? $track->getLanguage() : \Locale::getDefault();
+            $job = $this->jobService->addJob($path, $this->sbsProfileName, 2, $multimediaObject, $language, array(), array());
+        }
+
+        return 0;
     }
 }

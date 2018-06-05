@@ -75,7 +75,15 @@ class CaptionServiceTest extends WebTestCase
         $pumukitLocales = array('en');
         $youtubeSyncStatus = false;
         $defaultTrackUpload = 'master';
-        $this->captionService = new CaptionService($this->dm, $this->router, $this->tagService, $this->logger, $this->notificationSender, $this->translator, $this->youtubeProcessService, $this->playlistPrivacyStatus, $locale, $useDefaultPlaylist, $defaultPlaylistCod, $defaultPlaylistTitle, $metatagPlaylistCod, $playlistMaster, $deletePlaylists, $pumukitLocales, $youtubeSyncStatus, $defaultTrackUpload);
+        $generateSbs = true;
+        $sbsProfileName = 'sbs';
+        $jobService = $this->getMockBuilder('Pumukit\EncoderBundle\Services\JobService')
+                           ->disableOriginalConstructor()
+                           ->getMock();
+        $jobService->expects($this->any())
+                   ->method('addJob')
+                   ->will($this->returnValue(0));
+        $this->captionService = new CaptionService($this->dm, $this->router, $this->tagService, $this->logger, $this->notificationSender, $this->translator, $this->youtubeProcessService, $this->playlistPrivacyStatus, $locale, $useDefaultPlaylist, $defaultPlaylistCod, $defaultPlaylistTitle, $metatagPlaylistCod, $playlistMaster, $deletePlaylists, $pumukitLocales, $youtubeSyncStatus, $defaultTrackUpload, $generateSbs, $sbsProfileName, $jobService);
         $this->resourcesDir = realpath(__DIR__.'/../Resources').'/';
     }
 
