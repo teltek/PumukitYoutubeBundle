@@ -40,6 +40,7 @@ class YoutubeService
     protected $generateSbs;
     protected $sbsProfileName;
     protected $jobService;
+    protected $jobRepo;
 
     public static $status = array(
         0 => 'public',
@@ -59,6 +60,7 @@ class YoutubeService
         $this->youtubeRepo = $this->dm->getRepository('PumukitYoutubeBundle:Youtube');
         $this->tagRepo = $this->dm->getRepository('PumukitSchemaBundle:Tag');
         $this->mmobjRepo = $this->dm->getRepository('PumukitSchemaBundle:MultimediaObject');
+        $this->jobRepo = $this->dm->getRepository('PumukitEncoderBundle:Job');
         $this->playlistPrivacyStatus = $playlistPrivacyStatus;
         $this->ytLocale = $locale;
         $this->syncStatus = $youtubeSyncStatus;
@@ -1172,6 +1174,10 @@ class YoutubeService
     {
         if ($this->generateSbs && $this->sbsProfileName) {
             if ($multimediaObject->getProperty('opencast')) {
+                return 0;
+            }
+            $job = $this->jobRepo->findOneBy(array('mm_id' => $multimediaObject->getId(), 'profile' => $this->sbsProfileName));
+            if ($job) {
                 return 0;
             }
             $tracks = $multimediaObject->getTracks();

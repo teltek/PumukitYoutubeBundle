@@ -174,6 +174,25 @@ class YoutubeServiceTest extends WebTestCase
         $youtube = $this->youtubeRepo->findOneByMultimediaObjectId($multimediaObject->getId());
         $out7 = $this->youtubeService->updateStatus($youtube);
         $this->assertEquals(0, $out7);
+
+        // Create Dual stream tracks
+        $track1 = new Track();
+        $track1->setPath($this->resourcesDir.'camera.mp4');
+        $track1->addTag('presenter/delivery');
+        $track1->setDuration(10);
+        $this->dm->persist($track1);
+        $track2 = new Track();
+        $track2->setPath($this->resourcesDir.'camera.mp4');
+        $track2->addTag('presentation/delivery');
+        $track2->setDuration(10);
+        $this->dm->persist($track2);
+        $multimediaObject->addTrack($track1);
+        $multimediaObject->addTrack($track2);
+        $this->dm->persist($multimediaObject);
+        $this->dm->flush();
+
+        $out8 = $this->youtubeService->upload($multimediaObject, 27, 'private', false);
+        $this->assertEquals(0, $out8);
     }
 
     private function createTagWithCode($code, $title, $tagParentCode = null, $metatag = false, $display = true)
