@@ -41,6 +41,7 @@ class YoutubeService
     protected $sbsProfileName;
     protected $jobService;
     protected $jobRepo;
+    protected $opencastService;
 
     public static $status = array(
         0 => 'public',
@@ -48,7 +49,7 @@ class YoutubeService
         2 => 'unlisted',
     );
 
-    public function __construct(DocumentManager $documentManager, Router $router, TagService $tagService, LoggerInterface $logger, SenderService $senderService = null, TranslatorInterface $translator, YoutubeProcessService $youtubeProcessService, $playlistPrivacyStatus, $locale, $useDefaultPlaylist, $defaultPlaylistCod, $defaultPlaylistTitle, $metatagPlaylistCod, $playlistMaster, $deletePlaylists, $pumukitLocales, $youtubeSyncStatus, $defaultTrackUpload, $generateSbs, $sbsProfileName, $jobService)
+    public function __construct(DocumentManager $documentManager, Router $router, TagService $tagService, LoggerInterface $logger, SenderService $senderService = null, TranslatorInterface $translator, YoutubeProcessService $youtubeProcessService, $playlistPrivacyStatus, $locale, $useDefaultPlaylist, $defaultPlaylistCod, $defaultPlaylistTitle, $metatagPlaylistCod, $playlistMaster, $deletePlaylists, $pumukitLocales, $youtubeSyncStatus, $defaultTrackUpload, $generateSbs, $sbsProfileName, $jobService, $opencastService)
     {
         $this->dm = $documentManager;
         $this->router = $router;
@@ -73,6 +74,7 @@ class YoutubeService
         $this->generateSbs = $generateSbs;
         $this->sbsProfileName = $sbsProfileName;
         $this->jobService = $jobService;
+        $this->opencastService = $opencastService;
 
         $this->defaultTrackUpload = $defaultTrackUpload;
         if (!in_array($this->ytLocale, $pumukitLocales)) {
@@ -1174,7 +1176,7 @@ class YoutubeService
     {
         if ($this->generateSbs && $this->sbsProfileName) {
             if ($multimediaObject->getProperty('opencast')) {
-                return 0;
+                return $this->generateSbsTrackForOpencast($multimediaObject);
             }
             $job = $this->jobRepo->findOneBy(array('mm_id' => $multimediaObject->getId(), 'profile' => $this->sbsProfileName));
             if ($job) {
@@ -1188,6 +1190,15 @@ class YoutubeService
             $path = $track->getPath();
             $language = $track->getLanguage() ? $track->getLanguage() : \Locale::getDefault();
             $job = $this->jobService->addJob($path, $this->sbsProfileName, 2, $multimediaObject, $language, array(), array());
+        }
+
+        return 0;
+    }
+
+    protected function generateSbsTrackForOpencast(MultimediaObject $multimediaObject)
+    {
+        if ($this->opencastService) {
+            $this->opencastService->generateSbsTrack($multimediaObject);
         }
 
         return 0;
