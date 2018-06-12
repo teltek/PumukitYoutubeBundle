@@ -86,7 +86,7 @@ class Configuration implements ConfigurationInterface
               ->defaultValue(array('vtt'))
             ->end()
             ->booleanNode('generate_sbs')
-              ->defaultValue(false)
+              ->defaultValue(true)
               ->info('Variable that generates a SBS track of a multistream multimedia object. Set to true to use.')
             ->end()
             ->scalarNode('sbs_profile_name')
