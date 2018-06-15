@@ -248,7 +248,7 @@ class YoutubeService
             $this->deleteFromList($playlistItem, $youtube, $playlistId);
         }
         $aResult = $this->youtubeProcessService->deleteVideo($youtube);
-        if ($aResult['error'] && (strpos($result['error_out'], 'No se ha encontrado el video') === false)) {
+        if ($aResult['error'] && (strpos($aResult['error_out'], 'No se ha encontrado el video') === false)) {
             $errorLog = __CLASS__.' ['.__FUNCTION__
               ."] Error in deleting the YouTube video with id '".$youtube->getYoutubeId()
               ."' and mongo id '".$youtube->getId()."': ".$aResult['error_out'];
@@ -296,7 +296,7 @@ class YoutubeService
         }
 
         $aResult = $this->youtubeProcessService->deleteVideo($youtube);
-        if ($aResult['error'] && (strpos($result['error_out'], 'No se ha encontrado el video') === false)) {
+        if ($aResult['error'] && (strpos($aResult['error_out'], 'No se ha encontrado el video') === false)) {
             $errorLog = __CLASS__.' ['.__FUNCTION__
               ."] Error in deleting the YouTube video with id '".$youtube->getYoutubeId()
               ."' and mongo id '".$youtube->getId()."': ".$aResult['error_out'];
@@ -1140,7 +1140,7 @@ class YoutubeService
     protected function deleteFromList($playlistItem, $youtube, $playlistId, $doFlush = true)
     {
         $aResult = $this->youtubeProcessService->deleteFromList($playlistItem);
-        if ($aResult['error'] && (strpos($result['error_out'], 'Playlist item not found') === false)) {
+        if ($aResult['error'] && (strpos($aResult['error_out'], 'Playlist item not found') === false)) {
             $errorLog = __CLASS__.' ['.__FUNCTION__
               ."] Error in deleting the Youtube video with id '".$youtube->getId()
               ."' from playlist with id '".$playlistItem."': ".$aResult['error_out'];
