@@ -62,7 +62,10 @@
             <argument>%pumukit2.locales%</argument>
             <argument>%pumukit_youtube.sync_status%</argument>
             <argument>%pumukit_youtube.default_track_upload%</argument>
-
+            <argument>%pumukit_youtube.generate_sbs%</argument>
+            <argument>%pumukit_youtube.sbs_profile_name%</argument>
+            <argument type="service" id="pumukitencoder.job" />
+            <argument type="service" id="pumukit_opencast.job" on-invalid="null" />
             <tag name="monolog.logger" channel="youtube"/>
         </service>
     </services>
