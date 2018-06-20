@@ -1189,7 +1189,7 @@ class YoutubeService
             $track = $tracks[0];
             $path = $track->getPath();
             $language = $track->getLanguage() ? $track->getLanguage() : \Locale::getDefault();
-            $job = $this->jobService->addJob($path, $this->sbsProfileName, 2, $multimediaObject, $language, array(), array());
+            $job = $this->jobService->addJob($path, $this->sbsProfileName, 2, $multimediaObject, $language, array(), array(), $track->getDuration());
         }
 
         return 0;
