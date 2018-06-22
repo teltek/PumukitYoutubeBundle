@@ -56,6 +56,8 @@ class PumukitYoutubeExtension extends Extension implements PrependExtensionInter
         $container->setParameter('pumukit_youtube.default_track_upload', $config['default_track_upload']);
         $container->setParameter('pumukit_youtube.default_image_for_audio', $config['default_image_for_audio']);
         $container->setParameter('pumukit_youtube.allowed_caption_mimetypes', $config['allowed_caption_mimetypes']);
+        $container->setParameter('pumukit_youtube.generate_sbs', $config['generate_sbs']);
+        $container->setParameter('pumukit_youtube.sbs_profile_name', $config['sbs_profile_name']);
 
         $bundleConfiguration = Yaml::parse(file_get_contents(__DIR__.'/../Resources/config/encoders.yml'));
         if (!$config['profiles'] && $bundleConfiguration['pumukit_youtube']['profiles']) {

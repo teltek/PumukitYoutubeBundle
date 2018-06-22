@@ -91,6 +91,14 @@ class Configuration implements ConfigurationInterface
               ->prototype('scalar')->end()
               ->defaultValue(array('vtt'))
             ->end()
+            ->booleanNode('generate_sbs')
+              ->defaultValue(true)
+              ->info('Variable that generates a SBS track of a multistream multimedia object. Set to true to use.')
+            ->end()
+            ->scalarNode('sbs_profile_name')
+                ->defaultValue('sbs')
+                ->info('SBS profile name to generate track with.')
+            ->end()
           ->end();
 
         $this->addProfilesSection($rootNode);

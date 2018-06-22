@@ -56,6 +56,12 @@ class YoutubeProcessService
 
     public function deleteVideo($youtube, $login)
     {
+        if (!$youtube->getYoutubeId()) {
+            return array(
+                'error' => true,
+                'error_out' => 'No se ha encontrado el video',
+            );
+        }
         $sFile = 'deleteVideo.py';
         $aCommandArguments = array();
         $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--videoid', $youtube->getYoutubeId());
@@ -184,6 +190,7 @@ class YoutubeProcessService
             if (JSON_ERROR_NONE !== json_last_error()) {
                 throw new UnexpectedValueException(json_last_error_msg());
             }
+
             return $aResult;
         } catch (ProcessFailedException $e) {
             echo $e->getMessage();
