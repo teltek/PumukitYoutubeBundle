@@ -107,9 +107,11 @@ class YoutubeService
     public function getTrack(MultimediaObject $multimediaObject)
     {
         $track = null;
-        $opencastId = $multimediaObject->getProperty('opencast');
-        if (null !== $opencastId) {
-            $track = $multimediaObject->getFilteredTrackWithTags(array(), array('sbs'), array(), array(), false);
+        if ($multimediaObject->isMultistream()) {
+            $track = $multimediaObject->getFilteredTrackWithTags(array(), array($this->sbsProfileName), array(), array(), false);
+            if (!$track) {
+                return $this->generateSbsTrack($multimediaObject);
+            }
         } else {
             $track = $multimediaObject->getTrackWithTag($this->defaultTrackUpload);
         }
@@ -136,24 +138,13 @@ class YoutubeService
      */
     public function upload(MultimediaObject $multimediaObject, $category = 27, $privacy = 'private', $force = false)
     {
-        $track = null;
-        if ($multimediaObject->isMultistream()) {
-            $track = $multimediaObject->getFilteredTrackWithTags(array(), array($this->sbsProfileName), array(), array(), false);
-            if (!$track) {
-                return $this->generateSbsTrack($multimediaObject);
-            }
-        } //Or array('sbs','html5') ??
-        else {
-            $track = $multimediaObject->getTrackWithTag($this->defaultTrackUpload); //TODO get Only the video track with tag html5
-        }
-        if ((null === $track) || ($track->isOnlyAudio())) {
-            $track = $multimediaObject->getTrackWithTag('master');
-        }
+        $track = $this->getTrack();
         if ((null === $track) || ($track->isOnlyAudio())) {
             $errorLog = __CLASS__.' ['.__FUNCTION__."] Error, the Multimedia Object with id '".$multimediaObject->getId()."' has no track master.";
             $this->logger->addError($errorLog);
             throw new \Exception($errorLog);
         }
+
         $trackPath = $track->getPath();
         if (!file_exists($trackPath)) {
             $errorLog = __CLASS__.' ['.__FUNCTION__.'] Error, there is no file '.$trackPath;
