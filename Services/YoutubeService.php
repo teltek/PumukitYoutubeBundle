@@ -138,7 +138,7 @@ class YoutubeService
      */
     public function upload(MultimediaObject $multimediaObject, $category = 27, $privacy = 'private', $force = false)
     {
-        $track = $this->getTrack();
+        $track = $this->getTrack($multimediaObject);
         if ((null === $track) || ($track->isOnlyAudio())) {
             $errorLog = __CLASS__.' ['.__FUNCTION__."] Error, the Multimedia Object with id '".$multimediaObject->getId()."' has no track master.";
             $this->logger->addError($errorLog);
