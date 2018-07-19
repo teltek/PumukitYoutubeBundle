@@ -91,18 +91,13 @@ EOT
     {
         foreach ($mms as $mm) {
             try {
-                if (!$this->youtubeService->getTrack($mm) && $this->youtubeService->hasPendingJobs($mm)) {
-                    $this->logger->addInfo("MultimediaObject with id $mm->getId() haven't valid track for Youtube and have pending jobs .");
-                    continue;
-                }
-
                 if (!$this->youtubeService->getTrack($mm)) {
-                    $this->logger->addInfo("MultimediaObject with id $mm->getId() haven't valid track for Youtube.");
-                    continue;
-                }
+                    if ($this->youtubeService->hasPendingJobs($mm)) {
+                        $this->logger->addInfo("MultimediaObject with id $mm->getId() have pending jobs.");
+                    } else {
+                        $this->logger->addInfo("MultimediaObject with id $mm->getId() haven't valid track for Youtube.");
+                    }
 
-                if ($this->youtubeService->hasPendingJobs($mm)) {
-                    $this->logger->addInfo("MultimediaObject with id $mm->getId() have pending jobs.");
                     continue;
                 }
 
