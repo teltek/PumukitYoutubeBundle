@@ -96,6 +96,16 @@ EOT
                     continue;
                 }
 
+                if (!$this->youtubeService->getTrack($mm)) {
+                    $this->logger->addInfo("MultimediaObject with id $mm->getId() haven't valid track for Youtube.");
+                    continue;
+                }
+
+                if ($this->youtubeService->hasPendingJobs($mm)) {
+                    $this->logger->addInfo("MultimediaObject with id $mm->getId() have pending jobs.");
+                    continue;
+                }
+
                 $infoLog = sprintf(
                     '%s [%s] Started uploading to Youtube of MultimediaObject with id %s',
                     __CLASS__,
