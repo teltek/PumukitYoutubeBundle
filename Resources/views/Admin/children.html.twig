@@ -55,6 +55,11 @@
                 {{ tag.getTitle() }} - {{ tag.getProperty('login') }}
             {% endif %}
         </td>
+        <td headers="th-ytid">
+             {% if playlist == true %}
+                 {{ tag.getProperty('youtube')| default('Pending') }}
+             {% endif %}
+        </td>        
         <td headers="th-num">
             {{ tag.getNumberMultimediaObjects() }}
         </td>
