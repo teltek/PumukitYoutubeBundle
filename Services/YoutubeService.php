@@ -98,7 +98,7 @@ class YoutubeService
     }
 
     /**
-     * Get track to upload into YouTube.
+     * Get a video track to upload into YouTube.
      *
      * @param MultimediaObject $multimediaObject
      *
@@ -115,11 +115,15 @@ class YoutubeService
         } else {
             $track = $multimediaObject->getTrackWithTag($this->defaultTrackUpload);
         }
-        if ((null === $track) || ($track->isOnlyAudio())) {
+        if (!$track || $track->isOnlyAudio()) {
             $track = $multimediaObject->getTrackWithTag('master');
         }
 
-        return $track;
+        if ($track && !$track->isOnlyAudio()) {
+            return $track;
+        }
+
+        return null;
     }
 
     /**
@@ -139,8 +143,8 @@ class YoutubeService
     public function upload(MultimediaObject $multimediaObject, $category = 27, $privacy = 'private', $force = false)
     {
         $track = $this->getTrack($multimediaObject);
-        if ((null === $track) || ($track->isOnlyAudio())) {
-            $errorLog = __CLASS__.' ['.__FUNCTION__."] Error, the Multimedia Object with id '".$multimediaObject->getId()."' has no track master.";
+        if (!$track) {
+            $errorLog = __CLASS__.' ['.__FUNCTION__."] Error, the Multimedia Object with id '".$multimediaObject->getId()."' has no a valid video track.";
             $this->logger->addError($errorLog);
             throw new \Exception($errorLog);
         }
