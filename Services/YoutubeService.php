@@ -144,7 +144,7 @@ class YoutubeService
     {
         $track = $this->getTrack($multimediaObject);
         if (!$track) {
-            $errorLog = __CLASS__.' ['.__FUNCTION__."] Error, the Multimedia Object with id '".$multimediaObject->getId()."' has no a valid video track.";
+            $errorLog = __CLASS__.' ['.__FUNCTION__."] Error, the Multimedia Object with id '".$multimediaObject->getId()."' has not a valid video track.";
             $this->logger->addError($errorLog);
             throw new \Exception($errorLog);
         }
