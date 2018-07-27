@@ -93,9 +93,9 @@ EOT
             try {
                 if (!$this->youtubeService->getTrack($mm)) {
                     if ($this->youtubeService->hasPendingJobs($mm)) {
-                        $this->logger->addInfo("MultimediaObject with id $mm->getId() have pending jobs.");
+                        $this->logger->addInfo('MultimediaObject with id '.$mm->getId().' have pending jobs.');
                     } else {
-                        $this->logger->addInfo("MultimediaObject with id $mm->getId() haven't valid track for Youtube.");
+                        $this->logger->addInfo('MultimediaObject with id '.$mm->getId().' haven\'t valid track for Youtube.');
                     }
 
                     continue;
