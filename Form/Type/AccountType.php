@@ -33,7 +33,7 @@ class AccountType extends AbstractType
         ));
     }
 
-    public function getName()
+    public function getBlockPrefix()
     {
         return 'pumukit_youtube_account';
     }

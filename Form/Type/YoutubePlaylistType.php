@@ -27,7 +27,7 @@ class YoutubePlaylistType extends AbstractType
         ));
     }
 
-    public function getName()
+    public function getBlockPrefix()
     {
         return 'pumukit_youtube_playlist';
     }
