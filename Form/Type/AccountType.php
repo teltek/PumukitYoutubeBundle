@@ -32,9 +32,4 @@ class AccountType extends AbstractType
             'required' => true,
         ));
     }
-
-    public function getName()
-    {
-        return 'pumukit_youtube_account';
-    }
 }
