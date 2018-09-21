@@ -66,6 +66,7 @@ class BackofficeListener
                 $accountLabel = $this->dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(array('_id' => new \MongoId($request->request->get('youtube_label'))));
                 if ($accountLabel && $youtubeDocument->getYoutubeAccount() !== $accountLabel->getProperty('login')) {
                     $youtubeDocument->setYoutubeAccount($accountLabel->getProperty('login'));
+                    $youtubeDocument->setPlaylists(array());
                     $this->dm->flush();
                 }
             }
