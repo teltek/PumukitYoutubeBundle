@@ -17,6 +17,13 @@ class BackofficeListener
         $this->tagService = $tagService;
     }
 
+    /**
+     * @param PublicationSubmitEvent $event
+     *
+     * @return bool
+     *
+     * @throws \Exception
+     */
     public function onPublicationSubmit(PublicationSubmitEvent $event)
     {
         $request = $event->getRequest();
@@ -52,6 +59,15 @@ class BackofficeListener
                     $multimediaObject,
                     new \MongoId($request->request->get('youtube_playlist_label'))
                 );
+            }
+
+            $youtubeDocument = $this->dm->getRepository('PumukitYoutubeBundle:Youtube')->findOneBy(array('multimediaObjectId' => $multimediaObject->getId()));
+            if ($youtubeDocument) {
+                $accountLabel = $this->dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(array('_id' => new \MongoId($request->request->get('youtube_label'))));
+                if ($accountLabel) {
+                    $youtubeDocument->setYoutubeAccount($accountLabel->getProperty('login'));
+                    $this->dm->flush();
+                }
             }
         }
     }
