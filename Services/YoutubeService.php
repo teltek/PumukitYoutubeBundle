@@ -242,6 +242,7 @@ class YoutubeService
         $youtube = $this->getYoutubeDocument($multimediaObject);
 
         if (null === $playlistTag = $this->tagRepo->find($playlistTagId)) {
+
             $errorLog = __CLASS__.' ['.__FUNCTION__."] Error! The tag with id '".$playlistTagId."' for Youtube Playlist does not exist";
             $this->logger->addError($errorLog);
             throw new \Exception($errorLog);
@@ -260,6 +261,7 @@ class YoutubeService
         }
         if (null != $aResult['out']) {
             $youtube->setPlaylist($playlistId, $aResult['out']);
+
             if (!$multimediaObject->containsTagWithCod($playlistTag->getCod())) {
                 $this->tagService->addTagToMultimediaObject($multimediaObject, $playlistTag->getId(), false);
             }
@@ -511,6 +513,7 @@ class YoutubeService
             return 0;
         }
         $this->checkAndAddDefaultPlaylistTag($multimediaObject);
+
         foreach ($multimediaObject->getTags() as $embedTag) {
             if (!$embedTag->isDescendantOfByCod($this->METATAG_PLAYLIST_COD)) {
                 //This is not the tag you are looking for
@@ -1235,6 +1238,17 @@ class YoutubeService
             $this->logger->addWarning($errorLog);
         }
 
+        if($youtube && !$youtube->getYoutubeAccount()) {
+            $youtubeTag = $this->dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(array('cod' => 'YOUTUBE'));
+            foreach ($multimediaObject->getTags() as $embeddedTag) {
+                $tag = $this->dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(array('_id' => new \MongoId($embeddedTag->getId())));
+                if ($tag->getParent() && $youtubeTag->getId() === $tag->getParent()->getId()) {
+                    $youtube->setYoutubeAccount($tag->getProperty('login'));
+                    $this->dm->flush();
+                }
+            }
+        }
+
         return $youtube;
     }
 
@@ -1279,9 +1293,10 @@ class YoutubeService
         $youtube->setYoutubeId($youtubeId);
 
         $youtubeTag = $this->dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(array('cod' => 'YOUTUBE'));
-        foreach ($multimediaObject->getTags() as $tag) {
-            if ($youtubeTag->getId() === $tag->getParent()) {
-                $youtube->setYoutubeAccount($youtubeTag->getProperty('login'));
+        foreach ($multimediaObject->getTags() as $embeddedTag) {
+            $tag = $this->dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(array('_id' => new \MongoId($embeddedTag->getId())));
+            if ($tag->getParent() && $youtubeTag->getId() === $tag->getParent()->getId()) {
+                $youtube->setYoutubeAccount($tag->getProperty('login'));
             }
         }
 

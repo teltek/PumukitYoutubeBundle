@@ -22,6 +22,7 @@ class YoutubeDeleteCommand extends ContainerAwareCommand
     private $youtubeRepo = null;
 
     private $youtubeService;
+    private $tagService;
 
     private $okRemoved = array();
     private $failedRemoved = array();
@@ -99,6 +100,7 @@ EOT
         $this->youtubeRepo = $this->dm->getRepository('PumukitYoutubeBundle:Youtube');
         $this->syncStatus = $this->getContainer()->getParameter('pumukit_youtube.sync_status');
         $this->youtubeService = $this->getContainer()->get('pumukityoutube.youtube');
+        $this->tagService = $this->getContainer()->get('pumukitschema.tag');
 
         $this->okRemoved = array();
         $this->failedRemoved = array();
@@ -162,6 +164,22 @@ EOT
                     $this->errors[] = $errorLog;
                     continue;
                 }
+
+                $youtubeTag = $this->dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(array('cod' => 'YOUTUBE'));
+                $multimediaObject = $this->dm->getRepository('PumukitSchemaBundle:MultimediaObject')->findOneBy(array('_id' => new \MongoId($youtube->getMultimediaObjectId())));
+                if ($multimediaObject) {
+                    foreach ($multimediaObject->getTags() as $embeddedTag) {
+                        $tag = $this->dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(array('_id' => new \MongoId($embeddedTag->getId())));
+                        if ($tag->getParent() && $youtubeTag->getId() === $tag->getParent()->getId()) {
+                            $youtube->setYoutubeAccount($tag->getProperty('login'));
+                            $youtube->setStatus(Youtube::STATUS_UPLOADING);
+                            $multimediaObject->removeProperty('youtube');
+                            $multimediaObject->removeProperty('youtubeurl');
+                            $this->dm->flush();
+                        }
+                    }
+                }
+
                 $this->okRemoved[] = $youtube;
             } catch (\Exception $e) {
                 $errorLog = __CLASS__.' ['.__FUNCTION__
@@ -229,7 +247,8 @@ EOT
         if (null != $youtubeTag) {
             foreach ($this->okRemoved as $mm) {
                 if ($mm instanceof MultimediaObject) {
-                    if ($mm->containsTagWithCod(self::PUB_CHANNEL_YOUTUBE)) {
+                    $youtubeDocument = $this->dm->getRepository('PumukitYoutubeBundle:Youtube')->findOneBy(array('status' => Youtube::STATUS_REMOVED));
+                    if ($mm->containsTagWithCod(self::PUB_CHANNEL_YOUTUBE) && $youtubeDocument) {
                         $this->tagService->removeTagFromMultimediaObject($mm, $youtubeTag->getId(), false);
                     }
                 }
