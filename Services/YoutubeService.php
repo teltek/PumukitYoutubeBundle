@@ -1294,7 +1294,7 @@ class YoutubeService
         $youtubeTag = $this->dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(array('cod' => 'YOUTUBE'));
         foreach ($multimediaObject->getTags() as $embeddedTag) {
             $tag = $this->dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(array('_id' => new \MongoId($embeddedTag->getId())));
-            if ($tag->getParent() && $youtubeTag->getId() === $tag->getParent()->getId()) {
+            if ($tag->getParent() && $tag->isChildOf($youtubeTag)) {
                 $youtube->setYoutubeAccount($tag->getProperty('login'));
             }
         }
