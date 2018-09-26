@@ -170,7 +170,7 @@ EOT
                 if ($multimediaObject) {
                     foreach ($multimediaObject->getTags() as $embeddedTag) {
                         $tag = $this->dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(array('_id' => new \MongoId($embeddedTag->getId())));
-                        if ($tag->getParent() && $tag->isChildOf($youtubeTag)) {
+                        if ($tag->isChildOf($youtubeTag)) {
                             $youtube->setYoutubeAccount($tag->getProperty('login'));
                             $youtube->setStatus(Youtube::STATUS_UPLOADING);
                             $multimediaObject->removeProperty('youtube');
