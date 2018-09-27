@@ -202,7 +202,7 @@ class YoutubeService
         $youtube->setLink('https://www.youtube.com/watch?v='.$aResult['out']['id']);
         $multimediaObject->setProperty('youtubeurl', $youtube->getLink());
         $this->dm->persist($multimediaObject);
-        if ($aResult['out']['status'] == 'uploaded') {
+        if ('uploaded' == $aResult['out']['status']) {
             $youtube->setStatus(Youtube::STATUS_PROCESSING);
         }
 
@@ -260,6 +260,7 @@ class YoutubeService
         }
         if (null != $aResult['out']) {
             $youtube->setPlaylist($playlistId, $aResult['out']);
+
             if (!$multimediaObject->containsTagWithCod($playlistTag->getCod())) {
                 $this->tagService->addTagToMultimediaObject($multimediaObject, $playlistTag->getId(), false);
             }
@@ -511,6 +512,7 @@ class YoutubeService
             return 0;
         }
         $this->checkAndAddDefaultPlaylistTag($multimediaObject);
+
         foreach ($multimediaObject->getTags() as $embedTag) {
             if (!$embedTag->isDescendantOfByCod($this->METATAG_PLAYLIST_COD)) {
                 //This is not the tag you are looking for
@@ -745,7 +747,7 @@ class YoutubeService
         echo 'delete On Youtube: '.$youtubePlaylist['title']."\n";
 
         $aResult = $this->youtubeProcessService->deletePlaylist($youtubePlaylist['id'], $login);
-        if (!isset($aResult['out']) && $aResult['error_out']['code'] != '404') {
+        if (!isset($aResult['out']) && '404' != $aResult['error_out']['code']) {
             $errorLog = sprintf('%s [%s] Error in deleting in Youtube the playlist with id %s: %s', __CLASS__, __FUNCTION__, $youtubePlaylist['id'], $aResult['error_out']);
             $this->logger->addError($errorLog);
             throw new \Exception($errorLog);
@@ -1235,6 +1237,17 @@ class YoutubeService
             $this->logger->addWarning($errorLog);
         }
 
+        if ($youtube && !$youtube->getYoutubeAccount()) {
+            $youtubeTag = $this->dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(array('cod' => 'YOUTUBE'));
+            foreach ($multimediaObject->getTags() as $embeddedTag) {
+                if ($embeddedTag->isChildOf($youtubeTag)) {
+                    $tag = $this->dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(array('_id' => new \MongoId($embeddedTag->getId())));
+                    $youtube->setYoutubeAccount($tag->getProperty('login'));
+                    $this->dm->flush();
+                }
+            }
+        }
+
         return $youtube;
     }
 
@@ -1279,9 +1292,10 @@ class YoutubeService
         $youtube->setYoutubeId($youtubeId);
 
         $youtubeTag = $this->dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(array('cod' => 'YOUTUBE'));
-        foreach ($multimediaObject->getTags() as $tag) {
-            if ($youtubeTag->getId() === $tag->getParent()) {
-                $youtube->setYoutubeAccount($youtubeTag->getProperty('login'));
+        foreach ($multimediaObject->getTags() as $embeddedTag) {
+            if ($embeddedTag->isChildOf($youtubeTag)) {
+                $tag = $this->dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(array('_id' => new \MongoId($embeddedTag->getId())));
+                $youtube->setYoutubeAccount($tag->getProperty('login'));
             }
         }
 
@@ -1361,4 +1375,5 @@ class YoutubeService
 
         return 0;
     }
+
 }
