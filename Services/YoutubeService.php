@@ -1240,8 +1240,8 @@ class YoutubeService
         if ($youtube && !$youtube->getYoutubeAccount()) {
             $youtubeTag = $this->dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(array('cod' => 'YOUTUBE'));
             foreach ($multimediaObject->getTags() as $embeddedTag) {
-                $tag = $this->dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(array('_id' => new \MongoId($embeddedTag->getId())));
-                if ($tag->isChildOf($youtubeTag)) {
+                if ($embeddedTag->isChildOf($youtubeTag)) {
+                    $tag = $this->dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(array('_id' => new \MongoId($embeddedTag->getId())));
                     $youtube->setYoutubeAccount($tag->getProperty('login'));
                     $this->dm->flush();
                 }
@@ -1293,8 +1293,8 @@ class YoutubeService
 
         $youtubeTag = $this->dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(array('cod' => 'YOUTUBE'));
         foreach ($multimediaObject->getTags() as $embeddedTag) {
-            $tag = $this->dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(array('_id' => new \MongoId($embeddedTag->getId())));
-            if ($tag->isChildOf($youtubeTag)) {
+            if ($embeddedTag->isChildOf($youtubeTag)) {
+                $tag = $this->dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(array('_id' => new \MongoId($embeddedTag->getId())));
                 $youtube->setYoutubeAccount($tag->getProperty('login'));
             }
         }
@@ -1375,4 +1375,5 @@ class YoutubeService
 
         return 0;
     }
+
 }

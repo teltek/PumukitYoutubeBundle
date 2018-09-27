@@ -169,8 +169,8 @@ EOT
                 $multimediaObject = $this->dm->getRepository('PumukitSchemaBundle:MultimediaObject')->findOneBy(array('_id' => new \MongoId($youtube->getMultimediaObjectId())));
                 if ($multimediaObject) {
                     foreach ($multimediaObject->getTags() as $embeddedTag) {
-                        $tag = $this->dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(array('_id' => new \MongoId($embeddedTag->getId())));
-                        if ($tag->isChildOf($youtubeTag)) {
+                        if ($embeddedTag->isChildOf($youtubeTag)) {
+                            $tag = $this->dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(array('_id' => new \MongoId($embeddedTag->getId())));
                             $youtube->setYoutubeAccount($tag->getProperty('login'));
                             $youtube->setStatus(Youtube::STATUS_UPLOADING);
                             $multimediaObject->removeProperty('youtube');
