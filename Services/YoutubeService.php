@@ -399,6 +399,26 @@ class YoutubeService
     public function updateStatus(Youtube $youtube)
     {
         $multimediaObject = $this->mmobjRepo->find($youtube->getMultimediaObjectId());
+
+        if (!$youtube->getYoutubeAccount()) {
+            $youtubeTag = $this->dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(array('cod' => 'YOUTUBE'));
+            $account = null;
+            foreach ($multimediaObject->getTags() as $tag) {
+                if (!$tag->isChildOf($youtubeTag)) {
+                    $tag = $this->dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(array('cod' => $tag->getCod()));
+                    $account = $tag->getProperty('login');
+                }
+            }
+
+            if ($account) {
+                $youtube->setYoutubeAccount($account);
+            } else {
+                $this->logger->warning('Youtube document '.$youtube->getId().' and Mmobj '.$multimediaObject->getId().' havent account.');
+
+                return 0;
+            }
+        }
+
         if (null == $multimediaObject) {
             // TODO remove Youtube Document ?????
             $errorLog = __CLASS__.' ['.__FUNCTION__."] Error, there is no MultimediaObject referenced from YouTube document with id '".$youtube->getId()."'";
@@ -1375,5 +1395,4 @@ class YoutubeService
 
         return 0;
     }
-
 }
