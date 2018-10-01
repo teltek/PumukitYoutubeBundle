@@ -101,6 +101,12 @@ EOT
                     continue;
                 }
 
+                $haveAccount = $this->checkIfMultimediaObjectHaveAccount($mm);
+                if (!$haveAccount) {
+                    $this->logger->warning('MultimediaObject with id '.$mm->getId().' haven\'t account for Youtube.');
+                    continue;
+                }
+
                 $infoLog = sprintf(
                     '%s [%s] Started uploading to Youtube of MultimediaObject with id %s',
                     __CLASS__,
@@ -210,5 +216,19 @@ EOT
         if (!empty($this->okUploads) || !empty($this->failedUploads)) {
             $this->youtubeService->sendEmail('upload', $this->okUploads, $this->failedUploads, $this->errors);
         }
+    }
+
+    private function checkIfMultimediaObjectHaveAccount(MultimediaObject $mm)
+    {
+        $youtubeTag = $this->dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(array('cod' => 'YOUTUBE'));
+        $haveAccount = false;
+        foreach ($mm->getTags() as $tag) {
+            if ($tag->isChildOf($youtubeTag)) {
+                $haveAccount = true;
+                break;
+            }
+        }
+
+        return $haveAccount;
     }
 }
