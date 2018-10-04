@@ -32,4 +32,9 @@ class AccountType extends AbstractType
             'required' => true,
         ));
     }
+
+    public function getBlockPrefix()
+    {
+        return 'pumukit_youtube_account';
+    }
 }
