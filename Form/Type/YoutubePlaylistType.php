@@ -26,9 +26,4 @@ class YoutubePlaylistType extends AbstractType
             'required' => true,
         ));
     }
-
-    public function getName()
-    {
-        return 'pumukit_youtube_playlist';
-    }
 }
