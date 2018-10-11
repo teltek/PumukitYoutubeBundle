@@ -6,8 +6,6 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
-use Pumukit\SchemaBundle\Document\Tag;
-use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\YoutubeBundle\Document\Youtube;
 
 class YoutubeUpdateStatusCommand extends ContainerAwareCommand
@@ -85,6 +83,7 @@ EOT
                 }
                 continue;
             }
+
             try {
                 $infoLog = __CLASS__.
                     ' ['.__FUNCTION__.'] Started updating internal YouTube status video "'.
@@ -129,8 +128,7 @@ EOT
     {
         $qb = $this->mmobjRepo
             ->createQueryBuilder()
-            ->field('properties.youtube')
-            ->equals($youtube->getId())
+            ->field('_id')->equals(new \MongoId($youtube->getMultimediaObjectId()))
             ->field('properties.origin')
             ->notEqual('youtube');
 
@@ -147,7 +145,7 @@ EOT
     protected function findByYoutubeId(Youtube $youtube)
     {
         return $this->mmobjRepo->createQueryBuilder()
-            ->field('properties.youtube')->equals($youtube->getId())
+            ->field('_id')->equals(new \MongoId($youtube->getMultimediaObjectId()))
             ->getQuery()
             ->getSingleResult();
     }
