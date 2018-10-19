@@ -61,7 +61,7 @@ class Youtube
     /**
      * @var int
      *
-     * @MongoDB\Int
+     * @MongoDB\Field(type="int")
      */
     private $status = self::STATUS_DEFAULT;
 
