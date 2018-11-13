@@ -6,6 +6,7 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Template;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\YoutubeBundle\Document\Youtube;
 
@@ -55,5 +56,16 @@ class ModalController extends Controller
         }
 
         return array('mm' => $mm, 'youtube' => $youtube, 'youtube_status' => $youtubeStatus);
+    }
+
+    /**
+     * @Route ("/updateplaylist/mm/{id}", name="pumukityoutube_updateplaylist")
+     */
+    public function updateplaylistAction(Request $request, MultimediaObject $mm)
+    {
+        $service = $this->get('pumukityoutube.youtube');
+        $out = $service->updatePlaylists($mm);
+
+        return new JsonResponse($out);
     }
 }
