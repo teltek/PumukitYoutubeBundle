@@ -86,6 +86,18 @@
         <source>Add new Youtube account playlist</source>
         <target>Add new Youtube account playlist</target>
       </trans-unit>
+      <trans-unit id="34" resname="Update playlist error">
+        <source>Update playlist error</source>
+        <target>Update playlist error</target>
+      </trans-unit>
+      <trans-unit id="35" resname="Update playlist successfully">
+        <source>Update playlist successfully</source>
+        <target>Update playlist successfully</target>
+      </trans-unit>
+      <trans-unit id="36" resname="Manual playlist update">
+        <source>Manual playlist update</source>
+        <target>Manual playlist update</target>
+      </trans-unit>
     </body>
   </file>
 </xliff>
