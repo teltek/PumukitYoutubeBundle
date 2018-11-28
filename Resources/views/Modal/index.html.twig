@@ -29,8 +29,8 @@
             <dd>{{ youtube.id }}</dd>
             {% if youtube_status in ['published', 'proccessing'] %}
                 <dt>{% trans %}Youtube Playlists{% endtrans %}:</dt>
-                {% for key, playlist in youtube.playlists %}
-                    <dd>
+                <dd>
+                    {% for key, playlist in youtube.playlists %}
                         <div class="input-group">
                             {{ playlist }}
                             <span class="input-group-addon">
@@ -39,10 +39,15 @@
                                 </a>
                             </span>
                         </div>
-                    </dd>
-                {% else %}
-                    <dd>---</dd>
-                {% endfor %}
+                    {% else %}
+                        ---
+                    {% endfor %}
+                    {% if youtube_status == 'published' %}
+                        <span class="manualUpdatePlaylist" title="{{ "Manual playlist update"|trans }}" data-id="{{ mm.id }}" style="cursor:pointer">
+                            &nbsp;&nbsp;<i class="mdi-av-loop"></i>
+                        </span>
+                    {% endif %}
+                </dd>
                 <dt>{% trans %}Youtube Link{% endtrans %}</dt>
                 <dd>
                     <div class="col-lg-10 input-group">
@@ -68,3 +73,23 @@
         </dl>
     </div>
 </div>
+
+<script>
+    $('.manualUpdatePlaylist').on('click',function() {
+        $.ajax({
+            url: '{{ path('pumukityoutube_updateplaylist', {'id': mm.id}) }}',
+            method: 'GET',
+            success: function (response) {
+                if(response == 0) {
+                    no_success("{{ 'Update playlist error' | trans }}");
+                } else {
+                    success("{{ 'Update playlist successfully' | trans }}");
+                }
+            },
+            error: function(response) {
+                no_success(response.error);
+            },
+        });
+        return false;
+    });
+</script>
