@@ -76,15 +76,12 @@
 
 <script>
     $('.manualUpdatePlaylist').on('click',function() {
+        $('#myModal').modal('toggle');
         $.ajax({
             url: '{{ path('pumukityoutube_updateplaylist', {'id': mm.id}) }}',
             method: 'GET',
             success: function (response) {
-                if(response == 0) {
-                    no_success("{{ 'Update playlist error' | trans }}");
-                } else {
-                    success("{{ 'Update playlist successfully' | trans }}");
-                }
+                success("{{ 'Update playlist successfully' | trans }}");
             },
             error: function(response) {
                 no_success(response.error);
