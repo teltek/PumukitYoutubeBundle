@@ -41,7 +41,7 @@ class YoutubeService
     protected $sbsProfileName;
     protected $jobService;
     protected $jobRepo;
-    protected $opencastService;
+    protected $opencastService = null;
 
     public static $status = array(
         0 => 'public',
@@ -49,7 +49,7 @@ class YoutubeService
         2 => 'unlisted',
     );
 
-    public function __construct(DocumentManager $documentManager, Router $router, TagService $tagService, LoggerInterface $logger, SenderService $senderService = null, TranslatorInterface $translator, YoutubeProcessService $youtubeProcessService, $playlistPrivacyStatus, $locale, $useDefaultPlaylist, $defaultPlaylistCod, $defaultPlaylistTitle, $metatagPlaylistCod, $playlistMaster, $deletePlaylists, $pumukitLocales, $youtubeSyncStatus, $defaultTrackUpload, $generateSbs, $sbsProfileName, $jobService, $opencastService)
+    public function __construct(DocumentManager $documentManager, Router $router, TagService $tagService, LoggerInterface $logger, SenderService $senderService = null, TranslatorInterface $translator, YoutubeProcessService $youtubeProcessService, $playlistPrivacyStatus, $locale, $useDefaultPlaylist, $defaultPlaylistCod, $defaultPlaylistTitle, $metatagPlaylistCod, $playlistMaster, $deletePlaylists, $pumukitLocales, $youtubeSyncStatus, $defaultTrackUpload, $generateSbs, $sbsProfileName, $jobService, $opencastService = null)
     {
         $this->dm = $documentManager;
         $this->router = $router;
@@ -1366,7 +1366,7 @@ class YoutubeService
 
     protected function generateSbsTrack(MultimediaObject $multimediaObject)
     {
-        if ($this->generateSbs && $this->sbsProfileName) {
+        if ($this->opencastService && $this->generateSbs && $this->sbsProfileName) {
             if ($multimediaObject->getProperty('opencast')) {
                 return $this->generateSbsTrackForOpencast($multimediaObject);
             }
