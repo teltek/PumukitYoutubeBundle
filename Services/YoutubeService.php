@@ -1056,7 +1056,7 @@ class YoutubeService
         }, ARRAY_FILTER_USE_BOTH);
 
         /* Fix error when keywords contains < or > */
-        $tagsToUpload = array_map('filterSpecialCharacters', $tagsToUpload);
+        $tagsToUpload = array_map(array($this, 'filterSpecialCharacters'), $tagsToUpload);
 
         return implode(',', $tagsToUpload);
     }
