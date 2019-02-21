@@ -6,10 +6,12 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
-use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\YoutubeBundle\Document\Youtube;
 
+/**
+ * Class YoutubeDeleteCommand.
+ */
 class YoutubeDeleteCommand extends ContainerAwareCommand
 {
     const PUB_CHANNEL_WEBTV = 'PUCHWEBTV';
@@ -51,6 +53,12 @@ EOT
           );
     }
 
+    /**
+     * @param InputInterface  $input
+     * @param OutputInterface $output
+     *
+     * @return int|void|null
+     */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $youtubeMongoIds = $this->youtubeRepo->getDistinctFieldWithStatusAndForce('_id', Youtube::STATUS_PUBLISHED, false);
@@ -109,6 +117,10 @@ EOT
         }
     }
 
+    /**
+     * @param InputInterface  $input
+     * @param OutputInterface $output
+     */
     protected function initialize(InputInterface $input, OutputInterface $output)
     {
         $this->dm = $this->getContainer()->get('doctrine_mongodb')->getManager();
@@ -129,6 +141,10 @@ EOT
         $this->dryRun = (true === $input->getOption('dry-run'));
     }
 
+    /**
+     * @param                 $mms
+     * @param OutputInterface $output
+     */
     private function deleteVideosFromYoutube($mms, OutputInterface $output)
     {
         foreach ($mms as $mm) {
@@ -162,6 +178,10 @@ EOT
         }
     }
 
+    /**
+     * @param                 $orphanYoutubes
+     * @param OutputInterface $output
+     */
     private function deleteOrphanVideosFromYoutube($orphanYoutubes, OutputInterface $output)
     {
         foreach ($orphanYoutubes as $youtube) {
@@ -211,6 +231,11 @@ EOT
         }
     }
 
+    /**
+     * @param $mongoIds
+     *
+     * @return array
+     */
     private function getStringIds($mongoIds)
     {
         $stringIds = array();
@@ -221,6 +246,12 @@ EOT
         return $stringIds;
     }
 
+    /**
+     * @param $youtubeIds
+     * @param $status
+     *
+     * @return mixed
+     */
     private function getMultimediaObjectsInYoutubeWithoutStatus($youtubeIds, $status)
     {
         return $this->createYoutubeQueryBuilder($youtubeIds)
@@ -229,6 +260,12 @@ EOT
             ->execute();
     }
 
+    /**
+     * @param $youtubeIds
+     * @param $tagCode
+     *
+     * @return mixed
+     */
     private function getMultimediaObjectsInYoutubeWithoutTagCode($youtubeIds, $tagCode)
     {
         return $this->createYoutubeQueryBuilder($youtubeIds)
@@ -237,6 +274,12 @@ EOT
             ->execute();
     }
 
+    /**
+     * @param $youtubeIds
+     * @param $broadcastTypeId
+     *
+     * @return mixed
+     */
     private function getMultimediaObjectsInYoutubeWithoutEmbeddedBroadcast($youtubeIds, $broadcastTypeId)
     {
         return $this->createYoutubeQueryBuilder($youtubeIds)
@@ -245,6 +288,11 @@ EOT
             ->execute();
     }
 
+    /**
+     * @param array $youtubeIds
+     *
+     * @return mixed
+     */
     private function createYoutubeQueryBuilder($youtubeIds = array())
     {
         $qb = $this->mmobjRepo
