@@ -30,15 +30,18 @@ class YoutubeDeleteCommand extends ContainerAwareCommand
 
     private $syncStatus;
 
+    private $dryRun;
+
     protected function configure()
     {
         $this
             ->setName('youtube:delete')
-            ->setDescription('Delete videos from Youtube')
+            ->addOption('dry-run', null, InputOption::VALUE_NONE, 'List multimedia objects to delete')
+            ->setDescription('Command to delete videos from Youtube')
             ->setHelp(
                 <<<'EOT'
 Command to delete controlled videos from Youtube.
-
+                
 EOT
           );
     }
@@ -55,9 +58,12 @@ EOT
             $status = array(MultimediaObject::STATUS_PUBLISHED);
         }
         $notPublishedMms = $this->getMultimediaObjectsInYoutubeWithoutStatus($publishedYoutubeIds, $status);
-        if (0 != count($notPublishedMms)) {
+        if (0 != count($notPublishedMms) && !$this->dryRun) {
             $output->writeln('Removing '.count($notPublishedMms).' object(s) with status not published');
             $this->deleteVideosFromYoutube($notPublishedMms, $output);
+        } else {
+            $state = 'Not published multimedia objects';
+            $this->showMultimediaObjects($output, $state, $notPublishedMms);
         }
 
         $arrayPubTags = $this->getContainer()->getParameter('pumukit_youtube.pub_channels_tags');
@@ -66,27 +72,38 @@ EOT
             $publishedYoutubeIds = $this->getStringIds($youtubeMongoIds);
             // TODO When tag IMPORTANT is defined as child of PUBLICATION DECISION Tag
             $notCorrectTagMms = $this->getMultimediaObjectsInYoutubeWithoutTagCode($publishedYoutubeIds, $tagCode);
-            if (0 != count($notCorrectTagMms)) {
+            if (0 != count($notCorrectTagMms) && !$this->dryRun) {
                 $output->writeln('Removing '.count($notCorrectTagMms).' object(s) w/o tag '.$tagCode);
                 $this->deleteVideosFromYoutube($notCorrectTagMms, $output);
+            } else {
+                $state = 'Not correct tags multimedia objects';
+                $this->showMultimediaObjects($output, $state, $notCorrectTagMms);
             }
         }
 
         $youtubeMongoIds = $this->youtubeRepo->getDistinctFieldWithStatusAndForce('_id', Youtube::STATUS_PUBLISHED, false);
         $publishedYoutubeIds = $this->getStringIds($youtubeMongoIds);
         $notPublicMms = $this->getMultimediaObjectsInYoutubeWithoutEmbeddedBroadcast($publishedYoutubeIds, 'public');
-        if (0 != count($notPublicMms)) {
+        if (0 != count($notPublicMms) && !$this->dryRun) {
             $output->writeln('Removing '.count($notPublicMms).' object(s) with broadcast not public');
             $this->deleteVideosFromYoutube($notPublicMms, $output);
+        } else {
+            $state = 'Not public multimedia objects';
+            $this->showMultimediaObjects($output, $state, $notPublicMms);
         }
 
-        $orphanYoutubes = $this->youtubeRepo->findByStatus(Youtube::STATUS_TO_DELETE);
-        if (0 != count($orphanYoutubes)) {
+        $orphanYoutubes = $this->youtubeRepo->findBy(array('status' => Youtube::STATUS_TO_DELETE));
+        if (0 != count($orphanYoutubes) && !$this->dryRun) {
             $output->writeln('Removing '.count($orphanYoutubes).' orphanYoutube(s) ');
             $this->deleteOrphanVideosFromYoutube($orphanYoutubes, $output);
+        } else {
+            $state = 'Orphan youtube documents';
+            $this->showYoutubeMultimediaObjects($output, $state, $orphanYoutubes);
         }
 
-        $this->checkResultsAndSendEmail();
+        if (!$this->dryRun) {
+            $this->checkResultsAndSendEmail();
+        }
     }
 
     private function initParameters()
@@ -103,6 +120,7 @@ EOT
         $this->errors = array();
 
         $this->logger = $this->getContainer()->get('monolog.logger.youtube');
+        $this->dryRun = (true === $input->getOption('dry-run'));
     }
 
     private function deleteVideosFromYoutube($mms, OutputInterface $output)
@@ -228,6 +246,52 @@ EOT
         }
         if (!empty($this->okRemoved) || !empty($this->failedRemoved)) {
             $this->youtubeService->sendEmail('remove', $this->okRemoved, $this->failedRemoved, $this->errors);
+        }
+    }
+
+    /**
+     * @param OutputInterface $output
+     * @param                 $state
+     * @param                 $multimediaObjects
+     */
+    private function showMultimediaObjects(OutputInterface $output, $state, $multimediaObjects)
+    {
+        $numberMultimediaObjects = count($multimediaObjects);
+        $output->writeln(
+            array(
+                "\n",
+                "<info>***** $state ***** ($numberMultimediaObjects)</info>",
+                "\n",
+            )
+        );
+
+        if ($numberMultimediaObjects > 0) {
+            foreach ($multimediaObjects as $multimediaObject) {
+                $output->writeln($multimediaObject->getId().' - '.$multimediaObject->getProperty('youtubeurl').' - '.$multimediaObject->getProperty('pumukit1id'));
+            }
+        }
+    }
+
+    /**
+     * @param OutputInterface $output
+     * @param                 $state
+     * @param                 $youtubeDocuments
+     */
+    private function showYoutubeMultimediaObjects(OutputInterface $output, $state, $youtubeDocuments)
+    {
+        $numberYoutubeDocuments = count($youtubeDocuments);
+        $output->writeln(
+            array(
+                "\n",
+                "<info>***** $state ***** ($numberYoutubeDocuments)</info>",
+                "\n",
+            )
+        );
+
+        if ($numberYoutubeDocuments > 0) {
+            foreach ($youtubeDocuments as $youtube) {
+                $output->writeln($youtube->getMultimediaObjectId().' - '.$youtube->getLink());
+            }
         }
     }
 }
