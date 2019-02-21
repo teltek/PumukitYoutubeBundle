@@ -1225,14 +1225,32 @@ class YoutubeService
      */
     protected function getTagsForYoutube(MultimediaObject $multimediaObject)
     {
-        return $multimediaObject->getKeywords($this->ytLocale);
+        $tags = $multimediaObject->getI18nKeywords();
 
-        /* Se matiene comentado el código por si en algún momento un usuario decide devolver por defecto ciertas keywords fijas a sus videos. */
-        //$numbers = array('1', '2', '3', '4', '5', '6', '7', '8', '9', '0');
-        // TODO CMAR
-        //$tags = str_replace($numbers, '', $multimediaObject->getKeyword()) . ', CMAR, Mar, Galicia, Portugal, Eurorregión, Campus, Excelencia, Internacional';
-        //$tags = str_replace($numbers, '', $multimediaObject->getKeyword());
-        //return $tags;
+        $tagsToUpload = $tags[$this->ytLocale];
+
+        /* Filter with Youtube Keyword length limit */
+        $tagsToUpload = array_filter($tagsToUpload, function ($value, $key) {
+            return strlen($value) < 500;
+        }, ARRAY_FILTER_USE_BOTH);
+
+        /* Fix error when keywords contains < or > */
+        $tagsToUpload = array_map(array($this, 'filterSpecialCharacters'), $tagsToUpload);
+
+        return implode(',', $tagsToUpload);
+    }
+
+    /**
+     * @param $value
+     *
+     * @return mixed
+     */
+    public function filterSpecialCharacters($value)
+    {
+        $value = str_replace('<', '', $value);
+        $value = str_replace('>', '', $value);
+
+        return $value;
     }
 
     /**
