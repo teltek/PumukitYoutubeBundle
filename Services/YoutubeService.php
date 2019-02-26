@@ -1342,7 +1342,7 @@ class YoutubeService
         if ('HTTP/1.0 200 OK' === $file_headers[0]) {
             $youtube->setStatus(Youtube::STATUS_PUBLISHED);
         } else {
-            $this->logger->error('ERROR - Setting status removed '.$youtube->getId().' ( '.$youtube->getMultimediaObjectId().') HTTP/1.0 200  - '.__CLASS__);
+            $this->logger->error('ERROR - Setting status removed '.$youtube->getId().' ( '.$youtube->getMultimediaObjectId().') HTTP/1.0 200  - '.__FUNCTION__);
             $youtube->setStatus(Youtube::STATUS_REMOVED);
         }
         $this->dm->persist($youtube);
