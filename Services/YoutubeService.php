@@ -520,7 +520,7 @@ class YoutubeService
      *
      * @return int
      */
-    public function syncPlaylistsRelations()
+    public function syncPlaylistsRelations($dryRun = false)
     {
         if ($this->USE_DEFAULT_PLAYLIST) {
             $this->getOrCreateDefaultTag();
@@ -551,24 +551,32 @@ class YoutubeService
                     $msg = sprintf('Creating YouTube playlist from tag "%s" (%s) because it doesn\'t exist locally', $tag->getTitle(), $tag->getCod());
                     echo $msg;
                     $this->logger->info($msg);
-                    $this->createYoutubePlaylist($tag);
+                    if (!$dryRun) {
+                        $this->createYoutubePlaylist($tag);
+                    }
                 } elseif ($this->DELETE_PLAYLISTS) {
                     $msg = sprintf('Deleting tag "%s" (%s) because it doesn\'t exist on YouTube', $tag->getTitle(), $tag->getCod());
                     echo $msg;
                     $this->logger->warning($msg);
-                    $this->deletePumukitPlaylist($tag);
+                    if (!$dryRun) {
+                        $this->deletePumukitPlaylist($tag);
+                    }
                 }
             } else {
                 if ('pumukit' == $master) {
                     $msg = sprintf('Updating YouTube playlist from tag "%s" (%s)', $tag->getTitle(), $tag->getCod());
                     echo $msg;
                     $this->logger->info($msg);
-                    $this->updateYoutubePlaylist($tag);
+                    if (!$dryRun) {
+                        $this->updateYoutubePlaylist($tag);
+                    }
                 } else {
                     $msg = sprintf('Updating tag from YouTube playlist "%s" (%s)', $tag->getTitle(), $tag->getCod());
                     echo $msg;
                     $this->logger->info($msg);
-                    $this->updatePumukitPlaylist($tag);
+                    if (!$dryRun) {
+                        $this->updatePumukitPlaylist($tag);
+                    }
                 }
             }
         }
@@ -578,7 +586,9 @@ class YoutubeService
                     $msg = sprintf('Creating tag using YouTube playlist "%s" (%s)', $ytPlaylist['title'], $ytPlaylist['id']);
                     echo $msg;
                     $this->logger->info($msg);
-                    $this->createPumukitPlaylist($ytPlaylist);
+                    if (!$dryRun) {
+                        $this->createPumukitPlaylist($ytPlaylist);
+                    }
                 } elseif ($this->DELETE_PLAYLISTS) {
                     if ('Favorites' == $ytPlaylist['title']) {
                         continue;
@@ -586,7 +596,9 @@ class YoutubeService
                     $msg = sprintf('Deleting YouTube playlist "%s" (%s) because it doesn\'t exist locally', $ytPlaylist['title'], $ytPlaylist['id']);
                     echo $msg;
                     $this->logger->warning($msg);
-                    $this->deleteYoutubePlaylist($ytPlaylist);
+                    if (!$dryRun) {
+                        $this->deleteYoutubePlaylist($ytPlaylist);
+                    }
                 }
             }
         }

@@ -5,9 +5,6 @@ namespace Pumukit\YoutubeBundle\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
-use Pumukit\SchemaBundle\Document\Tag;
-use Pumukit\SchemaBundle\Document\MultimediaObject;
-use Pumukit\YoutubeBundle\Document\Youtube;
 
 class YoutubeUpdatePlaylistCommand extends ContainerAwareCommand
 {
@@ -34,6 +31,7 @@ class YoutubeUpdatePlaylistCommand extends ContainerAwareCommand
         $this
             ->setName('youtube:update:playlist')
             ->setDescription('Update Youtube playlists from Multimedia Objects')
+            ->addOption('dry-run', null, InputOption::VALUE_NONE, 'List actions')
             ->setHelp(
                 <<<'EOT'
 Command to update playlist in Youtube.
@@ -44,17 +42,24 @@ EOT
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
+        $dryRun = (true === $input->getOption('dry-run'));
+
         $this->initParameters();
         $multimediaObjects = $this->createYoutubeQueryBuilder()
             ->field('properties.youtube')->exists(true)
             ->getQuery()
             ->execute();
 
-        $this->youtubeService->syncPlaylistsRelations();
+        $this->youtubeService->syncPlaylistsRelations($dryRun);
+
+        if ($dryRun) {
+            return;
+        }
+
         foreach ($multimediaObjects as $multimediaObject) {
             try {
                 $outUpdatePlaylists = $this->youtubeService->updatePlaylists($multimediaObject);
-                if ($outUpdatePlaylists !== 0) {
+                if (0 !== $outUpdatePlaylists) {
                     $errorLog = sprintf('%s [%s] Unknown error in the update of Youtube Playlists of MultimediaObject with id %s: %s', __CLASS__, __FUNCTION__, $multimediaObject->getId(), $outUpdatePlaylists);
                     $this->logger->addError($errorLog);
                     $output->writeln($errorLog);
