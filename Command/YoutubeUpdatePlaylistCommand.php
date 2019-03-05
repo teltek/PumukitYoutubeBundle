@@ -33,8 +33,9 @@ class YoutubeUpdatePlaylistCommand extends ContainerAwareCommand
     {
         $this
             ->setName('youtube:update:playlist')
-            ->addOption('use-pmk1', null, InputOption::VALUE_NONE, 'Use multimedia objects from PuMuKIT1')
             ->setDescription('Update Youtube playlists from Multimedia Objects')
+            ->addOption('use-pmk1', null, InputOption::VALUE_NONE, 'Use multimedia objects from PuMuKIT1')
+            ->addOption('dry-run', null, InputOption::VALUE_NONE, 'List actions')
             ->setHelp(
                 <<<'EOT'
 Command to update playlist in Youtube.
@@ -45,12 +46,18 @@ EOT
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
+        $dryRun = (true === $input->getOption('dry-run'));
+
         $multimediaObjects = $this->createYoutubeQueryBuilder()
             ->field('properties.youtube')->exists(true)
             ->getQuery()
             ->execute();
 
-        $this->youtubeService->syncPlaylistsRelations();
+        $this->youtubeService->syncPlaylistsRelations($dryRun);
+
+        if ($dryRun) {
+            return;
+        }
 
         foreach ($multimediaObjects as $multimediaObject) {
             try {
