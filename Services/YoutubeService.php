@@ -552,14 +552,22 @@ class YoutubeService
                     echo $msg, "\n";
                     $this->logger->info($msg);
                     if (!$dryRun) {
-                        $this->createYoutubePlaylist($tag);
+                        try {
+                            $this->createYoutubePlaylist($tag);
+                        } catch (\Exception $e) {
+                            $this->logger->error($e->getMessage());
+                        }
                     }
                 } elseif ($this->DELETE_PLAYLISTS) {
                     $msg = sprintf('Deleting tag "%s" (%s) because it doesn\'t exist on YouTube', $tag->getTitle(), $tag->getCod());
                     echo $msg, "\n";
                     $this->logger->warning($msg);
                     if (!$dryRun) {
-                        $this->deletePumukitPlaylist($tag);
+                        try {
+                            $this->deletePumukitPlaylist($tag);
+                        } catch (\Exception $e) {
+                            $this->logger->error($e->getMessage());
+                        }
                     }
                 }
             } else {
@@ -568,14 +576,22 @@ class YoutubeService
                     echo $msg, "\n";
                     $this->logger->info($msg);
                     if (!$dryRun) {
-                        $this->updateYoutubePlaylist($tag);
+                        try {
+                            $this->updateYoutubePlaylist($tag);
+                        } catch (\Exception $e) {
+                            $this->logger->error($e->getMessage());
+                        }
                     }
                 } else {
                     $msg = sprintf('Updating tag from YouTube playlist "%s" (%s)', $tag->getTitle(), $tag->getCod());
                     echo $msg, "\n";
                     $this->logger->info($msg);
                     if (!$dryRun) {
-                        $this->updatePumukitPlaylist($tag);
+                        try {
+                            $this->updatePumukitPlaylist($tag);
+                        } catch (\Exception $e) {
+                            $this->logger->error($e->getMessage());
+                        }
                     }
                 }
             }
@@ -587,7 +603,11 @@ class YoutubeService
                     echo $msg, "\n";
                     $this->logger->info($msg);
                     if (!$dryRun) {
-                        $this->createPumukitPlaylist($ytPlaylist);
+                        try {
+                            $this->createPumukitPlaylist($ytPlaylist);
+                        } catch (\Exception $e) {
+                            $this->logger->error($e->getMessage());
+                        }
                     }
                 } elseif ($this->DELETE_PLAYLISTS) {
                     if ('Favorites' == $ytPlaylist['title']) {
@@ -597,7 +617,11 @@ class YoutubeService
                     echo $msg, "\n";
                     $this->logger->warning($msg);
                     if (!$dryRun) {
-                        $this->deleteYoutubePlaylist($ytPlaylist);
+                        try {
+                            $this->deleteYoutubePlaylist($ytPlaylist);
+                        } catch (\Exception $e) {
+                            $this->logger->error($e->getMessage());
+                        }
                     }
                 }
             }
@@ -632,7 +656,6 @@ class YoutubeService
             $this->dm->flush();
         } else {
             $errorLog = sprintf('%s [%s] Error! Creating the playlist from tag with id %s', __CLASS__, __FUNCTION__, $tag->getId());
-            $this->logger->error($errorLog);
             throw new \Exception($errorLog);
         }
     }
