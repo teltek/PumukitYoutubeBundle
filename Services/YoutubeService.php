@@ -717,7 +717,14 @@ class YoutubeService
     {
         echo 'create On Youtube: '.$tag->getTitle($this->ytLocale)."\n";
 
-        $aResult = $this->youtubeProcessService->createPlaylist($tag->getTitle($this->ytLocale), $this->playlistPrivacyStatus, $tag->getParent()->getProperty('login'));
+        $playlistTitle = $tag->getTitle($this->ytLocale);
+        if (strlen($playlistTitle) > 150) {
+            $youtubeTitlePlaylist = substr($playlistTitle, 0, 147);
+            $youtubeTitlePlaylist .= '...';
+        } else {
+            $youtubeTitlePlaylist = $playlistTitle;
+        }
+        $aResult = $this->youtubeProcessService->createPlaylist($youtubeTitlePlaylist, $this->playlistPrivacyStatus);
         if ($aResult['error']) {
             $errorLog = sprintf('%s [%s] Error in creating in Youtube the playlist from tag with id %s: %s', __CLASS__, __FUNCTION__, $tag->getId(), $aResult['error_out']);
             $this->logger->error($errorLog);
@@ -732,7 +739,6 @@ class YoutubeService
             $this->dm->flush();
         } else {
             $errorLog = sprintf('%s [%s] Error! Creating the playlist from tag with id %s', __CLASS__, __FUNCTION__, $tag->getId());
-            $this->logger->error($errorLog);
             throw new \Exception($errorLog);
         }
     }
