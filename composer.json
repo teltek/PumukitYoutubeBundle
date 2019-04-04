@@ -1,9 +1,9 @@
 {
-    "name": "teltek/pmk2-youtube-bundle",
+    "name": "teltek/pumukit-youtube-bundle",
     "type": "symfony-bundle",
-    "description": "Youtube bundle for Symfony2 to upload videos to Youtube and other features",
-    "keywords": ["youtube", "uploader", "upload", "videos", "symfony2", "bundle", "pumukit", "teltek"],
-    "homepage": "https://github.com/teltek/PuMuKIT2-youtube-bundle",
+    "description": "Youtube bundle for Symfony to upload videos to Youtube and other features",
+    "keywords": ["youtube", "uploader", "upload", "videos", "symfony", "bundle", "pumukit", "teltek"],
+    "homepage": "https://github.com/teltek/PumukitYoutubeBundle",
     "license": "proprietary",
     "authors": [
         {
@@ -12,8 +12,8 @@
         }
     ],
     "require": {
-        "php": ">=5.3.3",
-        "pumukit/pumukit2": ">=2.3"
+        "php": ">=7.2",
+        "pumukit/pumukit": ">=3.0"
     },
     "autoload": {
         "psr-4": {

@@ -1,7 +1,7 @@
 Installation Guide
 ==================
 
-*This page is updated to the PuMuKIT2-youtube-bundle 8127-make-youtube-generic and to the PuMuKIT 2.1.0*
+*This page is updated to the PumukitYoutubeBundle 8127-make-youtube-generic and to the PuMuKIT 2.1.0 or higher*
 
 Requirements
 ------------
@@ -19,7 +19,7 @@ Open a command console, enter your project directory and execute the
 following command to add this repo:
 
 ```bash
-$ composer config repositories.pumukityoutubebundle vcs https://github.com/teltek/PuMuKIT2-youtube-bundle
+$ composer config repositories.pumukityoutubebundle vcs git@github.com:teltek/PumukitYoutubeBundle.git
 ```
 
 Step 2: Download the Bundle
@@ -29,7 +29,7 @@ Open a command console, enter your project directory and execute the
 following command to download the latest stable version of this bundle:
 
 ```bash
-$ composer require teltek/pmk2-youtube-bundle dev-8127-make-youtube-generic
+$ composer require teltek/pumukit-youtube-bundle dev-master
 ```
 
 Step 3: Install the Bundle
@@ -38,7 +38,7 @@ Step 3: Install the Bundle
 Install the bundle by executing the following line command. This command updates the Kernel to enable the bundle (app/AppKernel.php) and loads the routing (app/config/routing.yml) to add the bundle routes.
 
 ```bash
-$ cd /path/to/pumukit2/
+$ cd /path/to/pumukit/
 $ php app/console pumukit:install:bundle Pumukit/YoutubeBundle/PumukitYoutubeBundle
 ```
 

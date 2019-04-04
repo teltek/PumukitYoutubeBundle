@@ -1,7 +1,7 @@
 Configuration Guide
 ===================
 
-*This page is updated to the PuMuKIT2-youtube-bundle 8127-make-youtube-generic and to the PuMuKIT 2.1.0*
+*This page is updated to the PumukitYoutubeBundle and to the PuMuKIT 2.1.0 or higher*
 
 ### Create account for uploading Pumukit videos to Youtube
 
@@ -68,8 +68,8 @@ python setup.py install
 #### Create credential file executing script:
 
 ```
-cd /path/to/pumukit2/
-cd vendor/teltek/pmk2-youtube-bundle/
+cd /path/to/pumukit/
+cd vendor/teltek/pumukit-youtube-bundle/
 cd Resources/data/pyPumukit
 python createAccount.py
 ```
@@ -144,7 +144,7 @@ If this parameter is not configured, the track by default is `vtt`.
 ### Clear cache
 
 ```
-cd /path/to/pumukit2/
+cd /path/to/pumukit/
 php app/console cache:clear
 php app/console cache:clear --env=prod
 ```
@@ -161,12 +161,12 @@ The recommendation on a development environment is to run commands every minute.
 The recommendation on a production environment is to run commands every day, e.g.: every day at time 23:40.
 
 ```
-40 23 * * *     /usr/bin/php /var/www/pumukit2/app/console youtube:update:metadata --env=prod
-40 23 * * *     /usr/bin/php /var/www/pumukit2/app/console youtube:update:playlist --env=prod
-40 23 * * *     /usr/bin/php /var/www/pumukit2/app/console youtube:update:status --env=prod
-20  * * * *     /usr/bin/php /var/www/pumukit2/app/console youtube:update:pendingstatus --env=prod
-40 23 * * *     /usr/bin/php /var/www/pumukit2/app/console youtube:upload --env=prod
-40 23 * * *     /usr/bin/php /var/www/pumukit2/app/console youtube:delete --env=prod
-40 23 * * *     /usr/bin/php /var/www/pumukit2/app/console youtube:caption:upload --env=prod
-40 23 * * *     /usr/bin/php /var/www/pumukit2/app/console youtube:caption:delete --env=prod
+40 23 * * *     /usr/bin/php /var/www/pumukit/app/console youtube:update:metadata --env=prod
+40 23 * * *     /usr/bin/php /var/www/pumukit/app/console youtube:update:playlist --env=prod
+40 23 * * *     /usr/bin/php /var/www/pumukit/app/console youtube:update:status --env=prod
+20  * * * *     /usr/bin/php /var/www/pumukit/app/console youtube:update:pendingstatus --env=prod
+40 23 * * *     /usr/bin/php /var/www/pumukit/app/console youtube:upload --env=prod
+40 23 * * *     /usr/bin/php /var/www/pumukit/app/console youtube:delete --env=prod
+40 23 * * *     /usr/bin/php /var/www/pumukit/app/console youtube:caption:upload --env=prod
+40 23 * * *     /usr/bin/php /var/www/pumukit/app/console youtube:caption:delete --env=prod
 ```
