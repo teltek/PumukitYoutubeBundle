@@ -94,9 +94,10 @@ This script launches the login page for accepting the access to our account. We 
 
 Once acepted the access, an oauth2.json file will be created in Resources/data. We should rename it to a file with the login name. Ex: yourlogin.json on the accounts directory
 
-```bash
-mkdir ../accounts
-mv oauth2.json ../accounts/{login}.json
+Note: The json account file can be stored into the Pumukit project config dir: `app/config/youtube_accouns/pumukit-oauth2.json`
+
+```
+mv oauth2.json pumukit-oauth2.json
 ```
 
 #### Undo modifications:

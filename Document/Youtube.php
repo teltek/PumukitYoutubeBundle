@@ -32,13 +32,15 @@ class Youtube
 
     /**
      * @var string
-     * @MongoDB\String
+     *
+     * @MongoDB\Field(type="string")
      */
     private $multimediaObjectId;
 
     /**
      * @var string
-     * @MongoDB\String
+     *
+     * @MongoDB\Field(type="string")
      */
     private $youtubeId;
 
@@ -50,62 +52,71 @@ class Youtube
 
     /**
      * @var string
-     * @MongoDB\String
+     *
+     * @MongoDB\Field(type="string")
      */
     private $link = '';
 
     /**
      * @var string
-     * @MongoDB\String
+     *
+     * @MongoDB\Field(type="string")
      */
     private $embed = '';
 
     /**
      * @var int
-     * @MongoDB\Int
+     *
+     * @MongoDB\Field(type="int")
      */
     private $status = self::STATUS_DEFAULT;
 
     /**
      * @var array
-     * @MongoDB\Raw
+     *
+     * @MongoDB\Field(type="raw")
      */
     private $playlists = array();
 
     /**
      * @var bool
-     * @MongoDB\Boolean
+     *
+     * @MongoDB\Field(type="boolean")
      */
     private $force = false;
 
     /**
      * @var bool
-     * @MongoDB\Boolean
+     *
+     * @MongoDB\Field(type="boolean")
      */
     private $updatePlaylist = false;
 
     /**
      * @var date
-     * @MongoDB\Date
+     *
+     * @MongoDB\Field(type="date")
      */
     private $multimediaObjectUpdateDate;
 
     /**
      * @var date
-     * @MongoDB\Date
+     *
+     * @MongoDB\Field(type="date")
      */
     private $syncMetadataDate;
 
     /**
      * @var date
-     * @MongoDB\Date
+     *
+     * @MongoDB\Field(type="date")
      */
     private $syncCaptionsDate;
 
     /**
      * @var date
      *
-     * @MongoDB\Date
+     * @MongoDB\Field(type="date")
      */
     private $uploadDate;
 
