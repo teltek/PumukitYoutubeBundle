@@ -2,7 +2,7 @@ Configuration Guide
 ===================
 
 <<<<<<< HEAD
-*This page is updated to the PuMuKIT2-youtube-bundle master and to the PuMuKIT 2.1.0*
+*This page is updated to the PumukitYoutubeBundle master and to the PuMuKIT 2.1.0 or higher*
 =======
 *To use Youtube 2.0.x you should have PuMuKIT 2.4.x or greater*
 >>>>>>> 2.0.x
@@ -164,7 +164,7 @@ If this parameter is not configured, the track by default is `vtt`.
 ### Clear cache
 
 ```bash
-cd /path/to/pumukit2/
+cd /path/to/pumukit/
 php app/console cache:clear
 php app/console cache:clear --env=prod
 ```
@@ -181,19 +181,19 @@ The recommendation on a development environment is to run commands every minute.
 The recommendation on a production environment is to run commands every day, e.g.: every day at time 23:40.
 
 ```bash
-40 23 * * *     /usr/bin/php /var/www/pumukit2/app/console youtube:update:metadata --env=prod
-40 23 * * *     /usr/bin/php /var/www/pumukit2/app/console youtube:update:playlist --env=prod
-40 23 * * *     /usr/bin/php /var/www/pumukit2/app/console youtube:update:status --env=prod
-20  * * * *     /usr/bin/php /var/www/pumukit2/app/console youtube:update:pendingstatus --env=prod
-40 23 * * *     /usr/bin/php /var/www/pumukit2/app/console youtube:upload --env=prod
-40 23 * * *     /usr/bin/php /var/www/pumukit2/app/console youtube:delete --env=prod
-40 23 * * *     /usr/bin/php /var/www/pumukit2/app/console youtube:caption:upload --env=prod
-40 23 * * *     /usr/bin/php /var/www/pumukit2/app/console youtube:caption:delete --env=prod
+40 23 * * *     /usr/bin/php /var/www/pumukit/app/console youtube:update:metadata --env=prod
+40 23 * * *     /usr/bin/php /var/www/pumukit/app/console youtube:update:playlist --env=prod
+40 23 * * *     /usr/bin/php /var/www/pumukit/app/console youtube:update:status --env=prod
+20  * * * *     /usr/bin/php /var/www/pumukit/app/console youtube:update:pendingstatus --env=prod
+40 23 * * *     /usr/bin/php /var/www/pumukit/app/console youtube:upload --env=prod
+40 23 * * *     /usr/bin/php /var/www/pumukit/app/console youtube:delete --env=prod
+40 23 * * *     /usr/bin/php /var/www/pumukit/app/console youtube:caption:upload --env=prod
+40 23 * * *     /usr/bin/php /var/www/pumukit/app/console youtube:caption:delete --env=prod
 ```
 
-### Create account on PuMuKIT 2.4.x
+### Create account on PuMuKIT 2.4.x or higher
 
-PuMuKIT 2.4.x have a new panel to create/modifiy or delete Youtube accounts.
+PuMuKIT 2.4.x or higher have a new panel to create/modifiy or delete Youtube accounts.
 
 1. Go to the menu "Tools" and select "Youtube".
 

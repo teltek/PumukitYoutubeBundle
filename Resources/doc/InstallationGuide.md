@@ -1,7 +1,7 @@
 Installation Guide
 ==================
 
-*This page is updated to the PuMuKIT2-youtube-bundle master and to the PuMuKIT 2.1.0*
+*This page is updated to the PumukitYoutubeBundle master and to the PuMuKIT 2.1.0 or higher*
 
 Requirements
 ------------
@@ -19,7 +19,7 @@ Open a command console, enter your project directory and execute the
 following command to add this repo:
 
 ```bash
-$ composer config repositories.pumukityoutubebundle vcs https://github.com/teltek/PuMuKIT2-youtube-bundle
+$ composer config repositories.pumukityoutubebundle vcs git@github.com:teltek/PumukitYoutubeBundle.git
 ```
 
 Step 2: Download the Bundle
@@ -29,7 +29,7 @@ Open a command console, enter your project directory and execute the
 following command to download the latest stable version of this bundle:
 
 ```bash
-$ composer require teltek/pmk2-youtube-bundle dev-master
+$ composer require teltek/pumukit-youtube-bundle dev-master
 ```
 
 Step 3: Install the Bundle
