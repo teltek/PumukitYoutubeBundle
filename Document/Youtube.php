@@ -94,28 +94,28 @@ class Youtube
     private $updatePlaylist = false;
 
     /**
-     * @var date
+     * @var \DateTime
      *
      * @MongoDB\Field(type="date")
      */
     private $multimediaObjectUpdateDate;
 
     /**
-     * @var date
+     * @var \DateTime
      *
      * @MongoDB\Field(type="date")
      */
     private $syncMetadataDate;
 
     /**
-     * @var date
+     * @var \DateTime
      *
      * @MongoDB\Field(type="date")
      */
     private $syncCaptionsDate;
 
     /**
-     * @var date
+     * @var \DateTime
      *
      * @MongoDB\Field(type="date")
      */
@@ -351,7 +351,7 @@ class Youtube
     /**
      * Set multimediaObjectUpdateDate.
      *
-     * @param DateTime $multimediaObjectUpdateDate
+     * @param \DateTime $multimediaObjectUpdateDate
      */
     public function setMultimediaObjectUpdateDate($multimediaObjectUpdateDate)
     {
@@ -361,7 +361,7 @@ class Youtube
     /**
      * Get multimediaObjectUpdateDate.
      *
-     * @return datetime
+     * @return \DateTime
      */
     public function getMultimediaObjectUpdateDate()
     {
@@ -371,7 +371,7 @@ class Youtube
     /**
      * Set syncMetadataDate.
      *
-     * @param DateTime $syncMetadataDate
+     * @param \DateTime $syncMetadataDate
      */
     public function setSyncMetadataDate($syncMetadataDate)
     {
@@ -381,7 +381,7 @@ class Youtube
     /**
      * Get syncMetadataDate.
      *
-     * @return datetime
+     * @return \DateTime
      */
     public function getSyncMetadataDate()
     {
@@ -391,7 +391,7 @@ class Youtube
     /**
      * Set syncCaptionsDate.
      *
-     * @param DateTime $syncCaptionsDate
+     * @param \DateTime $syncCaptionsDate
      */
     public function setSyncCaptionsDate($syncCaptionsDate)
     {
@@ -401,7 +401,7 @@ class Youtube
     /**
      * Get syncCaptionsDate.
      *
-     * @return datetime
+     * @return \DateTime
      */
     public function getSyncCaptionsDate()
     {
@@ -411,7 +411,7 @@ class Youtube
     /**
      * Set uploadDate.
      *
-     * @param DateTime $uploadDate
+     * @param \DateTime $uploadDate
      */
     public function setUploadDate($uploadDate)
     {
@@ -421,7 +421,7 @@ class Youtube
     /**
      * Get uploadDate.
      *
-     * @return datetime
+     * @return \DateTime
      */
     public function getUploadDate()
     {

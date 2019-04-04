@@ -15,6 +15,7 @@ class YoutubeProcessService
     private $router;
     private $logger;
     private $process_timeout;
+    private $pythonDirectory;
 
     public function __construct(DocumentManager $documentManager, Router $router, LoggerInterface $logger, $process_timeout)
     {
@@ -124,7 +125,14 @@ class YoutubeProcessService
             case 'meta':
                 $sFile = 'getVideoMeta.py';
                 break;
+            default:
+                $sFile = false;
         }
+
+        if (!$sFile) {
+            throw new \Exception(__FUNCTION__.'$sFile is not defined');
+        }
+
         $aCommandArguments = array();
         $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--videoid', $sYoutubeId);
         $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--account', $login);

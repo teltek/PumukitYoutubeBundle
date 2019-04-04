@@ -4,6 +4,7 @@ namespace Pumukit\YoutubeBundle\Services;
 
 use Doctrine\ODM\MongoDB\DocumentManager;
 use Psr\Log\LoggerInterface;
+use Pumukit\SchemaBundle\Document\Track;
 use Symfony\Bundle\FrameworkBundle\Routing\Router;
 use Symfony\Component\Translation\TranslatorInterface;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
@@ -529,7 +530,7 @@ class YoutubeService
     public function updatePlaylists(MultimediaObject $multimediaObject)
     {
         $youtube = $this->getYoutubeDocument($multimediaObject);
-        if (!isset($youtube) || Youtube::STATUS_PUBLISHED !== $youtube->getStatus()) {
+        if (Youtube::STATUS_PUBLISHED !== $youtube->getStatus()) {
             return 0;
         }
         $this->checkAndAddDefaultPlaylistTag($multimediaObject);
@@ -846,7 +847,7 @@ class YoutubeService
 
         $aResult = $this->youtubeProcessService->getAllPlaylist($login);
         if ($aResult['error']) {
-            $errorLog = sprintf('%s [%s] Error in executing getAllPlaylists.py:', __CLASS__, __FUNCTION__, $aResult['error_out']);
+            $errorLog = sprintf('%s [%s] Error in executing getAllPlaylists.py: %s', __CLASS__, __FUNCTION__, $aResult['error_out']);
             $this->logger->error($errorLog);
             throw new \Exception($errorLog);
         }
@@ -873,7 +874,7 @@ class YoutubeService
     {
         $aResult = $this->youtubeProcessService->getAllPlaylist($login);
         if ($aResult['error']) {
-            $errorLog = sprintf('%s [%s] Error in executing getAllPlaylists.py:', __CLASS__, __FUNCTION__, $aResult['error_out']);
+            $errorLog = sprintf('%s [%s] Error in executing getAllPlaylists.py: %s', __CLASS__, __FUNCTION__, $aResult['error_out']);
             $this->logger->error($errorLog);
             throw new \Exception($errorLog);
         }

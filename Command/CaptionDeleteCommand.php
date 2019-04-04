@@ -16,6 +16,7 @@ class CaptionDeleteCommand extends ContainerAwareCommand
     private $logger;
     private $captionService;
     private $allowedCaptionMimeTypes;
+    private $syncStatus;
 
     private $okDelete = array();
     private $failedDelete = array();

@@ -47,7 +47,7 @@ class Caption
     private $name;
 
     /**
-     * @var date
+     * @var \DateTime
      *
      * @MongoDB\Field(type="date")
      */
@@ -64,6 +64,8 @@ class Caption
      * Get id.
      *
      * @param string
+     *
+     * @return int
      */
     public function getId()
     {

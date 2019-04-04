@@ -16,6 +16,7 @@ class CaptionUploadCommand extends ContainerAwareCommand
     private $logger;
     private $captionService;
     private $allowedCaptionMimeTypes;
+    private $syncStatus;
 
     private $okUploads = array();
     private $failedUploads = array();

@@ -19,6 +19,13 @@ class YoutubeServiceTest extends WebTestCase
     private $resourcesDir;
     private $playlistPrivacyStatus;
     private $multimediaobject_dispatcher;
+    private $router;
+    private $factoryService;
+    private $notificationSender;
+    private $translator;
+    private $tagService;
+    private $youtubeService;
+    private $youtubeProcessService;
 
     public function setUp()
     {
