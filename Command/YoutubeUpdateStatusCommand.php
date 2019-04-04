@@ -3,45 +3,48 @@
 namespace Pumukit\YoutubeBundle\Command;
 
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
-use Pumukit\SchemaBundle\Document\Tag;
-use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\YoutubeBundle\Document\Youtube;
 
 class YoutubeUpdateStatusCommand extends ContainerAwareCommand
 {
-    private $dm = null;
-    private $tagRepo = null;
-    private $mmobjRepo = null;
-    private $youtubeRepo = null;
+    protected $dm = null;
+    protected $tagRepo = null;
+    protected $mmobjRepo = null;
+    protected $youtubeRepo = null;
 
-    private $youtubeService;
+    protected $youtubeService;
 
-    private $okUpdates = array();
-    private $failedUpdates = array();
-    private $errors = array();
+    protected $okUpdates = array();
+    protected $failedUpdates = array();
+    protected $errors = array();
 
-    private $logger;
+    protected $usePumukit1 = false;
+
+    protected $logger;
 
     protected function configure()
     {
         $this
             ->setName('youtube:update:status')
+            ->addOption('use-pmk1', null, InputOption::VALUE_NONE, 'Use multimedia objects from PuMuKIT1')
             ->setDescription('Update local YouTube status of the video')
-            ->setHelp(<<<'EOT'
-Update the YouTube status in PuMuKIT YouTube collection using the YouTube API. If enabled it send an email with a summary.
+            ->setHelp(
+                <<<'EOT'
+Update the local YouTube status stored in PuMuKIT YouTube collection, getting the info from the YouTube service using the API. If enabled it sends an email with a summary.
 
 The statuses removed, notified error and duplicated are not updated.
 
+PERFORMANCE NOTE: This command has a bad performance because use all the multimedia objects uploaded in Youtube Service. (See youtube:update:pendingstatus)
+
 EOT
-          );
+            );
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $this->initParameters();
-
         $statusArray = array(Youtube::STATUS_REMOVED, Youtube::STATUS_NOTIFIED_ERROR, Youtube::STATUS_DUPLICATED);
         $youtubes = $this->youtubeRepo->getWithoutAnyStatus($statusArray);
 
@@ -49,7 +52,7 @@ EOT
         $this->checkResultsAndSendEmail();
     }
 
-    private function initParameters()
+    protected function initialize(InputInterface $input, OutputInterface $output)
     {
         $this->dm = $this->getContainer()->get('doctrine_mongodb')->getManager();
         $this->tagRepo = $this->dm->getRepository('PumukitSchemaBundle:Tag');
@@ -63,31 +66,35 @@ EOT
         $this->errors = array();
 
         $this->logger = $this->getContainer()->get('monolog.logger.youtube');
+
+        $this->usePumukit1 = $input->getOption('use-pmk1');
     }
 
-    private function updateVideoStatusInYoutube($youtubes, OutputInterface $output)
+    protected function updateVideoStatusInYoutube($youtubes, OutputInterface $output)
     {
         foreach ($youtubes as $youtube) {
             $multimediaObject = $this->findByYoutubeIdAndPumukit1Id($youtube, false);
-            if ($multimediaObject == null) {
+            if (null == $multimediaObject) {
                 $multimediaObject = $this->findByYoutubeId($youtube);
-                if ($multimediaObject == null) {
+                if (null == $multimediaObject) {
                     $msg = sprintf("No multimedia object for YouTube document %s\n", $youtube->getId());
                     echo $msg;
                     $this->logger->addInfo($msg);
                 }
                 continue;
             }
+
             try {
-                $infoLog = __CLASS__.' ['.__FUNCTION__
-                  .'] Started updating internal YouTube status video "'.$youtube->getId().'"';
+                $infoLog = __CLASS__.
+                    ' ['.__FUNCTION__.'] Started updating internal YouTube status video "'.
+                    $youtube->getId().'"';
                 $this->logger->addInfo($infoLog);
                 $output->writeln($infoLog);
                 $outUpdate = $this->youtubeService->updateStatus($youtube);
                 if (0 !== $outUpdate) {
-                    $errorLog = __CLASS__.' ['.__FUNCTION__
-                      .'] Unknown error on the update in Youtube status video "'
-                      .$youtube->getId().'": '.$outUpdate;
+                    $errorLog = __CLASS__.
+                        ' ['.__FUNCTION__.'] Unknown error on the update in Youtube status video "'.
+                        $youtube->getId().'": '.$outUpdate;
                     $this->logger->addError($errorLog);
                     $output->writeln($errorLog);
                     $this->errors[] = $errorLog;
@@ -97,9 +104,9 @@ EOT
                     $this->okUpdates[] = $multimediaObject;
                 }
             } catch (\Exception $e) {
-                $errorLog = __CLASS__.' ['.__FUNCTION__
-                  .'] The update of the Youtube status video "'.$youtube->getId()
-                  .'" failed: '.$e->getMessage();
+                $errorLog = __CLASS__.
+                    ' ['.__FUNCTION__.'] The update of the Youtube status video "'.
+                    $youtube->getId().'" failed: '.$e->getMessage();
                 $this->logger->addError($errorLog);
                 $output->writeln($errorLog);
                 if ($multimediaObject) {
@@ -110,27 +117,35 @@ EOT
         }
     }
 
-    private function checkResultsAndSendEmail()
+    protected function checkResultsAndSendEmail()
     {
         if (!empty($this->errors)) {
             $this->youtubeService->sendEmail('status update', $this->okUpdates, $this->failedUpdates, $this->errors);
         }
     }
 
-    private function findByYoutubeIdAndPumukit1Id(Youtube $youtube, $pumukit1Id = false)
+    protected function findByYoutubeIdAndPumukit1Id(Youtube $youtube, $pumukit1Id = false)
     {
-        return $this->mmobjRepo->createQueryBuilder()
-            ->field('properties.youtube')->equals($youtube->getId())
-            ->field('properties.origin')->notEqual('youtube')
-            ->field('properties.pumukit1id')->exists($pumukit1Id)
+        $qb = $this->mmobjRepo
+            ->createQueryBuilder()
+            ->field('_id')->equals(new \MongoId($youtube->getMultimediaObjectId()))
+            ->field('properties.origin')
+            ->notEqual('youtube');
+
+        if (!$this->usePumukit1) {
+            $qb->field('properties.pumukit1id')
+                ->exists($pumukit1Id);
+        }
+
+        return $qb
             ->getQuery()
             ->getSingleResult();
     }
 
-    private function findByYoutubeId(Youtube $youtube)
+    protected function findByYoutubeId(Youtube $youtube)
     {
         return $this->mmobjRepo->createQueryBuilder()
-            ->field('properties.youtube')->equals($youtube->getId())
+            ->field('_id')->equals(new \MongoId($youtube->getMultimediaObjectId()))
             ->getQuery()
             ->getSingleResult();
     }

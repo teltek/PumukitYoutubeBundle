@@ -1,0 +1,106 @@
+<link href="{{ asset('bundles/pumukityoutube/css/select2.min.css') }}" rel="stylesheet"/>
+<script src="{{ asset('bundles/pumukityoutube/js/select2.min.js') }}"></script>
+
+{% set selectedAccount = false %}
+<div class="form-group" id="pumukit_youtube_accounts">
+    <label for="youtube_label" class="control-label">{% trans %}Youtube accounts{% endtrans %}</label>
+    <br/>
+    {% if youtubeAccounts|length == 0 %}
+        <div class="col-xs-12">
+            {% trans %}Please, create a new youtube account{% endtrans %}
+        </div>
+    {% else %}
+        <div class="col-xs-6">
+            <select id="youtube_label" name="youtube_label" class="form-control" required {% if is_granted('ROLE_TAG_DISABLE_PUCHYOUTUBE') %}disabled{% endif %}>
+                {% for account in youtubeAccounts %}
+                    <option class="account_option" value="{{ account.getId() }}" {% if accountId == account.getId() %}selected{% endif %} data-href="{{ path('pumukityoutube_playlist_select', {'id' : account.getId() }) }}">{{ account.getTitle() }}</option>
+                    {% if accountId == account.getId() %}
+                        {% set selectedAccount = account %}
+                    {% endif %}
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-xs-6">
+            <div id="list_playlist">
+                <select id="youtube_playlist_label" name="youtube_playlist_label" class="form-control" style="width:100%" required {% if is_granted('ROLE_TAG_DISABLE_PUCHYOUTUBE') %}disabled{% endif %}>
+                    <option value="any">&nbsp;</option>
+                    {% if selectedAccount %}
+                        {% for playlist in selectedAccount.getChildren() %}
+                            <option value="{{ playlist.getId() }}" {% if playlistId == playlist.getId() %}selected{% endif %}>{{ playlist.getTitle(app.request.getLocale()) }}</option>
+                        {% endfor %}
+                    {% endif %}
+                </select>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+
+<script type="text/javascript">
+
+    $('.form-group').on('click', function () {
+        var active = $('#pub_channels_PUCHYOUTUBE:checked');
+
+        if (active.length >= 1) {
+            $('#youtube_advanced_configuration').show();
+        } else {
+            $('#youtube_advanced_configuration').hide();
+        }
+    });
+
+    $(document).ready(function (event) {
+
+        var active = $('#pub_channels_PUCHYOUTUBE:checked');
+
+        if (active.length >= 1) {
+            $('#youtube_advanced_configuration').show();
+        } else {
+            $('#youtube_advanced_configuration').hide();
+        }
+        {% if selectedAccount %}
+        $("#youtube_playlist_label").select2({width: 'resolve'});
+        {% else %}
+        var href = $("#youtube_label option:first-child").data('href');
+        if (href) {
+            $.ajax({
+                url: href,
+                method: 'GET',
+                success: function (response) {
+                    $("#youtube_playlist_label").select2({
+                        width: 'resolve',
+                        data: response
+                    });
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    no_success(errorThrown + ': ' + textStatus);
+                }
+            })
+        }
+        {% endif %}
+
+    });
+
+    $('#youtube_label').on('change', function (event) {
+        event.preventDefault();
+        var href = $("#youtube_label option:selected").data('href');
+
+        if ($(this).val() != '') {
+            $('#youtube_playlist_label').empty();
+            $.ajax({
+                url: href,
+                method: 'GET',
+                success: function (response) {
+                    $('#youtube_playlist_label').append($('<option value="any">&nbsp;</option>'));
+                    $("#youtube_playlist_label").select2({
+                        width: 'resolve',
+                        data: response
+                    });
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    no_success(errorThrown + ': ' + textStatus);
+                }
+            })
+        }
+    });
+
+</script>

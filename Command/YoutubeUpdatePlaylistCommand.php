@@ -3,11 +3,9 @@
 namespace Pumukit\YoutubeBundle\Command;
 
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
-use Pumukit\SchemaBundle\Document\Tag;
-use Pumukit\SchemaBundle\Document\MultimediaObject;
-use Pumukit\YoutubeBundle\Document\Youtube;
 
 class YoutubeUpdatePlaylistCommand extends ContainerAwareCommand
 {
@@ -27,6 +25,8 @@ class YoutubeUpdatePlaylistCommand extends ContainerAwareCommand
     private $failedUpdates = array();
     private $errors = array();
 
+    private $usePumukit1 = false;
+
     private $logger;
 
     protected function configure()
@@ -34,7 +34,10 @@ class YoutubeUpdatePlaylistCommand extends ContainerAwareCommand
         $this
             ->setName('youtube:update:playlist')
             ->setDescription('Update Youtube playlists from Multimedia Objects')
-            ->setHelp(<<<'EOT'
+            ->addOption('use-pmk1', null, InputOption::VALUE_NONE, 'Use multimedia objects from PuMuKIT1')
+            ->addOption('dry-run', null, InputOption::VALUE_NONE, 'List actions')
+            ->setHelp(
+                <<<'EOT'
 Command to update playlist in Youtube.
 
 EOT
@@ -43,17 +46,23 @@ EOT
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $this->initParameters();
+        $dryRun = (true === $input->getOption('dry-run'));
+
         $multimediaObjects = $this->createYoutubeQueryBuilder()
             ->field('properties.youtube')->exists(true)
             ->getQuery()
             ->execute();
 
-        $this->youtubeService->syncPlaylistsRelations();
+        $this->youtubeService->syncPlaylistsRelations($dryRun);
+
+        if ($dryRun) {
+            return;
+        }
+
         foreach ($multimediaObjects as $multimediaObject) {
             try {
                 $outUpdatePlaylists = $this->youtubeService->updatePlaylists($multimediaObject);
-                if ($outUpdatePlaylists !== 0) {
+                if (0 !== $outUpdatePlaylists) {
                     $errorLog = sprintf('%s [%s] Unknown error in the update of Youtube Playlists of MultimediaObject with id %s: %s', __CLASS__, __FUNCTION__, $multimediaObject->getId(), $outUpdatePlaylists);
                     $this->logger->addError($errorLog);
                     $output->writeln($errorLog);
@@ -76,7 +85,7 @@ EOT
         $this->checkResultsAndSendEmail();
     }
 
-    private function initParameters()
+    protected function initialize(InputInterface $input, OutputInterface $output)
     {
         $this->dm = $this->getContainer()->get('doctrine_mongodb')->getManager();
         $this->tagRepo = $this->dm->getRepository('PumukitSchemaBundle:Tag');
@@ -90,13 +99,20 @@ EOT
         $this->errors = array();
 
         $this->logger = $this->getContainer()->get('monolog.logger.youtube');
+
+        $this->usePumukit1 = $input->getOption('use-pmk1');
     }
 
     private function createYoutubeQueryBuilder()
     {
-        return $this->mmobjRepo->createQueryBuilder()
-            ->field('properties.origin')->notEqual('youtube')
-            ->field('properties.pumukit1id')->exists(false);
+        $qb = $this->mmobjRepo->createQueryBuilder()
+            ->field('properties.origin')->notEqual('youtube');
+
+        if (!$this->usePumukit1) {
+            $qb->field('properties.pumukit1id')->exists(false);
+        }
+
+        return $qb;
     }
 
     private function checkResultsAndSendEmail()

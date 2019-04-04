@@ -38,6 +38,66 @@
         <source>Video available at:</source>
         <target>Vídeo disponible en:</target>
       </trans-unit>
+      <trans-unit id="22" resname="Youtube">
+        <source>Youtube</source>
+        <target>Youtube</target>
+      </trans-unit>
+      <trans-unit id="23" resname="Delete account">
+        <source>Delete account</source>
+        <target>Borrar cuenta</target>
+      </trans-unit>
+      <trans-unit id="24" resname="Edit account">
+        <source>Edit account</source>
+        <target>Editar cuenta</target>
+      </trans-unit>
+      <trans-unit id="25" resname="Add new playlist">
+        <source>Add new playlist</source>
+        <target>Añadir nueva lista de reproducción</target>
+      </trans-unit>
+      <trans-unit id="26" resname="New account">
+        <source>New account</source>
+        <target>Nueva cuenta</target>
+      </trans-unit>
+      <trans-unit id="27" resname="There was an error on deleting Youtube account.">
+        <source>There was an error on deleting Youtube account.</source>
+        <target>Hubo un error borrando la cuenta de Youtube.</target>
+      </trans-unit>
+      <trans-unit id="28" resname="Youtube account was successfully deleted.">
+        <source>Youtube account was successfully deleted.</source>
+        <target>La cuenta de Youtube ha sido borrada satisfactoriamente.</target>
+      </trans-unit>
+      <trans-unit id="29" resname="Youtube accounts">
+        <source>Youtube accounts</source>
+        <target>Cuentas de Youtube</target>
+      </trans-unit>
+      <trans-unit id="30" resname="YouTubeEDU">
+        <source>YouTubeEDU</source>
+        <target>YouTubeEDU</target>
+      </trans-unit>
+      <trans-unit id="31" resname="Participating">
+        <source>Participating</source>
+        <target>Participan</target>
+      </trans-unit>
+      <trans-unit id="32" resname="Add new Youtube account">
+        <source>Add new Youtube account</source>
+        <target>Añadir cuenta de Youtube</target>
+      </trans-unit>
+      <trans-unit id="33" resname="Add new Youtube account playlist">
+        <source>Add new Youtube account playlist</source>
+        <target>Añadir nueva playlist de Youtube</target>
+      </trans-unit>
+      <trans-unit id="34" resname="Update playlist error">
+        <source>Update playlist error</source>
+        <target>Error al actualizar la playlist</target>
+      </trans-unit>
+      <trans-unit id="35" resname="Update playlist successfully">
+        <source>Update playlist successfully</source>
+        <target>Playlist actualizada correctamente</target>
+      </trans-unit>
+      <trans-unit id="36" resname="Manual playlist update">
+        <source>Manual playlist update</source>
+        <target>Actualizar manualmente la playlist</target>
+      </trans-unit>
     </body>
   </file>
 </xliff>

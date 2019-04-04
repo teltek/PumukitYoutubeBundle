@@ -4,13 +4,10 @@ namespace Pumukit\YoutubeBundle\Tests\Services;
 
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Pumukit\YoutubeBundle\Services\YoutubeService;
-use Pumukit\YoutubeBundle\Document\Youtube;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\SchemaBundle\Document\Track;
 use Pumukit\SchemaBundle\Services\TagService;
-use Pumukit\SchemaBundle\Services\FactoryService;
-use Symfony\Bundle\FrameworkBundle\Routing\Router;
 
 class YoutubeServiceTest extends WebTestCase
 {
@@ -65,7 +62,18 @@ class YoutubeServiceTest extends WebTestCase
         $playlistMaster = array('pumukit', 'youtube');
         $deletePlaylists = false;
         $pumukitLocales = array('en');
-        $this->youtubeService = new YoutubeService($this->dm, $this->router, $this->tagService, $this->logger, $this->notificationSender, $this->translator, $this->youtubeProcessService, $this->playlistPrivacyStatus, $locale, $useDefaultPlaylist, $defaultPlaylistCod, $defaultPlaylistTitle, $metatagPlaylistCod, $playlistMaster, $deletePlaylists, $pumukitLocales);
+        $youtubeSyncStatus = false;
+        $defaultTrackUpload = 'master';
+        $generateSbs = true;
+        $sbsProfileName = 'sbs';
+        $jobService = $this->getMockBuilder('Pumukit\EncoderBundle\Services\JobService')
+                           ->disableOriginalConstructor()
+                           ->getMock();
+        $jobService->expects($this->any())
+                   ->method('addJob')
+                   ->will($this->returnValue(0));
+        $opencastService = null;
+        $this->youtubeService = new YoutubeService($this->dm, $this->router, $this->tagService, $this->logger, $this->notificationSender, $this->translator, $this->youtubeProcessService, $this->playlistPrivacyStatus, $locale, $useDefaultPlaylist, $defaultPlaylistCod, $defaultPlaylistTitle, $metatagPlaylistCod, $playlistMaster, $deletePlaylists, $pumukitLocales, $youtubeSyncStatus, $defaultTrackUpload, $generateSbs, $sbsProfileName, $jobService, $opencastService);
         $this->resourcesDir = realpath(__DIR__.'/../Resources').'/';
     }
 
@@ -164,6 +172,25 @@ class YoutubeServiceTest extends WebTestCase
         $youtube = $this->youtubeRepo->findOneByMultimediaObjectId($multimediaObject->getId());
         $out7 = $this->youtubeService->updateStatus($youtube);
         $this->assertEquals(0, $out7);
+
+        // Create Dual stream tracks
+        $track1 = new Track();
+        $track1->setPath($this->resourcesDir.'camera.mp4');
+        $track1->addTag('presenter/delivery');
+        $track1->setDuration(10);
+        $this->dm->persist($track1);
+        $track2 = new Track();
+        $track2->setPath($this->resourcesDir.'camera.mp4');
+        $track2->addTag('presentation/delivery');
+        $track2->setDuration(10);
+        $this->dm->persist($track2);
+        $multimediaObject->addTrack($track1);
+        $multimediaObject->addTrack($track2);
+        $this->dm->persist($multimediaObject);
+        $this->dm->flush();
+
+        $out8 = $this->youtubeService->upload($multimediaObject, 27, 'private', false);
+        $this->assertEquals(0, $out8);
     }
 
     private function createTagWithCode($code, $title, $tagParentCode = null, $metatag = false, $display = true)
