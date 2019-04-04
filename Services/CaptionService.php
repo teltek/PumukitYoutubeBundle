@@ -3,7 +3,6 @@
 namespace Pumukit\YoutubeBundle\Services;
 
 use Pumukit\SchemaBundle\Document\MultimediaObject;
-use Pumukit\YoutubeBundle\Document\Youtube;
 use Pumukit\YoutubeBundle\Document\Caption;
 
 class CaptionService extends YoutubeService
