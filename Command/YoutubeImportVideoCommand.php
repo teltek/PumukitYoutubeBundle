@@ -21,6 +21,7 @@ class YoutubeImportVideoCommand extends ContainerAwareCommand
     private $mmobjRepo = null;
     private $seriesRepo = null;
     private $youtubeRepo = null;
+    private $tagService;
 
     private $youtubeService;
     private $factoryService;

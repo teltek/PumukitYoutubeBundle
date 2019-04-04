@@ -4,8 +4,9 @@ namespace Pumukit\YoutubeBundle\Tests\Document;
 
 use Pumukit\YoutubeBundle\Document\Youtube;
 use Pumukit\YoutubeBundle\Document\Caption;
+use PHPUnit\Framework\TestCase;
 
-class YoutubeTest extends \PHPUnit_Framework_TestCase
+class YoutubeTest extends TestCase
 {
     public function testSetterAndGetter()
     {

@@ -25,6 +25,7 @@ class CaptionService extends YoutubeService
     {
         $youtube = $this->getYoutubeDocument($multimediaObject);
         $uploaded = array();
+        $result = array();
         foreach ($materialIds as $materialId) {
             $material = $multimediaObject->getMaterialById($materialId);
             if ($material) {

@@ -27,6 +27,7 @@ class CaptionServiceTest extends WebTestCase
     private $tagService;
     private $youtubeProcessService;
     private $captionService;
+    private $router;
 
     public function setUp()
     {

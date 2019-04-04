@@ -47,7 +47,7 @@ class Caption
     private $name;
 
     /**
-     * @var date
+     * @var \DateTime
      *
      * @MongoDB\Field(type="date")
      */
