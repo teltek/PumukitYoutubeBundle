@@ -65,7 +65,7 @@ EOT
         foreach ($mms as $multimediaObject) {
             try {
                 $youtube = $this->captionService->getYoutubeDocument($multimediaObject);
-                if ($youtube == null) {
+                if (null == $youtube) {
                     continue;
                 }
                 $deleteCaptionIds = $this->getDeleteCaptionIds($youtube, $multimediaObject);

@@ -5,9 +5,6 @@ namespace Pumukit\YoutubeBundle\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
-use Pumukit\SchemaBundle\Document\Tag;
-use Pumukit\SchemaBundle\Document\MultimediaObject;
-use Pumukit\YoutubeBundle\Document\Youtube;
 
 class YoutubeUpdateMetadataCommand extends ContainerAwareCommand
 {

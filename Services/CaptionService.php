@@ -3,7 +3,6 @@
 namespace Pumukit\YoutubeBundle\Services;
 
 use Pumukit\SchemaBundle\Document\MultimediaObject;
-use Pumukit\YoutubeBundle\Document\Youtube;
 use Pumukit\YoutubeBundle\Document\Caption;
 
 class CaptionService extends YoutubeService
@@ -64,7 +63,7 @@ class CaptionService extends YoutubeService
         foreach ($captionIds as $captionId) {
             $result = $this->youtubeProcessService->deleteCaption($captionId);
             if ($result['error']) {
-                if (strpos($result['error_out'], 'caption track could not be found') === false) {
+                if (false === strpos($result['error_out'], 'caption track could not be found')) {
                     $errorLog = __CLASS__.' ['.__FUNCTION__
                         ."] Error in deleting Caption for Youtube video with id '"
                         .$youtube->getId()."' and Caption id '"

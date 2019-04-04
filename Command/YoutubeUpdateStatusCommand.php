@@ -5,8 +5,6 @@ namespace Pumukit\YoutubeBundle\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
-use Pumukit\SchemaBundle\Document\Tag;
-use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\YoutubeBundle\Document\Youtube;
 
 class YoutubeUpdateStatusCommand extends ContainerAwareCommand
@@ -70,9 +68,9 @@ EOT
     {
         foreach ($youtubes as $youtube) {
             $multimediaObject = $this->findByYoutubeIdAndPumukit1Id($youtube, false);
-            if ($multimediaObject == null) {
+            if (null == $multimediaObject) {
                 $multimediaObject = $this->findByYoutubeId($youtube);
-                if ($multimediaObject == null) {
+                if (null == $multimediaObject) {
                     $msg = sprintf("No multimedia object for YouTube document %s\n", $youtube->getId());
                     echo $msg;
                     $this->logger->addInfo($msg);

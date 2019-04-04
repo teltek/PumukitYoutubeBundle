@@ -4,13 +4,10 @@ namespace Pumukit\YoutubeBundle\Tests\Services;
 
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Pumukit\YoutubeBundle\Services\YoutubeService;
-use Pumukit\YoutubeBundle\Document\Youtube;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\SchemaBundle\Document\Track;
 use Pumukit\SchemaBundle\Services\TagService;
-use Pumukit\SchemaBundle\Services\FactoryService;
-use Symfony\Bundle\FrameworkBundle\Routing\Router;
 
 class YoutubeServiceTest extends WebTestCase
 {

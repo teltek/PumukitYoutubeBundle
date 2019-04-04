@@ -3,7 +3,6 @@
 namespace Pumukit\YoutubeBundle\EventListener;
 
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Pumukit\YoutubeBundle\Document\Youtube;
 use Pumukit\SchemaBundle\Event\MultimediaObjectEvent;
 
 class UpdateListener
