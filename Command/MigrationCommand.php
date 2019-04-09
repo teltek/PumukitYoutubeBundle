@@ -5,7 +5,6 @@ namespace Pumukit\YoutubeBundle\Command;
 use Doctrine\ODM\MongoDB\DocumentManager;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Tag;
-use Pumukit\SchemaBundle\Services\TagService;
 use Pumukit\YoutubeBundle\Document\Youtube;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Input\InputInterface;
@@ -48,11 +47,6 @@ class MigrationCommand extends ContainerAwareCommand
 
     private $force;
 
-    /**
-     * @var TagService
-     */
-    private $tagService;
-
     protected function configure()
     {
         $this
@@ -63,7 +57,7 @@ class MigrationCommand extends ContainerAwareCommand
             ->setHelp(
                 <<<'EOT'
                 
-                Command to migrate schema from bundle with single account to bundle with multiple account.
+                Command to migrate schema from YoutubeBundle with single account to YoutubeBundle with multiple account.
                 
                 Steps without force option:
                 
@@ -98,7 +92,6 @@ EOT
     {
         $this->dm = $this->getContainer()->get('doctrine.odm.mongodb.document_manager');
         $this->locales = $this->getContainer()->getParameter('pumukit2.locales');
-        $this->tagService = $this->getContainer()->get('pumukitschema.tag');
 
         $this->accountName = $input->getOption('single_account_name');
         $this->force = (true === $input->getOption('force'));
@@ -454,9 +447,15 @@ EOT
             ]
         );
 
+        $progress = new ProgressBar($output, count($multimediaObjects));
+        $progress->setFormat('verbose');
+
+        $progress->start();
+
         $i = 0;
         foreach ($multimediaObjects as $multimediaObject) {
             ++$i;
+            $progress->advance();
             $this->addTagAccountOnMultimediaObject($multimediaObject, $tagAccount);
             if (0 === $i % 50) {
                 $this->dm->flush();
@@ -464,6 +463,7 @@ EOT
         }
 
         $this->dm->flush();
+        $progress->finish();
 
         return true;
     }
@@ -474,7 +474,7 @@ EOT
      */
     private function addTagAccountOnMultimediaObject(MultimediaObject $multimediaObject, Tag $tagAccount)
     {
-        $this->tagService->addTag($multimediaObject, $tagAccount, false);
+        $multimediaObject->addTag($tagAccount);
     }
 
     /**
