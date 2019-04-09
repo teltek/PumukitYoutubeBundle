@@ -3,6 +3,7 @@
 namespace Pumukit\YoutubeBundle\Command;
 
 use Doctrine\ODM\MongoDB\DocumentManager;
+use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\YoutubeBundle\Document\Youtube;
 use Symfony\Component\Console\Helper\ProgressBar;
@@ -44,6 +45,8 @@ class MigrationCommand extends ContainerAwareCommand
         'hide_in_tag_group' => true,
     ];
 
+    private $force;
+
     protected function configure()
     {
         $this
@@ -56,16 +59,25 @@ class MigrationCommand extends ContainerAwareCommand
                 
                 Command to migrate schema from bundle with single account to bundle with multiple account.
                 
-                Steps: 
+                Steps without force option:
                 
-                1. Migrate Youtube tag publication channel
-                2. Migrate Youtube account
+                1. Check if account file ( json ) exists.
+                2. Check if tags with login property exists.
+                
+                Steps with force option: 
+                
+                1. Migrate Youtube account
+                2. Migrate Youtube tag publication channel
                 3. Migrate Youtube tag playlist
                 4. Migrate Youtube documents adding account
                 5. Move all playlist tags under Account tag
                 6. Update multimedia objects embedding tags
                 
-                Example:
+                Example to check account:
+                
+                php app/console youtube:migration:schema --single_account_name=my_name_account
+                
+                Example to execute migration: 
                 
                 php app/console youtube:migration:schema --single_account_name=my_name_account --force
 EOT
@@ -82,30 +94,79 @@ EOT
         $this->locales = $this->getContainer()->getParameter('pumukit2.locales');
 
         $this->accountName = $input->getOption('single_account_name');
+        $this->force = (true === $input->getOption('force'));
     }
 
     /**
      * @param InputInterface  $input
      * @param OutputInterface $output
      *
+     * @return bool|void
+     *
      * @throws \Exception
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        // NOTE: Migrate Youtube tag publication channel
-        $this->migratePubChannelYoutube($output);
+        if (!$this->force) {
+            $fileExists = $this->findJsonAccount();
+            if (!$fileExists) {
+                $output->writeln('<error>File '.$this->accountName.'.json not exists</error>');
+            } else {
+                $output->writeln('<info>File '.$this->accountName.'.json exists</info>');
+            }
 
-        // NOTE: Migrate Youtube account
+            $this->checkAccountExists($output);
+
+            return true;
+        }
+
+        $output->writeln(
+            [
+                '\n',
+                '1. Migrate Youtube account',
+            ]
+        );
         $this->migrateYoutubeAccount($output);
 
-        // NOTE: Migrate Youtube tag playlist
+        $output->writeln(
+            [
+                '\n',
+                '2. Migrate Youtube tag publication channel',
+            ]
+        );
+        $this->migratePubChannelYoutube($output);
+
+        $output->writeln(
+            [
+                '\n',
+                '3. Migrate Youtube tag playlist',
+            ]
+        );
         $this->migrateYoutubeTag($output);
 
-        // NOTE: Migrate Youtube documents adding account
+        $output->writeln(
+            [
+                '\n',
+                '4. Migrate Youtube documents adding account',
+            ]
+        );
         $this->migrateYoutubeDocuments($output);
 
-        // NOTE: Move all playlist tags under Account tag
+        $output->writeln(
+            [
+                '\n',
+                '5. Move all playlist tags under Account tag',
+            ]
+        );
         $this->moveAllPlaylistTags($output);
+
+        $output->writeln(
+            [
+                '\n',
+                '6. Update multimedia objects with account tag',
+            ]
+        );
+        $this->updateMultimediaObjectsWithAccountTag($output);
     }
 
     /**
@@ -344,5 +405,71 @@ EOT
         }
 
         return false;
+    }
+
+    /**
+     * @param OutputInterface $output
+     *
+     * @return bool
+     */
+    private function updateMultimediaObjectsWithAccountTag(OutputInterface $output)
+    {
+        $multimediaObjects = $this->dm->getRepository('PumukitSchemaBundle:MultimediaObject')->findBy(
+            [
+                'tags.cod' => [
+                    '$all' => [
+                        $this->puchYoutubeCod,
+                        $this->tagYoutubeCod,
+                    ],
+                ],
+            ]
+        );
+
+        if (!$multimediaObjects) {
+            $output->writeln('No multimedia objects to add tag account');
+
+            return false;
+        }
+
+        $tagAccount = $this->dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(
+            [
+                'properties.login' => $this->accountName,
+            ]
+        );
+
+        foreach ($multimediaObjects as $multimediaObject) {
+            $this->addTagAccountOnMultimediaObject($multimediaObject, $tagAccount);
+        }
+
+        return true;
+    }
+
+    /**
+     * @param MultimediaObject $multimediaObject
+     * @param Tag              $tagAccount
+     */
+    private function addTagAccountOnMultimediaObject(MultimediaObject $multimediaObject, Tag $tagAccount)
+    {
+        $tagService = $this->getContainer()->get('pumukitschema.tag');
+
+        $tagService->addTag($multimediaObject, $tagAccount);
+    }
+
+    /**
+     * @param OutputInterface $output
+     */
+    private function checkAccountExists(OutputInterface $output)
+    {
+        $tagAccount = $this->dm->getRepository('PumukitSchemaBundle:Tag')->findBy(
+            [
+                'properties.login' => $this->accountName,
+            ]
+        );
+
+        if ($tagAccount) {
+            $output->writeln('<error> There are accounts defined on BBDD'.count($tagAccount).'</error>');
+        } else {
+            $output->writeln('<info> There arent accounts defined on BBDD </info>');
+        }
     }
 }
