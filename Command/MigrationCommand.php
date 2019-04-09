@@ -5,6 +5,7 @@ namespace Pumukit\YoutubeBundle\Command;
 use Doctrine\ODM\MongoDB\DocumentManager;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Tag;
+use Pumukit\SchemaBundle\Services\TagService;
 use Pumukit\YoutubeBundle\Document\Youtube;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Input\InputInterface;
@@ -46,6 +47,11 @@ class MigrationCommand extends ContainerAwareCommand
     ];
 
     private $force;
+
+    /**
+     * @var TagService
+     */
+    private $tagService;
 
     protected function configure()
     {
@@ -92,6 +98,7 @@ EOT
     {
         $this->dm = $this->getContainer()->get('doctrine.odm.mongodb.document_manager');
         $this->locales = $this->getContainer()->getParameter('pumukit2.locales');
+        $this->tagService = $this->getContainer()->get('pumukitschema.tag');
 
         $this->accountName = $input->getOption('single_account_name');
         $this->force = (true === $input->getOption('force'));
@@ -108,13 +115,26 @@ EOT
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         if (!$this->force) {
+            $output->writeln(
+                [
+                    "\n",
+                    '<info>1. Check if account file ( json ) exists.</info>',
+                ]
+            );
+
             $fileExists = $this->findJsonAccount();
             if (!$fileExists) {
                 $output->writeln('<error>File '.$this->accountName.'.json not exists</error>');
             } else {
-                $output->writeln('<info>File '.$this->accountName.'.json exists</info>');
+                $output->writeln('File '.$this->accountName.'.json exists');
             }
 
+            $output->writeln(
+                [
+                    "\n",
+                    '<info>2. Check if tags with login property exists</info>',
+                ]
+            );
             $this->checkAccountExists($output);
 
             return true;
@@ -122,48 +142,48 @@ EOT
 
         $output->writeln(
             [
-                '\n',
-                '1. Migrate Youtube account',
+                "\n",
+                '<info>1. Migrate Youtube account</info>',
             ]
         );
         $this->migrateYoutubeAccount($output);
 
         $output->writeln(
             [
-                '\n',
-                '2. Migrate Youtube tag publication channel',
+                "\n",
+                '<info>2. Migrate Youtube tag publication channel</info>',
             ]
         );
         $this->migratePubChannelYoutube($output);
 
         $output->writeln(
             [
-                '\n',
-                '3. Migrate Youtube tag playlist',
+                "\n",
+                '<info>3. Migrate Youtube tag playlist</info>',
             ]
         );
         $this->migrateYoutubeTag($output);
 
         $output->writeln(
             [
-                '\n',
-                '4. Migrate Youtube documents adding account',
+                "\n",
+                '<info>4. Migrate Youtube documents adding account</info>',
             ]
         );
         $this->migrateYoutubeDocuments($output);
 
         $output->writeln(
             [
-                '\n',
-                '5. Move all playlist tags under Account tag',
+                "\n",
+                '<info>5. Move all playlist tags under Account tag</info>',
             ]
         );
         $this->moveAllPlaylistTags($output);
 
         $output->writeln(
             [
-                '\n',
-                '6. Update multimedia objects with account tag',
+                "\n",
+                '<info>6. Update multimedia objects with account tag</info>',
             ]
         );
         $this->updateMultimediaObjectsWithAccountTag($output);
@@ -190,7 +210,7 @@ EOT
 
         $this->dm->flush();
 
-        $output->writeln('***** Youtube - SKIP - Added properties to '.$this->puchYoutubeCod);
+        $output->writeln('Youtube - SKIP - Added properties to '.$this->puchYoutubeCod);
     }
 
     /**
@@ -210,12 +230,12 @@ EOT
         );
 
         if (!$youtubeTag) {
-            throw new \Exception(' Youtube - ERROR - '.$this->tagYoutubeCod." doesn't exists");
+            throw new \Exception('Youtube - ERROR - '.$this->tagYoutubeCod." doesn't exists");
         }
 
         $this->createYoutubeTagAccount($output, $youtubeTag);
 
-        $output->writeln(' Youtube - SKIP - Created Youtube tag account with name: '.$this->accountName);
+        $output->writeln('Youtube - SKIP - Created Youtube tag account with name: '.$this->accountName);
     }
 
     /**
@@ -229,7 +249,7 @@ EOT
         );
 
         if ($tagAccount) {
-            $output->writeln('<info> Tag account with login '.$this->accountName.' exists on BBDD</info>');
+            $output->writeln('Tag account with login '.$this->accountName.' exists on BBDD');
         }
 
         $tagYoutubeAccount = new Tag();
@@ -265,7 +285,9 @@ EOT
 
         $this->dm->flush();
 
-        $output->writeln('Youtube - SKIP - Adding properties to '.$this->tagYoutubeCod);
+        $output->writeln('Youtube - SKIP - Added properties to '.$this->tagYoutubeCod);
+
+        $this->dm->clear();
     }
 
     /**
@@ -277,8 +299,6 @@ EOT
      */
     private function migrateYoutubeDocuments(OutputInterface $output)
     {
-        $output->writeln('<info>***** Youtube - Updating account on documents</info>');
-
         $youtubeDocuments = $this->dm->getRepository('PumukitYoutubeBundle:Youtube')->findBy(
             ['youtubeAccount' => ['$exists' => false]]
         );
@@ -298,7 +318,7 @@ EOT
             ['properties.login' => $this->accountName]
         );
         if (!$tagAccount) {
-            throw new \Exception(' Youtube - ERROR - '.$this->accountName." tag doesn't exists");
+            throw new \Exception('Youtube - ERROR - '.$this->accountName." tag doesn't exists");
         }
 
         $i = 0;
@@ -313,7 +333,6 @@ EOT
 
         $this->dm->flush();
         $progress->finish();
-        $output->writeln('<info>***** Youtube - End updating account on documents</info>');
 
         return true;
     }
@@ -346,7 +365,7 @@ EOT
         );
 
         if (!$playlistTags) {
-            throw new \Exception(' Youtube - ERROR - playlist tags not found');
+            throw new \Exception('Youtube - ERROR - playlist tags not found. Did execute the script before ?');
         }
 
         $progress = new ProgressBar($output, count($playlistTags));
@@ -359,7 +378,7 @@ EOT
         );
 
         if (!$tagAccount) {
-            throw new \Exception(' Youtube - ERROR - '.$this->accountName." tag doesn't exists");
+            throw new \Exception('Youtube - ERROR - '.$this->accountName." tag doesn't exists");
         }
 
         foreach ($playlistTags as $playlistTag) {
@@ -368,9 +387,7 @@ EOT
         }
 
         $this->dm->flush();
-
         $progress->finish();
-        $output->writeln('Youtube - SKIP - Moved all Youtube tags under Youtube account tag');
     }
 
     /**
@@ -426,7 +443,7 @@ EOT
         );
 
         if (!$multimediaObjects) {
-            $output->writeln('No multimedia objects to add tag account');
+            $output->writeln('Youtube - SKIP - No multimedia objects to add tag account');
 
             return false;
         }
@@ -437,9 +454,16 @@ EOT
             ]
         );
 
+        $i = 0;
         foreach ($multimediaObjects as $multimediaObject) {
+            ++$i;
             $this->addTagAccountOnMultimediaObject($multimediaObject, $tagAccount);
+            if (0 === $i % 50) {
+                $this->dm->flush();
+            }
         }
+
+        $this->dm->flush();
 
         return true;
     }
@@ -450,9 +474,7 @@ EOT
      */
     private function addTagAccountOnMultimediaObject(MultimediaObject $multimediaObject, Tag $tagAccount)
     {
-        $tagService = $this->getContainer()->get('pumukitschema.tag');
-
-        $tagService->addTag($multimediaObject, $tagAccount);
+        $this->tagService->addTag($multimediaObject, $tagAccount, false);
     }
 
     /**
@@ -467,9 +489,9 @@ EOT
         );
 
         if ($tagAccount) {
-            $output->writeln('<error> There are accounts defined on BBDD'.count($tagAccount).'</error>');
+            $output->writeln('<error>There are accounts defined on BBDD'.count($tagAccount).'</error>');
         } else {
-            $output->writeln('<info> There arent accounts defined on BBDD </info>');
+            $output->writeln('There arent accounts defined on BBDD');
         }
     }
 }
