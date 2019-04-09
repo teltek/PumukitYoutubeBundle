@@ -10,6 +10,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
+use Symfony\Component\Finder\Finder;
 
 /**
  * Class MigrationCommand.
@@ -138,7 +139,10 @@ EOT
      */
     private function migrateYoutubeAccount(OutputInterface $output)
     {
-        // TODO: Check if json exists
+        $existsFile = $this->findJsonAccount();
+        if (!$existsFile) {
+            throw new \Exception($this->accountName.' file doesnt exists');
+        }
 
         $youtubeTag = $this->dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(
             ['cod' => $this->tagYoutubeCod]
@@ -148,16 +152,25 @@ EOT
             throw new \Exception(' Youtube - ERROR - '.$this->tagYoutubeCod." doesn't exists");
         }
 
-        $this->createYoutubeTagAccount($youtubeTag);
+        $this->createYoutubeTagAccount($output, $youtubeTag);
 
         $output->writeln(' Youtube - SKIP - Created Youtube tag account with name: '.$this->accountName);
     }
 
     /**
-     * @param Tag $youtubeTag
+     * @param OutputInterface $output
+     * @param Tag             $youtubeTag
      */
-    private function createYoutubeTagAccount(Tag $youtubeTag)
+    private function createYoutubeTagAccount(OutputInterface $output, Tag $youtubeTag)
     {
+        $tagAccount = $this->dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(
+            ['properties.login' => $this->accountName]
+        );
+
+        if ($tagAccount) {
+            $output->writeln('<info> Tag account with login '.$this->accountName.' exists on BBDD</info>');
+        }
+
         $tagYoutubeAccount = new Tag();
 
         foreach ($this->locales as $locale) {
@@ -275,41 +288,61 @@ EOT
             throw new \Exception(' Youtube - ERROR - playlist tags not found');
         }
 
+        $progress = new ProgressBar($output, count($playlistTags));
+        $progress->setFormat('verbose');
+
+        $progress->start();
+
+        $tagAccount = $this->dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(
+            ['properties.login' => $this->accountName]
+        );
+
+        if (!$tagAccount) {
+            throw new \Exception(' Youtube - ERROR - '.$this->accountName." tag doesn't exists");
+        }
+
         foreach ($playlistTags as $playlistTag) {
-            $this->refactorPlaylistTag($playlistTag, $this->accountName);
+            $progress->advance();
+            $this->refactorPlaylistTag($playlistTag, $tagAccount);
         }
 
         $this->dm->flush();
 
+        $progress->finish();
         $output->writeln('Youtube - SKIP - Moved all Youtube tags under Youtube account tag');
     }
 
     /**
      * @param Tag $playlistTag
-     * @param     $accountName
+     * @param     $tagAccount
      *
      * @return bool
-     *
-     * @throws \Exception
      */
-    private function refactorPlaylistTag(Tag $playlistTag, $accountName)
+    private function refactorPlaylistTag(Tag $playlistTag, $tagAccount)
     {
         if ($playlistTag->getProperty('login')) {
             return false;
         }
 
-        $tagAccount = $this->dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(
-            ['properties.login' => $accountName]
-        );
-
-        if (!$tagAccount) {
-            throw new \Exception(' Youtube - ERROR - '.$accountName." tag doesn't exists");
-        }
-
-        $playlistTag->setParent($playlistTag);
-        $playlistTag->setCod($playlistTag->getId());
+        $playlistTag->setParent($tagAccount);
         $playlistTag->setProperty('youtube_playlist', true);
 
         return true;
+    }
+
+    /**
+     * @return bool
+     */
+    private function findJsonAccount()
+    {
+        $finder = new Finder();
+        $files = $finder->files()->in(__DIR__.'/../Resources/data/accounts');
+        foreach ($files as $file) {
+            if ($file->getFileName() === $this->accountName.'.json') {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
