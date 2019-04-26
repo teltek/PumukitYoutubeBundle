@@ -18,7 +18,7 @@ Please ensure that you have enabled the YouTube Data API for your project.
 After the installation of this bundle, it should be placed on:
 
 ```
-cd /path/to/pumukit2/
+cd /path/to/pumukit/
 cd vendor/teltek/pmk2-youtube-bundle/
 ```
 
