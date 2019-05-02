@@ -161,7 +161,7 @@ EOT
         if ($syncStatus) {
             $aStatus = array(
                 MultimediaObject::STATUS_PUBLISHED,
-                MultimediaObject::STATUS_BLOQ,
+                MultimediaObject::STATUS_BLOCKED,
                 MultimediaObject::STATUS_HIDDEN,
             );
         } else {
