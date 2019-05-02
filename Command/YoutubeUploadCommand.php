@@ -122,7 +122,7 @@ EOT
 
         $syncStatus = $this->getContainer()->getParameter('pumukit_youtube.sync_status');
         if ($syncStatus) {
-            $aStatus = array(MultimediaObject::STATUS_PUBLISHED, MultimediaObject::STATUS_BLOQ, MultimediaObject::STATUS_HIDDEN);
+            $aStatus = array(MultimediaObject::STATUS_PUBLISHED, MultimediaObject::STATUS_BLOCKED, MultimediaObject::STATUS_HIDDEN);
         } else {
             $aStatus = array(MultimediaObject::STATUS_PUBLISHED);
         }
