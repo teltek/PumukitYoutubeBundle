@@ -5,6 +5,7 @@ namespace Pumukit\YoutubeBundle\Services;
 use Doctrine\ODM\MongoDB\DocumentManager;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Routing\Router;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Translation\TranslatorInterface;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Tag;
@@ -955,7 +956,7 @@ class YoutubeService
                 $body = $body.'<br/>The following videos were '.$cause.('e' === substr($cause, -1)) ? '' : 'e'.'d to Youtube:<br/>';
                 foreach ($succeed as $mm) {
                     if ($mm instanceof MultimediaObject) {
-                        $body = $body.'<br/> -'.$mm->getId().': '.$mm->getTitle($this->ytLocale).' '.$this->router->generate('pumukitnewadmin_mms_shortener', array('id' => $mm->getId()), true);
+                        $body = $body.'<br/> -'.$mm->getId().': '.$mm->getTitle($this->ytLocale).' '.$this->router->generate('pumukitnewadmin_mms_shortener', array('id' => $mm->getId()), UrlGeneratorInterface::ABSOLUTE_URL);
                     } elseif ($mm instanceof Youtube) {
                         $body = $body.'<br/> -'.$mm->getId().': '.$mm->getLink();
                     }
@@ -1071,7 +1072,7 @@ class YoutubeService
         $description = $series->getTitle($this->ytLocale).' - '.$multimediaObject->getTitle($this->ytLocale)."\n".$multimediaObject->getSubtitle($this->ytLocale)."\n".str_replace($break, "\n", $multimediaObject->getDescription($this->ytLocale));
 
         if (MultimediaObject::STATUS_PUBLISHED == $multimediaObject->getStatus() && $multimediaObject->containsTagWithCod('PUCHWEBTV')) {
-            $appInfoLink = $this->router->generate('pumukit_webtv_multimediaobject_index', array('id' => $multimediaObject->getId()), true);
+            $appInfoLink = $this->router->generate('pumukit_webtv_multimediaobject_index', array('id' => $multimediaObject->getId()), UrlGeneratorInterface::ABSOLUTE_URL);
             $description .= '<br /> '.$linkLabelI18n.' '.$appInfoLink;
         }
 
