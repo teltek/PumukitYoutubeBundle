@@ -3,14 +3,13 @@
 
 {% set selectedAccount = false %}
 <div class="form-group" id="pumukit_youtube_accounts">
-    <label for="youtube_label" class="control-label">{% trans %}Youtube accounts{% endtrans %}</label>
-    <br/>
     {% if youtubeAccounts|length == 0 %}
         <div class="col-xs-12">
             {% trans %}Please, create a new youtube account{% endtrans %}
         </div>
     {% else %}
-        <div class="col-xs-6">
+        <div class="col-xs-6" style="padding-left: 0;">
+            <label for="youtube_label">{{ "Youtube accounts"|trans }}</label>
             <select id="youtube_label" name="youtube_label" class="form-control" required {% if is_granted('ROLE_TAG_DISABLE_PUCHYOUTUBE') %}disabled{% endif %}>
                 {% for account in youtubeAccounts %}
                     <option class="account_option" value="{{ account.getId() }}" {% if accountId == account.getId() %}selected{% endif %} data-href="{{ path('pumukityoutube_playlist_select', {'id' : account.getId() }) }}">{{ account.getTitle() }}</option>
@@ -22,11 +21,12 @@
         </div>
         <div class="col-xs-6">
             <div id="list_playlist">
-                <select id="youtube_playlist_label" name="youtube_playlist_label" class="form-control" style="width:100%" required {% if is_granted('ROLE_TAG_DISABLE_PUCHYOUTUBE') %}disabled{% endif %}>
-                    <option value="any">&nbsp;</option>
+                <label for="youtube_playlist_label">{{ "Playlist"|trans }}</label>
+                <select multiple id="youtube_playlist_label" name="youtube_playlist_label[]" class="form-control" style="width:100%" required {% if is_granted('ROLE_TAG_DISABLE_PUCHYOUTUBE') %}disabled{% endif %}>
+                    <option id="default_playlist" value="any" {% if not playlistId %}selected{% endif %}>{{ "Without playlist"|trans }}</option>
                     {% if selectedAccount %}
                         {% for playlist in selectedAccount.getChildren() %}
-                            <option value="{{ playlist.getId() }}" {% if playlistId == playlist.getId() %}selected{% endif %}>{{ playlist.getTitle(app.request.getLocale()) }}</option>
+                            <option value="{{ playlist.getId() }}" {% if playlist.getId() in playlistId %}selected{% endif %}>{{ playlist.getTitle(app.request.getLocale()) }}</option>
                         {% endfor %}
                     {% endif %}
                 </select>
@@ -34,7 +34,6 @@
         </div>
     {% endif %}
 </div>
-
 
 <script type="text/javascript">
 
@@ -58,24 +57,28 @@
             $('#youtube_advanced_configuration').hide();
         }
         {% if selectedAccount %}
-        $("#youtube_playlist_label").select2({width: 'resolve'});
+            $("#youtube_playlist_label").select2({
+                width: 'resolve',
+                multiple: true,
+            });
         {% else %}
-        var href = $("#youtube_label option:first-child").data('href');
-        if (href) {
-            $.ajax({
-                url: href,
-                method: 'GET',
-                success: function (response) {
-                    $("#youtube_playlist_label").select2({
-                        width: 'resolve',
-                        data: response
-                    });
-                },
-                error: function (jqXHR, textStatus, errorThrown) {
-                    no_success(errorThrown + ': ' + textStatus);
-                }
-            })
-        }
+            var href = $("#youtube_label option:first-child").data('href');
+            if (href) {
+                $.ajax({
+                    url: href,
+                    method: 'GET',
+                    success: function (response) {
+                        $("#youtube_playlist_label").select2({
+                            multiple: true,
+                            width: 'resolve',
+                            data: response
+                        });
+                    },
+                    error: function (jqXHR, textStatus, errorThrown) {
+                        no_success(errorThrown + ': ' + textStatus);
+                    }
+                })
+            }
         {% endif %}
 
     });
@@ -90,8 +93,10 @@
                 url: href,
                 method: 'GET',
                 success: function (response) {
+                    console.log(response);
                     $('#youtube_playlist_label').append($('<option value="any">&nbsp;</option>'));
                     $("#youtube_playlist_label").select2({
+                        multiple: true,
                         width: 'resolve',
                         data: response
                     });
@@ -103,4 +108,12 @@
         }
     });
 
+    $('#youtube_playlist_label').on('change', function(event) {
+        if($('#youtube_playlist_label option:selected').size() === 0) {
+            $('#default_playlist').prop("selected", "selected");
+        }
+        if($('#youtube_playlist_label option:selected').size() >= 1) {
+            $('#default_playlist').prop("selected", false);
+        }
+    });
 </script>

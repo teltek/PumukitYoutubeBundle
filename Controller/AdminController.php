@@ -311,13 +311,13 @@ class AdminController extends Controller
         $youtubeAccounts = $dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(array('cod' => $this->youtubeTag));
 
         $accountSelectedTag = '';
-        $playlistSelectedTag = '';
+        $playlistSelectedTag = [];
         foreach ($multimediaObject->getTags() as $tag) {
             if ($tag->isDescendantOf($youtubeAccounts)) {
                 if (3 == $tag->getLevel()) {
                     $accountSelectedTag = $tag->getId();
                 } elseif (4 == $tag->getLevel()) {
-                    $playlistSelectedTag = $tag->getId();
+                    $playlistSelectedTag[] = $tag->getId();
                 }
             }
         }
