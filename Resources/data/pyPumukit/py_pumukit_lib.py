@@ -20,7 +20,7 @@ def get_authenticated_service(account=None):
 
   account_conf_file = "%s.json" % account
 
-  global_account_conf_file = "../../../../../../app/config/youtube_accouns/%s.json" % account
+  global_account_conf_file = "../../../../../../app/config/youtube_accounts/%s.json" % account
   if os.path.isfile(global_account_conf_file):
     account_conf_file = global_account_conf_file
 
