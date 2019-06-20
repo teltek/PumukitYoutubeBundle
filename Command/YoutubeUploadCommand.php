@@ -62,7 +62,7 @@ EOT
         $failureMultimediaObjects = $this->getUploadsByStatus($errorStatus);
         $this->uploadVideosToYoutube($failureMultimediaObjects, $output);
 
-        if($this->uploadRemovedVideos) {
+        if ($this->uploadRemovedVideos) {
             $removedStatus = [Youtube::STATUS_REMOVED];
             $removedYoutubeMultimediaObjects = $this->getUploadsByStatus($removedStatus);
             $this->uploadVideosToYoutube($removedYoutubeMultimediaObjects, $output);
