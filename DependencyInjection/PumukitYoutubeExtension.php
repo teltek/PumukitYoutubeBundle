@@ -56,6 +56,7 @@ class PumukitYoutubeExtension extends Extension implements PrependExtensionInter
         $container->setParameter('pumukit_youtube.allowed_caption_mimetypes', $config['allowed_caption_mimetypes']);
         $container->setParameter('pumukit_youtube.generate_sbs', $config['generate_sbs']);
         $container->setParameter('pumukit_youtube.sbs_profile_name', $config['sbs_profile_name']);
+        $container->setParameter('pumukit_youtube.upload_removed_videos', $config['upload_removed_videos']);
 
         $loader = new Loader\XmlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
         $loader->load('services.xml');

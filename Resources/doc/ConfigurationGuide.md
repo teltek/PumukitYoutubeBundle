@@ -106,8 +106,16 @@ parameters:
 pumukit_youtube:
     playlist_privacy_status: private
 ```
-
 If this parameter is not configured, the playlists will be created as public.
+
+### [OPTIONAL] Configure upload removed video status to Youtube in `app/config/parameters.yml`
+
+```
+pumukit_youtube:
+    upload_removed_videos: true
+```
+
+If this parameter is not configured, the removed videos from Youtube will not be re-uploaded
 
 
 ### [OPTIONAL] Configure the sync status in `app/config/parameters.yml`
