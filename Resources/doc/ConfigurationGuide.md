@@ -1,11 +1,7 @@
 Configuration Guide
 ===================
 
-<<<<<<< HEAD
 *This page is updated to the PumukitYoutubeBundle master and to the PuMuKIT 2.1.0 or higher*
-=======
-*To use Youtube 2.0.x you should have PuMuKIT 2.4.x or greater*
->>>>>>> 2.0.x
 
 ## Create account for uploading Pumukit videos to Youtube
 
