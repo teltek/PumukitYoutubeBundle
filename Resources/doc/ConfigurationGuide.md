@@ -115,7 +115,7 @@ pumukit_youtube:
     upload_removed_videos: true
 ```
 
-If this parameter is not configured, the removed videos from Youtube will not be uploaded
+If this parameter is not configured, the removed videos from Youtube will not be re-uploaded
 
 
 ### [OPTIONAL] Configure the sync status in `app/config/parameters.yml`
