@@ -91,7 +91,7 @@ class Configuration implements ConfigurationInterface
             ->end()
             ->booleanNode('upload_removed_videos')
               ->defaultValue(false)
-              ->info('Upload removed video status to Youtube')
+              ->info('Re-upload removed videos to Youtube')
             ->end()
             ->scalarNode('sbs_profile_name')
                 ->defaultValue('sbs')
