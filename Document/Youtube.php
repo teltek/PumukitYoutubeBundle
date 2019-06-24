@@ -26,7 +26,6 @@ class Youtube
 
     /**
      * @var string
-     *
      * @MongoDB\Id
      */
     private $id;
@@ -44,6 +43,13 @@ class Youtube
      * @MongoDB\Field(type="string")
      */
     private $youtubeId;
+
+    /**
+     * @var string
+     *
+     * @MongoDB\Field(type="string")
+     */
+    private $youtubeAccount;
 
     /**
      * @var string
@@ -420,6 +426,22 @@ class Youtube
     public function getUploadDate()
     {
         return $this->uploadDate;
+    }
+
+    /**
+     * @return string
+     */
+    public function getYoutubeAccount()
+    {
+        return $this->youtubeAccount;
+    }
+
+    /**
+     * @param string $youtubeAccount
+     */
+    public function setYoutubeAccount($youtubeAccount)
+    {
+        $this->youtubeAccount = $youtubeAccount;
     }
 
     // Caption getter section

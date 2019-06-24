@@ -43,6 +43,14 @@
             <argument type="service" id="logger"/>
             <argument>%pumukit_youtube.process_timeout%</argument>
         </service>
+        <service id="pumukityoutube.backoffice" class="Pumukit\YoutubeBundle\EventListener\BackofficeListener">
+            <argument type="service" id="doctrine_mongodb.odm.document_manager"/>
+            <argument type="service" id="pumukitschema.tag" />
+            <tag name="kernel.event_listener" event="publication.submit" method="onPublicationSubmit"/>
+        </service>
+        <service id="pumukityoutube.menu" class="Pumukit\YoutubeBundle\Services\MenuService">
+            <tag name="pumukitnewadmin.menuitem"></tag>
+        </service>
         <service id="pumukityoutube.caption" class="Pumukit\YoutubeBundle\Services\CaptionService">
             <argument type="service" id="doctrine_mongodb.odm.document_manager"/>
             <argument type="service" id="router"/>

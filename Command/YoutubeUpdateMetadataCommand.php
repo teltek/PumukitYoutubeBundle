@@ -3,6 +3,7 @@
 namespace Pumukit\YoutubeBundle\Command;
 
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 
@@ -19,12 +20,15 @@ class YoutubeUpdateMetadataCommand extends ContainerAwareCommand
     private $failedUpdates = array();
     private $errors = array();
 
+    private $usePumukit1 = false;
+
     private $logger;
 
     protected function configure()
     {
         $this
             ->setName('youtube:update:metadata')
+            ->addOption('use-pmk1', null, InputOption::VALUE_NONE, 'Use multimedia objects from PuMuKIT1')
             ->setDescription('Update Youtube metadata from Multimedia Objects')
             ->setHelp(
             <<<'EOT'
@@ -33,19 +37,17 @@ Sync YouTube Service metadata with local metadata(title, description...). Meanin
 PERFORMANCE NOTE: This command has a good performance because only use the multimedia objects updated from the last synchronization.
 
 EOT
-          );
+        );
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $this->initParameters();
-
         $mms = $this->getMultimediaObjectsInYoutubeToUpdate();
         $this->updateVideosInYoutube($mms, $output);
         $this->checkResultsAndSendEmail();
     }
 
-    private function initParameters()
+    protected function initialize(InputInterface $input, OutputInterface $output)
     {
         $this->dm = $this->getContainer()->get('doctrine_mongodb')->getManager();
         $this->tagRepo = $this->dm->getRepository('PumukitSchemaBundle:Tag');
@@ -59,22 +61,24 @@ EOT
         $this->errors = array();
 
         $this->logger = $this->getContainer()->get('monolog.logger.youtube');
+
+        $this->usePumukit1 = $input->getOption('use-pmk1');
     }
 
     private function updateVideosInYoutube($mms, OutputInterface $output)
     {
         foreach ($mms as $mm) {
             try {
-                $infoLog = __CLASS__.' ['.__FUNCTION__
-                  .'] Started updating Youtube video of MultimediaObject with id "'
-                  .$mm->getId().'"';
+                $infoLog = __CLASS__.
+                    ' ['.__FUNCTION__.'] Started updating Youtube video of MultimediaObject with id "'.
+                    $mm->getId().'"';
                 $this->logger->addInfo($infoLog);
                 $output->writeln($infoLog);
                 $outUpdate = $this->youtubeService->updateMetadata($mm);
                 if (0 !== $outUpdate) {
-                    $errorLog = __CLASS__.' ['.__FUNCTION__
-                      .'] Uknown output on the update in Youtube video of MultimediaObject with id "'
-                      .$mm->getId().'": '.$outUpdate;
+                    $errorLog = __CLASS__.
+                        ' ['.__FUNCTION__.'] Uknown output on the update in Youtube video of MultimediaObject with id "'.
+                        $mm->getId().'": '.$outUpdate;
                     $this->logger->addError($errorLog);
                     $output->writeln($errorLog);
                     $this->failedUpdates[] = $mm;
@@ -82,9 +86,9 @@ EOT
                 }
                 $this->okUpdates[] = $mm;
             } catch (\Exception $e) {
-                $errorLog = __CLASS__.' ['.__FUNCTION__
-                  .'] The update of the video from the Multimedia Object with id "'
-                  .$mm->getId().'" failed: '.$e->getMessage();
+                $errorLog = __CLASS__.
+                    ' ['.__FUNCTION__.'] The update of the video from the Multimedia Object with id "'.
+                    $mm->getId().'" failed: '.$e->getMessage();
                 $this->logger->addError($errorLog);
                 $output->writeln($errorLog);
                 $this->failedUpdates[] = $mm;
@@ -101,14 +105,21 @@ EOT
             $youtubeIds[] = $mongoObjectId->__toString();
         }
 
-        $mms = $this->mmobjRepo->createQueryBuilder()
-          ->field('properties.pumukit1id')->exists(false)
-          ->field('properties.origin')->notEqual('youtube')
-          ->field('properties.youtube')->in($youtubeIds)
-          ->getQuery()
-          ->execute();
+        $mms = $this->mmobjRepo
+             ->createQueryBuilder()
+             ->field('properties.origin')
+             ->notEqual('youtube')
+             ->field('properties.youtube')
+             ->in($youtubeIds);
 
-        return $mms;
+        if (!$this->usePumukit1) {
+            $mms->field('properties.pumukit1id')
+                ->exists(false);
+        }
+
+        return $mms
+            ->getQuery()
+            ->execute();
     }
 
     private function checkResultsAndSendEmail()

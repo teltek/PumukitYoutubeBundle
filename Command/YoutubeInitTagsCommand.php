@@ -15,18 +15,16 @@ class YoutubeInitTagsCommand extends ContainerAwareCommand
 
     protected function configure()
     {
-        $this
-            ->setName('youtube:init:tags')
-            ->setDescription('Load Youtube tag data fixture to your database')
-            ->addOption('force', null, InputOption::VALUE_NONE, 'Set this parameter to execute this action')
-            ->setHelp(
+        $this->setName('youtube:init:tags')->setDescription(
+                'Load Youtube tag data fixture to your database'
+            )->addOption('force', null, InputOption::VALUE_NONE, 'Set this parameter to execute this action')->setHelp(
                 <<<'EOT'
 Command to load a controlled Youtube tags data into a database. Useful for init Youtube environment.
 
 The --force parameter has to be used to actually drop the database.
 
 EOT
-          );
+            );
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
@@ -36,13 +34,29 @@ EOT
         if ($input->getOption('force')) {
             $youtubePublicationChannelTag = $this->createTagWithCode('PUCHYOUTUBE', 'YouTubeEDU', 'PUBCHANNELS', false);
             $youtubePublicationChannelTag->setProperty('modal_path', 'pumukityoutube_modal_index');
+            $youtubePublicationChannelTag->setProperty(
+                'advanced_configuration',
+                'pumukityoutube_advance_configuration_index'
+            );
             $this->dm->persist($youtubePublicationChannelTag);
             $this->dm->flush();
-            $output->writeln('Tag persisted - new id: '.$youtubePublicationChannelTag->getId().' cod: '.$youtubePublicationChannelTag->getCod());
-            $youtubePlaylistTag = $this->createTagWithCode('YOUTUBE', 'YouTube Playlists', 'ROOT', true);
-            $output->writeln('Tag persisted - new id: '.$youtubePlaylistTag->getId().' cod: '.$youtubePlaylistTag->getCod());
+            $output->writeln(
+                'Tag persisted - new id: '.$youtubePublicationChannelTag->getId().
+                ' cod: '.$youtubePublicationChannelTag->getCod()
+            );
+            $youtubePlaylistTag = $this->createTagWithCode('YOUTUBE', 'YouTube', 'ROOT', true);
+            $youtubePlaylistTag->setProperty(
+                'hide_in_tag_group',
+                true
+            );
+            $this->dm->flush();
+            $output->writeln(
+                'Tag persisted - new id: '.$youtubePlaylistTag->getId().' cod: '.$youtubePlaylistTag->getCod()
+            );
         } else {
-            $output->writeln('<error>ATTENTION:</error> This operation should not be executed in a production environment without backup.');
+            $output->writeln(
+                '<error>ATTENTION:</error> This operation should not be executed in a production environment without backup.'
+            );
             $output->writeln('');
             $output->writeln('Please run the operation with --force to execute.');
 
@@ -68,7 +82,9 @@ EOT
             if ($parent = $this->tagRepo->findOneByCod($tagParentCode)) {
                 $tag->setParent($parent);
             } else {
-                throw new \Exception('Nothing done - There is no tag in the database with code '.$tagParentCode.' to be the parent tag');
+                throw new \Exception(
+                    'Nothing done - There is no tag in the database with code '.$tagParentCode.' to be the parent tag'
+                );
             }
         }
         $this->dm->persist($tag);

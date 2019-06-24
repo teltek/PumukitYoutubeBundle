@@ -64,6 +64,8 @@ class Caption
      * Get id.
      *
      * @param string
+     *
+     * @return int
      */
     public function getId()
     {

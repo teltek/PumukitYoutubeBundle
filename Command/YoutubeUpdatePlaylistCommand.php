@@ -25,6 +25,8 @@ class YoutubeUpdatePlaylistCommand extends ContainerAwareCommand
     private $failedUpdates = array();
     private $errors = array();
 
+    private $usePumukit1 = false;
+
     private $logger;
 
     protected function configure()
@@ -32,6 +34,7 @@ class YoutubeUpdatePlaylistCommand extends ContainerAwareCommand
         $this
             ->setName('youtube:update:playlist')
             ->setDescription('Update Youtube playlists from Multimedia Objects')
+            ->addOption('use-pmk1', null, InputOption::VALUE_NONE, 'Use multimedia objects from PuMuKIT1')
             ->addOption('dry-run', null, InputOption::VALUE_NONE, 'List actions')
             ->setHelp(
                 <<<'EOT'
@@ -45,7 +48,6 @@ EOT
     {
         $dryRun = (true === $input->getOption('dry-run'));
 
-        $this->initParameters();
         $multimediaObjects = $this->createYoutubeQueryBuilder()
             ->field('properties.youtube')->exists(true)
             ->getQuery()
@@ -83,7 +85,7 @@ EOT
         $this->checkResultsAndSendEmail();
     }
 
-    private function initParameters()
+    protected function initialize(InputInterface $input, OutputInterface $output)
     {
         $this->dm = $this->getContainer()->get('doctrine_mongodb')->getManager();
         $this->tagRepo = $this->dm->getRepository('PumukitSchemaBundle:Tag');
@@ -97,13 +99,20 @@ EOT
         $this->errors = array();
 
         $this->logger = $this->getContainer()->get('monolog.logger.youtube');
+
+        $this->usePumukit1 = $input->getOption('use-pmk1');
     }
 
     private function createYoutubeQueryBuilder()
     {
-        return $this->mmobjRepo->createQueryBuilder()
-            ->field('properties.origin')->notEqual('youtube')
-            ->field('properties.pumukit1id')->exists(false);
+        $qb = $this->mmobjRepo->createQueryBuilder()
+            ->field('properties.origin')->notEqual('youtube');
+
+        if (!$this->usePumukit1) {
+            $qb->field('properties.pumukit1id')->exists(false);
+        }
+
+        return $qb;
     }
 
     private function checkResultsAndSendEmail()

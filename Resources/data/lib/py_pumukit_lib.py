@@ -28,7 +28,7 @@ def get_authenticated_service(account=None):
   credentials = storage.get()
 
   if credentials is None:
-    raise Exception('No credential with login %s (file: Resources/data/pyPumukit/%s.json)' % (account, account))
+    raise Exception('No credential with login %s (file: Resources/data/accounts/%s.json)' % (account, account))
 
   if credentials.invalid:
     raise Exception('Invalid credential with login %s (file: Resources/data/pyPumukit/%s.json)' % (account, account))

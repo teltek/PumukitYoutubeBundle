@@ -10,7 +10,8 @@ class CaptionService extends YoutubeService
     public function listAllCaptions(MultimediaObject $multimediaObject)
     {
         $youtube = $this->getYoutubeDocument($multimediaObject);
-        $result = $this->youtubeProcessService->listCaptions($youtube);
+        $login = $youtube->getYoutubeAccount();
+        $result = $this->youtubeProcessService->listCaptions($youtube, $login);
         if ($result['error']) {
             $errorLog = __CLASS__.' ['.__FUNCTION__
                        .'] Error in retrieve captions list: '.$result['error_out'];
@@ -24,12 +25,13 @@ class CaptionService extends YoutubeService
     public function uploadCaption(MultimediaObject $multimediaObject, array $materialIds = array())
     {
         $youtube = $this->getYoutubeDocument($multimediaObject);
+        $login = $youtube->getYoutubeAccount();
         $uploaded = array();
         $result = array();
         foreach ($materialIds as $materialId) {
             $material = $multimediaObject->getMaterialById($materialId);
             if ($material) {
-                $result = $this->youtubeProcessService->insertCaption($youtube, $material->getName(), $material->getLanguage(), $material->getPath());
+                $result = $this->youtubeProcessService->insertCaption($youtube, $material->getName(), $material->getLanguage(), $material->getPath(), $login);
             }
             if ($result['error']) {
                 $errorLog = __CLASS__.' ['.__FUNCTION__
@@ -61,8 +63,9 @@ class CaptionService extends YoutubeService
     public function deleteCaption(MultimediaObject $multimediaObject, array $captionIds = array())
     {
         $youtube = $this->getYoutubeDocument($multimediaObject);
+        $login = $youtube->getYoutubeAccount();
         foreach ($captionIds as $captionId) {
-            $result = $this->youtubeProcessService->deleteCaption($captionId);
+            $result = $this->youtubeProcessService->deleteCaption($captionId, $login);
             if ($result['error']) {
                 if (false === strpos($result['error_out'], 'caption track could not be found')) {
                     $errorLog = __CLASS__.' ['.__FUNCTION__
