@@ -1,7 +1,7 @@
 Configuration Guide
 ===================
 
-*This page is updated to the PumukitYoutubeBundle master and to the PuMuKIT 2.1.0 or higher*
+*This page is updated to the PumukitYoutubeBundle master and to the PuMuKIT 3.0.0 or higher*
 
 ## Create account for uploading Pumukit videos to Youtube
 
@@ -84,8 +84,8 @@ python setup.py install
 #### Create credential file executing script:
 
 ```bash
-cd /path/to/pumukit2/
-cd vendor/teltek/pmk2-youtube-bundle/
+cd /path/to/pumukit/
+cd vendor/teltek/pumukit-youtube-bundle/
 cd Resources/data/createAccount
 python createAccount.py
 ```
@@ -122,8 +122,16 @@ parameters:
 pumukit_youtube:
     playlist_privacy_status: private
 ```
-
 If this parameter is not configured, the playlists will be created as public.
+
+### [OPTIONAL] Configure upload removed video status to Youtube in `app/config/parameters.yml`
+
+```
+pumukit_youtube:
+    upload_removed_videos: true
+```
+
+If this parameter is not configured, the removed videos from Youtube will not be re-uploaded
 
 
 ### [OPTIONAL] Configure the sync status in `app/config/parameters.yml`
@@ -187,9 +195,9 @@ The recommendation on a production environment is to run commands every day, e.g
 40 23 * * *     /usr/bin/php /var/www/pumukit/app/console youtube:caption:delete --env=prod
 ```
 
-### Create account on PuMuKIT 2.4.x or higher
+### Create account on PuMuKIT 3.0.x or higher
 
-PuMuKIT 2.4.x or higher have a new panel to create/modifiy or delete Youtube accounts.
+PuMuKIT 3.0.x or higher have a new panel to create/modifiy or delete Youtube accounts.
 
 1. Go to the menu "Tools" and select "Youtube".
 
@@ -211,4 +219,3 @@ PuMuKIT 2.4.x or higher have a new panel to create/modifiy or delete Youtube acc
         Modal page will be appear and you can set a "Title" for this new playlist.
         
 7. When you save changes, you can click on your Account and the playlist will be show.
-

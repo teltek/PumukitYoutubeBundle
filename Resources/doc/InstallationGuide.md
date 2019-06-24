@@ -1,7 +1,7 @@
 Installation Guide
 ==================
 
-*This page is updated to the PumukitYoutubeBundle master and to the PuMuKIT 2.1.0 or higher*
+*This page is updated to the PumukitYoutubeBundle master and to the PuMuKIT 3.0.0 or higher*
 
 Requirements
 ------------
@@ -38,7 +38,7 @@ Step 3: Install the Bundle
 Install the bundle by executing the following line command. This command updates the Kernel to enable the bundle (app/AppKernel.php) and loads the routing (app/config/routing.yml) to add the bundle routes.
 
 ```bash
-$ cd /path/to/pumukit2/
+$ cd /path/to/pumukit/
 $ php app/console pumukit:install:bundle Pumukit/YoutubeBundle/PumukitYoutubeBundle
 ```
 

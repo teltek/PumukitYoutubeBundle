@@ -26,6 +26,7 @@ class YoutubeUploadCommand extends ContainerAwareCommand
     private $tagService;
     private $syncStatus;
 
+    private $uploadRemovedVideos;
     private $usePumukit1 = false;
 
     private $logger;
@@ -62,9 +63,11 @@ EOT
         $failureMultimediaObjects = $this->getUploadsByStatus($errorStatus);
         $this->uploadVideosToYoutube($failureMultimediaObjects, $output);
 
-        $removedStatus = array(Youtube::STATUS_REMOVED);
-        $removedYoutubeMultimediaObjects = $this->getUploadsByStatus($removedStatus);
-        $this->uploadVideosToYoutube($removedYoutubeMultimediaObjects, $output);
+        if ($this->uploadRemovedVideos) {
+            $removedStatus = [Youtube::STATUS_REMOVED];
+            $removedYoutubeMultimediaObjects = $this->getUploadsByStatus($removedStatus);
+            $this->uploadVideosToYoutube($removedYoutubeMultimediaObjects, $output);
+        }
 
         $this->checkResultsAndSendEmail();
     }
@@ -81,6 +84,7 @@ EOT
         $this->logger = $container->get('monolog.logger.youtube');
 
         $this->syncStatus = $container->getParameter('pumukit_youtube.sync_status');
+        $this->uploadRemovedVideos = $container->getParameter('pumukit_youtube.upload_removed_videos');
 
         $this->okUploads = array();
         $this->failedUploads = array();

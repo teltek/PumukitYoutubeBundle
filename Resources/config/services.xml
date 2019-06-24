@@ -20,7 +20,7 @@
             <argument>%pumukit_youtube.metatag_playlist_cod%</argument>
             <argument>%pumukit_youtube.playlists_master%</argument>
             <argument>%pumukit_youtube.delete_playlists%</argument>
-            <argument>%pumukit2.locales%</argument>
+            <argument>%pumukit.locales%</argument>
             <argument>%pumukit_youtube.sync_status%</argument>
             <argument>%pumukit_youtube.default_track_upload%</argument>
             <argument>%pumukit_youtube.generate_sbs%</argument>
@@ -67,7 +67,7 @@
             <argument>%pumukit_youtube.metatag_playlist_cod%</argument>
             <argument>%pumukit_youtube.playlists_master%</argument>
             <argument>%pumukit_youtube.delete_playlists%</argument>
-            <argument>%pumukit2.locales%</argument>
+            <argument>%pumukit.locales%</argument>
             <argument>%pumukit_youtube.sync_status%</argument>
             <argument>%pumukit_youtube.default_track_upload%</argument>
             <argument>%pumukit_youtube.generate_sbs%</argument>
