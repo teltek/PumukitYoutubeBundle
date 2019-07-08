@@ -2,9 +2,13 @@
 
 namespace Pumukit\YoutubeBundle\Tests\Document;
 
-use Pumukit\YoutubeBundle\Document\Caption;
 use PHPUnit\Framework\TestCase;
+use Pumukit\YoutubeBundle\Document\Caption;
 
+/**
+ * @internal
+ * @coversNothing
+ */
 class CaptionTest extends TestCase
 {
     public function testSetterAndGetter()

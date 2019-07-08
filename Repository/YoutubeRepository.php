@@ -19,7 +19,7 @@ class YoutubeRepository extends DocumentRepository
      *
      * @return \Doctrine\ODM\MongoDB\Query\Builder
      */
-    public function getWithAnyStatusQueryBuilder($statusArray = array())
+    public function getWithAnyStatusQueryBuilder($statusArray = [])
     {
         return $this->createQueryBuilder()
             ->field('status')->in($statusArray);
@@ -32,7 +32,7 @@ class YoutubeRepository extends DocumentRepository
      *
      * @return \Doctrine\ODM\MongoDB\Query\Query
      */
-    public function getWithAnyStatusQuery($statusArray = array())
+    public function getWithAnyStatusQuery($statusArray = [])
     {
         return $this->getWithAnyStatusQueryBuilder($statusArray)->getQuery();
     }
@@ -42,11 +42,11 @@ class YoutubeRepository extends DocumentRepository
      *
      * @param array $statusArray
      *
-     * @return mixed
-     *
      * @throws \Doctrine\ODM\MongoDB\MongoDBException
+     *
+     * @return mixed
      */
-    public function getWithAnyStatus($statusArray = array())
+    public function getWithAnyStatus($statusArray = [])
     {
         return $this->getWithAnyStatusQuery($statusArray)->execute();
     }
@@ -56,16 +56,17 @@ class YoutubeRepository extends DocumentRepository
      *
      * @param array $statusArray
      *
-     * @return mixed
-     *
      * @throws \Doctrine\ODM\MongoDB\MongoDBException
+     *
+     * @return mixed
      */
-    public function getDistinctMultimediaObjectIdsWithAnyStatus($statusArray = array())
+    public function getDistinctMultimediaObjectIdsWithAnyStatus($statusArray = [])
     {
         return $this->getWithAnyStatusQueryBuilder($statusArray)
             ->distinct('multimediaObjectId')
             ->getQuery()
-            ->execute();
+            ->execute()
+        ;
     }
 
     /**
@@ -102,9 +103,9 @@ class YoutubeRepository extends DocumentRepository
      * @param      $status
      * @param bool $force
      *
-     * @return mixed
-     *
      * @throws \Doctrine\ODM\MongoDB\MongoDBException
+     *
+     * @return mixed
      */
     public function getWithStatusAndForce($status, $force = false)
     {
@@ -117,16 +118,17 @@ class YoutubeRepository extends DocumentRepository
      * @param      $status
      * @param bool $force
      *
-     * @return mixed
-     *
      * @throws \Doctrine\ODM\MongoDB\MongoDBException
+     *
+     * @return mixed
      */
     public function getDistinctMultimediaObjectIdsWithStatusAndForce($status, $force = false)
     {
         return $this->getWithStatusAndForceQueryBuilder($status, $force)
             ->distinct('multimediaObjectId')
             ->getQuery()
-            ->execute();
+            ->execute()
+        ;
     }
 
     /**
@@ -136,16 +138,17 @@ class YoutubeRepository extends DocumentRepository
      * @param      $status
      * @param bool $force
      *
-     * @return mixed
-     *
      * @throws \Doctrine\ODM\MongoDB\MongoDBException
+     *
+     * @return mixed
      */
     public function getDistinctFieldWithStatusAndForce($field, $status, $force = false)
     {
         return $this->getWithStatusAndForceQueryBuilder($status, $force)
             ->distinct($field)
             ->getQuery()
-            ->execute();
+            ->execute()
+        ;
     }
 
     /**
@@ -155,7 +158,7 @@ class YoutubeRepository extends DocumentRepository
      *
      * @return \Doctrine\ODM\MongoDB\Query\Builder
      */
-    public function getWithoutAnyStatusQueryBuilder($statusArray = array())
+    public function getWithoutAnyStatusQueryBuilder($statusArray = [])
     {
         return $this->createQueryBuilder()
             ->field('status')->notIn($statusArray);
@@ -168,7 +171,7 @@ class YoutubeRepository extends DocumentRepository
      *
      * @return \Doctrine\ODM\MongoDB\Query\Query
      */
-    public function getWithoutAnyStatusQuery($statusArray = array())
+    public function getWithoutAnyStatusQuery($statusArray = [])
     {
         return $this->getWithoutAnyStatusQueryBuilder($statusArray)->getQuery();
     }
@@ -178,11 +181,11 @@ class YoutubeRepository extends DocumentRepository
      *
      * @param array $statusArray
      *
-     * @return mixed
-     *
      * @throws \Doctrine\ODM\MongoDB\MongoDBException
+     *
+     * @return mixed
      */
-    public function getWithoutAnyStatus($statusArray = array())
+    public function getWithoutAnyStatus($statusArray = [])
     {
         return $this->getWithoutAnyStatusQuery($statusArray)->execute();
     }
@@ -192,16 +195,17 @@ class YoutubeRepository extends DocumentRepository
      *
      * @param array $statusArray
      *
-     * @return mixed
-     *
      * @throws \Doctrine\ODM\MongoDB\MongoDBException
+     *
+     * @return mixed
      */
-    public function getDistinctMultimediaObjectIdsWithoutAnyStatus($statusArray = array())
+    public function getDistinctMultimediaObjectIdsWithoutAnyStatus($statusArray = [])
     {
         return $this->getWithoutAnyStatusQueryBuilder($statusArray)
             ->distinct('multimediaObjectId')
             ->getQuery()
-            ->execute();
+            ->execute()
+        ;
     }
 
     /**
@@ -238,9 +242,9 @@ class YoutubeRepository extends DocumentRepository
      * @param      $status
      * @param bool $updatePlaylist
      *
-     * @return mixed
-     *
      * @throws \Doctrine\ODM\MongoDB\MongoDBException
+     *
+     * @return mixed
      */
     public function getWithStatusAndUpdatePlaylist($status, $updatePlaylist = false)
     {
@@ -256,7 +260,8 @@ class YoutubeRepository extends DocumentRepository
     public function getNotMetadataUpdatedQueryBuilder()
     {
         return $this->createQueryBuilder()
-            ->where('this.multimediaObjectUpdateDate > this.syncMetadataDate');
+            ->where('this.multimediaObjectUpdateDate > this.syncMetadataDate')
+        ;
     }
 
     /**
@@ -268,21 +273,23 @@ class YoutubeRepository extends DocumentRepository
     public function getNotMetadataUpdatedQuery()
     {
         return $this->getNotMetadataUpdatedQueryBuilder()
-            ->getQuery();
+            ->getQuery()
+        ;
     }
 
     /**
      * Get by multimedia object update date
      * greater than sync metadata date.
      *
-     * @return mixed
-     *
      * @throws \Doctrine\ODM\MongoDB\MongoDBException
+     *
+     * @return mixed
      */
     public function getNotMetadataUpdated()
     {
         return $this->getNotMetadataUpdatedQuery()
-            ->execute();
+            ->execute()
+        ;
     }
 
     /**
@@ -294,7 +301,8 @@ class YoutubeRepository extends DocumentRepository
     public function getDistinctIdsNotMetadataUpdatedQueryBuilder()
     {
         return $this->getNotMetadataUpdatedQueryBuilder()
-            ->distinct('_id');
+            ->distinct('_id')
+        ;
     }
 
     /**
@@ -306,20 +314,22 @@ class YoutubeRepository extends DocumentRepository
     public function getDistinctIdsNotMetadataUpdatedQuery()
     {
         return $this->getDistinctIdsNotMetadataUpdatedQueryBuilder()
-            ->getQuery();
+            ->getQuery()
+        ;
     }
 
     /**
      * Get distinct ids by multimedia object update date
      * greater than sync metadata date.
      *
-     * @return mixed
-     *
      * @throws \Doctrine\ODM\MongoDB\MongoDBException
+     *
+     * @return mixed
      */
     public function getDistinctIdsNotMetadataUpdated()
     {
         return $this->getDistinctIdsNotMetadataUpdatedQuery()
-            ->execute();
+            ->execute()
+        ;
     }
 }

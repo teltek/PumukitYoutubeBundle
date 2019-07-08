@@ -37,9 +37,9 @@ class BackofficeListener
     /**
      * @param PublicationSubmitEvent $event
      *
-     * @return bool
-     *
      * @throws \Exception
+     *
+     * @return bool
      */
     public function onPublicationSubmit(PublicationSubmitEvent $event)
     {

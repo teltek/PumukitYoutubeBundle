@@ -2,13 +2,13 @@
 
 namespace Pumukit\YoutubeBundle\Command;
 
-use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Input\InputOption;
-use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\YoutubeBundle\Document\Youtube;
 use Pumukit\YoutubeBundle\Services\YoutubeService;
+use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Console\Output\OutputInterface;
 
 class YoutubeUploadCommand extends ContainerAwareCommand
 {
@@ -19,10 +19,10 @@ class YoutubeUploadCommand extends ContainerAwareCommand
     const METATAG_PLAYLIST_COD = 'YOUTUBE';
     const METATAG_PLAYLIST_PATH = 'ROOT|YOUTUBE|';
 
-    private $dm = null;
-    private $tagRepo = null;
-    private $mmobjRepo = null;
-    private $youtubeRepo = null;
+    private $dm;
+    private $tagRepo;
+    private $mmobjRepo;
+    private $youtubeRepo;
     private $tagService;
     private $syncStatus;
 
@@ -32,9 +32,9 @@ class YoutubeUploadCommand extends ContainerAwareCommand
     private $logger;
     private $youtubeService;
 
-    private $okUploads = array();
-    private $failedUploads = array();
-    private $errors = array();
+    private $okUploads = [];
+    private $failedUploads = [];
+    private $errors = [];
 
     protected function configure()
     {
@@ -47,7 +47,8 @@ class YoutubeUploadCommand extends ContainerAwareCommand
 Command to upload a controlled videos to Youtube.
 
 EOT
-            );
+            )
+        ;
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
@@ -55,11 +56,11 @@ EOT
         $newMultimediaObjects = $this->getNewMultimediaObjectsToUpload();
         $this->uploadVideosToYoutube($newMultimediaObjects, $output);
 
-        $errorStatus = array(
+        $errorStatus = [
             Youtube::STATUS_HTTP_ERROR,
             Youtube::STATUS_ERROR,
             Youtube::STATUS_UPDATE_ERROR,
-        );
+        ];
         $failureMultimediaObjects = $this->getUploadsByStatus($errorStatus);
         $this->uploadVideosToYoutube($failureMultimediaObjects, $output);
 
@@ -86,9 +87,9 @@ EOT
         $this->syncStatus = $container->getParameter('pumukit_youtube.sync_status');
         $this->uploadRemovedVideos = $container->getParameter('pumukit_youtube.upload_removed_videos');
 
-        $this->okUploads = array();
-        $this->failedUploads = array();
-        $this->errors = array();
+        $this->okUploads = [];
+        $this->failedUploads = [];
+        $this->errors = [];
 
         $this->usePumukit1 = $input->getOption('use-pmk1');
     }
@@ -110,6 +111,7 @@ EOT
                 $haveAccount = $this->checkIfMultimediaObjectHaveAccount($mm);
                 if (!$haveAccount) {
                     $this->logger->warning('MultimediaObject with id '.$mm->getId().' haven\'t account for Youtube.');
+
                     continue;
                 }
 
@@ -138,6 +140,7 @@ EOT
                     $output->writeln($errorLog);
                     $this->failedUploads[] = $mm;
                     $this->errors[] = $errorLog;
+
                     continue;
                 }
                 $this->okUploads[] = $mm;
@@ -163,13 +166,13 @@ EOT
 
         $syncStatus = $this->getContainer()->getParameter('pumukit_youtube.sync_status');
         if ($syncStatus) {
-            $aStatus = array(
+            $aStatus = [
                 MultimediaObject::STATUS_PUBLISHED,
                 MultimediaObject::STATUS_BLOCKED,
                 MultimediaObject::STATUS_HIDDEN,
-            );
+            ];
         } else {
-            $aStatus = array(MultimediaObject::STATUS_PUBLISHED);
+            $aStatus = [MultimediaObject::STATUS_PUBLISHED];
         }
 
         $qb = $this->mmobjRepo->createQueryBuilder();
@@ -185,7 +188,8 @@ EOT
             ->field('embeddedBroadcast.type')
             ->equals('public')
             ->field('tags.cod')
-            ->all($array_pub_tags);
+            ->all($array_pub_tags)
+        ;
     }
 
     private function getNewMultimediaObjectsToUpload()
@@ -194,10 +198,11 @@ EOT
             ->field('properties.youtube')
             ->exists(false)
             ->getQuery()
-            ->execute();
+            ->execute()
+        ;
     }
 
-    private function getUploadsByStatus($statusArray = array())
+    private function getUploadsByStatus($statusArray = [])
     {
         $mmIds = $this->youtubeRepo->getDistinctMultimediaObjectIdsWithAnyStatus($statusArray);
 
@@ -205,7 +210,8 @@ EOT
             ->field('_id')
             ->in($mmIds->toArray())
             ->getQuery()
-            ->execute();
+            ->execute()
+        ;
     }
 
     private function checkResultsAndSendEmail()
@@ -226,11 +232,12 @@ EOT
 
     private function checkIfMultimediaObjectHaveAccount(MultimediaObject $mm)
     {
-        $youtubeTag = $this->dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(array('cod' => 'YOUTUBE'));
+        $youtubeTag = $this->dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(['cod' => 'YOUTUBE']);
         $haveAccount = false;
         foreach ($mm->getTags() as $tag) {
             if ($tag->isChildOf($youtubeTag)) {
                 $haveAccount = true;
+
                 break;
             }
         }

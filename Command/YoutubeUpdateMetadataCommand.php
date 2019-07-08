@@ -2,23 +2,23 @@
 
 namespace Pumukit\YoutubeBundle\Command;
 
+use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 
 class YoutubeUpdateMetadataCommand extends ContainerAwareCommand
 {
-    private $dm = null;
-    private $tagRepo = null;
-    private $mmobjRepo = null;
-    private $youtubeRepo = null;
+    private $dm;
+    private $tagRepo;
+    private $mmobjRepo;
+    private $youtubeRepo;
 
     private $youtubeService;
 
-    private $okUpdates = array();
-    private $failedUpdates = array();
-    private $errors = array();
+    private $okUpdates = [];
+    private $failedUpdates = [];
+    private $errors = [];
 
     private $usePumukit1 = false;
 
@@ -31,13 +31,14 @@ class YoutubeUpdateMetadataCommand extends ContainerAwareCommand
             ->addOption('use-pmk1', null, InputOption::VALUE_NONE, 'Use multimedia objects from PuMuKIT1')
             ->setDescription('Update Youtube metadata from Multimedia Objects')
             ->setHelp(
-            <<<'EOT'
+                <<<'EOT'
 Sync YouTube Service metadata with local metadata(title, description...). Meaning, update the metadata of the YouTube service getting the info from the local multimedia objects.
 
 PERFORMANCE NOTE: This command has a good performance because only use the multimedia objects updated from the last synchronization.
 
 EOT
-        );
+        )
+        ;
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
@@ -56,9 +57,9 @@ EOT
 
         $this->youtubeService = $this->getContainer()->get('pumukityoutube.youtube');
 
-        $this->okUpdates = array();
-        $this->failedUpdates = array();
-        $this->errors = array();
+        $this->okUpdates = [];
+        $this->failedUpdates = [];
+        $this->errors = [];
 
         $this->logger = $this->getContainer()->get('monolog.logger.youtube');
 
@@ -100,26 +101,29 @@ EOT
     private function getMultimediaObjectsInYoutubeToUpdate()
     {
         $mongoObjectIds = $this->youtubeRepo->getDistinctIdsNotMetadataUpdated();
-        $youtubeIds = array();
+        $youtubeIds = [];
         foreach ($mongoObjectIds as $mongoObjectId) {
             $youtubeIds[] = $mongoObjectId->__toString();
         }
 
         $mms = $this->mmobjRepo
-             ->createQueryBuilder()
-             ->field('properties.origin')
-             ->notEqual('youtube')
-             ->field('properties.youtube')
-             ->in($youtubeIds);
+            ->createQueryBuilder()
+            ->field('properties.origin')
+            ->notEqual('youtube')
+            ->field('properties.youtube')
+            ->in($youtubeIds)
+        ;
 
         if (!$this->usePumukit1) {
             $mms->field('properties.pumukit1id')
-                ->exists(false);
+                ->exists(false)
+            ;
         }
 
         return $mms
             ->getQuery()
-            ->execute();
+            ->execute()
+        ;
     }
 
     private function checkResultsAndSendEmail()

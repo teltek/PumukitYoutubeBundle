@@ -2,8 +2,8 @@
 
 namespace Pumukit\YoutubeBundle\EventListener;
 
-use Symfony\Component\DependencyInjection\ContainerInterface;
 use Pumukit\SchemaBundle\Event\MultimediaObjectEvent;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 class UpdateListener
 {
@@ -23,7 +23,8 @@ class UpdateListener
         $youtube = $youtubeRepo->createQueryBuilder()
             ->field('multimediaObjectId')->equals($document->getId())
             ->getQuery()
-            ->getSingleResult();
+            ->getSingleResult()
+        ;
 
         if (null != $youtube) {
             $youtube->setMultimediaObjectUpdateDate(new \DateTime('now'));

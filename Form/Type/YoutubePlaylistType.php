@@ -2,8 +2,8 @@
 
 namespace Pumukit\YoutubeBundle\Form\Type;
 
-use Symfony\Component\Form\AbstractType;
 use Pumukit\NewAdminBundle\Form\Type\Base\TextI18nType;
+use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Translation\TranslatorInterface;
 
@@ -20,11 +20,11 @@ class YoutubePlaylistType extends AbstractType
 
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
-        $builder->add('i18n_title', TextI18nType::class, array(
-            'label' => $this->translator->trans('Title', array(), null, $this->locale),
-            'attr' => array('class' => 'form-control'),
+        $builder->add('i18n_title', TextI18nType::class, [
+            'label' => $this->translator->trans('Title', [], null, $this->locale),
+            'attr' => ['class' => 'form-control'],
             'required' => true,
-        ));
+        ]);
     }
 
     public function getBlockPrefix()

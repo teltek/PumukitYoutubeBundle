@@ -2,11 +2,11 @@
 
 namespace Pumukit\YoutubeBundle\DependencyInjection;
 
-use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\Config\FileLocator;
-use Symfony\Component\HttpKernel\DependencyInjection\Extension;
-use Symfony\Component\DependencyInjection\Loader;
+use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\PrependExtensionInterface;
+use Symfony\Component\DependencyInjection\Loader;
+use Symfony\Component\HttpKernel\DependencyInjection\Extension;
 use Symfony\Component\Yaml\Yaml;
 
 /**
@@ -21,17 +21,17 @@ class PumukitYoutubeExtension extends Extension implements PrependExtensionInter
      */
     public function prepend(ContainerBuilder $container)
     {
-        $container->prependExtensionConfig('monolog', array(
-            'channels' => array('youtube'),
-            'handlers' => array(
-                'youtube' => array(
+        $container->prependExtensionConfig('monolog', [
+            'channels' => ['youtube'],
+            'handlers' => [
+                'youtube' => [
                     'type' => 'stream',
                     'path' => '%kernel.logs_dir%/youtube_%kernel.environment%.log',
                     'level' => 'info',
-                    'channels' => array('youtube'),
-                ),
-            ),
-        ));
+                    'channels' => ['youtube'],
+                ],
+            ],
+        ]);
     }
 
     /**
@@ -67,7 +67,7 @@ class PumukitYoutubeExtension extends Extension implements PrependExtensionInter
         $container->setParameter('pumukit_youtube.profilelist', $config['profiles']);
 
         $encoderBundleProfiles = $container->getParameter('pumukitencode.profilelist');
-        $profilesToMerge = array();
+        $profilesToMerge = [];
         foreach ($config['profiles'] as $name => $profile) {
             $image = '"'.$container->getParameter('pumukit_youtube.default_image_for_audio').'"';
             $profile['bat'] = str_replace('__IMAGE__', $image, $profile['bat']);
@@ -84,7 +84,7 @@ class PumukitYoutubeExtension extends Extension implements PrependExtensionInter
         $loader = new Loader\XmlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
         $loader->load('services.xml');
 
-        $permissions = array(array('role' => 'ROLE_ACCESS_YOUTUBE', 'description' => 'Access youtube CRUD'));
+        $permissions = [['role' => 'ROLE_ACCESS_YOUTUBE', 'description' => 'Access youtube CRUD']];
         $newPermissions = array_merge($container->getParameter('pumukitschema.external_permissions'), $permissions);
         $container->setParameter('pumukitschema.external_permissions', $newPermissions);
     }

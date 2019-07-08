@@ -2,25 +2,25 @@
 
 namespace Pumukit\YoutubeBundle\Command;
 
-use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\YoutubeBundle\Document\Youtube;
+use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\OutputInterface;
 
 class CaptionUploadCommand extends ContainerAwareCommand
 {
-    private $dm = null;
-    private $mmobjRepo = null;
+    private $dm;
+    private $mmobjRepo;
 
     private $logger;
     private $captionService;
     private $allowedCaptionMimeTypes;
     private $syncStatus;
 
-    private $okUploads = array();
-    private $failedUploads = array();
-    private $errors = array();
+    private $okUploads = [];
+    private $failedUploads = [];
+    private $errors = [];
 
     private $input;
     private $output;
@@ -35,7 +35,8 @@ class CaptionUploadCommand extends ContainerAwareCommand
 Command to upload a controlled set of captions to Youtube.
 
 EOT
-          );
+          )
+        ;
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
@@ -54,9 +55,9 @@ EOT
         $this->logger = $container->get('monolog.logger.youtube');
         $this->syncStatus = $container->getParameter('pumukit_youtube.sync_status');
         $this->allowedCaptionMimeTypes = $container->getParameter('pumukit_youtube.allowed_caption_mimetypes');
-        $this->okUploads = array();
-        $this->failedUploads = array();
-        $this->errors = array();
+        $this->okUploads = [];
+        $this->failedUploads = [];
+        $this->errors = [];
         $this->input = $input;
         $this->output = $output;
     }
@@ -79,6 +80,7 @@ EOT
                         $this->output->writeln($errorLog);
                         $this->failedUploads[] = $multimediaObject;
                         $this->errors[] = $errorLog;
+
                         continue;
                     }
                     $this->okUploads[] = $multimediaObject;
@@ -99,31 +101,32 @@ EOT
 
         $syncStatus = $this->getContainer()->getParameter('pumukit_youtube.sync_status');
         if ($syncStatus) {
-            $aStatus = array(MultimediaObject::STATUS_PUBLISHED, MultimediaObject::STATUS_BLOCKED, MultimediaObject::STATUS_HIDDEN);
+            $aStatus = [MultimediaObject::STATUS_PUBLISHED, MultimediaObject::STATUS_BLOCKED, MultimediaObject::STATUS_HIDDEN];
         } else {
-            $aStatus = array(MultimediaObject::STATUS_PUBLISHED);
+            $aStatus = [MultimediaObject::STATUS_PUBLISHED];
         }
 
         return $this->mmobjRepo->createQueryBuilder()
-          ->field('properties.pumukit1id')->exists(false)
-          ->field('properties.origin')->notEqual('youtube')
-          ->field('status')->in($aStatus)
-          ->field('embeddedBroadcast.type')->equals('public')
-          ->field('tags.cod')->all($array_pub_tags);
+            ->field('properties.pumukit1id')->exists(false)
+            ->field('properties.origin')->notEqual('youtube')
+            ->field('status')->in($aStatus)
+            ->field('embeddedBroadcast.type')->equals('public')
+            ->field('tags.cod')->all($array_pub_tags);
     }
 
     private function getYoutubeMultimediaObjects()
     {
         return $this->createYoutubeMultimediaObjectsQueryBuilder()
-          ->field('properties.youtube')->exists(true)
-          ->getQuery()
-          ->execute();
+            ->field('properties.youtube')->exists(true)
+            ->getQuery()
+            ->execute()
+        ;
     }
 
     private function getCaptionsMaterialIds(Youtube $youtube)
     {
         $captions = $youtube->getCaptions();
-        $captionsMaterialIds = array();
+        $captionsMaterialIds = [];
         foreach ($captions as $caption) {
             $captionsMaterialIds[] = $caption->getMaterialId();
         }
@@ -131,9 +134,9 @@ EOT
         return $captionsMaterialIds;
     }
 
-    private function getNewMaterialIds(MultimediaObject $multimediaObject, array $captionMaterialIds = array())
+    private function getNewMaterialIds(MultimediaObject $multimediaObject, array $captionMaterialIds = [])
     {
-        $newMaterialIds = array();
+        $newMaterialIds = [];
         foreach ($multimediaObject->getMaterials() as $material) {
             if ((in_array($material->getId(), $captionMaterialIds)) ||
             (!in_array($material->getMimeType(), $this->allowedCaptionMimeTypes)) || $material->isHide()) {

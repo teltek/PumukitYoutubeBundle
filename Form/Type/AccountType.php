@@ -22,15 +22,16 @@ class AccountType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
         $builder
-            ->add('i18n_title', TextI18nType::class, array(
-                'attr' => array('aria-label' => $this->translator->trans('Title', array(), null, $this->locale)),
-                'label' => $this->translator->trans('Title', array(), null, $this->locale),
-            ))
-            ->add('login', TextType::class, array(
-            'label' => $this->translator->trans('login', array(), null, $this->locale),
-            'attr' => array('class' => 'form-control'),
-            'required' => true,
-        ));
+            ->add('i18n_title', TextI18nType::class, [
+                'attr' => ['aria-label' => $this->translator->trans('Title', [], null, $this->locale)],
+                'label' => $this->translator->trans('Title', [], null, $this->locale),
+            ])
+            ->add('login', TextType::class, [
+                'label' => $this->translator->trans('login', [], null, $this->locale),
+                'attr' => ['class' => 'form-control'],
+                'required' => true,
+            ])
+        ;
     }
 
     public function getBlockPrefix()

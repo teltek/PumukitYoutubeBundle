@@ -2,18 +2,18 @@
 
 namespace Pumukit\YoutubeBundle\Command;
 
+use Pumukit\YoutubeBundle\Document\Youtube;
+use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
-use Pumukit\YoutubeBundle\Document\Youtube;
 
 class YoutubeCheckCommand extends ContainerAwareCommand
 {
-    private $dm = null;
-    private $tagRepo = null;
-    private $mmobjRepo = null;
-    private $youtubeRepo = null;
+    private $dm;
+    private $tagRepo;
+    private $mmobjRepo;
+    private $youtubeRepo;
 
     private $youtubeService;
     private $youtubeProcessService;
@@ -37,7 +37,8 @@ Check:
  - The stats of all youtube videos in the platform.
 
 EOT
-            );
+            )
+        ;
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
@@ -49,20 +50,44 @@ EOT
         $output->writeln(
             sprintf(
                 '<info>    %s no_mm, %s from_pmk1, %s error_api, %s ok</info>',
-                $result['no_mm'], $result['from_pmk1'], $result['error_api'], $result['ok'])
+                $result['no_mm'],
+                $result['from_pmk1'],
+                $result['error_api'],
+                $result['ok']
+            )
         );
+    }
+
+    protected function initialize(InputInterface $input, OutputInterface $output)
+    {
+        $this->dm = $this->getContainer()->get('doctrine_mongodb')->getManager();
+        $this->tagRepo = $this->dm->getRepository('PumukitSchemaBundle:Tag');
+        $this->mmobjRepo = $this->dm->getRepository('PumukitSchemaBundle:MultimediaObject');
+        $this->youtubeRepo = $this->dm->getRepository('PumukitYoutubeBundle:Youtube');
+
+        $this->youtubeTag = $this->tagRepo->findOneBy(['cod' => 'YOUTUBE']);
+        if (!$this->youtubeTag) {
+            throw new \Exception('No tag with code YOUTUBE');
+        }
+
+        $this->youtubeService = $this->getContainer()->get('pumukityoutube.youtube');
+        $this->youtubeProcessService = $this->getContainer()->get('pumukityoutube.youtubeprocess');
+
+        $this->logger = $this->getContainer()->get('monolog.logger.youtube');
+
+        $this->usePumukit1 = $input->getOption('use-pmk1');
     }
 
     private function checkMultimediaObjects()
     {
-        $result = array(
+        $result = [
             'no_mm' => 0,
             'from_pmk1' => 0,
             'error_api' => 0,
             'ok' => 0,
-        );
+        ];
 
-        $statusArray = array(Youtube::STATUS_REMOVED, Youtube::STATUS_NOTIFIED_ERROR, Youtube::STATUS_DUPLICATED);
+        $statusArray = [Youtube::STATUS_REMOVED, Youtube::STATUS_NOTIFIED_ERROR, Youtube::STATUS_DUPLICATED];
         $youtubes = $this->youtubeRepo->getWithoutAnyStatus($statusArray);
 
         foreach ($youtubes as $youtube) {
@@ -74,6 +99,7 @@ EOT
                 } else {
                     ++$result['from_pmk1'];
                 }
+
                 continue;
             }
 
@@ -100,32 +126,13 @@ EOT
             if (!$login) {
                 throw new \Exception(sprintf('Youtube account tag %s without login property', $account->getCod()));
             }
+
             try {
                 $this->youtubeService->getAllYoutubePlaylists($login);
             } catch (\Exception $e) {
                 throw new \Exception(sprintf('Error getting playlist of account %s. To debug it execute `python getAllPlaylists.py --account %s`', $login, $login));
             }
         }
-    }
-
-    protected function initialize(InputInterface $input, OutputInterface $output)
-    {
-        $this->dm = $this->getContainer()->get('doctrine_mongodb')->getManager();
-        $this->tagRepo = $this->dm->getRepository('PumukitSchemaBundle:Tag');
-        $this->mmobjRepo = $this->dm->getRepository('PumukitSchemaBundle:MultimediaObject');
-        $this->youtubeRepo = $this->dm->getRepository('PumukitYoutubeBundle:Youtube');
-
-        $this->youtubeTag = $this->tagRepo->findOneBy(array('cod' => 'YOUTUBE'));
-        if (!$this->youtubeTag) {
-            throw new \Exception('No tag with code YOUTUBE');
-        }
-
-        $this->youtubeService = $this->getContainer()->get('pumukityoutube.youtube');
-        $this->youtubeProcessService = $this->getContainer()->get('pumukityoutube.youtubeprocess');
-
-        $this->logger = $this->getContainer()->get('monolog.logger.youtube');
-
-        $this->usePumukit1 = $input->getOption('use-pmk1');
     }
 
     private function findByYoutubeIdAndPumukit1Id(Youtube $youtube, $pumukit1Id = false)
@@ -135,16 +142,19 @@ EOT
             ->field('properties.youtube')
             ->equals($youtube->getId())
             ->field('properties.origin')
-            ->notEqual('youtube');
+            ->notEqual('youtube')
+        ;
 
         if (!$this->usePumukit1) {
             $qb->field('properties.pumukit1id')
-                ->exists($pumukit1Id);
+                ->exists($pumukit1Id)
+            ;
         }
 
         return $qb
             ->getQuery()
-            ->getSingleResult();
+            ->getSingleResult()
+        ;
     }
 
     private function findByYoutubeId(Youtube $youtube)
@@ -152,6 +162,7 @@ EOT
         return $this->mmobjRepo->createQueryBuilder()
             ->field('properties.youtube')->equals($youtube->getId())
             ->getQuery()
-            ->getSingleResult();
+            ->getSingleResult()
+        ;
     }
 }

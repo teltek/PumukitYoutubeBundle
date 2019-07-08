@@ -2,25 +2,25 @@
 
 namespace Pumukit\YoutubeBundle\Command;
 
-use Symfony\Component\Console\Input\InputInterface;
+use Pumukit\SchemaBundle\Document\MultimediaObject;
+use Pumukit\SchemaBundle\Document\Pic;
+use Pumukit\SchemaBundle\Document\Series;
+use Pumukit\SchemaBundle\Document\Tag;
+use Pumukit\YoutubeBundle\Document\Youtube;
+use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 use Symfony\Component\Console\Input\InputArgument;
+use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
-use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
-use Pumukit\SchemaBundle\Document\Pic;
-use Pumukit\SchemaBundle\Document\Tag;
-use Pumukit\SchemaBundle\Document\MultimediaObject;
-use Pumukit\SchemaBundle\Document\Series;
-use Pumukit\YoutubeBundle\Document\Youtube;
 
 class YoutubeImportVideoCommand extends ContainerAwareCommand
 {
-    private $dm = null;
-    private $tagRepo = null;
-    private $mmobjRepo = null;
-    private $seriesRepo = null;
-    private $youtubeRepo = null;
+    private $dm;
+    private $tagRepo;
+    private $mmobjRepo;
+    private $seriesRepo;
+    private $youtubeRepo;
     private $tagService;
 
     private $youtubeService;
@@ -54,14 +54,14 @@ class YoutubeImportVideoCommand extends ContainerAwareCommand
             null,
             InputOption::VALUE_IS_ARRAY | InputOption::VALUE_OPTIONAL,
             'Youtube tags to add in the object',
-            array()
+            []
         )->addOption(
             'force',
             null,
             InputOption::VALUE_NONE,
             'Set this parameter force the execution of this action'
         )->setHelp(
-            <<<EOT
+            <<<'EOT'
 Command to create a multimedia object from Youtube.
 
 Steps:
@@ -130,12 +130,14 @@ EOT
                     $output->writeln(' * Tagging multimedia object ');
                     $this->tagMultimediaObject($mmobj, $tags);
                 }
+
                 break;
             case 2:
                 if ('all' == $yid) {
-                    $mmobjs = $this->mmobjRepo->findBy(array('properties.origin' => 'youtube'));
+                    $mmobjs = $this->mmobjRepo->findBy(['properties.origin' => 'youtube']);
                     foreach ($mmobjs as $mmobj) {
                         $output->writeln(' * Downloading image for multimedia object with id '.$mmobj->getId());
+
                         try {
                             $this->downloadPic($mmobj, $input->getArgument('series'), $input->getOption('force'));
                         } catch (\Exception $e) {
@@ -150,6 +152,7 @@ EOT
                     $output->writeln(' * Downloading image for multimedia object with YouTube id '.$yid);
                     $this->downloadPic($mmobj, $input->getArgument('series'), $input->getOption('force'));
                 }
+
                 break;
             case 3:
                 $mmobj = $this->getMmObjFromYid($yid);
@@ -158,6 +161,7 @@ EOT
                 }
                 $output->writeln(' * Moving tracks for multimedia object ');
                 $this->moveTracks($mmobj, $input->getArgument('series'));
+
                 break;
             case 4:
                 $mmobj = $this->getMmObjFromYid($yid);
@@ -166,13 +170,15 @@ EOT
                 }
                 $output->writeln(' * Tagging multimedia object ');
                 $this->tagMultimediaObject($mmobj, $input->getOption('tags'));
+
                 break;
             case 5:
                 $dispatcher = $this->getContainer()->get('pumukitschema.multimediaobject_dispatcher');
                 if ('all' == $yid) {
-                    $mmobjs = $this->mmobjRepo->findBy(array('properties.origin' => 'youtube'));
+                    $mmobjs = $this->mmobjRepo->findBy(['properties.origin' => 'youtube']);
                     foreach ($mmobjs as $mmobj) {
                         $output->writeln(' * Publishing multimedia object '.$mmobj->getId());
+
                         try {
                             $this->tagService->addTagByCodToMultimediaObject($mmobj, 'PUCHWEBTV');
                         } catch (\Exception $e) {
@@ -191,6 +197,7 @@ EOT
                     $this->tagService->addTagByCodToMultimediaObject($mmobj, 'PUCHWEBTV');
                     $dispatcher->dispatchUpdate($mmobj);
                 }
+
                 break;
             default:
                 $output->writeln('<error>Select a valid step</error>');
@@ -244,8 +251,7 @@ EOT
         $meta = $mmobj->getProperty('youtubemeta');
 
         if (!$quality) {
-            $picUrl = isset($meta['snippet']['thumbnails']['standard']['url']) ?
-                $meta['snippet']['thumbnails']['standard']['url'] :
+            $picUrl = $meta['snippet']['thumbnails']['standard']['url'] ??
                 $meta['snippet']['thumbnails']['default']['url'];
         } else {
             if (!isset($meta['snippet']['thumbnails'][$quality]['url'])) {
@@ -292,10 +298,10 @@ EOT
     private function tagMultimediaObject(MultimediaObject $mmobj, $tagIds)
     {
         $tags = $this->tagRepo->findBy(
-            array(
+            [
                 'properties.origin' => 'youtube',
-                'properties.youtube' => array('$in' => $tagIds),
-            )
+                'properties.youtube' => ['$in' => $tagIds],
+            ]
         );
         if (count($tagIds) != count($tags)) {
             throw new \Exception(
@@ -344,7 +350,7 @@ EOT
 
     private function getMmObjFromYid($yid)
     {
-        $mmobj = $this->mmobjRepo->findOneBy(array('properties.youtubemeta.id' => $yid));
+        $mmobj = $this->mmobjRepo->findOneBy(['properties.youtubemeta.id' => $yid]);
         if ($mmobj) {
             return $mmobj;
         }
@@ -353,7 +359,8 @@ EOT
             ->field('youtubeId')
             ->equals($yid)
             ->getQuery()
-            ->getSingleResult();
+            ->getSingleResult()
+        ;
 
         if (!$yt) {
             return null;
@@ -376,10 +383,10 @@ EOT
         }
 
         $series = $this->seriesRepo->findOneBy(
-            array(
+            [
                 'properties.origin' => 'youtube',
                 'properties.fromyoutubetag' => $seriesId,
-            )
+            ]
         );
         if ($series) {
             $this->logger->info(sprintf('Using series with YouTube property %s', $seriesId));
@@ -389,10 +396,10 @@ EOT
 
         //tag with youtube
         $tag = $this->tagRepo->findOneBy(
-            array(
+            [
                 'properties.origin' => 'youtube',
                 'properties.youtube' => $seriesId,
-            )
+            ]
         );
         if ($tag) {
             $this->logger->info(sprintf('Creating series from YouTube property %s', $seriesId));
@@ -413,7 +420,7 @@ EOT
     private function getStatus($status)
     {
         $status = strtolower($status);
-        $validStatus = array(
+        $validStatus = [
             'published',
             'pub',
             'block',
@@ -421,7 +428,7 @@ EOT
             'blocked',
             'hide',
             'hidden',
-        );
+        ];
         if (!in_array($status, $validStatus)) {
             throw new \Exception('Status "'.$status.'" not in '.implode(', ', $validStatus));
         }

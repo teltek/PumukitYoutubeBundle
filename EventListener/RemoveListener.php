@@ -3,9 +3,9 @@
 namespace Pumukit\YoutubeBundle\EventListener;
 
 use Doctrine\ODM\MongoDB\Event\LifecycleEventArgs;
-use Symfony\Component\DependencyInjection\ContainerInterface;
-use Pumukit\YoutubeBundle\Document\Youtube;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
+use Pumukit\YoutubeBundle\Document\Youtube;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 class RemoveListener
 {

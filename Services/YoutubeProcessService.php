@@ -5,8 +5,8 @@ namespace Pumukit\YoutubeBundle\Services;
 use Doctrine\ODM\MongoDB\DocumentManager;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Routing\Router;
-use Symfony\Component\Process\ProcessBuilder;
 use Symfony\Component\Process\Exception\ProcessFailedException;
+use Symfony\Component\Process\ProcessBuilder;
 use UnexpectedValueException;
 
 class YoutubeProcessService
@@ -29,7 +29,7 @@ class YoutubeProcessService
     public function upload($trackPath, $title, $description, $category, $tags, $privacy, $login)
     {
         $sFile = 'upload.py';
-        $aCommandArguments = array();
+        $aCommandArguments = [];
         $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--file', $trackPath);
         $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--title', $title);
         $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--description', $description);
@@ -44,7 +44,7 @@ class YoutubeProcessService
     public function updateVideo($youtube, $title, $description, $tags, $status, $login)
     {
         $sFile = 'updateVideo.py';
-        $aCommandArguments = array();
+        $aCommandArguments = [];
         $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--videoid', $youtube->getYoutubeId());
         $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--title', $title);
         $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--description', $description);
@@ -60,13 +60,13 @@ class YoutubeProcessService
     public function deleteVideo($youtube, $login)
     {
         if (!$youtube->getYoutubeId()) {
-            return array(
+            return [
                 'error' => true,
                 'error_out' => 'No se ha encontrado el video',
-            );
+            ];
         }
         $sFile = 'deleteVideo.py';
-        $aCommandArguments = array();
+        $aCommandArguments = [];
         $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--videoid', $youtube->getYoutubeId());
         $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--account', $login);
 
@@ -76,7 +76,7 @@ class YoutubeProcessService
     public function createPlaylist($sTitleTag, $playlistPrivacyStatus, $login)
     {
         $sFile = 'createPlaylist.py';
-        $aCommandArguments = array();
+        $aCommandArguments = [];
         $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--title', $sTitleTag);
         $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--privacyStatus', $playlistPrivacyStatus);
         $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--account', $login);
@@ -87,7 +87,7 @@ class YoutubeProcessService
     public function deletePlaylist($youtubePlaylistId, $login)
     {
         $sFile = 'deletePlaylist.py';
-        $aCommandArguments = array();
+        $aCommandArguments = [];
         $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--playlistid', $youtubePlaylistId);
         $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--account', $login);
 
@@ -97,7 +97,7 @@ class YoutubeProcessService
     public function insertInToList($youtube, $youtubePlaylistId, $login)
     {
         $sFile = 'insertInToList.py';
-        $aCommandArguments = array();
+        $aCommandArguments = [];
         $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--videoid', $youtube->getYoutubeId());
         $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--playlistid', $youtubePlaylistId);
         $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--account', $login);
@@ -108,7 +108,7 @@ class YoutubeProcessService
     public function deleteFromList($youtubePlaylistItem, $login)
     {
         $sFile = 'deleteFromList.py';
-        $aCommandArguments = array();
+        $aCommandArguments = [];
         $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--id', $youtubePlaylistItem);
         $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--account', $login);
 
@@ -121,9 +121,11 @@ class YoutubeProcessService
         switch ($sType) {
             case 'status':
                 $sFile = 'getVideoStatus.py';
+
                 break;
             case 'meta':
                 $sFile = 'getVideoMeta.py';
+
                 break;
             default:
                 $sFile = false;
@@ -133,7 +135,7 @@ class YoutubeProcessService
             throw new \Exception(__FUNCTION__.'$sFile is not defined');
         }
 
-        $aCommandArguments = array();
+        $aCommandArguments = [];
         $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--videoid', $sYoutubeId);
         $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--account', $login);
 
@@ -143,7 +145,7 @@ class YoutubeProcessService
     public function getAllPlaylist($login)
     {
         $sFile = 'getAllPlaylists.py';
-        $aCommandArguments = array();
+        $aCommandArguments = [];
         $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--account', $login);
 
         return $this->createProcess($sFile, $aCommandArguments);
@@ -152,7 +154,7 @@ class YoutubeProcessService
     public function listCaptions($youtube, $login)
     {
         $sFile = 'listCaptions.py';
-        $aCommandArguments = array();
+        $aCommandArguments = [];
         $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--videoid', $youtube->getYoutubeId());
         $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--account', $login);
 
@@ -162,7 +164,7 @@ class YoutubeProcessService
     public function insertCaption($youtube, $name, $language, $file, $login)
     {
         $sFile = 'insertCaption.py';
-        $aCommandArguments = array();
+        $aCommandArguments = [];
         $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--videoid', $youtube->getYoutubeId());
         $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--name', $name);
         $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--language', $language);
@@ -175,14 +177,14 @@ class YoutubeProcessService
     public function deleteCaption($captionId, $login)
     {
         $sFile = 'deleteCaption.py';
-        $aCommandArguments = array();
+        $aCommandArguments = [];
         $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--captionid', $captionId);
         $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--account', $login);
 
         return $this->createProcess($sFile, $aCommandArguments);
     }
 
-    private function createProcess($sFile, $aCommandArguments = array())
+    private function createProcess($sFile, $aCommandArguments = [])
     {
         $builder = new ProcessBuilder();
         $builder->setPrefix('python');
@@ -191,6 +193,7 @@ class YoutubeProcessService
         $builder->setTimeout($this->process_timeout);
         $builder->setWorkingDirectory($this->pythonDirectory);
         $pyProcess = $builder->getProcess();
+
         try {
             $pyProcess->mustRun();
             if (!$pyProcess->isSuccessful()) {
