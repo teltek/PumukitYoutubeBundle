@@ -22,7 +22,6 @@ class YoutubeDeleteCommand extends ContainerAwareCommand
     private $tagRepo = null;
     private $mmobjRepo = null;
     private $youtubeRepo = null;
-    private $tagService;
 
     private $youtubeService;
     private $tagService;
