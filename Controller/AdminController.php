@@ -2,7 +2,6 @@
 
 namespace Pumukit\YoutubeBundle\Controller;
 
-use Documents\Account;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\YoutubeBundle\Form\Type\AccountType;
