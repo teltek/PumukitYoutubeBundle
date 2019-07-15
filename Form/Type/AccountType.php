@@ -27,7 +27,7 @@ class AccountType extends AbstractType
                 'i18n_title',
                 TextI18nType::class,
                 [
-                    'attr'  => ['aria-label' => $this->translator->trans('Title', [], null, $this->locale)],
+                    'attr' => ['aria-label' => $this->translator->trans('Title', [], null, $this->locale)],
                     'label' => $this->translator->trans('Title', [], null, $this->locale),
                 ]
             )
@@ -35,11 +35,12 @@ class AccountType extends AbstractType
                 'login',
                 TextType::class,
                 [
-                    'label'    => $this->translator->trans('login', [], null, $this->locale),
-                    'attr'     => ['class' => 'form-control'],
+                    'label' => $this->translator->trans('login', [], null, $this->locale),
+                    'attr' => ['class' => 'form-control'],
                     'required' => true,
                 ]
-            );
+            )
+        ;
     }
 
     /**
