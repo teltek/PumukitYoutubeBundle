@@ -65,7 +65,7 @@ class AdminController extends Controller
         $translator = $this->get('translator');
         $locale = $request->getLocale();
 
-        $form = $this->createForm(new AccountType($translator, $locale));
+        $form = $this->createForm(AccountType::class, null, ['translator' => $translator, 'locale' => $locale]);
 
         $form->handleRequest($request);
         if ('POST' === $request->getMethod() && $form->isValid()) {
@@ -121,7 +121,7 @@ class AdminController extends Controller
         $translator = $this->get('translator');
         $locale = $request->getLocale();
 
-        $form = $this->createForm(new AccountType($translator, $locale));
+        $form = $this->createForm(AccountType::class, null, ['translator' => $translator, 'locale' => $locale]);
         $form->get('i18n_title')->setData($youtubeAccount->getI18nTitle());
         $form->get('login')->setData($youtubeAccount->getProperty('login'));
 
@@ -218,7 +218,7 @@ class AdminController extends Controller
         $translator = $this->get('translator');
         $locale = $request->getLocale();
 
-        $form = $this->createForm(new YoutubePlaylistType($translator, $locale));
+        $form = $this->createForm(YoutubePlaylistType::class, null, ['translator' => $translator, 'locale' => $locale]);
 
         $form->handleRequest($request);
         if ('POST' === $request->getMethod() && $form->isValid()) {
@@ -271,8 +271,7 @@ class AdminController extends Controller
 
         $playlist = $dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(['_id' => new \MongoId($id)]);
 
-        $form = $this->createForm(new YoutubePlaylistType($translator, $locale), $playlist);
-
+        $form = $this->createForm(YoutubePlaylistType::class, $playlist, ['translator' => $translator, 'locale' => $locale]);
         $form->handleRequest($request);
         if ('POST' === $request->getMethod() && $form->isValid()) {
             try {
