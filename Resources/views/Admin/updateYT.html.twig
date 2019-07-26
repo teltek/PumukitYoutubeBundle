@@ -21,7 +21,18 @@
         </div>
         <div class="col-xs-6">
             <div id="list_playlist">
-                <label for="youtube_playlist_label">{{ "Playlist"|trans }}</label>
+                <label for="youtube_playlist_label">
+                    {{ "Playlist"|trans }}
+                    {% if multimediaObject.isPrototype() %}
+                        {% set default_account = youtubeAccounts|first %}
+                        <a id="create_yt_playlist" title="{{ "Create new playlist"|trans }}" href="#" data-href="{{ path('pumukit_youtube_create_playlist', {'id': '__account__' }) }}" data-toggle="modal" data-backdrop="static" data-target="#myModal">
+                            <i class="mdi-av-playlist-add"></i>
+                        </a>
+                        <a id="refresh_yt_playlist" title="{{ "Refresh playlists"|trans }}">
+                            <i class="mdi-navigation-refresh yt-mdi-navigation-refresh"></i>
+                        </a>
+                    {% endif %}
+                </label>
                 <select multiple id="youtube_playlist_label" name="youtube_playlist_label[]" class="form-control" style="width:100%" required {% if is_granted('ROLE_TAG_DISABLE_PUCHYOUTUBE') %}disabled{% endif %}>
                     <option id="default_playlist" value="any" {% if not playlistId %}selected{% endif %}>{{ "Without playlist"|trans }}</option>
                     {% if selectedAccount %}
@@ -115,5 +126,34 @@
         if($('#youtube_playlist_label option:selected').size() >= 1) {
             $('#default_playlist').prop("selected", false);
         }
+    });
+
+
+    $('#create_yt_playlist').on('click',function(event){
+
+        var account = $("#youtube_label option:selected").val();
+        var base_href =  $(this).data('href').replace('__account__', account);
+        $('#create_yt_playlist').attr("href",base_href);
+    });
+
+    $('#refresh_yt_playlist').on('click',function(event){
+        event.preventDefault();
+        var href = $("#youtube_label option:selected").data('href');
+        $('#youtube_playlist_label').empty();
+        $.ajax({
+            url: href,
+            method: 'GET',
+            success: function (response) {
+                $('#youtube_playlist_label').append($('<option value="any">&nbsp;</option>'));
+                $("#youtube_playlist_label").select2({
+                    multiple: true,
+                    width: 'resolve',
+                    data: response
+                });
+            },
+            error: function (jqXHR, textStatus, errorThrown) {
+                no_success(errorThrown + ': ' + textStatus);
+            }
+        });
     });
 </script>

@@ -2,34 +2,108 @@
 
 namespace Pumukit\YoutubeBundle\EventListener;
 
+use Doctrine\ODM\MongoDB\DocumentManager;
+use Pumukit\SchemaBundle\Document\EmbeddedTag;
+use Pumukit\SchemaBundle\Document\MultimediaObject;
+use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\SchemaBundle\Event\MultimediaObjectEvent;
-use Symfony\Component\DependencyInjection\ContainerInterface;
+use Pumukit\YoutubeBundle\Document\Youtube;
 
 class UpdateListener
 {
-    private $container;
+    /**
+     * @var DocumentManager
+     */
+    private $documentManager;
 
-    public function __construct(ContainerInterface $container)
+    const YOUTUBE_CODE = 'YOUTUBE';
+
+    /**
+     * UpdateListener constructor.
+     *
+     * @param DocumentManager $documentManager
+     */
+    public function __construct(DocumentManager $documentManager)
     {
-        $this->container = $container;
+        $this->documentManager = $documentManager;
     }
 
+    /**
+     * @param MultimediaObjectEvent $event
+     *
+     * @throws \MongoException
+     */
     public function onMultimediaObjectUpdate(MultimediaObjectEvent $event)
     {
-        $document = $event->getMultimediaObject();
+        $multimediaObject = $event->getMultimediaObject();
 
-        $dm = $this->container->get('doctrine_mongodb.odm.document_manager');
-        $youtubeRepo = $dm->getRepository('PumukitYoutubeBundle:Youtube');
+        $this->updateYoutubeDocument($multimediaObject);
+
+        $this->setYoutubeAccount($multimediaObject);
+    }
+
+    /**
+     * @param MultimediaObject $multimediaObject
+     *
+     * @throws \Exception
+     */
+    private function updateYoutubeDocument(MultimediaObject $multimediaObject)
+    {
+        $youtubeRepo = $this->documentManager->getRepository(Youtube::class);
         $youtube = $youtubeRepo->createQueryBuilder()
-            ->field('multimediaObjectId')->equals($document->getId())
-            ->getQuery()
-            ->getSingleResult()
+                               ->field('multimediaObjectId')->equals($multimediaObject->getId())
+                               ->getQuery()
+                               ->getSingleResult()
         ;
 
-        if (null != $youtube) {
+        if (null !== $youtube) {
             $youtube->setMultimediaObjectUpdateDate(new \DateTime('now'));
-            $dm->persist($youtube);
-            $dm->flush();
+            $this->documentManager->persist($youtube);
+            $this->documentManager->flush();
         }
+    }
+
+    /**
+     * Set YouTube account ( from template ) on multimedia object that was cut (TTK-22155)
+     *
+     * @param MultimediaObject $multimediaObject
+     *
+     * @throws \MongoException
+     */
+    private function setYoutubeAccount(MultimediaObject $multimediaObject)
+    {
+        $youtubeTag = $this->documentManager->getRepository(Tag::class)->findOneBy([
+            'cod' => self::YOUTUBE_CODE
+        ]);
+
+        if (!$youtubeTag) {
+            throw new \Exception(self::YOUTUBE_CODE . ' tag not found');
+        }
+
+        if (!$multimediaObject->isPrototype() && !$multimediaObject->containsTag($youtubeTag)) {
+            $prototype = $this->documentManager->getRepository(MultimediaObject::class)->findOneBy([
+               'series' => new \MongoId($multimediaObject->getSeries()->getId()),
+               'status' => MultimediaObject::STATUS_PROTOTYPE,
+            ]);
+
+            if (!$prototype) {
+                throw new \Exception('Prototype for series ' . $multimediaObject->getSeries(). ' not found');
+            }
+
+            foreach ($prototype->getTags() as $tag) {
+                $this->updateTagsFromPrototype($tag, $multimediaObject);
+            }
+
+            $this->documentManager->flush();
+        }
+    }
+
+    /**
+     * @param EmbeddedTag      $tag
+     * @param MultimediaObject $multimediaObject
+     */
+    private function updateTagsFromPrototype(EmbeddedTag $tag, MultimediaObject $multimediaObject)
+    {
+        $multimediaObject->addTag($tag);
     }
 }

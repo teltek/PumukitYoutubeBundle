@@ -204,7 +204,7 @@ class AdminController extends Controller
     }
 
     /**
-     * @param         $id
+     * @param string  $id
      * @param Request $request
      *
      * @return array|JsonResponse
@@ -224,7 +224,6 @@ class AdminController extends Controller
         if ('POST' === $request->getMethod() && $form->isValid()) {
             try {
                 $data = $form->getData();
-
                 $playlist = new Tag();
                 $playlist->setI18nTitle($data['i18n_title']);
                 $playlist->setProperty('youtube_playlist', true);
