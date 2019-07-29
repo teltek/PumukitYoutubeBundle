@@ -11,12 +11,11 @@ use Pumukit\YoutubeBundle\Document\Youtube;
 
 class UpdateListener
 {
+    const YOUTUBE_CODE = 'YOUTUBE';
     /**
      * @var DocumentManager
      */
     private $documentManager;
-
-    const YOUTUBE_CODE = 'YOUTUBE';
 
     /**
      * UpdateListener constructor.
@@ -51,20 +50,20 @@ class UpdateListener
     {
         $youtubeRepo = $this->documentManager->getRepository(Youtube::class);
         $youtube = $youtubeRepo->createQueryBuilder()
-                               ->field('multimediaObjectId')->equals($multimediaObject->getId())
-                               ->getQuery()
-                               ->getSingleResult()
+            ->field('multimediaObjectId')->equals($multimediaObject->getId())
+            ->getQuery()
+            ->getSingleResult()
         ;
 
-        if (null !== $youtube) {
-            $youtube->setMultimediaObjectUpdateDate(new \DateTime('now'));
+        if (null !== $youtube && $youtube instanceof Youtube) {
+            $youtube->setMultimediaObjectUpdateDate(new \DateTime());
             $this->documentManager->persist($youtube);
             $this->documentManager->flush();
         }
     }
 
     /**
-     * Set YouTube account ( from template ) on multimedia object that was cut (TTK-22155)
+     * Set YouTube account ( from template ) on multimedia object that was cut (TTK-22155).
      *
      * @param MultimediaObject $multimediaObject
      *
@@ -73,21 +72,21 @@ class UpdateListener
     private function setYoutubeAccount(MultimediaObject $multimediaObject)
     {
         $youtubeTag = $this->documentManager->getRepository(Tag::class)->findOneBy([
-            'cod' => self::YOUTUBE_CODE
+            'cod' => self::YOUTUBE_CODE,
         ]);
 
         if (!$youtubeTag) {
-            throw new \Exception(self::YOUTUBE_CODE . ' tag not found');
+            throw new \Exception(self::YOUTUBE_CODE.' tag not found');
         }
 
         if (!$multimediaObject->isPrototype() && !$multimediaObject->containsTag($youtubeTag)) {
             $prototype = $this->documentManager->getRepository(MultimediaObject::class)->findOneBy([
-               'series' => new \MongoId($multimediaObject->getSeries()->getId()),
-               'status' => MultimediaObject::STATUS_PROTOTYPE,
+                'series' => new \MongoId($multimediaObject->getSeries()->getId()),
+                'status' => MultimediaObject::STATUS_PROTOTYPE,
             ]);
 
             if (!$prototype) {
-                throw new \Exception('Prototype for series ' . $multimediaObject->getSeries(). ' not found');
+                throw new \Exception('Prototype for series '.$multimediaObject->getSeries().' not found');
             }
 
             foreach ($prototype->getTags() as $tag) {

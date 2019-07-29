@@ -2,11 +2,19 @@
 
 namespace Pumukit\YoutubeBundle\Services;
 
+use Pumukit\SchemaBundle\Document\Material;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\YoutubeBundle\Document\Caption;
 
 class CaptionService extends YoutubeService
 {
+    /**
+     * @param MultimediaObject $multimediaObject
+     *
+     * @throws \Exception
+     *
+     * @return mixed
+     */
     public function listAllCaptions(MultimediaObject $multimediaObject)
     {
         $youtube = $this->getYoutubeDocument($multimediaObject);
@@ -23,6 +31,14 @@ class CaptionService extends YoutubeService
         return $result['out'];
     }
 
+    /**
+     * @param MultimediaObject $multimediaObject
+     * @param array            $materialIds
+     *
+     * @throws \Exception
+     *
+     * @return array
+     */
     public function uploadCaption(MultimediaObject $multimediaObject, array $materialIds = [])
     {
         $youtube = $this->getYoutubeDocument($multimediaObject);
@@ -54,9 +70,8 @@ class CaptionService extends YoutubeService
     }
 
     /**
-     * Delete.
-     *
      * @param MultimediaObject $multimediaObject
+     * @param array            $captionIds
      *
      * @throws \Exception
      *
@@ -87,7 +102,15 @@ class CaptionService extends YoutubeService
         return 0;
     }
 
-    protected function createCaption($material, $output)
+    /**
+     * @param Material $material
+     * @param array    $output
+     *
+     * @throws \Exception
+     *
+     * @return Caption
+     */
+    protected function createCaption(Material $material, array $output)
     {
         $caption = new Caption();
         $caption->setMaterialId($material->getId());

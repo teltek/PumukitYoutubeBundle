@@ -103,14 +103,16 @@ class AdminController extends Controller
     }
 
     /**
-     * @param Request $request
-     * @param         $id
-     *
-     * @return array|JsonResponse
-     *
      * @Security("is_granted('ROLE_ACCESS_YOUTUBE')")
      * @Route ("/edit/{id}", name="pumukit_youtube_edit_account")
      * @Template()
+     *
+     * @param Request $request
+     * @param string  $id
+     *
+     * @throws \MongoException
+     *
+     * @return array|JsonResponse
      */
     public function editAction(Request $request, $id)
     {
@@ -153,14 +155,12 @@ class AdminController extends Controller
     }
 
     /**
-     * @param $id
-     *
-     * @throws \Exception
-     *
-     * @return JsonResponse
-     *
      * @Security("is_granted('ROLE_ACCESS_YOUTUBE')")
      * @Route ("/delete/{id}", name="pumukit_youtube_delete_tag")
+     *
+     * @param string $id
+     *
+     * @return JsonResponse
      */
     public function deleteAction($id)
     {
@@ -254,13 +254,17 @@ class AdminController extends Controller
     }
 
     /**
-     * @param         $id
-     * @param Request $request
-     *
-     * @return array|JsonResponse
      * @Security("is_granted('ROLE_ACCESS_YOUTUBE')")
      * @Route ("/edit/playlist/{id}", name="pumukit_youtube_edit_playlist")
      * @Template()
+     *
+     * @param Request $request
+     * @param string  $id
+     *
+     * @throws \MongoException
+     *
+     * @return array|JsonResponse
+     * @return array|JsonResponse
      */
     public function editPlaylistAction(Request $request, $id)
     {
@@ -330,10 +334,11 @@ class AdminController extends Controller
     }
 
     /**
-     * @param $id
+     * @Route ("/playlist/list/{id}", name="pumukityoutube_playlist_select")
+     *
+     * @param string $id
      *
      * @return JsonResponse
-     * @Route ("/playlist/list/{id}", name="pumukityoutube_playlist_select")
      */
     public function playlistAccountAction($id)
     {

@@ -19,7 +19,7 @@ class YoutubeRepository extends DocumentRepository
      *
      * @return \Doctrine\ODM\MongoDB\Query\Builder
      */
-    public function getWithAnyStatusQueryBuilder($statusArray = [])
+    public function getWithAnyStatusQueryBuilder(array $statusArray = [])
     {
         return $this->createQueryBuilder()
             ->field('status')->in($statusArray);
@@ -32,7 +32,7 @@ class YoutubeRepository extends DocumentRepository
      *
      * @return \Doctrine\ODM\MongoDB\Query\Query
      */
-    public function getWithAnyStatusQuery($statusArray = [])
+    public function getWithAnyStatusQuery(array $statusArray = [])
     {
         return $this->getWithAnyStatusQueryBuilder($statusArray)->getQuery();
     }
@@ -46,7 +46,7 @@ class YoutubeRepository extends DocumentRepository
      *
      * @return mixed
      */
-    public function getWithAnyStatus($statusArray = [])
+    public function getWithAnyStatus(array $statusArray = [])
     {
         return $this->getWithAnyStatusQuery($statusArray)->execute();
     }
@@ -60,7 +60,7 @@ class YoutubeRepository extends DocumentRepository
      *
      * @return mixed
      */
-    public function getDistinctMultimediaObjectIdsWithAnyStatus($statusArray = [])
+    public function getDistinctMultimediaObjectIdsWithAnyStatus(array $statusArray = [])
     {
         return $this->getWithAnyStatusQueryBuilder($statusArray)
             ->distinct('multimediaObjectId')
@@ -72,8 +72,8 @@ class YoutubeRepository extends DocumentRepository
     /**
      * Get with status and force query builder.
      *
-     * @param      $status
-     * @param bool $force
+     * @param string $status
+     * @param bool   $force
      *
      * @return \Doctrine\ODM\MongoDB\Query\Builder
      */
@@ -87,8 +87,8 @@ class YoutubeRepository extends DocumentRepository
     /**
      * Get with status and force query.
      *
-     * @param      $status
-     * @param bool $force
+     * @param string $status
+     * @param bool   $force
      *
      * @return \Doctrine\ODM\MongoDB\Query\Query
      */
@@ -100,8 +100,8 @@ class YoutubeRepository extends DocumentRepository
     /**
      * Get with status and force.
      *
-     * @param      $status
-     * @param bool $force
+     * @param string $status
+     * @param bool   $force
      *
      * @throws \Doctrine\ODM\MongoDB\MongoDBException
      *
@@ -115,8 +115,8 @@ class YoutubeRepository extends DocumentRepository
     /**
      * Get distinct Multimedia Object Ids with status and force.
      *
-     * @param      $status
-     * @param bool $force
+     * @param string $status
+     * @param bool   $force
      *
      * @throws \Doctrine\ODM\MongoDB\MongoDBException
      *
@@ -134,9 +134,9 @@ class YoutubeRepository extends DocumentRepository
     /**
      * Get distinct field with status and force.
      *
-     * @param      $field
-     * @param      $status
-     * @param bool $force
+     * @param string $field
+     * @param int    $status
+     * @param bool   $force
      *
      * @throws \Doctrine\ODM\MongoDB\MongoDBException
      *
@@ -158,7 +158,7 @@ class YoutubeRepository extends DocumentRepository
      *
      * @return \Doctrine\ODM\MongoDB\Query\Builder
      */
-    public function getWithoutAnyStatusQueryBuilder($statusArray = [])
+    public function getWithoutAnyStatusQueryBuilder(array $statusArray = [])
     {
         return $this->createQueryBuilder()
             ->field('status')->notIn($statusArray);
@@ -171,7 +171,7 @@ class YoutubeRepository extends DocumentRepository
      *
      * @return \Doctrine\ODM\MongoDB\Query\Query
      */
-    public function getWithoutAnyStatusQuery($statusArray = [])
+    public function getWithoutAnyStatusQuery(array $statusArray = [])
     {
         return $this->getWithoutAnyStatusQueryBuilder($statusArray)->getQuery();
     }
@@ -185,7 +185,7 @@ class YoutubeRepository extends DocumentRepository
      *
      * @return mixed
      */
-    public function getWithoutAnyStatus($statusArray = [])
+    public function getWithoutAnyStatus(array $statusArray = [])
     {
         return $this->getWithoutAnyStatusQuery($statusArray)->execute();
     }
@@ -199,7 +199,7 @@ class YoutubeRepository extends DocumentRepository
      *
      * @return mixed
      */
-    public function getDistinctMultimediaObjectIdsWithoutAnyStatus($statusArray = [])
+    public function getDistinctMultimediaObjectIdsWithoutAnyStatus(array $statusArray = [])
     {
         return $this->getWithoutAnyStatusQueryBuilder($statusArray)
             ->distinct('multimediaObjectId')
@@ -211,8 +211,8 @@ class YoutubeRepository extends DocumentRepository
     /**
      * Get with status and updatePlaylist query builder.
      *
-     * @param      $status
-     * @param bool $updatePlaylist
+     * @param string $status
+     * @param bool   $updatePlaylist
      *
      * @return \Doctrine\ODM\MongoDB\Query\Builder
      */
@@ -226,8 +226,8 @@ class YoutubeRepository extends DocumentRepository
     /**
      * Get with status and updatePlaylist query.
      *
-     * @param      $status
-     * @param bool $updatePlaylist
+     * @param string $status
+     * @param bool   $updatePlaylist
      *
      * @return \Doctrine\ODM\MongoDB\Query\Query
      */
@@ -239,8 +239,8 @@ class YoutubeRepository extends DocumentRepository
     /**
      * Get with status and updatePlaylist.
      *
-     * @param      $status
-     * @param bool $updatePlaylist
+     * @param string $status
+     * @param bool   $updatePlaylist
      *
      * @throws \Doctrine\ODM\MongoDB\MongoDBException
      *

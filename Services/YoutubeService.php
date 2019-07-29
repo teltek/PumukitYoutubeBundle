@@ -238,7 +238,7 @@ class YoutubeService
      * Move to list.
      *
      * @param MultimediaObject $multimediaObject
-     * @param                  $playlistTagId
+     * @param string           $playlistTagId
      *
      * @throws \Exception
      *
@@ -515,8 +515,8 @@ class YoutubeService
     /**
      * Update Status.
      *
-     * @param $yid
-     * @param $login
+     * @param string $yid
+     * @param string $login
      *
      * @throws \Exception
      *
@@ -831,7 +831,7 @@ class YoutubeService
     }
 
     /**
-     * @param $value
+     * @param string $value
      *
      * @return mixed
      */
@@ -951,12 +951,12 @@ class YoutubeService
      * string $youtubePlaylist['id'] = id of the playlist on youtube.
      * string $youtubePlaylist['title'] = title of the playlist on youtube.
      *
-     * @param $youtubePlaylist
+     * @param array  $youtubePlaylist
      * @param string $login
      *
      * @throws \Exception
      */
-    protected function deleteYoutubePlaylist($youtubePlaylist, $login)
+    protected function deleteYoutubePlaylist(array $youtubePlaylist, $login)
     {
         echo 'delete On Youtube: '.$youtubePlaylist['title']."\n";
 
@@ -1072,7 +1072,7 @@ class YoutubeService
      *
      * @throws \Exception
      *
-     * @return $metatag
+     * @return mixed
      */
     protected function getPlaylistMetaTag()
     {
@@ -1081,7 +1081,7 @@ class YoutubeService
             return $metatag;
         }
 
-        $metatag = $this->tagRepo->findOneByCod($this->METATAG_PLAYLIST_COD);
+        $metatag = $this->tagRepo->findOneBy(['cod' => $this->METATAG_PLAYLIST_COD]);
         if (!isset($metatag)) {
             $errorLog = sprintf('%s [%s] Error! The METATAG_PLAYLIST with cod:%s for YOUTUBE doesn\'t exist! \n Did you load the tag and set the correct cod in parameters.yml?', __CLASS__, __FUNCTION__, $this->METATAG_PLAYLIST_COD);
             $this->logger->error($errorLog);
@@ -1095,9 +1095,9 @@ class YoutubeService
     /**
      * Returns a Tag whose youtube property 'youtube' has a $playlistId value.
      *
-     * @param $playlistId
+     * @param string $playlistId
      *
-     * @return array|object
+     * @return Tag
      */
     protected function getTagByYoutubeProperty($playlistId)
     {

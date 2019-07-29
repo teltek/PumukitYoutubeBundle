@@ -4,20 +4,40 @@ namespace Pumukit\YoutubeBundle\Services;
 
 use Doctrine\ODM\MongoDB\DocumentManager;
 use Psr\Log\LoggerInterface;
+use Pumukit\YoutubeBundle\Document\Youtube;
 use Symfony\Bundle\FrameworkBundle\Routing\Router;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Process\ProcessBuilder;
+use Symfony\Component\Routing\RouterInterface;
 use UnexpectedValueException;
 
 class YoutubeProcessService
 {
+    /**
+     * @var DocumentManager
+     */
     private $dm;
+    /**
+     * @var RouterInterface
+     */
     private $router;
+    /**
+     * @var LoggerInterface
+     */
     private $logger;
+
     private $process_timeout;
     private $pythonDirectory;
 
-    public function __construct(DocumentManager $documentManager, Router $router, LoggerInterface $logger, $process_timeout)
+    /**
+     * YoutubeProcessService constructor.
+     *
+     * @param DocumentManager $documentManager
+     * @param RouterInterface $router
+     * @param LoggerInterface $logger
+     * @param null|float      $process_timeout
+     */
+    public function __construct(DocumentManager $documentManager, RouterInterface $router, LoggerInterface $logger, $process_timeout)
     {
         $this->dm = $documentManager;
         $this->router = $router;
@@ -26,6 +46,17 @@ class YoutubeProcessService
         $this->process_timeout = $process_timeout;
     }
 
+    /**
+     * @param string $trackPath
+     * @param string $title
+     * @param string $description
+     * @param string $category
+     * @param string $tags
+     * @param string $privacy
+     * @param string $login
+     *
+     * @return mixed
+     */
     public function upload($trackPath, $title, $description, $category, $tags, $privacy, $login)
     {
         $sFile = 'upload.py';
@@ -41,6 +72,16 @@ class YoutubeProcessService
         return $this->createProcess($sFile, $aCommandArguments);
     }
 
+    /**
+     * @param Youtube $youtube
+     * @param string  $title
+     * @param string  $description
+     * @param string  $tags
+     * @param string  $status
+     * @param string  $login
+     *
+     * @return mixed
+     */
     public function updateVideo($youtube, $title, $description, $tags, $status, $login)
     {
         $sFile = 'updateVideo.py';
@@ -57,7 +98,13 @@ class YoutubeProcessService
         return $this->createProcess($sFile, $aCommandArguments);
     }
 
-    public function deleteVideo($youtube, $login)
+    /**
+     * @param Youtube $youtube
+     * @param string  $login
+     *
+     * @return array|mixed
+     */
+    public function deleteVideo(Youtube $youtube, $login)
     {
         if (!$youtube->getYoutubeId()) {
             return [
@@ -73,6 +120,13 @@ class YoutubeProcessService
         return $this->createProcess($sFile, $aCommandArguments);
     }
 
+    /**
+     * @param string $sTitleTag
+     * @param string $playlistPrivacyStatus
+     * @param string $login
+     *
+     * @return mixed
+     */
     public function createPlaylist($sTitleTag, $playlistPrivacyStatus, $login)
     {
         $sFile = 'createPlaylist.py';
@@ -84,6 +138,12 @@ class YoutubeProcessService
         return $this->createProcess($sFile, $aCommandArguments);
     }
 
+    /**
+     * @param string $youtubePlaylistId
+     * @param string $login
+     *
+     * @return mixed
+     */
     public function deletePlaylist($youtubePlaylistId, $login)
     {
         $sFile = 'deletePlaylist.py';
@@ -94,7 +154,14 @@ class YoutubeProcessService
         return $this->createProcess($sFile, $aCommandArguments);
     }
 
-    public function insertInToList($youtube, $youtubePlaylistId, $login)
+    /**
+     * @param Youtube $youtube
+     * @param string  $youtubePlaylistId
+     * @param string  $login
+     *
+     * @return mixed
+     */
+    public function insertInToList(Youtube $youtube, $youtubePlaylistId, $login)
     {
         $sFile = 'insertInToList.py';
         $aCommandArguments = [];
@@ -105,6 +172,12 @@ class YoutubeProcessService
         return $this->createProcess($sFile, $aCommandArguments);
     }
 
+    /**
+     * @param string $youtubePlaylistItem
+     * @param string $login
+     *
+     * @return mixed
+     */
     public function deleteFromList($youtubePlaylistItem, $login)
     {
         $sFile = 'deleteFromList.py';
@@ -115,9 +188,17 @@ class YoutubeProcessService
         return $this->createProcess($sFile, $aCommandArguments);
     }
 
+    /**
+     * @param string $sType
+     * @param string $sYoutubeId
+     * @param string $login
+     *
+     * @throws \Exception
+     *
+     * @return mixed
+     */
     public function getData($sType, $sYoutubeId, $login)
     {
-        // TODO: Unified getVideoStatus and getVideoMeta.
         switch ($sType) {
             case 'status':
                 $sFile = 'getVideoStatus.py';
@@ -142,6 +223,11 @@ class YoutubeProcessService
         return $this->createProcess($sFile, $aCommandArguments);
     }
 
+    /**
+     * @param string $login
+     *
+     * @return mixed
+     */
     public function getAllPlaylist($login)
     {
         $sFile = 'getAllPlaylists.py';
@@ -151,7 +237,13 @@ class YoutubeProcessService
         return $this->createProcess($sFile, $aCommandArguments);
     }
 
-    public function listCaptions($youtube, $login)
+    /**
+     * @param Youtube $youtube
+     * @param string  $login
+     *
+     * @return mixed
+     */
+    public function listCaptions(Youtube $youtube, $login)
     {
         $sFile = 'listCaptions.py';
         $aCommandArguments = [];
@@ -161,7 +253,16 @@ class YoutubeProcessService
         return $this->createProcess($sFile, $aCommandArguments);
     }
 
-    public function insertCaption($youtube, $name, $language, $file, $login)
+    /**
+     * @param Youtube $youtube
+     * @param string  $name
+     * @param string  $language
+     * @param string  $file
+     * @param string  $login
+     *
+     * @return mixed
+     */
+    public function insertCaption(Youtube $youtube, $name, $language, $file, $login)
     {
         $sFile = 'insertCaption.py';
         $aCommandArguments = [];
@@ -174,6 +275,12 @@ class YoutubeProcessService
         return $this->createProcess($sFile, $aCommandArguments);
     }
 
+    /**
+     * @param string $captionId
+     * @param string $login
+     *
+     * @return mixed
+     */
     public function deleteCaption($captionId, $login)
     {
         $sFile = 'deleteCaption.py';
@@ -184,7 +291,13 @@ class YoutubeProcessService
         return $this->createProcess($sFile, $aCommandArguments);
     }
 
-    private function createProcess($sFile, $aCommandArguments = [])
+    /**
+     * @param string $sFile
+     * @param array  $aCommandArguments
+     *
+     * @return mixed
+     */
+    private function createProcess($sFile, array $aCommandArguments = [])
     {
         $builder = new ProcessBuilder();
         $builder->setPrefix('python');
@@ -210,7 +323,14 @@ class YoutubeProcessService
         }
     }
 
-    private function createCommandArguments($aCommandArguments, $sOption, $sValue)
+    /**
+     * @param array  $aCommandArguments
+     * @param string $sOption
+     * @param string $sValue
+     *
+     * @return array
+     */
+    private function createCommandArguments(array $aCommandArguments, $sOption, $sValue)
     {
         if (!empty($sValue)) {
             array_push($aCommandArguments, $sOption);

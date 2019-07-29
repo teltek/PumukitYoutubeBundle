@@ -529,7 +529,7 @@ class Youtube
     /**
      * Get caption by id.
      *
-     * @param $id
+     * @param string $id
      *
      * @return null|Caption
      */
@@ -547,7 +547,7 @@ class Youtube
     /**
      * Get caption by caption id.
      *
-     * @param $captionId
+     * @param string $captionId
      *
      * @return null|Caption
      */
@@ -565,7 +565,7 @@ class Youtube
     /**
      * Get caption by material id.
      *
-     * @param $materialId
+     * @param string $materialId
      *
      * @return null|Caption
      */
