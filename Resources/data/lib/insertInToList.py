@@ -21,7 +21,7 @@ RETRIABLE_EXCEPTIONS = (httplib2.HttpLib2Error, IOError, httplib.NotConnected,
 RETRIABLE_STATUS_CODES = [500, 502, 503, 504]
 
 
-def insert_video(playlist_id, video_id, account):
+def insert_video(playlist_id, video_id, account, position):
   response = None
   error = None
   out = {'error': False, 'out': None}
@@ -37,6 +37,9 @@ def insert_video(playlist_id, video_id, account):
       )
     )
   )
+
+  if position:
+     body["snippet"]["position"] = position
 
   try:
     response = youtube.playlistItems().insert(
@@ -67,6 +70,8 @@ if __name__ == "__main__":
   parser = OptionParser()
   parser.add_option("--videoid", dest="videoid",
     help="video ID.")
+  parser.add_option("--videorank", dest="videorank",
+    help="video ID.")
   parser.add_option("--playlistid", dest="playlistid",
     help="playlist ID.")
   parser.add_option("--account", dest="account",
@@ -81,4 +86,4 @@ if __name__ == "__main__":
   if options.playlistid is None:
    exit("Please specify a valid playlist using --playlistid= parameter")
 
-  insert_video(options.playlistid, options.videoid, options.account)
+  insert_video(options.playlistid, options.videoid, options.account, options.videorank)

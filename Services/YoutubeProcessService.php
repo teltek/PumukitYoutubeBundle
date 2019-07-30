@@ -158,14 +158,16 @@ class YoutubeProcessService
      * @param Youtube $youtube
      * @param string  $youtubePlaylistId
      * @param string  $login
+     * @param string  $rank
      *
      * @return mixed
      */
-    public function insertInToList(Youtube $youtube, $youtubePlaylistId, $login)
+    public function insertInToList(Youtube $youtube, $youtubePlaylistId, $login, $rank)
     {
         $sFile = 'insertInToList.py';
         $aCommandArguments = [];
         $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--videoid', $youtube->getYoutubeId());
+        $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--videorank', $rank);
         $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--playlistid', $youtubePlaylistId);
         $aCommandArguments = $this->createCommandArguments($aCommandArguments, '--account', $login);
 

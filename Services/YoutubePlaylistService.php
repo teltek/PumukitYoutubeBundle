@@ -106,7 +106,7 @@ class YoutubePlaylistService
             throw new \Exception();
         }
 
-        $aResult = $this->youtubeProcessService->insertInToList($youtube, $playlistId, $youtube->getYoutubeAccount());
+        $aResult = $this->youtubeProcessService->insertInToList($youtube, $playlistId, $youtube->getYoutubeAccount(), $multimediaObject->getRank());
         if ($aResult['error']) {
             $errorLog = __CLASS__.' ['.__FUNCTION__."] Error in moving the Multimedia Object '".$multimediaObject->getId()."' to Youtube playlist with id '".$playlistId."': ".$aResult['error_out'];
             $this->logger->error($errorLog);
