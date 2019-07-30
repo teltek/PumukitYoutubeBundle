@@ -6,6 +6,7 @@ use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\SchemaBundle\Document\Track;
 use Pumukit\SchemaBundle\Services\TagService;
+use Pumukit\YoutubeBundle\Services\YoutubePlaylistService;
 use Pumukit\YoutubeBundle\Services\YoutubeService;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
@@ -29,6 +30,7 @@ class YoutubeServiceTest extends WebTestCase
     private $translator;
     private $tagService;
     private $youtubeService;
+    private $youtubePlaylistService;
     private $youtubeProcessService;
 
     public function setUp()
@@ -97,6 +99,7 @@ class YoutubeServiceTest extends WebTestCase
         ;
         $opencastService = null;
         $this->youtubeService = new YoutubeService($this->dm, $this->router, $this->tagService, $this->logger, $this->notificationSender, $this->translator, $this->youtubeProcessService, $this->playlistPrivacyStatus, $locale, $useDefaultPlaylist, $defaultPlaylistCod, $defaultPlaylistTitle, $metatagPlaylistCod, $playlistMaster, $deletePlaylists, $pumukitLocales, $youtubeSyncStatus, $defaultTrackUpload, $generateSbs, $sbsProfileName, $jobService, $opencastService);
+        $this->youtubePlaylistService = new YoutubePlaylistService($this->dm, $this->youtubeService, $this->tagService, $this->logger, $this->translator, $this->youtubeProcessService, $this->playlistPrivacyStatus, $locale, $useDefaultPlaylist, $defaultPlaylistCod, $defaultPlaylistTitle, $metatagPlaylistCod, $playlistMaster, $deletePlaylists, $pumukitLocales, $defaultTrackUpload);
         $this->resourcesDir = realpath(__DIR__.'/../Resources').'/';
     }
 
@@ -147,7 +150,7 @@ class YoutubeServiceTest extends WebTestCase
         $series = $this->factoryService->createSeries();
         $multimediaObject = $this->factoryService->createMultimediaObject($series);
 
-        $multimediaObject = $this->mmobjRepo->find($multimediaObject->getId());
+        //$multimediaObject = $this->mmobjRepo->find($multimediaObject->getId());
         $addedTags = $this->tagService->addTagToMultimediaObject($multimediaObject, $youtubeEduTag->getId());
         $this->assertTrue($multimediaObject->containsTag($youtubeEduTag));
 
@@ -165,8 +168,8 @@ class YoutubeServiceTest extends WebTestCase
         $out = $this->youtubeService->upload($multimediaObject, 27, 'private', false);
         $this->assertEquals(0, $out);
 
-        $playlistTag = $this->tagRepo->findOneByCod('YOUTUBETEST');
-        $out2 = $this->youtubeService->moveToList($multimediaObject, $playlistTag->getId(), 27, 'private', false);
+        $playlistTag = $this->tagRepo->findOneBy(['cod' => 'YOUTUBETEST']);
+        $out2 = $this->youtubePlaylistService->moveToList($multimediaObject, $playlistTag->getId());
         $this->assertEquals(0, $out2);
 
         $playlist2Tag = $this->createTagWithCode('YOUTUBETEST2', 'Test Playlist 2', 'YOUTUBE', false, true);
@@ -218,7 +221,7 @@ class YoutubeServiceTest extends WebTestCase
 
     private function createTagWithCode($code, $title, $tagParentCode = null, $metatag = false, $display = true)
     {
-        if ($tag = $this->tagRepo->findOneByCod($code)) {
+        if ($tag = $this->tagRepo->findOneBy(['cod' => $code])) {
             throw new \Exception('Nothing done - Tag retrieved from DB id: '.$tag->getId().' cod: '.$tag->getCod());
         }
         $tag = new Tag();
@@ -229,7 +232,7 @@ class YoutubeServiceTest extends WebTestCase
         $tag->setTitle($title, 'gl');
         $tag->setTitle($title, 'en');
         if ($tagParentCode) {
-            if ($parent = $this->tagRepo->findOneByCod($tagParentCode)) {
+            if ($parent = $this->tagRepo->findOneBy(['cod' => $tagParentCode])) {
                 $tag->setParent($parent);
             } else {
                 throw new \Exception('Nothing done - There is no tag in the database with code '.$tagParentCode.' to be the parent tag');

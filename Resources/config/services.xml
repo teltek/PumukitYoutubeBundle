@@ -82,5 +82,25 @@
             <argument type="service" id="pumukit_opencast.job" on-invalid="null" />
             <tag name="monolog.logger" channel="youtube"/>
         </service>
+
+        <service id="pumukityoutube.youtube_playlist" class="Pumukit\YoutubeBundle\Services\YoutubePlaylistService">
+            <argument type="service" id="doctrine_mongodb.odm.document_manager"/>
+            <argument type="service" id="pumukityoutube.youtube"/>
+            <argument type="service" id="pumukitschema.tag"/>
+            <argument type="service" id="logger"/>
+            <argument type="service" id="translator"/>
+            <argument type="service" id="pumukityoutube.youtubeprocess" />
+            <argument>%pumukit_youtube.playlist_privacy_status%</argument>
+            <argument>%pumukit_youtube.locale%</argument>
+            <argument>%pumukit_youtube.use_default_playlist%</argument>
+            <argument>%pumukit_youtube.default_playlist_cod%</argument>
+            <argument>%pumukit_youtube.default_playlist_title%</argument>
+            <argument>%pumukit_youtube.metatag_playlist_cod%</argument>
+            <argument>%pumukit_youtube.playlists_master%</argument>
+            <argument>%pumukit_youtube.delete_playlists%</argument>
+            <argument>%pumukit.locales%</argument>
+            <argument>%pumukit_youtube.default_track_upload%</argument>
+            <tag name="monolog.logger" channel="youtube"/>
+        </service>
     </services>
 </container>

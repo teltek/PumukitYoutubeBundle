@@ -8,15 +8,18 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Template;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\Request;
 
 class ModalController extends Controller
 {
     /**
      * @Route ("/modal/mm/{id}", name="pumukityoutube_modal_index")
      * @Template()
+     *
+     * @param MultimediaObject $mm
+     *
+     * @return array|\Symfony\Component\HttpFoundation\Response
      */
-    public function indexAction(Request $request, MultimediaObject $mm)
+    public function indexAction(MultimediaObject $mm)
     {
         $dm = $this->get('doctrine_mongodb')->getManager();
         $youtubeRepo = $dm->getRepository('PumukitYoutubeBundle:Youtube');
@@ -67,11 +70,17 @@ class ModalController extends Controller
 
     /**
      * @Route ("/updateplaylist/mm/{id}", name="pumukityoutube_updateplaylist")
+     *
+     * @param MultimediaObject $mm
+     *
+     * @throws \Exception
+     *
+     * @return JsonResponse
      */
-    public function updateplaylistAction(Request $request, MultimediaObject $mm)
+    public function updateplaylistAction(MultimediaObject $mm)
     {
-        $service = $this->get('pumukityoutube.youtube');
-        $out = $service->updatePlaylists($mm);
+        $youtubePlaylistService = $this->get('pumukityoutube.youtube_playlist');
+        $out = $youtubePlaylistService->updatePlaylists($mm);
 
         return new JsonResponse($out);
     }

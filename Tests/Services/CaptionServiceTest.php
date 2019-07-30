@@ -379,7 +379,7 @@ class CaptionServiceTest extends WebTestCase
         ;
 
         $out = $this->captionService->listAllCaptions($multimediaObject);
-        $this->assertEquals($listOutput['out'], $out);
+        $this->assertEquals($listOutput['error_out'], $out);
     }
 
     /**

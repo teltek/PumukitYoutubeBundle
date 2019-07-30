@@ -2,7 +2,15 @@
 
 namespace Pumukit\YoutubeBundle\Command;
 
+use Doctrine\ODM\MongoDB\DocumentManager;
+use Pumukit\SchemaBundle\Document\Tag;
+use Pumukit\SchemaBundle\Repository\MultimediaObjectRepository;
+use Pumukit\SchemaBundle\Repository\TagRepository;
 use Pumukit\YoutubeBundle\Document\Youtube;
+use Pumukit\YoutubeBundle\Repository\YoutubeRepository;
+use Pumukit\YoutubeBundle\Services\YoutubePlaylistService;
+use Pumukit\YoutubeBundle\Services\YoutubeProcessService;
+use Pumukit\YoutubeBundle\Services\YoutubeService;
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -10,17 +18,39 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 class YoutubeCheckCommand extends ContainerAwareCommand
 {
+    /**
+     * @var DocumentManager
+     */
     private $dm;
+    /**
+     * @var TagRepository
+     */
     private $tagRepo;
+    /**
+     * @var MultimediaObjectRepository
+     */
     private $mmobjRepo;
+    /**
+     * @var YoutubeRepository
+     */
     private $youtubeRepo;
-
+    /**
+     * @var YoutubeService
+     */
     private $youtubeService;
+    /**
+     * @var YoutubePlaylistService
+     */
+    private $youtubePlaylistService;
+    /**
+     * @var YoutubeProcessService
+     */
     private $youtubeProcessService;
+    /**
+     * @var Tag
+     */
     private $youtubeTag;
-
     private $usePumukit1 = false;
-
     private $logger;
 
     protected function configure()
@@ -41,6 +71,14 @@ EOT
         ;
     }
 
+    /**
+     * @param InputInterface  $input
+     * @param OutputInterface $output
+     *
+     * @throws \Exception
+     *
+     * @return null|int|void
+     */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $this->checkAccounts();
@@ -58,6 +96,12 @@ EOT
         );
     }
 
+    /**
+     * @param InputInterface  $input
+     * @param OutputInterface $output
+     *
+     * @throws \Exception
+     */
     protected function initialize(InputInterface $input, OutputInterface $output)
     {
         $this->dm = $this->getContainer()->get('doctrine_mongodb')->getManager();
@@ -71,6 +115,7 @@ EOT
         }
 
         $this->youtubeService = $this->getContainer()->get('pumukityoutube.youtube');
+        $this->youtubePlaylistService = $this->getContainer()->get('pumukityoutube.youtube_playlist');
         $this->youtubeProcessService = $this->getContainer()->get('pumukityoutube.youtubeprocess');
 
         $this->logger = $this->getContainer()->get('monolog.logger.youtube');
@@ -78,6 +123,12 @@ EOT
         $this->usePumukit1 = $input->getOption('use-pmk1');
     }
 
+    /**
+     * @throws \Doctrine\ODM\MongoDB\MongoDBException
+     * @throws \Exception
+     *
+     * @return array
+     */
     private function checkMultimediaObjects()
     {
         $result = [
@@ -119,6 +170,9 @@ EOT
         return $result;
     }
 
+    /**
+     * @throws \Exception
+     */
     private function checkAccounts()
     {
         foreach ($this->youtubeTag->getChildren() as $account) {
@@ -128,13 +182,19 @@ EOT
             }
 
             try {
-                $this->youtubeService->getAllYoutubePlaylists($login);
+                $this->youtubePlaylistService->getAllYoutubePlaylists($login);
             } catch (\Exception $e) {
                 throw new \Exception(sprintf('Error getting playlist of account %s. To debug it execute `python getAllPlaylists.py --account %s`', $login, $login));
             }
         }
     }
 
+    /**
+     * @param Youtube $youtube
+     * @param bool    $pumukit1Id
+     *
+     * @return null|array|object
+     */
     private function findByYoutubeIdAndPumukit1Id(Youtube $youtube, $pumukit1Id = false)
     {
         $qb = $this->mmobjRepo
@@ -157,6 +217,11 @@ EOT
         ;
     }
 
+    /**
+     * @param Youtube $youtube
+     *
+     * @return null|array|object
+     */
     private function findByYoutubeId(Youtube $youtube)
     {
         return $this->mmobjRepo->createQueryBuilder()

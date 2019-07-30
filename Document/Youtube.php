@@ -285,7 +285,7 @@ class Youtube
      *
      * @param string $key
      *
-     * @return null|string
+     * @return null|Youtube
      */
     public function getPlaylist($key)
     {

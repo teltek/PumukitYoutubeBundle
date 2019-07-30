@@ -23,7 +23,7 @@ class CaptionService extends YoutubeService
         if ($result['error']) {
             $errorLog = __CLASS__.' ['.__FUNCTION__
                        .'] Error in retrieve captions list: '.$result['error_out'];
-            $this->logger->addError($errorLog);
+            $this->logger->error($errorLog);
 
             throw new \Exception($errorLog);
         }
@@ -55,7 +55,7 @@ class CaptionService extends YoutubeService
                   ."] Error in uploading Caption for Youtube video with id '"
                   .$youtube->getId()."' and material Id '"
                   .$materialId."': ".$result['error_out'];
-                $this->logger->addError($errorLog);
+                $this->logger->error($errorLog);
 
                 throw new \Exception($errorLog);
             }
@@ -89,7 +89,7 @@ class CaptionService extends YoutubeService
                         ."] Error in deleting Caption for Youtube video with id '"
                         .$youtube->getId()."' and Caption id '"
                         .$captionId."': ".$result['error_out'];
-                    $this->logger->addError($errorLog);
+                    $this->logger->error($errorLog);
 
                     throw new \Exception($errorLog);
                 }
@@ -100,6 +100,27 @@ class CaptionService extends YoutubeService
         $this->dm->flush();
 
         return 0;
+    }
+
+    /**
+     * @param array $pubChannelTags
+     *
+     * @return \Doctrine\ODM\MongoDB\Query\Builder
+     */
+    public function createYoutubeMultimediaObjectsQueryBuilder(array $pubChannelTags)
+    {
+        if ($this->syncStatus) {
+            $aStatus = [MultimediaObject::STATUS_PUBLISHED, MultimediaObject::STATUS_BLOCKED, MultimediaObject::STATUS_HIDDEN];
+        } else {
+            $aStatus = [MultimediaObject::STATUS_PUBLISHED];
+        }
+
+        return $this->mmobjRepo->createQueryBuilder()
+            ->field('properties.pumukit1id')->exists(false)
+            ->field('properties.origin')->notEqual('youtube')
+            ->field('status')->in($aStatus)
+            ->field('embeddedBroadcast.type')->equals('public')
+            ->field('tags.cod')->all($pubChannelTags);
     }
 
     /**

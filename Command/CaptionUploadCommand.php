@@ -2,18 +2,33 @@
 
 namespace Pumukit\YoutubeBundle\Command;
 
+use Doctrine\ODM\MongoDB\DocumentManager;
+use Psr\Log\LoggerInterface;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
+use Pumukit\SchemaBundle\Repository\MultimediaObjectRepository;
 use Pumukit\YoutubeBundle\Document\Youtube;
+use Pumukit\YoutubeBundle\Services\CaptionService;
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class CaptionUploadCommand extends ContainerAwareCommand
 {
+    /**
+     * @var DocumentManager
+     */
     private $dm;
+    /**
+     * @var MultimediaObjectRepository
+     */
     private $mmobjRepo;
-
+    /**
+     * @var LoggerInterface
+     */
     private $logger;
+    /**
+     * @var CaptionService
+     */
     private $captionService;
     private $allowedCaptionMimeTypes;
     private $syncStatus;
@@ -21,8 +36,13 @@ class CaptionUploadCommand extends ContainerAwareCommand
     private $okUploads = [];
     private $failedUploads = [];
     private $errors = [];
-
+    /**
+     * @var InputInterface
+     */
     private $input;
+    /**
+     * @var OutputInterface
+     */
     private $output;
 
     protected function configure()
@@ -39,13 +59,23 @@ EOT
         ;
     }
 
+    /**
+     * @param InputInterface  $input
+     * @param OutputInterface $output
+     *
+     * @return null|int|void
+     */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $youtubeMultimediaObjects = $this->getYoutubeMultimediaObjects();
-        $this->uploadCaptionsToYoutube($youtubeMultimediaObjects, $output);
+        $this->uploadCaptionsToYoutube($youtubeMultimediaObjects);
         $this->checkResultsAndSendEmail();
     }
 
+    /**
+     * @param InputInterface  $input
+     * @param OutputInterface $output
+     */
     protected function initialize(InputInterface $input, OutputInterface $output)
     {
         $container = $this->getContainer();
@@ -62,7 +92,10 @@ EOT
         $this->output = $output;
     }
 
-    private function uploadCaptionsToYoutube($mms, OutputInterface $output)
+    /**
+     * @param array $mms
+     */
+    private function uploadCaptionsToYoutube(array $mms)
     {
         foreach ($mms as $multimediaObject) {
             try {
@@ -76,7 +109,7 @@ EOT
                     $outUpload = $this->captionService->uploadCaption($multimediaObject, $newMaterialIds);
                     if (!is_array($outUpload)) {
                         $errorLog = sprintf('%s [%s] Unknown error in the upload caption to Youtube of MultimediaObject with id %s: %s', __CLASS__, __FUNCTION__, $multimediaObject->getId(), $outUpload);
-                        $this->logger->addError($errorLog);
+                        $this->logger->error($errorLog);
                         $this->output->writeln($errorLog);
                         $this->failedUploads[] = $multimediaObject;
                         $this->errors[] = $errorLog;
@@ -87,7 +120,7 @@ EOT
                 }
             } catch (\Exception $e) {
                 $errorLog = sprintf('%s [%s] The upload of the caption from the Multimedia Object with id %s failed: %s', __CLASS__, __FUNCTION__, $multimediaObject->getId(), $e->getMessage());
-                $this->logger->addError($errorLog);
+                $this->logger->error($errorLog);
                 $this->output->writeln($errorLog);
                 $this->failedUploads[] = $multimediaObject;
                 $this->errors[] = $e->getMessage();
@@ -95,34 +128,28 @@ EOT
         }
     }
 
-    private function createYoutubeMultimediaObjectsQueryBuilder()
-    {
-        $array_pub_tags = $this->getContainer()->getParameter('pumukit_youtube.pub_channels_tags');
-
-        $syncStatus = $this->getContainer()->getParameter('pumukit_youtube.sync_status');
-        if ($syncStatus) {
-            $aStatus = [MultimediaObject::STATUS_PUBLISHED, MultimediaObject::STATUS_BLOCKED, MultimediaObject::STATUS_HIDDEN];
-        } else {
-            $aStatus = [MultimediaObject::STATUS_PUBLISHED];
-        }
-
-        return $this->mmobjRepo->createQueryBuilder()
-            ->field('properties.pumukit1id')->exists(false)
-            ->field('properties.origin')->notEqual('youtube')
-            ->field('status')->in($aStatus)
-            ->field('embeddedBroadcast.type')->equals('public')
-            ->field('tags.cod')->all($array_pub_tags);
-    }
-
+    /**
+     * @throws \Doctrine\ODM\MongoDB\MongoDBException
+     *
+     * @return mixed
+     */
     private function getYoutubeMultimediaObjects()
     {
-        return $this->createYoutubeMultimediaObjectsQueryBuilder()
+        $pubChannelTags = $this->getContainer()->getParameter('pumukit_youtube.pub_channels_tags');
+        $queryBuilder = $this->captionService->createYoutubeMultimediaObjectsQueryBuilder($pubChannelTags);
+
+        return $queryBuilder
             ->field('properties.youtube')->exists(true)
             ->getQuery()
             ->execute()
         ;
     }
 
+    /**
+     * @param Youtube $youtube
+     *
+     * @return array
+     */
     private function getCaptionsMaterialIds(Youtube $youtube)
     {
         $captions = $youtube->getCaptions();
@@ -134,6 +161,12 @@ EOT
         return $captionsMaterialIds;
     }
 
+    /**
+     * @param MultimediaObject $multimediaObject
+     * @param array            $captionMaterialIds
+     *
+     * @return array
+     */
     private function getNewMaterialIds(MultimediaObject $multimediaObject, array $captionMaterialIds = [])
     {
         $newMaterialIds = [];
@@ -144,7 +177,7 @@ EOT
             }
             $newMaterialIds[] = $material->getId();
             $infoLog = sprintf('%s [%s] Started uploading captions to Youtube of MultimediaObject with id %s and Material with id %s', __CLASS__, __FUNCTION__, $multimediaObject->getId(), $material->getId());
-            $this->logger->addInfo($infoLog);
+            $this->logger->info($infoLog);
             $this->output->writeln($infoLog);
         }
 
@@ -157,4 +190,5 @@ EOT
             $this->captionService->sendEmail('caption upload', $this->okUploads, $this->failedUploads, $this->errors);
         }
     }
+
 }
