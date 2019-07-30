@@ -5,8 +5,11 @@ namespace Pumukit\YoutubeBundle\Services;
 use Doctrine\ODM\MongoDB\DocumentManager;
 use Psr\Log\LoggerInterface;
 use Pumukit\EncoderBundle\Document\Job;
+use Pumukit\EncoderBundle\Services\JobService;
 use Pumukit\NotificationBundle\Services\SenderService;
+use Pumukit\OpencastBundle\Services\OpencastService;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
+use Pumukit\SchemaBundle\Document\Person;
 use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\SchemaBundle\Document\Track;
 use Pumukit\SchemaBundle\Services\TagService;
@@ -25,16 +28,45 @@ class YoutubeService
         1 => 'private',
         2 => 'unlisted',
     ];
-
+    /**
+     * @var DocumentManager
+     */
     protected $dm;
+    /**
+     * @var Router
+     */
     protected $router;
+    /**
+     * @var TagService
+     */
     protected $tagService;
+    /**
+     * @var LoggerInterface
+     */
     protected $logger;
+    /**
+     * @var SenderService
+     */
     protected $senderService;
+    /**
+     * @var TranslatorInterface
+     */
     protected $translator;
+    /**
+     * @var \Pumukit\YoutubeBundle\Repository\YoutubeRepository
+     */
     protected $youtubeRepo;
+    /**
+     * @var \Pumukit\SchemaBundle\Repository\TagRepository
+     */
     protected $tagRepo;
+    /**
+     * @var \Pumukit\SchemaBundle\Repository\MultimediaObjectRepository
+     */
     protected $mmobjRepo;
+    /**
+     * @var YoutubeProcessService
+     */
     protected $youtubeProcessService;
     protected $playlistPrivacyStatus;
     protected $ytLocale;
@@ -48,11 +80,20 @@ class YoutubeService
     protected $defaultTrackUpload;
     protected $generateSbs;
     protected $sbsProfileName;
+    /**
+     * @var JobService
+     */
     protected $jobService;
+    /**
+     * @var \Pumukit\EncoderBundle\Repository\JobRepository
+     */
     protected $jobRepo;
+    /**
+     * @var OpencastService
+     */
     protected $opencastService;
 
-    public function __construct(DocumentManager $documentManager, Router $router, TagService $tagService, LoggerInterface $logger, SenderService $senderService = null, TranslatorInterface $translator, YoutubeProcessService $youtubeProcessService, $playlistPrivacyStatus, $locale, $useDefaultPlaylist, $defaultPlaylistCod, $defaultPlaylistTitle, $metatagPlaylistCod, $playlistMaster, $deletePlaylists, $pumukitLocales, $youtubeSyncStatus, $defaultTrackUpload, $generateSbs, $sbsProfileName, $jobService, $opencastService = null)
+    public function __construct(DocumentManager $documentManager, Router $router, TagService $tagService, LoggerInterface $logger, SenderService $senderService = null, TranslatorInterface $translator, YoutubeProcessService $youtubeProcessService, $playlistPrivacyStatus, $locale, $useDefaultPlaylist, $defaultPlaylistCod, $defaultPlaylistTitle, $metatagPlaylistCod, $playlistMaster, $deletePlaylists, $pumukitLocales, $youtubeSyncStatus, $defaultTrackUpload, $generateSbs, $sbsProfileName, JobService $jobService, OpencastService $opencastService = null)
     {
         $this->dm = $documentManager;
         $this->router = $router;
@@ -105,7 +146,7 @@ class YoutubeService
      *
      * @param MultimediaObject $multimediaObject
      *
-     * @return null|Track
+     * @return null|int|Track
      */
     public function getTrack(MultimediaObject $multimediaObject)
     {
@@ -160,16 +201,16 @@ class YoutubeService
 
             throw new \Exception($errorLog);
         }
-        $youtube = $this->youtubeRepo->findOneByMultimediaObjectId($multimediaObject->getId());
+        $youtube = $this->youtubeRepo->findOneBy(['multimediaObjectId' => $multimediaObject->getId()]);
         if (!$youtube) {
             $youtube = new Youtube();
             $youtube->setMultimediaObjectId($multimediaObject->getId());
 
-            $youtubeTag = $this->dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(['cod' => 'YOUTUBE']);
+            $youtubeTag = $this->dm->getRepository(Tag::class)->findOneBy(['cod' => 'YOUTUBE']);
             $youtubeTagAccount = null;
             foreach ($multimediaObject->getTags() as $tag) {
                 if ($tag->isChildOf($youtubeTag)) {
-                    $tagAccount = $this->dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(['cod' => $tag->getCod()]);
+                    $tagAccount = $this->dm->getRepository(Tag::class)->findOneBy(['cod' => $tag->getCod()]);
                     $youtube->setYoutubeAccount($tagAccount->getProperty('login'));
                     $youtubeTagAccount = $tagAccount;
                 }
@@ -177,7 +218,7 @@ class YoutubeService
 
             if (!$youtubeTagAccount) {
                 $errorLog = __CLASS__.' ['.__FUNCTION__.'] Error, there aren\'t account on '.$multimediaObject->getId();
-                $this->logger->addError($errorLog);
+                $this->logger->error($errorLog);
 
                 throw new \Exception($errorLog);
             }
@@ -222,7 +263,7 @@ class YoutubeService
         $youtube->setUploadDate($now);
         $this->dm->persist($youtube);
         $this->dm->flush();
-        $youtubeTag = $this->tagRepo->findOneByCod(self::PUB_CHANNEL_YOUTUBE);
+        $youtubeTag = $this->tagRepo->findOneBy(['cod' => self::PUB_CHANNEL_YOUTUBE]);
         if (null != $youtubeTag) {
             $this->tagService->addTagToMultimediaObject($multimediaObject, $youtubeTag->getId());
         } else {
@@ -256,8 +297,8 @@ class YoutubeService
         $this->dm->persist($multimediaObject);
 
         $this->dm->flush();
-        $youtubeEduTag = $this->tagRepo->findOneByCod(self::PUB_CHANNEL_YOUTUBE);
-        $youtubeTag = $this->tagRepo->findOneByCod(self::PUB_CHANNEL_YOUTUBE);
+        $youtubeEduTag = $this->tagRepo->findOneBy(['cod' => self::PUB_CHANNEL_YOUTUBE]);
+        $youtubeTag = $this->tagRepo->findOneBy(['cod' => self::PUB_CHANNEL_YOUTUBE]);
         if (null != $youtubeTag) {
             if ($multimediaObject->containsTag($youtubeEduTag)) {
                 $this->tagService->removeTagFromMultimediaObject($multimediaObject, $youtubeEduTag->getId());
@@ -341,11 +382,11 @@ class YoutubeService
         $multimediaObject = $this->mmobjRepo->find($youtube->getMultimediaObjectId());
 
         if (!$youtube->getYoutubeAccount()) {
-            $youtubeTag = $this->dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(['cod' => 'YOUTUBE']);
+            $youtubeTag = $this->dm->getRepository(Tag::class)->findOneBy(['cod' => 'YOUTUBE']);
             $account = null;
             foreach ($multimediaObject->getTags() as $tag) {
                 if (!$tag->isChildOf($youtubeTag)) {
-                    $tag = $this->dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(['cod' => $tag->getCod()]);
+                    $tag = $this->dm->getRepository(Tag::class)->findOneBy(['cod' => $tag->getCod()]);
                     $account = $tag->getProperty('login');
                 }
             }
@@ -390,7 +431,7 @@ class YoutubeService
                 $this->logger->error('ERROR - Setting status removed '.$youtube->getId().' ( '.$youtube->getMultimediaObjectId().')'.$aResult['error_out'].' - '.__FUNCTION__);
                 $youtube->setStatus(Youtube::STATUS_REMOVED);
                 $this->dm->persist($youtube);
-                $youtubeEduTag = $this->tagRepo->findOneByCod(self::PUB_CHANNEL_YOUTUBE);
+                $youtubeEduTag = $this->tagRepo->findOneBy(['cod' => self::PUB_CHANNEL_YOUTUBE]);
 
                 if (null !== $youtubeEduTag) {
                     if ($multimediaObject->containsTag($youtubeEduTag)) {
@@ -527,11 +568,13 @@ class YoutubeService
      *
      * @param MultimediaObject $multimediaObject
      *
-     * @return Youtube
+     * @throws \MongoException
+     *
+     * @return null|object|Youtube
      */
     public function getYoutubeDocument(MultimediaObject $multimediaObject)
     {
-        $youtube = $this->youtubeRepo->findOneByMultimediaObjectId($multimediaObject->getId());
+        $youtube = $this->youtubeRepo->findOneBy(['multimediaObjectId' => $multimediaObject->getId()]);
         if (null === $youtube) {
             $youtube = $this->fixRemovedYoutubeDocument($multimediaObject);
             $trace = debug_backtrace();
@@ -542,10 +585,10 @@ class YoutubeService
         }
 
         if ($youtube && !$youtube->getYoutubeAccount()) {
-            $youtubeTag = $this->dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(['cod' => 'YOUTUBE']);
+            $youtubeTag = $this->dm->getRepository(Tag::class)->findOneBy(['cod' => 'YOUTUBE']);
             foreach ($multimediaObject->getTags() as $embeddedTag) {
                 if ($embeddedTag->isChildOf($youtubeTag)) {
-                    $tag = $this->dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(['_id' => new \MongoId($embeddedTag->getId())]);
+                    $tag = $this->dm->getRepository(Tag::class)->findOneBy(['_id' => new \MongoId($embeddedTag->getId())]);
                     $youtube->setYoutubeAccount($tag->getProperty('login'));
                     $this->dm->flush();
                 }
@@ -742,9 +785,9 @@ class YoutubeService
         foreach ($roles as $role) {
             if ($role->getDisplay()) {
                 foreach ($role->getPeople() as $person) {
-                    $person = $this->dm->getRepository('PumukitSchemaBundle:Person')->findOneById(
-                        new \MongoId($person->getId())
-                    );
+                    $person = $this->dm->getRepository(Person::class)->findOneBy([
+                        '_id' => new \MongoId($person->getId()),
+                    ]);
                     $person->setLocale($this->ytLocale);
                     $addPeople .= $person->getHName().' '.$person->getInfo()."\n";
                     $bPeople = true;
@@ -846,10 +889,10 @@ class YoutubeService
         $youtube->setEmbed($this->getEmbed($youtubeId));
         $youtube->setYoutubeId($youtubeId);
 
-        $youtubeTag = $this->dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(['cod' => 'YOUTUBE']);
+        $youtubeTag = $this->dm->getRepository(Tag::class)->findOneBy(['cod' => 'YOUTUBE']);
         foreach ($multimediaObject->getTags() as $embeddedTag) {
             if ($embeddedTag->isChildOf($youtubeTag)) {
-                $tag = $this->dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(['_id' => new \MongoId($embeddedTag->getId())]);
+                $tag = $this->dm->getRepository(Tag::class)->findOneBy(['_id' => new \MongoId($embeddedTag->getId())]);
                 $youtube->setYoutubeAccount($tag->getProperty('login'));
             }
         }

@@ -4,6 +4,8 @@ namespace Pumukit\YoutubeBundle\Command;
 
 use Doctrine\ODM\MongoDB\DocumentManager;
 use Psr\Log\LoggerInterface;
+use Pumukit\SchemaBundle\Document\MultimediaObject;
+use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\SchemaBundle\Repository\MultimediaObjectRepository;
 use Pumukit\SchemaBundle\Repository\TagRepository;
 use Pumukit\YoutubeBundle\Repository\YoutubeRepository;
@@ -122,8 +124,8 @@ EOT
     protected function initialize(InputInterface $input, OutputInterface $output)
     {
         $this->dm = $this->getContainer()->get('doctrine_mongodb.odm.document_manager');
-        $this->tagRepo = $this->dm->getRepository('PumukitSchemaBundle:Tag');
-        $this->mmobjRepo = $this->dm->getRepository('PumukitSchemaBundle:MultimediaObject');
+        $this->tagRepo = $this->dm->getRepository(Tag::class);
+        $this->mmobjRepo = $this->dm->getRepository(MultimediaObject::class);
         $this->youtubeRepo = $this->dm->getRepository('PumukitYoutubeBundle:Youtube');
 
         $this->youtubeService = $this->getContainer()->get('pumukityoutube.youtube');

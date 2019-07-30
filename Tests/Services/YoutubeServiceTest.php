@@ -3,9 +3,11 @@
 namespace Pumukit\YoutubeBundle\Tests\Services;
 
 use Pumukit\SchemaBundle\Document\MultimediaObject;
+use Pumukit\SchemaBundle\Document\Series;
 use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\SchemaBundle\Document\Track;
 use Pumukit\SchemaBundle\Services\TagService;
+use Pumukit\YoutubeBundle\Document\Youtube;
 use Pumukit\YoutubeBundle\Services\YoutubePlaylistService;
 use Pumukit\YoutubeBundle\Services\YoutubeService;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
@@ -44,10 +46,10 @@ class YoutubeServiceTest extends WebTestCase
             ->getRepository('PumukitYoutubeBundle:Youtube')
         ;
         $this->mmobjRepo = $this->dm
-            ->getRepository('PumukitSchemaBundle:MultimediaObject')
+            ->getRepository(MultimediaObject::class)
         ;
         $this->tagRepo = $this->dm
-            ->getRepository('PumukitSchemaBundle:Tag')
+            ->getRepository(Tag::class)
         ;
         $this->router = $kernel->getContainer()
             ->get('router')
@@ -65,10 +67,11 @@ class YoutubeServiceTest extends WebTestCase
         $this->playlistPrivacyStatus = $kernel->getContainer()
             ->getParameter('pumukit_youtube.playlist_privacy_status')
         ;
-        $this->dm->getDocumentCollection('PumukitSchemaBundle:MultimediaObject')->remove([]);
-        $this->dm->getDocumentCollection('PumukitSchemaBundle:Series')->remove([]);
-        $this->dm->getDocumentCollection('PumukitSchemaBundle:Tag')->remove([]);
-        $this->dm->getDocumentCollection('PumukitYoutubeBundle:Youtube')->remove([]);
+
+        $this->dm->getDocumentCollection(MultimediaObject::class)->remove([]);
+        $this->dm->getDocumentCollection(Series::class)->remove([]);
+        $this->dm->getDocumentCollection(Tag::class)->remove([]);
+        $this->dm->getDocumentCollection(Youtube::class)->remove([]);
         $this->dm->flush();
         $this->multimediaobject_dispatcher = $kernel->getContainer()
             ->get('pumukitschema.multimediaobject_dispatcher')
@@ -195,7 +198,7 @@ class YoutubeServiceTest extends WebTestCase
         $out6 = $this->youtubeService->updateMetadata($multimediaObject);
         $this->assertEquals(0, $out6);
 
-        $youtube = $this->youtubeRepo->findOneByMultimediaObjectId($multimediaObject->getId());
+        $youtube = $this->youtubeRepo->findOneBy(['multimediaObjectId' => $multimediaObject->getId()]);
         $out7 = $this->youtubeService->updateStatus($youtube);
         $this->assertEquals(0, $out7);
 

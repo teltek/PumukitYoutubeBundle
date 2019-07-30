@@ -2,7 +2,9 @@
 
 namespace Pumukit\YoutubeBundle\Command;
 
+use Doctrine\ODM\MongoDB\DocumentManager;
 use Pumukit\SchemaBundle\Document\Tag;
+use Pumukit\SchemaBundle\Repository\TagRepository;
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -10,7 +12,13 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 class YoutubeInitTagsCommand extends ContainerAwareCommand
 {
+    /**
+     * @var DocumentManager
+     */
     private $dm;
+    /**
+     * @var TagRepository
+     */
     private $tagRepo;
 
     protected function configure()
@@ -27,10 +35,18 @@ EOT
             );
     }
 
+    /**
+     * @param InputInterface  $input
+     * @param OutputInterface $output
+     *
+     * @throws \Exception
+     *
+     * @return null|int
+     */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $this->dm = $this->getContainer()->get('doctrine_mongodb')->getManager();
-        $this->tagRepo = $this->dm->getRepository('PumukitSchemaBundle:Tag');
+        $this->tagRepo = $this->dm->getRepository(Tag::class);
         if ($input->getOption('force')) {
             $youtubePublicationChannelTag = $this->createTagWithCode('PUCHYOUTUBE', 'YouTubeEDU', 'PUBCHANNELS', false);
             $youtubePublicationChannelTag->setProperty('modal_path', 'pumukityoutube_modal_index');
@@ -66,9 +82,19 @@ EOT
         return 0;
     }
 
+    /**
+     * @param string $code
+     * @param string $title
+     * @param null   $tagParentCode
+     * @param bool   $metatag
+     *
+     * @throws \Exception
+     *
+     * @return Tag
+     */
     private function createTagWithCode($code, $title, $tagParentCode = null, $metatag = false)
     {
-        if ($tag = $this->tagRepo->findOneByCod($code)) {
+        if ($tag = $this->tagRepo->findOneBy(['cod' => $code])) {
             throw new \Exception('Nothing done - Tag retrieved from DB id: '.$tag->getId().' cod: '.$tag->getCod());
         }
         $tag = new Tag();
@@ -79,7 +105,7 @@ EOT
         $tag->setTitle($title, 'gl');
         $tag->setTitle($title, 'en');
         if ($tagParentCode) {
-            if ($parent = $this->tagRepo->findOneByCod($tagParentCode)) {
+            if ($parent = $this->tagRepo->findOneBy(['cod' => $tagParentCode])) {
                 $tag->setParent($parent);
             } else {
                 throw new \Exception(

@@ -585,7 +585,7 @@ class YoutubePlaylistService
      *
      * @param string $playlistId
      *
-     * @return Tag|array|null
+     * @return null|array|Tag
      */
     protected function getTagByYoutubeProperty($playlistId)
     {

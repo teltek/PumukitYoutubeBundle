@@ -2,8 +2,15 @@
 
 namespace Pumukit\YoutubeBundle\Command;
 
+use Doctrine\ODM\MongoDB\DocumentManager;
+use Psr\Log\LoggerInterface;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
+use Pumukit\SchemaBundle\Document\Tag;
+use Pumukit\SchemaBundle\Repository\MultimediaObjectRepository;
+use Pumukit\SchemaBundle\Repository\TagRepository;
+use Pumukit\SchemaBundle\Services\TagService;
 use Pumukit\YoutubeBundle\Document\Youtube;
+use Pumukit\YoutubeBundle\Repository\YoutubeRepository;
 use Pumukit\YoutubeBundle\Services\YoutubeService;
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 use Symfony\Component\Console\Input\InputInterface;
@@ -14,22 +21,37 @@ class YoutubeUploadCommand extends ContainerAwareCommand
 {
     const PUB_CHANNEL_YOUTUBE = 'PUCHYOUTUBE';
     const PUB_DECISION_AUTONOMOUS = 'PUDEAUTO';
-    const DEFAULT_PLAYLIST_COD = 'YOUTUBECONFERENCES';
-    const DEFAULT_PLAYLIST_TITLE = 'Conferences';
-    const METATAG_PLAYLIST_COD = 'YOUTUBE';
-    const METATAG_PLAYLIST_PATH = 'ROOT|YOUTUBE|';
-
+    /**
+     * @var DocumentManager
+     */
     private $dm;
+    /**
+     * @var TagRepository
+     */
     private $tagRepo;
+    /**
+     * @var MultimediaObjectRepository
+     */
     private $mmobjRepo;
+    /**
+     * @var YoutubeRepository
+     */
     private $youtubeRepo;
+    /**
+     * @var TagService
+     */
     private $tagService;
     private $syncStatus;
 
     private $uploadRemovedVideos;
     private $usePumukit1 = false;
-
+    /**
+     * @var LoggerInterface
+     */
     private $logger;
+    /**
+     * @var YoutubeService
+     */
     private $youtubeService;
 
     private $okUploads = [];
@@ -51,6 +73,14 @@ EOT
         ;
     }
 
+    /**
+     * @param InputInterface  $input
+     * @param OutputInterface $output
+     *
+     * @throws \Doctrine\ODM\MongoDB\MongoDBException
+     *
+     * @return null|int|void
+     */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $newMultimediaObjects = $this->getNewMultimediaObjectsToUpload();
@@ -73,11 +103,15 @@ EOT
         $this->checkResultsAndSendEmail();
     }
 
+    /**
+     * @param InputInterface  $input
+     * @param OutputInterface $output
+     */
     protected function initialize(InputInterface $input, OutputInterface $output)
     {
         $this->dm = $this->getContainer()->get('doctrine_mongodb')->getManager();
-        $this->tagRepo = $this->dm->getRepository('PumukitSchemaBundle:Tag');
-        $this->mmobjRepo = $this->dm->getRepository('PumukitSchemaBundle:MultimediaObject');
+        $this->tagRepo = $this->dm->getRepository(Tag::class);
+        $this->mmobjRepo = $this->dm->getRepository(MultimediaObject::class);
         $this->youtubeRepo = $this->dm->getRepository('PumukitYoutubeBundle:Youtube');
 
         $container = $this->getContainer();
@@ -94,15 +128,19 @@ EOT
         $this->usePumukit1 = $input->getOption('use-pmk1');
     }
 
-    private function uploadVideosToYoutube($mms, OutputInterface $output)
+    /**
+     * @param array           $mms
+     * @param OutputInterface $output
+     */
+    private function uploadVideosToYoutube(array $mms, OutputInterface $output)
     {
         foreach ($mms as $mm) {
             try {
                 if (!$this->youtubeService->getTrack($mm)) {
                     if ($this->youtubeService->hasPendingJobs($mm)) {
-                        $this->logger->addInfo('MultimediaObject with id '.$mm->getId().' have pending jobs.');
+                        $this->logger->info('MultimediaObject with id '.$mm->getId().' have pending jobs.');
                     } else {
-                        $this->logger->addInfo('MultimediaObject with id '.$mm->getId().' haven\'t valid track for Youtube.');
+                        $this->logger->info('MultimediaObject with id '.$mm->getId().' haven\'t valid track for Youtube.');
                     }
 
                     continue;
@@ -121,7 +159,7 @@ EOT
                     __FUNCTION__,
                     $mm->getId()
                 );
-                $this->logger->addInfo($infoLog);
+                $this->logger->info($infoLog);
                 $output->writeln($infoLog);
                 $status = 'public';
                 if ($this->syncStatus) {
@@ -136,7 +174,7 @@ EOT
                         $mm->getId(),
                         $outUpload
                     );
-                    $this->logger->addError($errorLog);
+                    $this->logger->error($errorLog);
                     $output->writeln($errorLog);
                     $this->failedUploads[] = $mm;
                     $this->errors[] = $errorLog;
@@ -152,7 +190,7 @@ EOT
                     $mm->getId(),
                     $e->getMessage()
                 );
-                $this->logger->addError($errorLog);
+                $this->logger->error($errorLog);
                 $output->writeln($errorLog);
                 $this->failedUploads[] = $mm;
                 $this->errors[] = $e->getMessage();
@@ -160,6 +198,9 @@ EOT
         }
     }
 
+    /**
+     * @return mixed
+     */
     private function createMultimediaObjectsToUploadQueryBuilder()
     {
         $array_pub_tags = $this->getContainer()->getParameter('pumukit_youtube.pub_channels_tags');
@@ -192,6 +233,9 @@ EOT
         ;
     }
 
+    /**
+     * @return mixed
+     */
     private function getNewMultimediaObjectsToUpload()
     {
         return $this->createMultimediaObjectsToUploadQueryBuilder()
@@ -202,6 +246,13 @@ EOT
         ;
     }
 
+    /**
+     * @param array $statusArray
+     *
+     * @throws \Doctrine\ODM\MongoDB\MongoDBException
+     *
+     * @return mixed
+     */
     private function getUploadsByStatus($statusArray = [])
     {
         $mmIds = $this->youtubeRepo->getDistinctMultimediaObjectIdsWithAnyStatus($statusArray);
@@ -216,7 +267,7 @@ EOT
 
     private function checkResultsAndSendEmail()
     {
-        $youtubeTag = $this->tagRepo->findByCod(self::PUB_CHANNEL_YOUTUBE);
+        $youtubeTag = $this->tagRepo->findOneBy(['cod' => self::PUB_CHANNEL_YOUTUBE]);
         if (null != $youtubeTag) {
             foreach ($this->okUploads as $mm) {
                 if (!$mm->containsTagWithCod(self::PUB_CHANNEL_YOUTUBE)) {
@@ -230,9 +281,14 @@ EOT
         }
     }
 
+    /**
+     * @param MultimediaObject $mm
+     *
+     * @return bool
+     */
     private function checkIfMultimediaObjectHaveAccount(MultimediaObject $mm)
     {
-        $youtubeTag = $this->dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(['cod' => 'YOUTUBE']);
+        $youtubeTag = $this->dm->getRepository(Tag::class)->findOneBy(['cod' => 'YOUTUBE']);
         $haveAccount = false;
         foreach ($mm->getTags() as $tag) {
             if ($tag->isChildOf($youtubeTag)) {

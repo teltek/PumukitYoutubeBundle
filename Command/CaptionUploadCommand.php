@@ -63,6 +63,8 @@ EOT
      * @param InputInterface  $input
      * @param OutputInterface $output
      *
+     * @throws \Doctrine\ODM\MongoDB\MongoDBException
+     *
      * @return null|int|void
      */
     protected function execute(InputInterface $input, OutputInterface $output)
@@ -80,7 +82,7 @@ EOT
     {
         $container = $this->getContainer();
         $this->dm = $container->get('doctrine_mongodb')->getManager();
-        $this->mmobjRepo = $this->dm->getRepository('PumukitSchemaBundle:MultimediaObject');
+        $this->mmobjRepo = $this->dm->getRepository(MultimediaObject::class);
         $this->captionService = $container->get('pumukityoutube.caption');
         $this->logger = $container->get('monolog.logger.youtube');
         $this->syncStatus = $container->getParameter('pumukit_youtube.sync_status');
@@ -190,5 +192,4 @@ EOT
             $this->captionService->sendEmail('caption upload', $this->okUploads, $this->failedUploads, $this->errors);
         }
     }
-
 }

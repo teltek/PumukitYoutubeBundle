@@ -81,7 +81,7 @@ EOT
     protected function initialize(InputInterface $input, OutputInterface $output)
     {
         $this->dm = $this->getContainer()->get('doctrine_mongodb')->getManager();
-        $this->mmobjRepo = $this->dm->getRepository('PumukitSchemaBundle:MultimediaObject');
+        $this->mmobjRepo = $this->dm->getRepository(MultimediaObject::class);
         $this->captionService = $this->getContainer()->get('pumukityoutube.caption');
         $this->logger = $this->getContainer()->get('monolog.logger.youtube');
         $this->syncStatus = $this->getContainer()->getParameter('pumukit_youtube.sync_status');
@@ -126,28 +126,6 @@ EOT
                 $this->errors[] = $e->getMessage();
             }
         }
-    }
-
-    /**
-     * @return \Doctrine\ODM\MongoDB\Query\Builder
-     */
-    private function createYoutubeMultimediaObjectsQueryBuilder()
-    {
-        $array_pub_tags = $this->getContainer()->getParameter('pumukit_youtube.pub_channels_tags');
-
-        $syncStatus = $this->getContainer()->getParameter('pumukit_youtube.sync_status');
-        if ($syncStatus) {
-            $aStatus = [MultimediaObject::STATUS_PUBLISHED, MultimediaObject::STATUS_BLOCKED, MultimediaObject::STATUS_HIDDEN];
-        } else {
-            $aStatus = [MultimediaObject::STATUS_PUBLISHED];
-        }
-
-        return $this->mmobjRepo->createQueryBuilder()
-            ->field('properties.pumukit1id')->exists(false)
-            ->field('properties.origin')->notEqual('youtube')
-            ->field('status')->in($aStatus)
-            ->field('embeddedBroadcast.type')->equals('public')
-            ->field('tags.cod')->all($array_pub_tags);
     }
 
     /**

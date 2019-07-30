@@ -5,6 +5,7 @@ namespace Pumukit\YoutubeBundle\EventListener;
 use Doctrine\ODM\MongoDB\DocumentManager;
 use Pumukit\NewAdminBundle\Event\PublicationSubmitEvent;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
+use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\SchemaBundle\Services\TagService;
 use Pumukit\YoutubeBundle\Document\Youtube;
 
@@ -45,7 +46,7 @@ class BackofficeListener
     {
         $request = $event->getRequest();
         $multimediaObject = $event->getMultimediaObject();
-        $youtubeTag = $this->dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(['cod' => 'YOUTUBE']);
+        $youtubeTag = $this->dm->getRepository(Tag::class)->findOneBy(['cod' => 'YOUTUBE']);
         if (!$youtubeTag) {
             return false;
         }
@@ -78,7 +79,7 @@ class BackofficeListener
 
         $youtubeDocument = $this->dm->getRepository('PumukitYoutubeBundle:Youtube')->findOneBy(['multimediaObjectId' => $multimediaObject->getId()]);
         if ($youtubeDocument) {
-            $accountLabel = $this->dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(['_id' => new \MongoId($request->request->get('youtube_label'))]);
+            $accountLabel = $this->dm->getRepository(Tag::class)->findOneBy(['_id' => new \MongoId($request->request->get('youtube_label'))]);
             $differentAccount = $accountLabel && $youtubeDocument->getYoutubeAccount() !== $accountLabel->getProperty('login');
             if ($differentAccount) {
                 $youtubeDocument->setStatus(Youtube::STATUS_TO_DELETE);

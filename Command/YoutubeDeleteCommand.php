@@ -7,7 +7,6 @@ use Psr\Log\LoggerInterface;
 use Pumukit\SchemaBundle\Document\EmbeddedBroadcast;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Tag;
-use Pumukit\SchemaBundle\Repository\MultimediaObjectRepository;
 use Pumukit\SchemaBundle\Repository\TagRepository;
 use Pumukit\SchemaBundle\Services\TagService;
 use Pumukit\YoutubeBundle\Document\Youtube;
@@ -34,10 +33,6 @@ class YoutubeDeleteCommand extends ContainerAwareCommand
      * @var TagRepository
      */
     private $tagRepo;
-    /**
-     * @var MultimediaObjectRepository
-     */
-    private $mmobjRepo;
     /**
      * @var YoutubeRepository
      */
@@ -81,6 +76,7 @@ EOT
      * @param InputInterface  $input
      * @param OutputInterface $output
      *
+     * @throws \Exception
      * @throws \Doctrine\ODM\MongoDB\MongoDBException
      *
      * @return null|int|void
@@ -265,12 +261,12 @@ EOT
     }
 
     /**
-     * @param array  $youtubeIds
-     * @param string $status
+     * @param array $youtubeIds
+     * @param array $status
      *
      * @return mixed
      */
-    private function getMultimediaObjectsInYoutubeWithoutStatus(array $youtubeIds, $status)
+    private function getMultimediaObjectsInYoutubeWithoutStatus(array $youtubeIds, array $status)
     {
         return $this->createYoutubeQueryBuilder($youtubeIds)
             ->field('status')->notIn($status)

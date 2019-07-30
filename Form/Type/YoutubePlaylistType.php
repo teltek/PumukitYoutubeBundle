@@ -6,9 +6,13 @@ use Pumukit\NewAdminBundle\Form\Type\Base\TextI18nType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Translation\TranslatorInterface;
 
 class YoutubePlaylistType extends AbstractType
 {
+    /**
+     * @var TranslatorInterface
+     */
     private $translator;
     private $locale;
 

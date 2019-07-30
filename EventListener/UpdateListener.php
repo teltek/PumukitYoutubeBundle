@@ -31,6 +31,7 @@ class UpdateListener
      * @param MultimediaObjectEvent $event
      *
      * @throws \MongoException
+     * @throws \Exception
      */
     public function onMultimediaObjectUpdate(MultimediaObjectEvent $event)
     {

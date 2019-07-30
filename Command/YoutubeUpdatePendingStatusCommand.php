@@ -26,12 +26,18 @@ EOT
         ;
     }
 
+    /**
+     * @param InputInterface  $input
+     * @param OutputInterface $output
+     *
+     * @return null|int|void
+     */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $statusArray = [Youtube::STATUS_UPLOADING, Youtube::STATUS_PROCESSING];
-        $youtubes = $this->youtubeRepo->getWithAnyStatus($statusArray);
+        $youtubeDocuments = $this->youtubeRepo->getWithAnyStatus($statusArray);
 
-        $this->updateVideoStatusInYoutube($youtubes, $output);
+        $this->updateVideoStatusInYoutube($youtubeDocuments, $output);
         $this->checkResultsAndSendEmail();
     }
 }

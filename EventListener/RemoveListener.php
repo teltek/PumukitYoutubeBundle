@@ -2,18 +2,27 @@
 
 namespace Pumukit\YoutubeBundle\EventListener;
 
+use Doctrine\ODM\MongoDB\DocumentManager;
 use Doctrine\ODM\MongoDB\Event\LifecycleEventArgs;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\YoutubeBundle\Document\Youtube;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 
 class RemoveListener
 {
-    private $container;
+    /**
+     * @var DocumentManager
+     */
+    private $documentManager;
 
-    public function __construct(ContainerInterface $container)
+    /**
+     * @var \Pumukit\YoutubeBundle\Repository\YoutubeRepository
+     */
+    private $youtubeRepo;
+
+    public function __construct(DocumentManager $documentManager)
     {
-        $this->container = $container;
+        $this->documentManager = $documentManager;
+        $this->youtubeRepo = $this->documentManager->getRepository(Youtube::class);
     }
 
     public function preRemove(LifecycleEventArgs $args)
@@ -21,13 +30,11 @@ class RemoveListener
         $document = $args->getDocument();
 
         if ($document instanceof MultimediaObject) {
-            $dm = $this->container->get('doctrine_mongodb.odm.document_manager');
-            $youtubeRepo = $dm->getRepository('PumukitYoutubeBundle:Youtube');
             if (null !== $youtubeId = $document->getProperty('youtube')) {
-                if (null != $youtube = $youtubeRepo->find($youtubeId)) {
+                if (null != $youtube = $this->youtubeRepo->find($youtubeId)) {
                     $youtube->setStatus(Youtube::STATUS_TO_DELETE);
-                    $dm->persist($youtube);
-                    $dm->flush();
+                    $this->documentManager->persist($youtube);
+                    $this->documentManager->flush();
                 }
             }
         }

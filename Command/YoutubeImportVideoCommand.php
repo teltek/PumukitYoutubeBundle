@@ -2,11 +2,20 @@
 
 namespace Pumukit\YoutubeBundle\Command;
 
+use Doctrine\ODM\MongoDB\DocumentManager;
+use Psr\Log\LoggerInterface;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Pic;
 use Pumukit\SchemaBundle\Document\Series;
 use Pumukit\SchemaBundle\Document\Tag;
+use Pumukit\SchemaBundle\Repository\MultimediaObjectRepository;
+use Pumukit\SchemaBundle\Repository\SeriesRepository;
+use Pumukit\SchemaBundle\Repository\TagRepository;
+use Pumukit\SchemaBundle\Services\FactoryService;
+use Pumukit\SchemaBundle\Services\TagService;
 use Pumukit\YoutubeBundle\Document\Youtube;
+use Pumukit\YoutubeBundle\Repository\YoutubeRepository;
+use Pumukit\YoutubeBundle\Services\YoutubeService;
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -16,15 +25,41 @@ use Symfony\Component\HttpFoundation\File\Exception\FileException;
 
 class YoutubeImportVideoCommand extends ContainerAwareCommand
 {
+    /**
+     * @var DocumentManager
+     */
     private $dm;
+    /**
+     * @var TagRepository
+     */
     private $tagRepo;
+    /**
+     * @var MultimediaObjectRepository
+     */
     private $mmobjRepo;
+    /**
+     * @var SeriesRepository
+     */
     private $seriesRepo;
+    /**
+     * @var YoutubeRepository
+     */
     private $youtubeRepo;
+    /**
+     * @var TagService
+     */
     private $tagService;
-
+    /**
+     * @var YoutubeService
+     */
     private $youtubeService;
+    /**
+     * @var FactoryService
+     */
     private $factoryService;
+    /**
+     * @var LoggerInterface
+     */
     private $logger;
 
     protected function configure()
@@ -102,10 +137,16 @@ EOT
         );
     }
 
+    /**
+     * @param InputInterface  $input
+     * @param OutputInterface $output
+     *
+     * @throws \Exception
+     *
+     * @return null|bool|int
+     */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $this->initParameters();
-
         $login = $input->getArgument('login');
         $yid = $input->getArgument('yid');
         $step = $input->getOption('step');
@@ -204,6 +245,27 @@ EOT
         }
     }
 
+    protected function initialize(InputInterface $input, OutputInterface $output)
+    {
+        $this->dm = $this->getContainer()->get('doctrine_mongodb')->getManager();
+        $this->tagRepo = $this->dm->getRepository(Tag::class);
+        $this->mmobjRepo = $this->dm->getRepository(MultimediaObject::class);
+        $this->seriesRepo = $this->dm->getRepository(Series::class);
+        $this->youtubeRepo = $this->dm->getRepository(Youtube::class);
+
+        $this->youtubeService = $this->getContainer()->get('pumukityoutube.youtube');
+        $this->factoryService = $this->getContainer()->get('pumukitschema.factory');
+        $this->tagService = $this->getContainer()->get('pumukitschema.tag');
+
+        $this->logger = $this->getContainer()->get('monolog.logger.youtube');
+    }
+
+    /**
+     * @param MultimediaObject $mmobj
+     * @param string           $trackPath
+     *
+     * @throws \Exception
+     */
     private function moveTracks(MultimediaObject $mmobj, $trackPath)
     {
         $profileService = $this->getContainer()->get('pumukitencoder.profile');
@@ -229,14 +291,6 @@ EOT
             throw new \Exception('Object already has master track');
         }
 
-        /*
-        try {
-            $jobService->createTrackWithFile($trackPath . '.delivery', $videoH264Profile, $mmobj);
-        } catch (\Exception $e) {
-            throw new \Exception('Error coping delivery file "' . $trackPath . '.delivery' . '"');
-        }
-        */
-
         try {
             $jobService->createTrackWithFile($trackPath, $masterProfile, $mmobj);
         } catch (\Exception $e) {
@@ -244,6 +298,13 @@ EOT
         }
     }
 
+    /**
+     * @param MultimediaObject $mmobj
+     * @param null             $quality
+     * @param bool             $force
+     *
+     * @throws \Exception
+     */
     private function downloadPic(MultimediaObject $mmobj, $quality = null, $force = false)
     {
         $picService = $this->getContainer()->get('pumukitschema.mmspic');
@@ -295,7 +356,13 @@ EOT
         $this->dm->flush();
     }
 
-    private function tagMultimediaObject(MultimediaObject $mmobj, $tagIds)
+    /**
+     * @param MultimediaObject $mmobj
+     * @param array            $tagIds
+     *
+     * @throws \Exception
+     */
+    private function tagMultimediaObject(MultimediaObject $mmobj, array $tagIds)
     {
         $tags = $this->tagRepo->findBy(
             [
@@ -318,6 +385,17 @@ EOT
         }
     }
 
+    /**
+     * @param Series          $series
+     * @param string          $yid
+     * @param int             $status
+     * @param string          $login
+     * @param OutputInterface $output
+     *
+     * @throws \Exception
+     *
+     * @return MultimediaObject
+     */
     private function createMultimediaObject(Series $series, $yid, $status, $login, OutputInterface $output)
     {
         try {
@@ -326,7 +404,6 @@ EOT
             throw new \Exception('No Youtube video with id '.$yid);
         }
 
-        //Create using the factory
         $mmobj = $this->factoryService->createMultimediaObject($series, false);
         $mmobj->setStatus($status);
         $mmobj->setTitle($meta['out']['snippet']['title']);
@@ -348,6 +425,14 @@ EOT
         return $mmobj;
     }
 
+    /**
+     * @param string $yid
+     *
+     * @throws \Doctrine\ODM\MongoDB\LockException
+     * @throws \Doctrine\ODM\MongoDB\Mapping\MappingException
+     *
+     * @return null|object
+     */
     private function getMmObjFromYid($yid)
     {
         $mmobj = $this->mmobjRepo->findOneBy(['properties.youtubemeta.id' => $yid]);
@@ -355,13 +440,7 @@ EOT
             return $mmobj;
         }
 
-        $yt = $this->youtubeRepo->createQueryBuilder()
-            ->field('youtubeId')
-            ->equals($yid)
-            ->getQuery()
-            ->getSingleResult()
-        ;
-
+        $yt = $this->youtubeRepo->find($yid);
         if (!$yt) {
             return null;
         }
@@ -369,6 +448,14 @@ EOT
         return $this->mmobjRepo->find($yt->getMultimediaObjectId());
     }
 
+    /**
+     * @param string $seriesId
+     *
+     * @throws \Doctrine\ODM\MongoDB\LockException
+     * @throws \Doctrine\ODM\MongoDB\Mapping\MappingException
+     *
+     * @return null|object|Series
+     */
     private function getSeries($seriesId)
     {
         if (!$seriesId) {
@@ -417,6 +504,13 @@ EOT
         throw new \Exception('No series, or YouTube tag with id '.$seriesId);
     }
 
+    /**
+     * @param string $status
+     *
+     * @throws \Exception
+     *
+     * @return int
+     */
     private function getStatus($status)
     {
         $status = strtolower($status);
@@ -449,6 +543,11 @@ EOT
         return MultimediaObject::STATUS_PUBLISHED;
     }
 
+    /**
+     * @param string $url
+     * @param string $directory
+     * @param string $filename
+     */
     private function download($url, $directory, $filename)
     {
         if (!is_dir($directory)) {
@@ -484,20 +583,5 @@ EOT
         if (!$output || !$output2) {
             throw new FileException(sprintf('Error downloading  "%s"', $url));
         }
-    }
-
-    private function initParameters()
-    {
-        $this->dm = $this->getContainer()->get('doctrine_mongodb')->getManager();
-        $this->tagRepo = $this->dm->getRepository('PumukitSchemaBundle:Tag');
-        $this->mmobjRepo = $this->dm->getRepository('PumukitSchemaBundle:MultimediaObject');
-        $this->seriesRepo = $this->dm->getRepository('PumukitSchemaBundle:Series');
-        $this->youtubeRepo = $this->dm->getRepository('PumukitYoutubeBundle:Youtube');
-
-        $this->youtubeService = $this->getContainer()->get('pumukityoutube.youtube');
-        $this->factoryService = $this->getContainer()->get('pumukitschema.factory');
-        $this->tagService = $this->getContainer()->get('pumukitschema.tag');
-
-        $this->logger = $this->getContainer()->get('monolog.logger.youtube');
     }
 }
