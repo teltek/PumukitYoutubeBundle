@@ -128,6 +128,13 @@ class Youtube
     private $captions;
 
     /**
+     * @var string
+     *
+     * @MongoDB\Field(type="string")
+     */
+    private $fileUploaded;
+
+    /**
      * Constructor.
      */
     public function __construct()
@@ -618,5 +625,20 @@ class Youtube
         return null;
     }
 
-    // End of Caption getter - setter etc methods section
+    /**
+     * @return string
+     */
+    public function getFileUploaded()
+    {
+        return $this->fileUploaded;
+    }
+
+    /**
+     * @param string $fileUploaded
+     */
+    public function setFileUploaded(string $fileUploaded)
+    {
+        $this->fileUploaded = $fileUploaded;
+    }
+
 }

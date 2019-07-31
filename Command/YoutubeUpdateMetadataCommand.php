@@ -152,7 +152,7 @@ EOT
 
         $criteria = [
             'properties.origin' => ['$ne' => 'youtube'],
-            'properties.youtube' => ['$in' => $youtubeIds]
+            'properties.youtube' => ['$in' => $youtubeIds],
         ];
 
         if (!$this->usePumukit1) {

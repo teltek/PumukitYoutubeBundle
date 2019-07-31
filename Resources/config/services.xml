@@ -103,5 +103,10 @@
             <argument>%pumukit_youtube.default_track_upload%</argument>
             <tag name="monolog.logger" channel="youtube"/>
         </service>
+
+        <service id="pumukit_youtube.twig_extension" class="Pumukit\YoutubeBundle\Twig\YoutubeExtension">
+            <argument type="service" id="doctrine_mongodb.odm.document_manager" />
+            <tag name="twig.extension" />
+        </service>
     </services>
 </container>

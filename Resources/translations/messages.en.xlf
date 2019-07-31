@@ -193,6 +193,58 @@
         <source>Without playlist</source>
         <target>Without playlist</target>
       </trans-unit>
+      <trans-unit id="fozSBW2" resname="Title">
+        <source>Title</source>
+        <target>Title</target>
+      </trans-unit>
+      <trans-unit id="ccZMO9V" resname="Youtube account">
+        <source>Youtube account</source>
+        <target>Youtube account</target>
+      </trans-unit>
+      <trans-unit id="9hj.WBl" resname="Go to playlist">
+        <source>Go to playlist</source>
+        <target>Go to playlist</target>
+      </trans-unit>
+      <trans-unit id="UILf2cl" resname="Show video on Youtube">
+        <source>Show video on Youtube</source>
+        <target>Show video on Youtube</target>
+      </trans-unit>
+      <trans-unit id="v0Z2Y3Q" resname="Copy iframe">
+        <source>Copy iframe</source>
+        <target>Copy iframe</target>
+      </trans-unit>
+      <trans-unit id="dJ_g_W7" resname="Update playlist">
+        <source>Update playlist</source>
+        <target>Update playlist</target>
+      </trans-unit>
+      <trans-unit id="FT4MKSm" resname="Force upload video">
+        <source>Force upload video</source>
+        <target>Force upload video</target>
+      </trans-unit>
+      <trans-unit id="RoliJDG" resname="Do you want force upload this video? This action will delete old video causing lose all views on Youtube">
+        <source>Do you want force upload this video? This action will delete old video causing lose all views on Youtube</source>
+        <target>Do you want force upload this video? This action will delete old video causing lose all views on Youtube</target>
+      </trans-unit>
+      <trans-unit id="L8V51n." resname="Update video successfully">
+        <source>Update video successfully</source>
+        <target>Update video successfully</target>
+      </trans-unit>
+      <trans-unit id="E7sxpCZ" resname="Copy Youtube link">
+        <source>Copy Youtube link</source>
+        <target>Copy Youtube link</target>
+      </trans-unit>
+      <trans-unit id="8ze7Pzt" resname="Multimedia Object title">
+        <source>Multimedia Object title</source>
+        <target>Multimedia Object title</target>
+      </trans-unit>
+      <trans-unit id="huegnov" resname="File uploaded">
+        <source>File uploaded</source>
+        <target>File uploaded</target>
+      </trans-unit>
+      <trans-unit id="Y1NpQHq" resname="File not saved on database">
+        <source>File not saved on database</source>
+        <target>File not saved on database</target>
+      </trans-unit>
     </body>
   </file>
 </xliff>

@@ -189,6 +189,58 @@
         <source>Without playlist</source>
         <target>Sin lista de reproducción</target>
       </trans-unit>
+      <trans-unit id="fozSBW2" resname="Title">
+        <source>Title</source>
+        <target>Título</target>
+      </trans-unit>
+      <trans-unit id="ccZMO9V" resname="Youtube account">
+        <source>Youtube account</source>
+        <target>Cuenta de Youtube</target>
+      </trans-unit>
+      <trans-unit id="9hj.WBl" resname="Go to playlist">
+        <source>Go to playlist</source>
+        <target>Ir a la playlist</target>
+      </trans-unit>
+      <trans-unit id="UILf2cl" resname="Show video on Youtube">
+        <source>Show video on Youtube</source>
+        <target>Ver vídeo en Youtube</target>
+      </trans-unit>
+      <trans-unit id="v0Z2Y3Q" resname="Copy iframe">
+        <source>Copy iframe</source>
+        <target>Copiar código iframe</target>
+      </trans-unit>
+      <trans-unit id="dJ_g_W7" resname="Update playlist">
+        <source>Update playlist</source>
+        <target>Actualizar playlist</target>
+      </trans-unit>
+      <trans-unit id="FT4MKSm" resname="Force upload video">
+        <source>Force upload video</source>
+        <target>Forzar subida del vídeo</target>
+      </trans-unit>
+      <trans-unit id="RoliJDG" resname="Do you want force upload this video? This action will delete old video causing lose all views on Youtube">
+        <source>Do you want force upload this video? This action will delete old video causing lose all views on Youtube</source>
+        <target>Quieres forzar la subida del video? Esta acción borrará el antiguo video causando perdida de datos como el número de visionados.</target>
+      </trans-unit>
+      <trans-unit id="L8V51n." resname="Update video successfully">
+        <source>Update video successfully</source>
+        <target>Video actualizado correctamente</target>
+      </trans-unit>
+      <trans-unit id="E7sxpCZ" resname="Copy Youtube link">
+        <source>Copy Youtube link</source>
+        <target>Copiar link de Youtube</target>
+      </trans-unit>
+      <trans-unit id="8ze7Pzt" resname="Multimedia Object title">
+        <source>Multimedia Object title</source>
+        <target>Título del objeto multimedia</target>
+      </trans-unit>
+      <trans-unit id="huegnov" resname="File uploaded">
+        <source>File uploaded</source>
+        <target>Archivo subido</target>
+      </trans-unit>
+      <trans-unit id="Y1NpQHq" resname="File not saved on database">
+        <source>File not saved on database</source>
+        <target>Archivo no guardado en la BBDD</target>
+      </trans-unit>
     </body>
   </file>
 </xliff>

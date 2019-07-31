@@ -1,92 +1,151 @@
+{% if youtube_status == 'error' or youtube_status == 'removed' or youtube_status == 'duplicated' %}
+    {% set label_class = "label-danger" %}
+{% elseif youtube_status == 'published' %}
+    {% set label_class = "label-success" %}
+{% else %}
+    {% set label_class = "label-warning" %}
+{% endif %}
+
 <div class="modal-header">
     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
         <span aria-hidden="true">&times;</span>
     </button>
-    <h4 class="modal-title" id="myModalLabel">{% trans %}Youtube Info For Multimedia Object: {% endtrans %} {{ mm.title }}</h4>
+    <h4 class="modal-title text-center" id="myModalLabel">
+       {{ "Youtube"|trans|upper }}
+    </h4>
 </div>
+
 <div class="modal-body">
-    <div class="col-md-8 input-group">
-        <dl class="dl-horizontal">
-            <dt>{% trans %}Youtube Status{% endtrans %}</dt>
-            <dd style="overflow:hidden">
-                {% if youtube_status == 'error' or youtube_status == 'removed' or youtube_status == 'duplicated' %}
-                    <span class="label label-dismissable label-danger">
-                        {{ youtube_status }} [{{ youtube.status }}]
+    <div class="row">
+    <div class="col-md-7">
+        <div class="row">
+            <div class="col-md-6 text-right">
+                <strong>{% trans %}Multimedia Object title{% endtrans %}</strong>
+            </div>
+            <div class="col-md-6 text-left">
+                {{ mm.title }}
+            </div>
+        </div>
+        <hr />
+
+        {% if youtube.youtubeAccount is defined and youtube.youtubeAccount is not empty %}
+            <div class="row">
+                <div class="col-md-6 text-right">
+                    <strong>{% trans %}Youtube account{% endtrans %}</strong>
+                </div>
+                <div class="col-md-6 text-left">
+                    {{ youtube.youtubeAccount }}
+                </div>
+            </div>
+            <hr />
+        {% endif %}
+
+        <div class="row">
+            <div class="col-md-6 text-right">
+                <strong>{% trans %}Youtube Playlists{% endtrans %}</strong>
+            </div>
+            <div class="col-md-6 text-left">
+                {% for key, playlist in youtube.playlists %}
+                <div class="input-group">
+                    {{ playlist_name(playlist) }}
+                    <span class="input-group-addon">
+                        <a href="{{ youtube.link }}&list={{ key }}" target="_blank" title="{{ "Go to playlist"|trans }}">
+                            <i class="mdi-action-exit-to-app"></i>
+                        </a>
                     </span>
-                {% elseif youtube_status == 'published' %}
-                    <span class="label label-dismissable label-success">
-                        {{ youtube_status }} [{{ youtube.status }}]
-                    </span>
+                </div>
                 {% else %}
-                    <span class="label label-dismissable label-warning">
-                        {{ youtube_status }} [{{ youtube.status }}]
-                    </span>
+                    ---
+                {% endfor %}
+            </div>
+        </div>
+        <hr />
+
+        <div class="row">
+            <div class="col-md-6 text-right" style="overflow: hidden">
+                <strong>{% trans %}Youtube Status{% endtrans %}</strong>
+            </div>
+            <div class="col-md-6 text-left">
+                <span class="label label-dismissable {{ label_class }}" style="padding:5px;">
+                    {{ youtube_status|upper }}
+                </span>
+            </div>
+        </div>
+        <hr />
+
+        <div class="row">
+            <div class="col-md-6 text-right" style="overflow: hidden">
+                <strong>{% trans %}File uploaded{% endtrans %}</strong>
+            </div>
+            <div class="col-md-6 text-left">
+                {% if attribute(youtube, 'getFileUploaded') is defined and youtube.getFileUploaded() is not empty %}
+                  {{ youtube.getFileUploaded() }}
+                {% else %}
+                    <span> {{ "File not saved on database"|trans }}</span>
                 {% endif %}
-            </dd>
-            <dt>{% trans %}Last Updated{% endtrans %}</dt>
-            <dd>{{ youtube.syncMetadataDate|localizeddate }}</dd>
-            <dt>{% trans %}Youtube Id{% endtrans %}</dt>
-            <dd>{{ youtube.id }}</dd>
-            {% if youtube_status in ['published', 'proccessing'] %}
-                <dt>{% trans %}Youtube Playlists{% endtrans %}:</dt>
-                <dd>
-                    {% for key, playlist in youtube.playlists %}
-                        <div class="input-group">
-                            {{ playlist }}
-                            <span class="input-group-addon">
-                                <a href="{{ youtube.link }}&list={{ key }}" target="_blank">
-                                    <i class="mdi-action-exit-to-app"></i>
-                                </a>
-                            </span>
-                        </div>
-                    {% else %}
-                        ---
-                    {% endfor %}
-                    {% if youtube_status == 'published' %}
-                        <span class="manualUpdatePlaylist" title="{{ "Manual playlist update"|trans }}" data-id="{{ mm.id }}" style="cursor:pointer">
-                            &nbsp;&nbsp;<i class="mdi-av-loop"></i>
-                        </span>
-                    {% endif %}
-                </dd>
-                <dt>{% trans %}Youtube Link{% endtrans %}</dt>
-                <dd>
-                    <div class="col-lg-10 input-group">
-                        <div class="form-control-wrapper">
-                            <input type="text" class="form-control" readonly onclick="select()" value="{{ youtube.link }}" />
-                            <span class="material-input"></span>
-                        </div>
-                        <span class="input-group-addon">
-                            <a href="{{ youtube.link }}" target="_blank">
-                                <i class="mdi-action-exit-to-app"></i>
-                            </a>
-                        </span>
-                    </div>
-                </dd>
-                <dt>{% trans %}Youtube Embed{% endtrans %}</dt>
-                <dd>
-                    <div class="form-control-wrapper">
-                        <input type="text" class="form-control" readonly onclick="select()" value="{{ youtube.embed }}" />
-                        <span class="material-input"></span>
-                    </div>
-                </dd>
-            {% endif %}
-        </dl>
+            </div>
+        </div>
+        <hr />
+
+        <div class="row">
+            <div class="col-md-6 text-right">
+                <strong>{% trans %}Last Updated{% endtrans %}</strong>
+            </div>
+            <div class="col-md-6 text-left">
+                {{ youtube.getSyncMetadataDate()|localizeddate }}
+            </div>
+        </div>
+        <hr />
+
+        {% if youtube_status in ['published', 'proccessing'] %}
+            <div class="row">
+                <div class="col-md-6">
+                    <a class="btn btn-default btn-raised copy-youtube-link" href="#"  title="{{ "Copy Youtube link"|trans }}">
+                        {{ "Copy Youtube link"|trans }}
+                    </a>
+                    <input id="copy-youtube-link" type="text" value="{{ youtube.link }}" style="display:none;"/>
+                </div>
+                <div class="col-md-6">
+                    <a class="btn btn-default btn-raised copy-embed-link" href="#"  title="{{ "Copy iframe"|trans }}">
+                        {{ "Copy iframe"|trans }}
+                    </a>
+                    <input id="copy-embed-link" type="text" value="{{ youtube.embed }}" style="display:none;"/>
+                </div>
+            </div>
+            <hr />
+        {% endif %}
+    </div>
+    <div class="col-md-5">
+
+        <div class="row">
+            <div class="col-md-12 text-center">
+                <a class="btn btn-default btn-raised" href="{{ youtube.link }}" title="{{ "Show video on Youtube"|trans }}">
+                    {{ "Show video on Youtube"|trans }}
+                </a>
+            </div>
+        </div>
+
+        {% if youtube_status in ['published'] %}
+            <div class="row">
+                <div class="col-md-12 text-center">
+                    <a href="#" class="btn btn-pumukit manualUpdatePlaylist" title="{{ "Manual playlist update"|trans }}" data-id="{{ mm.id }}">
+                       {{ "Update playlist"|trans }}
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+        <div class="row">
+            <div class="col-md-12 text-center">
+                <a href="#" class="btn btn-pumukit forcedUploadVideo" title="{{ "Force upload video"|trans }}" data-id="{{ mm.id }}">
+                    {{ "Force upload video"|trans }}
+                </a>
+            </div>
+        </div>
+    </div>
+
     </div>
 </div>
 
 <script>
-    $('.manualUpdatePlaylist').on('click',function() {
-        $('#myModal').modal('toggle');
-        $.ajax({
-            url: '{{ path('pumukityoutube_updateplaylist', {'id': mm.id}) }}',
-            method: 'GET',
-            success: function (response) {
-                success("{{ 'Update playlist successfully' | trans }}");
-            },
-            error: function(response) {
-                no_success(response.error);
-            },
-        });
-        return false;
-    });
+    {% include "PumukitYoutubeBundle:Modal:js.js.twig" %}
 </script>

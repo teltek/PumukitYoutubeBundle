@@ -211,7 +211,7 @@ class YoutubeService
             foreach ($multimediaObject->getTags() as $tag) {
                 if ($tag->isChildOf($youtubeTag)) {
                     $tagAccount = $this->dm->getRepository(Tag::class)->findOneBy(['cod' => $tag->getCod()]);
-                    if(!$tagAccount) {
+                    if (!$tagAccount) {
                         continue;
                     }
                     $youtube->setYoutubeAccount($tagAccount->getProperty('login'));
@@ -251,6 +251,7 @@ class YoutubeService
         }
         $youtube->setYoutubeId($aResult['out']['id']);
         $youtube->setLink('https://www.youtube.com/watch?v='.$aResult['out']['id']);
+        $youtube->setFileUploaded(basename($trackPath));
         $multimediaObject->setProperty('youtubeurl', $youtube->getLink());
         $this->dm->persist($multimediaObject);
         if ('uploaded' == $aResult['out']['status']) {
@@ -620,6 +621,46 @@ class YoutubeService
     }
 
     /**
+     * @param MultimediaObject $multimediaObject
+     *
+     * @throws \MongoException
+     *
+     * @return null|object|Tag
+     */
+    public function getMultimediaObjectYoutubeAccount(MultimediaObject $multimediaObject)
+    {
+        $youtubeTag = $this->dm->getRepository(Tag::class)->findOneBy(['cod' => 'YOUTUBE']);
+        foreach ($multimediaObject->getTags() as $embeddedTag) {
+            if ($embeddedTag->isChildOf($youtubeTag)) {
+                return $this->dm->getRepository(Tag::class)->findOneBy(['_id' => new \MongoId($embeddedTag->getId())]);
+            }
+        }
+    }
+
+    /**
+     * @param MultimediaObject $multimediaObject
+     * @param Tag              $youtubeTagAccount
+     *
+     * @throws \MongoException
+     *
+     * @return array
+     */
+    public function getMultimediaObjectYoutubePlaylists(MultimediaObject $multimediaObject, Tag $youtubeTagAccount)
+    {
+        $tags = [];
+        foreach ($multimediaObject->getTags() as $embeddedTag) {
+            if ($embeddedTag->isChildOf($youtubeTagAccount)) {
+                $tag = $this->dm->getRepository(Tag::class)->findOneBy(['_id' => new \MongoId($embeddedTag->getId())]);
+                if ($tag) {
+                    $tags[] = $tag;
+                }
+            }
+        }
+
+        return $tags;
+    }
+
+    /**
      * @param string $cause
      *
      * @return string
@@ -836,7 +877,7 @@ class YoutubeService
     protected function getTagsForYoutube(MultimediaObject $multimediaObject)
     {
         $tags = $multimediaObject->getI18nKeywords();
-        if(!isset($tags[$this->ytLocale])) {
+        if (!isset($tags[$this->ytLocale])) {
             return '';
         }
 

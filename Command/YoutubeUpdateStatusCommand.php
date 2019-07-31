@@ -2,7 +2,6 @@
 
 namespace Pumukit\YoutubeBundle\Command;
 
-use Doctrine\ODM\MongoDB\Cursor;
 use Doctrine\ODM\MongoDB\DocumentManager;
 use Psr\Log\LoggerInterface;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
@@ -110,7 +109,7 @@ EOT
     }
 
     /**
-     * @param mixed $youtubes
+     * @param mixed           $youtubes
      * @param OutputInterface $output
      *
      * @throws \MongoException

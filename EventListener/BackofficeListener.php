@@ -5,9 +5,9 @@ namespace Pumukit\YoutubeBundle\EventListener;
 use Doctrine\ODM\MongoDB\DocumentManager;
 use Pumukit\NewAdminBundle\Event\PublicationSubmitEvent;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
-use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\SchemaBundle\Services\TagService;
 use Pumukit\YoutubeBundle\Document\Youtube;
+use Pumukit\SchemaBundle\Document\Tag;
 
 /**
  * Class BackofficeListener.
@@ -80,7 +80,7 @@ class BackofficeListener
         // Add Youtube playlist
         $this->addPlaylistToMultimediaObject($multimediaObject, $request->request->get('youtube_playlist_label'));
 
-        $youtubeDocument = $this->dm->getRepository('PumukitYoutubeBundle:Youtube')->findOneBy(['multimediaObjectId' => $multimediaObject->getId()]);
+        $youtubeDocument = $this->dm->getRepository(Youtube::class)->findOneBy(['multimediaObjectId' => $multimediaObject->getId()]);
         if ($youtubeDocument) {
             $accountLabel = $this->dm->getRepository(Tag::class)->findOneBy(['_id' => new \MongoId($request->request->get('youtube_label'))]);
             $differentAccount = $accountLabel && $youtubeDocument->getYoutubeAccount() !== $accountLabel->getProperty('login');
