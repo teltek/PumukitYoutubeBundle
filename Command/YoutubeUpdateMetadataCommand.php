@@ -8,6 +8,7 @@ use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\SchemaBundle\Repository\MultimediaObjectRepository;
 use Pumukit\SchemaBundle\Repository\TagRepository;
+use Pumukit\YoutubeBundle\Document\Youtube;
 use Pumukit\YoutubeBundle\Repository\YoutubeRepository;
 use Pumukit\YoutubeBundle\Services\YoutubeService;
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
@@ -89,7 +90,7 @@ EOT
         $this->dm = $this->getContainer()->get('doctrine_mongodb.odm.document_manager');
         $this->tagRepo = $this->dm->getRepository(Tag::class);
         $this->mmobjRepo = $this->dm->getRepository(MultimediaObject::class);
-        $this->youtubeRepo = $this->dm->getRepository('PumukitYoutubeBundle:Youtube');
+        $this->youtubeRepo = $this->dm->getRepository(Youtube::class);
 
         $this->youtubeService = $this->getContainer()->get('pumukityoutube.youtube');
 
@@ -110,9 +111,7 @@ EOT
     {
         foreach ($mms as $mm) {
             try {
-                $infoLog = __CLASS__.
-                    ' ['.__FUNCTION__.'] Started updating Youtube video of MultimediaObject with id "'.
-                    $mm->getId().'"';
+                $infoLog = __CLASS__.' ['.__FUNCTION__.'] Started updating Youtube video of MultimediaObject with id "'.$mm->getId().'"';
                 $this->logger->info($infoLog);
                 $output->writeln($infoLog);
                 $outUpdate = $this->youtubeService->updateMetadata($mm);
@@ -151,24 +150,16 @@ EOT
             $youtubeIds[] = $mongoObjectId->__toString();
         }
 
-        $mms = $this->mmobjRepo
-            ->createQueryBuilder()
-            ->field('properties.origin')
-            ->notEqual('youtube')
-            ->field('properties.youtube')
-            ->in($youtubeIds)
-        ;
+        $criteria = [
+            'properties.origin' => ['$ne' => 'youtube'],
+            'properties.youtube' => ['$in' => $youtubeIds]
+        ];
 
         if (!$this->usePumukit1) {
-            $mms->field('properties.pumukit1id')
-                ->exists(false)
-            ;
+            $criteria['properties.pumukit1id'] = ['$exists' => false];
         }
 
-        return $mms
-            ->getQuery()
-            ->execute()
-        ;
+        return $this->mmobjRepo->findBy($criteria);
     }
 
     private function checkResultsAndSendEmail()

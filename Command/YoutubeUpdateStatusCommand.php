@@ -2,6 +2,7 @@
 
 namespace Pumukit\YoutubeBundle\Command;
 
+use Doctrine\ODM\MongoDB\Cursor;
 use Doctrine\ODM\MongoDB\DocumentManager;
 use Psr\Log\LoggerInterface;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
@@ -109,12 +110,12 @@ EOT
     }
 
     /**
-     * @param array           $youtubes
+     * @param mixed $youtubes
      * @param OutputInterface $output
      *
      * @throws \MongoException
      */
-    protected function updateVideoStatusInYoutube(array $youtubes, OutputInterface $output)
+    protected function updateVideoStatusInYoutube($youtubes, OutputInterface $output)
     {
         foreach ($youtubes as $youtube) {
             $multimediaObject = $this->findByYoutubeIdAndPumukit1Id($youtube, false);

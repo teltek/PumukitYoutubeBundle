@@ -95,9 +95,9 @@ EOT
     }
 
     /**
-     * @param array $mms
+     * @param mixed $mms
      */
-    private function uploadCaptionsToYoutube(array $mms)
+    private function uploadCaptionsToYoutube($mms)
     {
         foreach ($mms as $multimediaObject) {
             try {

@@ -376,7 +376,7 @@ class YoutubePlaylistService
         } else {
             $youtubeTitlePlaylist = $playlistTitle;
         }
-        $aResult = $this->youtubeProcessService->createPlaylist($youtubeTitlePlaylist, $this->playlistPrivacyStatus, $tag->getParent()->getId());
+        $aResult = $this->youtubeProcessService->createPlaylist($youtubeTitlePlaylist, $this->playlistPrivacyStatus, $tag->getParent()->getProperty('login'));
         if ($aResult['error']) {
             $errorLog = sprintf('%s [%s] Error in creating in Youtube the playlist from tag with id %s: %s', __CLASS__, __FUNCTION__, $tag->getId(), $aResult['error_out']);
             $this->logger->error($errorLog);

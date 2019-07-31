@@ -246,11 +246,11 @@ EOT
     }
 
     /**
-     * @param array $mongoIds
+     * @param mixed $mongoIds
      *
      * @return array
      */
-    private function getStringIds(array $mongoIds)
+    private function getStringIds($mongoIds)
     {
         $stringIds = [];
         foreach ($mongoIds as $mongoId) {
@@ -348,9 +348,9 @@ EOT
     /**
      * @param OutputInterface $output
      * @param string          $state
-     * @param array           $multimediaObjects
+     * @param mixed           $multimediaObjects
      */
-    private function showMultimediaObjects(OutputInterface $output, $state, array $multimediaObjects)
+    private function showMultimediaObjects(OutputInterface $output, $state, $multimediaObjects)
     {
         $numberMultimediaObjects = count($multimediaObjects);
         $output->writeln(

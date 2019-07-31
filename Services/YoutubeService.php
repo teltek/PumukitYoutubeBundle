@@ -211,6 +211,9 @@ class YoutubeService
             foreach ($multimediaObject->getTags() as $tag) {
                 if ($tag->isChildOf($youtubeTag)) {
                     $tagAccount = $this->dm->getRepository(Tag::class)->findOneBy(['cod' => $tag->getCod()]);
+                    if(!$tagAccount) {
+                        continue;
+                    }
                     $youtube->setYoutubeAccount($tagAccount->getProperty('login'));
                     $youtubeTagAccount = $tagAccount;
                 }
@@ -828,11 +831,14 @@ class YoutubeService
      *
      * @param MultimediaObject $multimediaObject
      *
-     * @return array
+     * @return string
      */
     protected function getTagsForYoutube(MultimediaObject $multimediaObject)
     {
         $tags = $multimediaObject->getI18nKeywords();
+        if(!isset($tags[$this->ytLocale])) {
+            return '';
+        }
 
         $tagsToUpload = $tags[$this->ytLocale];
 

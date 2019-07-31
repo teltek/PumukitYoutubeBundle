@@ -129,10 +129,10 @@ EOT
     }
 
     /**
-     * @param array           $mms
+     * @param mixed           $mms
      * @param OutputInterface $output
      */
-    private function uploadVideosToYoutube(array $mms, OutputInterface $output)
+    private function uploadVideosToYoutube($mms, OutputInterface $output)
     {
         foreach ($mms as $mm) {
             try {
@@ -165,6 +165,7 @@ EOT
                 if ($this->syncStatus) {
                     $status = YoutubeService::$status[$mm->getStatus()];
                 }
+
                 $outUpload = $this->youtubeService->upload($mm, 27, $status, false);
                 if (0 !== $outUpload) {
                     $errorLog = sprintf(
