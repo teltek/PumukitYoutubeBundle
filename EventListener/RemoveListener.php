@@ -25,6 +25,12 @@ class RemoveListener
         $this->youtubeRepo = $this->documentManager->getRepository(Youtube::class);
     }
 
+    /**
+     * @param LifecycleEventArgs $args
+     *
+     * @throws \Doctrine\ODM\MongoDB\LockException
+     * @throws \Doctrine\ODM\MongoDB\Mapping\MappingException
+     */
     public function preRemove(LifecycleEventArgs $args)
     {
         $document = $args->getDocument();

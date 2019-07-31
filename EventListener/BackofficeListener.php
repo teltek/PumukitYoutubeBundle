@@ -14,6 +14,9 @@ use Pumukit\YoutubeBundle\Document\Youtube;
  */
 class BackofficeListener
 {
+    /**
+     * @var DocumentManager
+     */
     private $dm;
 
     /**
