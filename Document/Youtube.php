@@ -640,5 +640,4 @@ class Youtube
     {
         $this->fileUploaded = $fileUploaded;
     }
-
 }

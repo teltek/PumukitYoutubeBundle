@@ -5,9 +5,9 @@ namespace Pumukit\YoutubeBundle\EventListener;
 use Doctrine\ODM\MongoDB\DocumentManager;
 use Pumukit\NewAdminBundle\Event\PublicationSubmitEvent;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
+use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\SchemaBundle\Services\TagService;
 use Pumukit\YoutubeBundle\Document\Youtube;
-use Pumukit\SchemaBundle\Document\Tag;
 
 /**
  * Class BackofficeListener.

@@ -47,7 +47,7 @@
             <div class="col-md-6 text-left">
                 {% for key, playlist in youtube.playlists %}
                 <div class="input-group">
-                    {{ playlist_name(playlist) }}
+                    {{ playlist_name(key) }}
                     <span class="input-group-addon">
                         <a href="{{ youtube.link }}&list={{ key }}" target="_blank" title="{{ "Go to playlist"|trans }}">
                             <i class="mdi-action-exit-to-app"></i>
