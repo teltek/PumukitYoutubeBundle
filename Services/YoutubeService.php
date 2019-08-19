@@ -4,8 +4,12 @@ namespace Pumukit\YoutubeBundle\Services;
 
 use Doctrine\ODM\MongoDB\DocumentManager;
 use Psr\Log\LoggerInterface;
+use Pumukit\EncoderBundle\Document\Job;
+use Pumukit\EncoderBundle\Services\JobService;
 use Pumukit\NotificationBundle\Services\SenderService;
+use Pumukit\OpencastBundle\Services\OpencastService;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
+use Pumukit\SchemaBundle\Document\Person;
 use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\SchemaBundle\Document\Track;
 use Pumukit\SchemaBundle\Services\TagService;
@@ -24,16 +28,45 @@ class YoutubeService
         1 => 'private',
         2 => 'unlisted',
     ];
-
+    /**
+     * @var DocumentManager
+     */
     protected $dm;
+    /**
+     * @var Router
+     */
     protected $router;
+    /**
+     * @var TagService
+     */
     protected $tagService;
+    /**
+     * @var LoggerInterface
+     */
     protected $logger;
+    /**
+     * @var SenderService
+     */
     protected $senderService;
+    /**
+     * @var TranslatorInterface
+     */
     protected $translator;
+    /**
+     * @var \Pumukit\YoutubeBundle\Repository\YoutubeRepository
+     */
     protected $youtubeRepo;
+    /**
+     * @var \Pumukit\SchemaBundle\Repository\TagRepository
+     */
     protected $tagRepo;
+    /**
+     * @var \Pumukit\SchemaBundle\Repository\MultimediaObjectRepository
+     */
     protected $mmobjRepo;
+    /**
+     * @var YoutubeProcessService
+     */
     protected $youtubeProcessService;
     protected $playlistPrivacyStatus;
     protected $ytLocale;
@@ -47,11 +80,20 @@ class YoutubeService
     protected $defaultTrackUpload;
     protected $generateSbs;
     protected $sbsProfileName;
+    /**
+     * @var JobService
+     */
     protected $jobService;
+    /**
+     * @var \Pumukit\EncoderBundle\Repository\JobRepository
+     */
     protected $jobRepo;
+    /**
+     * @var OpencastService
+     */
     protected $opencastService;
 
-    public function __construct(DocumentManager $documentManager, Router $router, TagService $tagService, LoggerInterface $logger, SenderService $senderService = null, TranslatorInterface $translator, YoutubeProcessService $youtubeProcessService, $playlistPrivacyStatus, $locale, $useDefaultPlaylist, $defaultPlaylistCod, $defaultPlaylistTitle, $metatagPlaylistCod, $playlistMaster, $deletePlaylists, $pumukitLocales, $youtubeSyncStatus, $defaultTrackUpload, $generateSbs, $sbsProfileName, $jobService, $opencastService = null)
+    public function __construct(DocumentManager $documentManager, Router $router, TagService $tagService, LoggerInterface $logger, SenderService $senderService = null, TranslatorInterface $translator, YoutubeProcessService $youtubeProcessService, $playlistPrivacyStatus, $locale, $useDefaultPlaylist, $defaultPlaylistCod, $defaultPlaylistTitle, $metatagPlaylistCod, $playlistMaster, $deletePlaylists, $pumukitLocales, $youtubeSyncStatus, $defaultTrackUpload, $generateSbs, $sbsProfileName, JobService $jobService, OpencastService $opencastService = null)
     {
         $this->dm = $documentManager;
         $this->router = $router;
@@ -60,10 +102,10 @@ class YoutubeService
         $this->senderService = $senderService;
         $this->translator = $translator;
         $this->youtubeProcessService = $youtubeProcessService;
-        $this->youtubeRepo = $this->dm->getRepository('PumukitYoutubeBundle:Youtube');
-        $this->tagRepo = $this->dm->getRepository('PumukitSchemaBundle:Tag');
-        $this->mmobjRepo = $this->dm->getRepository('PumukitSchemaBundle:MultimediaObject');
-        $this->jobRepo = $this->dm->getRepository('PumukitEncoderBundle:Job');
+        $this->youtubeRepo = $this->dm->getRepository(Youtube::class);
+        $this->tagRepo = $this->dm->getRepository(Tag::class);
+        $this->mmobjRepo = $this->dm->getRepository(MultimediaObject::class);
+        $this->jobRepo = $this->dm->getRepository(Job::class);
         $this->playlistPrivacyStatus = $playlistPrivacyStatus;
         $this->ytLocale = $locale;
         $this->syncStatus = $youtubeSyncStatus;
@@ -104,7 +146,7 @@ class YoutubeService
      *
      * @param MultimediaObject $multimediaObject
      *
-     * @return null|Track
+     * @return null|int|Track
      */
     public function getTrack(MultimediaObject $multimediaObject)
     {
@@ -159,16 +201,19 @@ class YoutubeService
 
             throw new \Exception($errorLog);
         }
-        $youtube = $this->youtubeRepo->findOneByMultimediaObjectId($multimediaObject->getId());
+        $youtube = $this->youtubeRepo->findOneBy(['multimediaObjectId' => $multimediaObject->getId()]);
         if (!$youtube) {
             $youtube = new Youtube();
             $youtube->setMultimediaObjectId($multimediaObject->getId());
 
-            $youtubeTag = $this->dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(['cod' => 'YOUTUBE']);
+            $youtubeTag = $this->dm->getRepository(Tag::class)->findOneBy(['cod' => 'YOUTUBE']);
             $youtubeTagAccount = null;
             foreach ($multimediaObject->getTags() as $tag) {
                 if ($tag->isChildOf($youtubeTag)) {
-                    $tagAccount = $this->dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(['cod' => $tag->getCod()]);
+                    $tagAccount = $this->dm->getRepository(Tag::class)->findOneBy(['cod' => $tag->getCod()]);
+                    if (!$tagAccount) {
+                        continue;
+                    }
                     $youtube->setYoutubeAccount($tagAccount->getProperty('login'));
                     $youtubeTagAccount = $tagAccount;
                 }
@@ -176,7 +221,7 @@ class YoutubeService
 
             if (!$youtubeTagAccount) {
                 $errorLog = __CLASS__.' ['.__FUNCTION__.'] Error, there aren\'t account on '.$multimediaObject->getId();
-                $this->logger->addError($errorLog);
+                $this->logger->error($errorLog);
 
                 throw new \Exception($errorLog);
             }
@@ -206,6 +251,7 @@ class YoutubeService
         }
         $youtube->setYoutubeId($aResult['out']['id']);
         $youtube->setLink('https://www.youtube.com/watch?v='.$aResult['out']['id']);
+        $youtube->setFileUploaded(basename($trackPath));
         $multimediaObject->setProperty('youtubeurl', $youtube->getLink());
         $this->dm->persist($multimediaObject);
         if ('uploaded' == $aResult['out']['status']) {
@@ -221,63 +267,11 @@ class YoutubeService
         $youtube->setUploadDate($now);
         $this->dm->persist($youtube);
         $this->dm->flush();
-        $youtubeTag = $this->tagRepo->findOneByCod(self::PUB_CHANNEL_YOUTUBE);
+        $youtubeTag = $this->tagRepo->findOneBy(['cod' => self::PUB_CHANNEL_YOUTUBE]);
         if (null != $youtubeTag) {
             $this->tagService->addTagToMultimediaObject($multimediaObject, $youtubeTag->getId());
         } else {
             $errorLog = __CLASS__.' ['.__FUNCTION__.'] There is no Youtube tag defined with code PUCHYOUTUBE.';
-            $this->logger->error($errorLog);
-
-            throw new \Exception($errorLog);
-        }
-
-        return 0;
-    }
-
-    /**
-     * Move to list.
-     *
-     * @param MultimediaObject $multimediaObject
-     * @param                  $playlistTagId
-     *
-     * @throws \Exception
-     *
-     * @return int
-     */
-    public function moveToList(MultimediaObject $multimediaObject, $playlistTagId)
-    {
-        $youtube = $this->getYoutubeDocument($multimediaObject);
-
-        if (null === $playlistTag = $this->tagRepo->find($playlistTagId)) {
-            $errorLog = __CLASS__.' ['.__FUNCTION__."] Error! The tag with id '".$playlistTagId."' for Youtube Playlist does not exist";
-            $this->logger->error($errorLog);
-
-            throw new \Exception($errorLog);
-        }
-        if (null === $playlistId = $playlistTag->getProperty('youtube')) {
-            $errorLog = sprintf('%s [%s] Error! The tag with id %s doesn\'t have a \'youtube\' property!\n Did you use %s first?', __CLASS__, __FUNCTION__, $playlistTag->getId(), 'syncPlaylistsRelations()');
-            $this->logger->error($errorLog);
-
-            throw new \Exception();
-        }
-
-        $aResult = $this->youtubeProcessService->insertInToList($youtube, $playlistId, $youtube->getYoutubeAccount());
-        if ($aResult['error']) {
-            $errorLog = __CLASS__.' ['.__FUNCTION__."] Error in moving the Multimedia Object '".$multimediaObject->getId()."' to Youtube playlist with id '".$playlistId."': ".$aResult['error_out'];
-            $this->logger->error($errorLog);
-
-            throw new \Exception($errorLog);
-        }
-        if (null != $aResult['out']) {
-            $youtube->setPlaylist($playlistId, $aResult['out']);
-
-            if (!$multimediaObject->containsTagWithCod($playlistTag->getCod())) {
-                $this->tagService->addTagToMultimediaObject($multimediaObject, $playlistTag->getId(), false);
-            }
-            $this->dm->persist($youtube);
-            $this->dm->flush();
-        } else {
-            $errorLog = __CLASS__.' ['.__FUNCTION__."] Error in moving the Multimedia Object '".$multimediaObject->getId()."' to Youtube playlist with id '".$playlistId."'";
             $this->logger->error($errorLog);
 
             throw new \Exception($errorLog);
@@ -299,27 +293,16 @@ class YoutubeService
     {
         $youtube = $this->getYoutubeDocument($multimediaObject);
 
-        foreach ($youtube->getPlaylists() as $playlistId => $playlistItem) {
-            $this->deleteFromList($playlistItem, $youtube, $playlistId);
-        }
-        $aResult = $this->youtubeProcessService->deleteVideo($youtube, $youtube->getYoutubeAccount());
-        if ($aResult['error'] && (false === strpos($aResult['error_out'], 'No se ha encontrado el video'))) {
-            $errorLog = __CLASS__.' ['.__FUNCTION__."] Error in deleting the YouTube video with id '".$youtube->getYoutubeId()."' and mongo id '".$youtube->getId()."': ".$aResult['error_out'];
-            $this->logger->error($errorLog);
+        $this->deleteFromPlaylist($youtube);
 
-            throw new \Exception($errorLog);
-        }
-        $youtube->setStatus(Youtube::STATUS_REMOVED);
-        $youtube->setForce(false);
-        $this->dm->persist($youtube);
         $multimediaObject->removeProperty('youtube');
         $multimediaObject->removeProperty('youtubeurl');
 
         $this->dm->persist($multimediaObject);
 
         $this->dm->flush();
-        $youtubeEduTag = $this->tagRepo->findOneByCod(self::PUB_CHANNEL_YOUTUBE);
-        $youtubeTag = $this->tagRepo->findOneByCod(self::PUB_CHANNEL_YOUTUBE);
+        $youtubeEduTag = $this->tagRepo->findOneBy(['cod' => self::PUB_CHANNEL_YOUTUBE]);
+        $youtubeTag = $this->tagRepo->findOneBy(['cod' => self::PUB_CHANNEL_YOUTUBE]);
         if (null != $youtubeTag) {
             if ($multimediaObject->containsTag($youtubeEduTag)) {
                 $this->tagService->removeTagFromMultimediaObject($multimediaObject, $youtubeEduTag->getId());
@@ -345,20 +328,7 @@ class YoutubeService
      */
     public function deleteOrphan(Youtube $youtube)
     {
-        foreach ($youtube->getPlaylists() as $playlistId => $playlistItem) {
-            $this->deleteFromList($playlistItem, $youtube, $playlistId);
-        }
-
-        $aResult = $this->youtubeProcessService->deleteVideo($youtube, $youtube->getYoutubeAccount());
-        if ($aResult['error'] && (false === strpos($aResult['error_out'], 'No se ha encontrado el video'))) {
-            $errorLog = __CLASS__.' ['.__FUNCTION__."] Error in deleting the YouTube video with id '".$youtube->getYoutubeId()."' and mongo id '".$youtube->getId()."': ".$aResult['error_out'];
-            $this->logger->error($errorLog);
-
-            throw new \Exception($errorLog);
-        }
-        $youtube->setStatus(Youtube::STATUS_REMOVED);
-        $youtube->setForce(false);
-        $this->dm->persist($youtube);
+        $this->deleteFromPlaylist($youtube);
         $this->dm->flush();
 
         return 0;
@@ -416,11 +386,11 @@ class YoutubeService
         $multimediaObject = $this->mmobjRepo->find($youtube->getMultimediaObjectId());
 
         if (!$youtube->getYoutubeAccount()) {
-            $youtubeTag = $this->dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(['cod' => 'YOUTUBE']);
+            $youtubeTag = $this->dm->getRepository(Tag::class)->findOneBy(['cod' => 'YOUTUBE']);
             $account = null;
             foreach ($multimediaObject->getTags() as $tag) {
                 if (!$tag->isChildOf($youtubeTag)) {
-                    $tag = $this->dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(['cod' => $tag->getCod()]);
+                    $tag = $this->dm->getRepository(Tag::class)->findOneBy(['cod' => $tag->getCod()]);
                     $account = $tag->getProperty('login');
                 }
             }
@@ -465,7 +435,7 @@ class YoutubeService
                 $this->logger->error('ERROR - Setting status removed '.$youtube->getId().' ( '.$youtube->getMultimediaObjectId().')'.$aResult['error_out'].' - '.__FUNCTION__);
                 $youtube->setStatus(Youtube::STATUS_REMOVED);
                 $this->dm->persist($youtube);
-                $youtubeEduTag = $this->tagRepo->findOneByCod(self::PUB_CHANNEL_YOUTUBE);
+                $youtubeEduTag = $this->tagRepo->findOneBy(['cod' => self::PUB_CHANNEL_YOUTUBE]);
 
                 if (null !== $youtubeEduTag) {
                     if ($multimediaObject->containsTag($youtubeEduTag)) {
@@ -515,8 +485,8 @@ class YoutubeService
     /**
      * Update Status.
      *
-     * @param $yid
-     * @param $login
+     * @param string $yid
+     * @param string $login
      *
      * @throws \Exception
      *
@@ -533,254 +503,6 @@ class YoutubeService
         }
 
         return $aResult;
-    }
-
-    /**
-     * Update playlists.
-     *
-     * @param MultimediaObject $multimediaObject
-     *
-     * @throws \Exception
-     *
-     * @return int
-     */
-    public function updatePlaylists(MultimediaObject $multimediaObject)
-    {
-        $youtube = $this->getYoutubeDocument($multimediaObject);
-        if (Youtube::STATUS_PUBLISHED !== $youtube->getStatus()) {
-            return 0;
-        }
-        $this->checkAndAddDefaultPlaylistTag($multimediaObject);
-
-        foreach ($multimediaObject->getTags() as $embedTag) {
-            if (!$embedTag->isDescendantOfByCod($this->METATAG_PLAYLIST_COD)) {
-                //This is not the tag you are looking for
-                continue;
-            }
-            $playlistTag = $this->tagRepo->findOneByCod($embedTag->getCod());
-
-            if (!$playlistTag->getProperty('youtube_playlist')) {
-                continue;
-            }
-            $playlistId = $playlistTag->getProperty('youtube');
-
-            if (!isset($playlistId) || !array_key_exists($playlistId, $youtube->getPlaylists())) {
-                //If the tag doesn't exist on youtube playlists
-                $this->moveToList($multimediaObject, $playlistTag->getId());
-            }
-        }
-        foreach ($youtube->getPlaylists() as $playlistId => $playlistRel) {
-            $playlistTag = $this->getTagByYoutubeProperty($playlistId);
-            //If the tag doesn't exist in PuMuKIT
-            if (null === $playlistTag) {
-                $errorLog = sprintf('%s [%s] Error! The tag with id %s => %s for Youtube Playlist does not exist', __CLASS__, __FUNCTION__, $playlistId, $playlistRel);
-                $this->logger->warning($errorLog);
-
-                continue;
-            }
-            if (!$multimediaObject->containsTagWithCod($playlistTag->getCod())) {
-                //If the mmobj doesn't have this tag
-                $playlistItem = $youtube->getPlaylist($playlistId);
-                if (null === $playlistItem) {
-                    $errorLog = sprintf('%s [%s] Error! The Youtube document with id %s does not have a playlist item for Playlist %s', __CLASS__, __FUNCTION__, $youtube->getId(), $playlistId);
-                    $this->logger->error($errorLog);
-
-                    throw new \Exception($errorLog);
-                }
-                $this->deleteFromList($playlistItem, $youtube, $playlistId, false);
-            }
-        }
-
-        $this->dm->persist($youtube);
-        $this->dm->flush();
-
-        return 0;
-    }
-
-    /**
-     * Updates the relationship between Tags and Youtube Playlists according to the $this->PLAYLISTS_MASTER
-     * configuration. If the master is PuMuKIT, it deletes/creates/updates_metadata of all playlists in Youtube based
-     * on existent tags. If the master is Youtube, it deletes/creates/updates_metadata of all tags in PuMuKIT based on
-     * existent Youtube playlists.
-     *
-     * @param mixed $dryRun
-     *
-     * @return int
-     */
-    public function syncPlaylistsRelations($dryRun = false)
-    {
-        if ($this->USE_DEFAULT_PLAYLIST) {
-            $this->getOrCreateDefaultTag();
-        }
-        $youtubeAccount = $this->dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(['cod' => 'YOUTUBE']);
-        foreach ($youtubeAccount->getChildren() as $account) {
-            $allPlaylistTags = $account->getChildren();
-            $login = $account->getProperty('login');
-
-            // If these condition is deleted, syncPlaylistRelations brokes and all videos will be without playlist
-            $currentDir = __DIR__.'/../Resources/data/accounts/';
-            if (!file_exists($currentDir.$login.'.json')) {
-                $this->logger->error("There aren't file for account {$login}");
-
-                continue;
-            }
-
-            $allYoutubePlaylists = $this->getAllYoutubePlaylists(
-                $login
-            ); //Returns array with all neccessary, list(['id','title'])
-            //REFACTOR THIS ARRAY_MAP >>
-            $allYoutubePlaylistsIds = array_map(
-                function ($n) {
-                    return $n['id'];
-                },
-                $allYoutubePlaylists
-            );
-            $master = $this->PLAYLISTS_MASTER;
-            $allTagsYtId = [];
-
-            foreach ($allPlaylistTags as $tag) {
-                $ytPlaylistId = $tag->getProperty('youtube');
-                $allTagsYtId[] = $ytPlaylistId;
-
-                if (null === $ytPlaylistId || !in_array($ytPlaylistId, $allYoutubePlaylistsIds)) {
-                    //If a playlist on PuMuKIT doesn't exist on Youtube, create it.
-                    if ('pumukit' == $master) {
-                        $msg = sprintf(
-                            'Creating YouTube playlist from tag "%s" (%s) because it doesn\'t exist locally',
-                            $tag->getTitle(),
-                            $tag->getCod()
-                        );
-                        echo $msg, "\n";
-                        $this->logger->info($msg);
-                        if (!$dryRun) {
-                            $this->createYoutubePlaylist($tag);
-                        }
-                    } elseif ($this->DELETE_PLAYLISTS) {
-                        $msg = sprintf(
-                            'Deleting tag "%s" (%s) because it doesn\'t exist on YouTube',
-                            $tag->getTitle(),
-                            $tag->getCod()
-                        );
-                        echo $msg, "\n";
-                        $this->logger->alert($msg);
-                        if (!$dryRun) {
-                            $this->deletePumukitPlaylist($tag);
-                        }
-                    }
-                } else {
-                    if ('pumukit' == $master) {
-                        $msg = sprintf(
-                            'Updating YouTube playlist from tag "%s" (%s)',
-                            $tag->getTitle(),
-                            $tag->getCod()
-                        );
-                        echo $msg, "\n";
-                        $this->logger->info($msg);
-                        if (!$dryRun) {
-                            $this->updateYoutubePlaylist($tag);
-                        }
-                    } else {
-                        $msg = sprintf(
-                            'Updating tag from YouTube playlist "%s" (%s)',
-                            $tag->getTitle(),
-                            $tag->getCod()
-                        );
-                        echo $msg, "\n";
-                        $this->logger->info($msg);
-                        if (!$dryRun) {
-                            $this->updatePumukitPlaylist($tag);
-                        }
-                    }
-                }
-            }
-            foreach ($allYoutubePlaylists as $ytPlaylist) {
-                if (!in_array($ytPlaylist['id'], $allTagsYtId)) {
-                    if ('youtube' == $master) {
-                        $msg = sprintf(
-                            'Creating tag using YouTube playlist "%s" (%s)',
-                            $ytPlaylist['title'],
-                            $ytPlaylist['id']
-                        );
-                        echo $msg, "\n";
-                        $this->logger->info($msg);
-                        if (!$dryRun) {
-                            $this->createPumukitPlaylist($ytPlaylist);
-                        }
-                    } elseif ($this->DELETE_PLAYLISTS) {
-                        if ('Favorites' == $ytPlaylist['title']) {
-                            continue;
-                        }
-
-                        $msg = sprintf(
-                            'Deleting YouTube playlist "%s" (%s) because it doesn\'t exist locally',
-                            $ytPlaylist['title'],
-                            $ytPlaylist['id']
-                        );
-                        echo $msg, "\n";
-                        $this->logger->alert($msg);
-                        if (!$dryRun) {
-                            $this->deleteYoutubePlaylist($ytPlaylist, $login);
-                        }
-                    }
-                }
-            }
-        }
-
-        return 0;
-    }
-
-    /**
-     * Gets an array of 'playlists' with all youtube playlists data.
-     * returns array.
-     *
-     * @param string $login
-     *
-     * @throws \Exception
-     *
-     * @return array
-     */
-    public function getAllYoutubePlaylists($login)
-    {
-        $res = [];
-        $playlist = [];
-
-        $aResult = $this->youtubeProcessService->getAllPlaylist($login);
-        if ($aResult['error']) {
-            $errorLog = sprintf('%s [%s] Error in executing getAllPlaylists.py: %s', __CLASS__, __FUNCTION__, $aResult['error_out']);
-            $this->logger->error($errorLog);
-
-            throw new \Exception($errorLog);
-        }
-        foreach ($aResult['out'] as $response) {
-            $playlist['id'] = $response['id'];
-            $playlist['title'] = $response['snippet']['title'];
-            $res[$playlist['id']] = $playlist;
-        }
-
-        return $res;
-    }
-
-    /**
-     * Gets an array of 'playlisitems.
-     * returns array.
-     *
-     * @param string $login
-     *
-     * @throws \Exception
-     *
-     * @return mixed
-     */
-    public function getAllYoutubePlaylistItems($login)
-    {
-        $aResult = $this->youtubeProcessService->getAllPlaylist($login);
-        if ($aResult['error']) {
-            $errorLog = sprintf('%s [%s] Error in executing getAllPlaylists.py: %s', __CLASS__, __FUNCTION__, $aResult['error_out']);
-            $this->logger->error($errorLog);
-
-            throw new \Exception($errorLog);
-        }
-
-        return $aResult['out'];
     }
 
     /**
@@ -831,7 +553,7 @@ class YoutubeService
     }
 
     /**
-     * @param $value
+     * @param string $value
      *
      * @return mixed
      */
@@ -850,11 +572,13 @@ class YoutubeService
      *
      * @param MultimediaObject $multimediaObject
      *
-     * @return Youtube
+     * @throws \MongoException
+     *
+     * @return null|object|Youtube
      */
     public function getYoutubeDocument(MultimediaObject $multimediaObject)
     {
-        $youtube = $this->youtubeRepo->findOneByMultimediaObjectId($multimediaObject->getId());
+        $youtube = $this->youtubeRepo->findOneBy(['multimediaObjectId' => $multimediaObject->getId()]);
         if (null === $youtube) {
             $youtube = $this->fixRemovedYoutubeDocument($multimediaObject);
             $trace = debug_backtrace();
@@ -865,10 +589,10 @@ class YoutubeService
         }
 
         if ($youtube && !$youtube->getYoutubeAccount()) {
-            $youtubeTag = $this->dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(['cod' => 'YOUTUBE']);
+            $youtubeTag = $this->dm->getRepository(Tag::class)->findOneBy(['cod' => 'YOUTUBE']);
             foreach ($multimediaObject->getTags() as $embeddedTag) {
                 if ($embeddedTag->isChildOf($youtubeTag)) {
-                    $tag = $this->dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(['_id' => new \MongoId($embeddedTag->getId())]);
+                    $tag = $this->dm->getRepository(Tag::class)->findOneBy(['_id' => new \MongoId($embeddedTag->getId())]);
                     $youtube->setYoutubeAccount($tag->getProperty('login'));
                     $this->dm->flush();
                 }
@@ -878,231 +602,62 @@ class YoutubeService
         return $youtube;
     }
 
-    /**
-     * Creates a new playlist in Youtube using the 'tag' metadata.
-     *
-     * @param Tag $tag
-     *
-     * @throws \Exception
-     */
-    protected function createYoutubePlaylist(Tag $tag)
+    public function deleteFromList($playlistItem, $youtube, $playlistId, $doFlush = true)
     {
-        echo 'create On Youtube: '.$tag->getTitle($this->ytLocale)."\n";
-
-        $playlistTitle = $tag->getTitle($this->ytLocale);
-        if (strlen($playlistTitle) > 150) {
-            $youtubeTitlePlaylist = substr($playlistTitle, 0, 147);
-            $youtubeTitlePlaylist .= '...';
-        } else {
-            $youtubeTitlePlaylist = $playlistTitle;
-        }
-        $aResult = $this->youtubeProcessService->createPlaylist($youtubeTitlePlaylist, $this->playlistPrivacyStatus);
-        if ($aResult['error']) {
-            $errorLog = sprintf('%s [%s] Error in creating in Youtube the playlist from tag with id %s: %s', __CLASS__, __FUNCTION__, $tag->getId(), $aResult['error_out']);
+        $aResult = $this->youtubeProcessService->deleteFromList($playlistItem, $youtube->getYoutubeAccount());
+        if ($aResult['error'] && (false === strpos($aResult['error_out'], 'Playlist item not found'))) {
+            $errorLog = __CLASS__.' ['.__FUNCTION__."] Error in deleting the Youtube video with id '".$youtube->getId()."' from playlist with id '".$playlistItem."': ".$aResult['error_out'];
             $this->logger->error($errorLog);
 
             throw new \Exception($errorLog);
         }
-        if (null != $aResult['out']) {
-            $infoLog = sprintf('%s [%s] Created Youtube Playlist %s for Tag with id %s', __CLASS__, __FUNCTION__, $aResult['out'], $tag->getId());
-            $this->logger->info($infoLog);
-            $playlistId = $aResult['out'];
-            $tag->setProperty('youtube', $playlistId);
-            $tag->setProperty('customfield', 'youtube:text');
-            $this->dm->persist($tag);
+        $youtube->removePlaylist($playlistId);
+        $this->dm->persist($youtube);
+        if ($doFlush) {
             $this->dm->flush();
-        } else {
-            $errorLog = sprintf('%s [%s] Error! Creating the playlist from tag with id %s', __CLASS__, __FUNCTION__, $tag->getId());
-
-            throw new \Exception($errorLog);
         }
-    }
-
-    /**
-     * Creates a new playlist in PuMuKIT using the 'youtubePlaylist' data. Returns the tag created if successful.
-     *
-     * @param array $youtubePlaylist
-     *                               string $youtubePlaylist['id'] = id of the playlist on youtube.
-     *                               string $youtubePlaylist['title'] = title of the playlist on youtube
-     *
-     * @return Tag
-     */
-    protected function createPumukitPlaylist($youtubePlaylist)
-    {
-        echo 'create On Pumukit: '.$youtubePlaylist['title']."\n";
-        $metatag = $this->getPlaylistMetaTag();
-        $tag = new Tag();
-        $tag->setLocale($this->ytLocale);
-        $tag->setCod($youtubePlaylist['id']);
-        $tag->setTitle($youtubePlaylist['title']);
-        $tag->setDescription('Tag playlist generated automatically from youtube. Do not edit.');
-        $tag->setProperty('youtube', $youtubePlaylist['id']);
-        $tag->setProperty('customfield', 'youtube:text');
-        $tag->setProperty('origin', 'youtube');
-        $tag->setParent($metatag);
-        $this->dm->persist($tag);
-        $this->dm->flush();
-
-        return $tag;
-    }
-
-    /**
-     * Deletes an existing playlist on Youtube given a playlist object.
-     * string $youtubePlaylist['id'] = id of the playlist on youtube.
-     * string $youtubePlaylist['title'] = title of the playlist on youtube.
-     *
-     * @param $youtubePlaylist
-     * @param string $login
-     *
-     * @throws \Exception
-     */
-    protected function deleteYoutubePlaylist($youtubePlaylist, $login)
-    {
-        echo 'delete On Youtube: '.$youtubePlaylist['title']."\n";
-
-        $aResult = $this->youtubeProcessService->deletePlaylist($youtubePlaylist['id'], $login);
-        if (!isset($aResult['out']) && '404' != $aResult['error_out']['code']) {
-            $errorLog = sprintf('%s [%s] Error in deleting in Youtube the playlist with id %s: %s', __CLASS__, __FUNCTION__, $youtubePlaylist['id'], $aResult['error_out']);
-            $this->logger->error($errorLog);
-
-            throw new \Exception($errorLog);
-        }
-        $infoLog = sprintf('%s [%s] Deleted Youtube Playlist with id %s', __CLASS__, __FUNCTION__, $youtubePlaylist['id']);
+        $infoLog = __CLASS__.' ['.__FUNCTION__."] Removed playlist with youtube id '".$playlistId."' and relation of playlist item id '".$playlistItem."' from Youtube document with Mongo id '".$youtube->getId()."'";
         $this->logger->info($infoLog);
     }
 
     /**
-     * Deletes an existing playlist on PuMuKIT. Takes care of deleting all relations left by this tag.
+     * @param MultimediaObject $multimediaObject
      *
-     * @param Tag $tag
+     * @throws \MongoException
+     *
+     * @return null|object|Tag
      */
-    protected function deletePumukitPlaylist(Tag $tag)
+    public function getMultimediaObjectYoutubeAccount(MultimediaObject $multimediaObject)
     {
-        echo 'delete On Pumukit: '.$tag->getTitle($this->ytLocale)."\n";
-        $multimediaObjects = $this->mmobjRepo->findWithTag($tag);
-        foreach ($multimediaObjects as $mmobj) {
-            $this->tagService->removeTagFromMultimediaObject($mmobj, $tag->getId());
-            $youtube = $this->youtubeRepo->findOneByMultimediaObjectId($mmobj->getId());
-            if (isset($youtube)) {
-                $playlist = $youtube->getPlaylist($tag->getProperty('youtube'));
-                if (isset($playlist)) {
-                    $youtube->removePlaylist($playlist->getId());
+        $youtubeTag = $this->dm->getRepository(Tag::class)->findOneBy(['cod' => 'YOUTUBE']);
+        foreach ($multimediaObject->getTags() as $embeddedTag) {
+            if ($embeddedTag->isChildOf($youtubeTag)) {
+                return $this->dm->getRepository(Tag::class)->findOneBy(['_id' => new \MongoId($embeddedTag->getId())]);
+            }
+        }
+    }
+
+    /**
+     * @param MultimediaObject $multimediaObject
+     * @param Tag              $youtubeTagAccount
+     *
+     * @throws \MongoException
+     *
+     * @return array
+     */
+    public function getMultimediaObjectYoutubePlaylists(MultimediaObject $multimediaObject, Tag $youtubeTagAccount)
+    {
+        $tags = [];
+        foreach ($multimediaObject->getTags() as $embeddedTag) {
+            if ($embeddedTag->isChildOf($youtubeTagAccount)) {
+                $tag = $this->dm->getRepository(Tag::class)->findOneBy(['_id' => new \MongoId($embeddedTag->getId())]);
+                if ($tag) {
+                    $tags[] = $tag;
                 }
             }
         }
-        $this->dm->remove($tag);
-        $this->dm->flush();
-    }
 
-    //TODO Update Scripts:
-    protected function updateYoutubePlaylist(Tag $tag)
-    {
-        echo 'update from Pumukit: '.$tag->getTitle($this->ytLocale)."\n";
-    }
-
-    protected function updatePumukitPlaylist(Tag $tag, $youtubePlaylist = null)
-    {
-        echo 'update from Youtube: '.$tag->getTitle($this->ytLocale)."\n";
-    }
-
-    /**
-     * Add the MultimediaObject to the default playlist tag if criteria are met
-     * Current Criteria: - USE_DEFAULT_PLAYLIST == true
-     *                   - Multimedia Object doesn't have any playlists tag.
-     *
-     * @param MultimediaObject $multimediaObject
-     *
-     * @throws \Exception
-     *
-     * @return int
-     */
-    protected function checkAndAddDefaultPlaylistTag(MultimediaObject $multimediaObject)
-    {
-        if (!$this->USE_DEFAULT_PLAYLIST) {
-            return 0;
-        }
-        $has_playlist = false;
-        //This logic is duplicated here from getPlaylistsToUpdate in order to make this function more generic, and the criteria easier to change
-        foreach ($multimediaObject->getTags() as $embedTag) {
-            if ($embedTag->isDescendantOfByCod($this->METATAG_PLAYLIST_COD)) {
-                $has_playlist = true;
-
-                break;
-            }
-        }
-        if ($has_playlist) {
-            return 0;
-        }
-        $playlistTag = $this->getOrCreateDefaultTag();
-        //Adds the tag using the service.
-        try {
-            $this->tagService->addTagToMultimediaObject($multimediaObject, $playlistTag->getId());
-        } catch (\Exception $e) {
-            throw new \Exception($e->getMessage());
-        }
-
-        return 0;
-    }
-
-    /**
-     * Returns the default tag. If it doesn't exist, it creates it first.
-     *
-     * @return Tag
-     */
-    protected function getOrCreateDefaultTag()
-    {
-        $playlistTag = $this->tagRepo->findOneByCod($this->DEFAULT_PLAYLIST_COD);
-        if (isset($playlistTag)) {
-            return $playlistTag;
-        }
-        $metatagPlaylist = $this->getPlaylistMetaTag();
-        $playlistTag = new Tag();
-        $playlistTag->setParent($metatagPlaylist);
-        $playlistTag->setCod($this->DEFAULT_PLAYLIST_COD);
-        $playlistTag->setTitle($this->DEFAULT_PLAYLIST_TITLE);
-        $playlistTag->setTitle($this->DEFAULT_PLAYLIST_TITLE, $this->ytLocale);
-        $this->dm->persist($playlistTag);
-        $this->dm->flush();
-
-        return $playlistTag;
-    }
-
-    /**
-     * Returns the metaTag for youtube playlists.
-     *
-     * @throws \Exception
-     *
-     * @return $metatag
-     */
-    protected function getPlaylistMetaTag()
-    {
-        static $metatag = null;
-        if (null !== $metatag) {
-            return $metatag;
-        }
-
-        $metatag = $this->tagRepo->findOneByCod($this->METATAG_PLAYLIST_COD);
-        if (!isset($metatag)) {
-            $errorLog = sprintf('%s [%s] Error! The METATAG_PLAYLIST with cod:%s for YOUTUBE doesn\'t exist! \n Did you load the tag and set the correct cod in parameters.yml?', __CLASS__, __FUNCTION__, $this->METATAG_PLAYLIST_COD);
-            $this->logger->error($errorLog);
-
-            throw new \Exception($errorLog);
-        }
-
-        return $metatag;
-    }
-
-    /**
-     * Returns a Tag whose youtube property 'youtube' has a $playlistId value.
-     *
-     * @param $playlistId
-     *
-     * @return array|object
-     */
-    protected function getTagByYoutubeProperty($playlistId)
-    {
-        //return $this->tagRepo->getTagByProperty('youtube', $playlistId); //I like this option more (yet unimplemented)
-        return $this->tagRepo->createQueryBuilder()->field('properties.youtube')->equals($playlistId)->getQuery()->getSingleResult();
+        return $tags;
     }
 
     /**
@@ -1274,9 +829,9 @@ class YoutubeService
         foreach ($roles as $role) {
             if ($role->getDisplay()) {
                 foreach ($role->getPeople() as $person) {
-                    $person = $this->dm->getRepository('PumukitSchemaBundle:Person')->findOneById(
-                        new \MongoId($person->getId())
-                    );
+                    $person = $this->dm->getRepository(Person::class)->findOneBy([
+                        '_id' => new \MongoId($person->getId()),
+                    ]);
                     $person->setLocale($this->ytLocale);
                     $addPeople .= $person->getHName().' '.$person->getInfo()."\n";
                     $bPeople = true;
@@ -1317,11 +872,14 @@ class YoutubeService
      *
      * @param MultimediaObject $multimediaObject
      *
-     * @return array
+     * @return string
      */
     protected function getTagsForYoutube(MultimediaObject $multimediaObject)
     {
         $tags = $multimediaObject->getI18nKeywords();
+        if (!isset($tags[$this->ytLocale])) {
+            return '';
+        }
 
         $tagsToUpload = $tags[$this->ytLocale];
 
@@ -1378,10 +936,10 @@ class YoutubeService
         $youtube->setEmbed($this->getEmbed($youtubeId));
         $youtube->setYoutubeId($youtubeId);
 
-        $youtubeTag = $this->dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(['cod' => 'YOUTUBE']);
+        $youtubeTag = $this->dm->getRepository(Tag::class)->findOneBy(['cod' => 'YOUTUBE']);
         foreach ($multimediaObject->getTags() as $embeddedTag) {
             if ($embeddedTag->isChildOf($youtubeTag)) {
-                $tag = $this->dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(['_id' => new \MongoId($embeddedTag->getId())]);
+                $tag = $this->dm->getRepository(Tag::class)->findOneBy(['_id' => new \MongoId($embeddedTag->getId())]);
                 $youtube->setYoutubeAccount($tag->getProperty('login'));
             }
         }
@@ -1400,24 +958,6 @@ class YoutubeService
         $this->dm->flush();
 
         return $youtube;
-    }
-
-    protected function deleteFromList($playlistItem, $youtube, $playlistId, $doFlush = true)
-    {
-        $aResult = $this->youtubeProcessService->deleteFromList($playlistItem, $youtube->getYoutubeAccount());
-        if ($aResult['error'] && (false === strpos($aResult['error_out'], 'Playlist item not found'))) {
-            $errorLog = __CLASS__.' ['.__FUNCTION__."] Error in deleting the Youtube video with id '".$youtube->getId()."' from playlist with id '".$playlistItem."': ".$aResult['error_out'];
-            $this->logger->error($errorLog);
-
-            throw new \Exception($errorLog);
-        }
-        $youtube->removePlaylist($playlistId);
-        $this->dm->persist($youtube);
-        if ($doFlush) {
-            $this->dm->flush();
-        }
-        $infoLog = __CLASS__.' ['.__FUNCTION__."] Removed playlist with youtube id '".$playlistId."' and relation of playlist item id '".$playlistItem."' from Youtube document with Mongo id '".$youtube->getId()."'";
-        $this->logger->info($infoLog);
     }
 
     /**
@@ -1463,5 +1003,22 @@ class YoutubeService
         }
 
         return 0;
+    }
+
+    private function deleteFromPlaylist(Youtube $youtube)
+    {
+        foreach ($youtube->getPlaylists() as $playlistId => $playlistItem) {
+            $this->deleteFromList($playlistItem, $youtube, $playlistId);
+        }
+        $aResult = $this->youtubeProcessService->deleteVideo($youtube, $youtube->getYoutubeAccount());
+        if ($aResult['error'] && (false === strpos($aResult['error_out'], 'No se ha encontrado el video'))) {
+            $errorLog = __CLASS__.' ['.__FUNCTION__."] Error in deleting the YouTube video with id '".$youtube->getYoutubeId()."' and mongo id '".$youtube->getId()."': ".$aResult['error_out'];
+            $this->logger->error($errorLog);
+
+            throw new \Exception($errorLog);
+        }
+        $youtube->setStatus(Youtube::STATUS_REMOVED);
+        $youtube->setForce(false);
+        $this->dm->persist($youtube);
     }
 }

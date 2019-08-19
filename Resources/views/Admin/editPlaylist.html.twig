@@ -36,6 +36,7 @@
                     $('#myModal').hide();
                     var message = '{% trans %}Youtube playlist was successfully edited.{% endtrans %}';
                     success(message);
+                    location.reload();
                 }
             },
             error: function (jqXHR, textStatus, errorThrown) {

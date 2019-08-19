@@ -4,6 +4,7 @@
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
     <services>
+        <defaults public="true" />
         <service id="pumukityoutube.youtube" class="Pumukit\YoutubeBundle\Services\YoutubeService">
             <argument type="service" id="doctrine_mongodb.odm.document_manager"/>
             <argument type="service" id="router"/>
@@ -30,11 +31,11 @@
             <tag name="monolog.logger" channel="youtube"/>
         </service>
         <service id="pumukityoutube.update" class="Pumukit\YoutubeBundle\EventListener\UpdateListener">
-            <argument type="service" id="service_container" />
+            <argument type="service" id="doctrine.odm.mongodb.document_manager" />
             <tag name="kernel.event_listener" event="multimediaobject.update" method="onMultimediaObjectUpdate"/>
         </service>
         <service id="pumukityoutube.remove" class="Pumukit\YoutubeBundle\EventListener\RemoveListener">
-          <argument type="service" id="service_container"/>
+            <argument type="service" id="doctrine_mongodb.odm.document_manager"/>
           <tag name="doctrine_mongodb.odm.event_listener" event="preRemove"/>
         </service>
         <service id="pumukityoutube.youtubeprocess" class="Pumukit\YoutubeBundle\Services\YoutubeProcessService">
@@ -48,9 +49,15 @@
             <argument type="service" id="pumukitschema.tag" />
             <tag name="kernel.event_listener" event="publication.submit" method="onPublicationSubmit"/>
         </service>
+
         <service id="pumukityoutube.menu" class="Pumukit\YoutubeBundle\Services\MenuService">
-            <tag name="pumukitnewadmin.menuitem"></tag>
+            <tag name="pumukitnewadmin.menuitem" />
         </service>
+
+        <service id="pumukityoutube.multimediaobject_menu" class="Pumukit\YoutubeBundle\Services\MultimediaObjectMenuService">
+            <tag name="pumukitnewadmin.mmobjmenuitem" />
+        </service>
+
         <service id="pumukityoutube.caption" class="Pumukit\YoutubeBundle\Services\CaptionService">
             <argument type="service" id="doctrine_mongodb.odm.document_manager"/>
             <argument type="service" id="router"/>
@@ -75,6 +82,31 @@
             <argument type="service" id="pumukitencoder.job" />
             <argument type="service" id="pumukit_opencast.job" on-invalid="null" />
             <tag name="monolog.logger" channel="youtube"/>
+        </service>
+
+        <service id="pumukityoutube.youtube_playlist" class="Pumukit\YoutubeBundle\Services\YoutubePlaylistService">
+            <argument type="service" id="doctrine_mongodb.odm.document_manager"/>
+            <argument type="service" id="pumukityoutube.youtube"/>
+            <argument type="service" id="pumukitschema.tag"/>
+            <argument type="service" id="logger"/>
+            <argument type="service" id="translator"/>
+            <argument type="service" id="pumukityoutube.youtubeprocess" />
+            <argument>%pumukit_youtube.playlist_privacy_status%</argument>
+            <argument>%pumukit_youtube.locale%</argument>
+            <argument>%pumukit_youtube.use_default_playlist%</argument>
+            <argument>%pumukit_youtube.default_playlist_cod%</argument>
+            <argument>%pumukit_youtube.default_playlist_title%</argument>
+            <argument>%pumukit_youtube.metatag_playlist_cod%</argument>
+            <argument>%pumukit_youtube.playlists_master%</argument>
+            <argument>%pumukit_youtube.delete_playlists%</argument>
+            <argument>%pumukit.locales%</argument>
+            <argument>%pumukit_youtube.default_track_upload%</argument>
+            <tag name="monolog.logger" channel="youtube"/>
+        </service>
+
+        <service id="pumukit_youtube.twig_extension" class="Pumukit\YoutubeBundle\Twig\YoutubeExtension">
+            <argument type="service" id="doctrine_mongodb.odm.document_manager" />
+            <tag name="twig.extension" />
         </service>
     </services>
 </container>

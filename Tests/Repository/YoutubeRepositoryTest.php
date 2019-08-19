@@ -30,7 +30,7 @@ class YoutubeRepositoryTest extends WebTestCase
         $this->dm->getDocumentCollection('PumukitYoutubeBundle:Youtube')
             ->remove([])
         ;
-        $this->dm->getDocumentCollection('PumukitSchemaBundle:MultimediaObject')
+        $this->dm->getDocumentCollection(MultimediaObject::class)
             ->remove([])
         ;
         $this->dm->flush();

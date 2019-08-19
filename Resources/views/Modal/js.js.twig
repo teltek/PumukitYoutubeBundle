@@ -1,0 +1,52 @@
+"use strict";
+
+$('.manualUpdatePlaylist').on('click',function() {
+    $('#myModal').modal('toggle');
+    $.ajax({
+        url: '{{ path('pumukityoutube_updateplaylist', {'id': mm.id}) }}',
+        method: 'GET',
+        success: function (response) {
+            success("{{ 'Update playlist successfully' | trans }}");
+        },
+        error: function(response) {
+            no_success(response.error);
+        },
+    });
+    return false;
+});
+
+$('.copy-embed-link').on('click',function() {
+    var input = document.getElementById("copy-embed-link");
+    var originalStyle = input.style.display;
+    input.style.display = 'block';
+    input.select();
+    document.execCommand("copy");
+    input.style.display = originalStyle;
+});
+
+$('.copy-youtube-link').on('click',function() {
+    var input = document.getElementById("copy-youtube-link");
+    var originalStyle = input.style.display;
+    input.style.display = 'block';
+    input.select();
+    document.execCommand("copy");
+    input.style.display = originalStyle;
+});
+
+
+$('.forcedUploadVideo').on('click',function() {
+    if (window.confirm("{% trans %}Do you want force upload this video? This action will delete old video causing lose all views on Youtube{% endtrans %}")){
+        $('#myModal').modal('toggle');
+        $.ajax({
+            url: '{{ path('pumukityoutube_force_upload', {'id': mm.id}) }}',
+            method: 'GET',
+            success: function (response) {
+                success("{{ 'Update video successfully' | trans }}");
+            },
+            error: function(response) {
+                no_success(response.error);
+            },
+        });
+        return false;
+    }
+});

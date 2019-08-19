@@ -128,6 +128,13 @@ class Youtube
     private $captions;
 
     /**
+     * @var string
+     *
+     * @MongoDB\Field(type="string")
+     */
+    private $fileUploaded;
+
+    /**
      * Constructor.
      */
     public function __construct()
@@ -285,7 +292,7 @@ class Youtube
      *
      * @param string $key
      *
-     * @return null|string
+     * @return null|Youtube
      */
     public function getPlaylist($key)
     {
@@ -529,7 +536,7 @@ class Youtube
     /**
      * Get caption by id.
      *
-     * @param $id
+     * @param string $id
      *
      * @return null|Caption
      */
@@ -547,7 +554,7 @@ class Youtube
     /**
      * Get caption by caption id.
      *
-     * @param $captionId
+     * @param string $captionId
      *
      * @return null|Caption
      */
@@ -565,7 +572,7 @@ class Youtube
     /**
      * Get caption by material id.
      *
-     * @param $materialId
+     * @param string $materialId
      *
      * @return null|Caption
      */
@@ -618,5 +625,19 @@ class Youtube
         return null;
     }
 
-    // End of Caption getter - setter etc methods section
+    /**
+     * @return string
+     */
+    public function getFileUploaded()
+    {
+        return $this->fileUploaded;
+    }
+
+    /**
+     * @param string $fileUploaded
+     */
+    public function setFileUploaded(string $fileUploaded)
+    {
+        $this->fileUploaded = $fileUploaded;
+    }
 }

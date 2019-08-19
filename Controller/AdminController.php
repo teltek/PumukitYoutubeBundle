@@ -26,6 +26,8 @@ class AdminController extends Controller
      * @Security("is_granted('ROLE_ACCESS_YOUTUBE')")
      * @Route ("/", name="pumukit_youtube_admin_index")
      * @Template()
+     *
+     * @return array
      */
     public function indexAction()
     {
@@ -36,13 +38,15 @@ class AdminController extends Controller
      * @Security("is_granted('ROLE_ACCESS_YOUTUBE')")
      * @Route ("/list", name="pumukit_youtube_admin_list")
      * @Template()
+     *
+     * @return array
      */
     public function listAction()
     {
         $dm = $this->get('doctrine_mongodb')->getManager();
         $translator = $this->get('translator');
 
-        $youtubeAccounts = $dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(['cod' => $this->youtubeTag]);
+        $youtubeAccounts = $dm->getRepository(Tag::class)->findOneBy(['cod' => $this->youtubeTag]);
         if (!$youtubeAccounts) {
             throw new NotFoundHttpException($translator->trans('Youtube tag not defined'));
         }
@@ -51,13 +55,13 @@ class AdminController extends Controller
     }
 
     /**
-     * @param Request $request
-     *
-     * @return array|JsonResponse
-     *
      * @Security("is_granted('ROLE_ACCESS_YOUTUBE')")
      * @Route ("/create", name="pumukit_youtube_create_account")
      * @Template()
+     *
+     * @param Request $request
+     *
+     * @return array|JsonResponse
      */
     public function createAction(Request $request)
     {
@@ -70,7 +74,7 @@ class AdminController extends Controller
         $form->handleRequest($request);
         if ('POST' === $request->getMethod() && $form->isValid()) {
             try {
-                $youtubeTag = $dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(
+                $youtubeTag = $dm->getRepository(Tag::class)->findOneBy(
                     ['cod' => $this->youtubeTag]
                 );
 
@@ -103,20 +107,22 @@ class AdminController extends Controller
     }
 
     /**
-     * @param Request $request
-     * @param         $id
-     *
-     * @return array|JsonResponse
-     *
      * @Security("is_granted('ROLE_ACCESS_YOUTUBE')")
      * @Route ("/edit/{id}", name="pumukit_youtube_edit_account")
      * @Template()
+     *
+     * @param Request $request
+     * @param string  $id
+     *
+     * @throws \MongoException
+     *
+     * @return array|JsonResponse
      */
     public function editAction(Request $request, $id)
     {
         $dm = $this->get('doctrine_mongodb')->getManager();
 
-        $youtubeAccount = $dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(['_id' => new \MongoId($id)]);
+        $youtubeAccount = $dm->getRepository(Tag::class)->findOneBy(['_id' => new \MongoId($id)]);
 
         $translator = $this->get('translator');
         $locale = $request->getLocale();
@@ -153,14 +159,12 @@ class AdminController extends Controller
     }
 
     /**
-     * @param $id
-     *
-     * @throws \Exception
-     *
-     * @return JsonResponse
-     *
      * @Security("is_granted('ROLE_ACCESS_YOUTUBE')")
      * @Route ("/delete/{id}", name="pumukit_youtube_delete_tag")
+     *
+     * @param string $id
+     *
+     * @return JsonResponse
      */
     public function deleteAction($id)
     {
@@ -168,7 +172,7 @@ class AdminController extends Controller
 
         try {
             $dm = $this->get('doctrine_mongodb')->getManager();
-            $youtubeAccount = $dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(
+            $youtubeAccount = $dm->getRepository(Tag::class)->findOneBy(
                 ['_id' => new \MongoId($id)]
             );
             $tagService->deleteTag($youtubeAccount);
@@ -185,12 +189,12 @@ class AdminController extends Controller
     }
 
     /**
-     * @param Tag $tag
-     *
      * @Security("is_granted('ROLE_ACCESS_YOUTUBE')")
      * @route("/children/{id}", name="pumukit_youtube_children_tag")
      * @ParamConverter("tag", class="PumukitSchemaBundle:Tag")
      * @Template()
+     *
+     * @param Tag $tag
      *
      * @return array
      */
@@ -204,13 +208,15 @@ class AdminController extends Controller
     }
 
     /**
-     * @param         $id
-     * @param Request $request
-     *
-     * @return array|JsonResponse
      * @Security("is_granted('ROLE_ACCESS_YOUTUBE')")
      * @Route ("/create/playlist/{id}", name="pumukit_youtube_create_playlist")
      * @Template()
+     *
+     * @param Request $request
+     * @param string  $id
+     *
+     * @return array|JsonResponse
+     * @return array|JsonResponse
      */
     public function createPlaylistAction(Request $request, $id)
     {
@@ -224,7 +230,6 @@ class AdminController extends Controller
         if ('POST' === $request->getMethod() && $form->isValid()) {
             try {
                 $data = $form->getData();
-
                 $playlist = new Tag();
                 $playlist->setI18nTitle($data['i18n_title']);
                 $playlist->setProperty('youtube_playlist', true);
@@ -232,7 +237,7 @@ class AdminController extends Controller
 
                 $playlist->setCod($playlist->getId());
 
-                $account = $dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(['_id' => new \MongoId($id)]);
+                $account = $dm->getRepository(Tag::class)->findOneBy(['_id' => new \MongoId($id)]);
                 $playlist->setParent($account);
 
                 $dm->flush();
@@ -255,13 +260,17 @@ class AdminController extends Controller
     }
 
     /**
-     * @param         $id
-     * @param Request $request
-     *
-     * @return array|JsonResponse
      * @Security("is_granted('ROLE_ACCESS_YOUTUBE')")
      * @Route ("/edit/playlist/{id}", name="pumukit_youtube_edit_playlist")
      * @Template()
+     *
+     * @param Request $request
+     * @param string  $id
+     *
+     * @throws \MongoException
+     *
+     * @return array|JsonResponse
+     * @return array|JsonResponse
      */
     public function editPlaylistAction(Request $request, $id)
     {
@@ -269,7 +278,7 @@ class AdminController extends Controller
         $translator = $this->get('translator');
         $locale = $request->getLocale();
 
-        $playlist = $dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(['_id' => new \MongoId($id)]);
+        $playlist = $dm->getRepository(Tag::class)->findOneBy(['_id' => new \MongoId($id)]);
 
         $form = $this->createForm(YoutubePlaylistType::class, $playlist, ['translator' => $translator, 'locale' => $locale]);
         $form->handleRequest($request);
@@ -297,18 +306,19 @@ class AdminController extends Controller
     }
 
     /**
-     * @param MultimediaObject $multimediaObject
-     *
-     * @return array
      * @Route ("/update/config/{id}", name="pumukityoutube_advance_configuration_index")
      * @ParamConverter("multimediaObject", class="PumukitSchemaBundle:MultimediaObject", options={"id" = "id"})
      * @Template()
+     *
+     * @param MultimediaObject $multimediaObject
+     *
+     * @return array
      */
     public function updateYTAction(MultimediaObject $multimediaObject)
     {
         $dm = $this->get('doctrine_mongodb')->getManager();
 
-        $youtubeAccounts = $dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(['cod' => $this->youtubeTag]);
+        $youtubeAccounts = $dm->getRepository(Tag::class)->findOneBy(['cod' => $this->youtubeTag]);
 
         $accountSelectedTag = '';
         $playlistSelectedTag = [];
@@ -331,10 +341,11 @@ class AdminController extends Controller
     }
 
     /**
-     * @param $id
+     * @Route ("/playlist/list/{id}", name="pumukityoutube_playlist_select")
+     *
+     * @param string $id
      *
      * @return JsonResponse
-     * @Route ("/playlist/list/{id}", name="pumukityoutube_playlist_select")
      */
     public function playlistAccountAction($id)
     {
@@ -343,7 +354,7 @@ class AdminController extends Controller
         }
 
         $dm = $this->get('doctrine_mongodb')->getManager();
-        $youtubeAccount = $dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(['_id' => $id]);
+        $youtubeAccount = $dm->getRepository(Tag::class)->findOneBy(['_id' => $id]);
 
         if (!$youtubeAccount) {
             return new JsonResponse([]);

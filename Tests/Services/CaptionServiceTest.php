@@ -4,6 +4,7 @@ namespace Pumukit\YoutubeBundle\Tests\Services;
 
 use Pumukit\SchemaBundle\Document\Material;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
+use Pumukit\SchemaBundle\Document\Series;
 use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\SchemaBundle\Document\Track;
 use Pumukit\SchemaBundle\Services\TagService;
@@ -44,10 +45,10 @@ class CaptionServiceTest extends WebTestCase
             ->getRepository('PumukitYoutubeBundle:Youtube')
         ;
         $this->mmobjRepo = $this->dm
-            ->getRepository('PumukitSchemaBundle:MultimediaObject')
+            ->getRepository(MultimediaObject::class)
         ;
         $this->tagRepo = $this->dm
-            ->getRepository('PumukitSchemaBundle:Tag')
+            ->getRepository(Tag::class)
         ;
         $this->router = $kernel->getContainer()
             ->get('router')
@@ -65,10 +66,10 @@ class CaptionServiceTest extends WebTestCase
         $this->playlistPrivacyStatus = $kernel->getContainer()
             ->getParameter('pumukit_youtube.playlist_privacy_status')
         ;
-        $this->dm->getDocumentCollection('PumukitSchemaBundle:MultimediaObject')->remove([]);
-        $this->dm->getDocumentCollection('PumukitSchemaBundle:Series')->remove([]);
-        $this->dm->getDocumentCollection('PumukitSchemaBundle:Tag')->remove([]);
-        $this->dm->getDocumentCollection('PumukitYoutubeBundle:Youtube')->remove([]);
+        $this->dm->getDocumentCollection(MultimediaObject::class)->remove([]);
+        $this->dm->getDocumentCollection(Series::class)->remove([]);
+        $this->dm->getDocumentCollection(Tag::class)->remove([]);
+        $this->dm->getDocumentCollection(Youtube::class)->remove([]);
         $this->dm->flush();
         $this->multimediaobject_dispatcher = $kernel->getContainer()
             ->get('pumukitschema.multimediaobject_dispatcher')
@@ -379,7 +380,7 @@ class CaptionServiceTest extends WebTestCase
         ;
 
         $out = $this->captionService->listAllCaptions($multimediaObject);
-        $this->assertEquals($listOutput['out'], $out);
+        $this->assertEquals($listOutput['error_out'], $out);
     }
 
     /**
@@ -558,7 +559,7 @@ class CaptionServiceTest extends WebTestCase
 
     private function createTagWithCode($code, $title, $tagParentCode = null, $metatag = false, $display = true)
     {
-        if ($tag = $this->tagRepo->findOneByCod($code)) {
+        if ($tag = $this->tagRepo->findOneBy(['cod' => $code])) {
             throw new \Exception('Nothing done - Tag retrieved from DB id: '.$tag->getId().' cod: '.$tag->getCod());
         }
         $tag = new Tag();
@@ -569,7 +570,7 @@ class CaptionServiceTest extends WebTestCase
         $tag->setTitle($title, 'gl');
         $tag->setTitle($title, 'en');
         if ($tagParentCode) {
-            if ($parent = $this->tagRepo->findOneByCod($tagParentCode)) {
+            if ($parent = $this->tagRepo->findOneBy(['cod' => $tagParentCode])) {
                 $tag->setParent($parent);
             } else {
                 throw new \Exception('Nothing done - There is no tag in the database with code '.$tagParentCode.' to be the parent tag');
