@@ -25,14 +25,14 @@ class YoutubeInitTagsCommand extends ContainerAwareCommand
     {
         $this->setName('youtube:init:tags')->setDescription(
             'Load Youtube tag data fixture to your database'
-            )->addOption('force', null, InputOption::VALUE_NONE, 'Set this parameter to execute this action')->setHelp(
-                <<<'EOT'
+        )->addOption('force', null, InputOption::VALUE_NONE, 'Set this parameter to execute this action')->setHelp(
+            <<<'EOT'
 Command to load a controlled Youtube tags data into a database. Useful for init Youtube environment.
 
 The --force parameter has to be used to actually drop the database.
 
 EOT
-            );
+        );
     }
 
     /**

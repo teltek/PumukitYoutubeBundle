@@ -55,7 +55,7 @@ class CaptionDeleteCommand extends ContainerAwareCommand
 Command to delete a controlled set of captions from Youtube.
 
 EOT
-          )
+            )
         ;
     }
 

@@ -62,7 +62,7 @@ Sync YouTube Service metadata with local metadata(title, description...). Meanin
 PERFORMANCE NOTE: This command has a good performance because only use the multimedia objects updated from the last synchronization.
 
 EOT
-        )
+            )
         ;
     }
 

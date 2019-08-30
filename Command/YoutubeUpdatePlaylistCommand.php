@@ -65,7 +65,7 @@ class YoutubeUpdatePlaylistCommand extends ContainerAwareCommand
 Command to update playlist in Youtube.
 
 EOT
-          )
+            )
         ;
     }
 
