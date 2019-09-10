@@ -67,30 +67,24 @@
         } else {
             $('#youtube_advanced_configuration').hide();
         }
-        {% if selectedAccount %}
-            $("#youtube_playlist_label").select2({
-                width: 'resolve',
-                multiple: true,
-            });
-        {% else %}
-            var href = $("#youtube_label option:first-child").data('href');
-            if (href) {
-                $.ajax({
-                    url: href,
-                    method: 'GET',
-                    success: function (response) {
-                        $("#youtube_playlist_label").select2({
-                            multiple: true,
-                            width: 'resolve',
-                            data: response
-                        });
-                    },
-                    error: function (jqXHR, textStatus, errorThrown) {
-                        no_success(errorThrown + ': ' + textStatus);
-                    }
-                })
-            }
-        {% endif %}
+
+        var href = $("#youtube_label option:first-child").data('href');
+        if (href) {
+            $.ajax({
+                url: href,
+                method: 'GET',
+                success: function (response) {
+                    $("#youtube_playlist_label").select2({
+                        multiple: true,
+                        width: 'resolve',
+                        data: response
+                    });
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    no_success(errorThrown + ': ' + textStatus);
+                }
+            })
+        }
 
     });
 
@@ -104,8 +98,8 @@
                 url: href,
                 method: 'GET',
                 success: function (response) {
-                    console.log(response);
-                    $('#youtube_playlist_label').append($('<option value="any">&nbsp;</option>'));
+                    var text = "{{ 'Without playlist'|trans }}";
+                    $('#youtube_playlist_label').append($('<option value="any">' + text +'</option>'));
                     $("#youtube_playlist_label").select2({
                         multiple: true,
                         width: 'resolve',
@@ -128,7 +122,6 @@
         }
     });
 
-
     $('#create_yt_playlist').on('click',function(event){
 
         var account = $("#youtube_label option:selected").val();
@@ -140,15 +133,16 @@
         event.preventDefault();
         var href = $("#youtube_label option:selected").data('href');
         $('#youtube_playlist_label').empty();
+        var text = "{{ 'Without playlist'|trans }}";
         $.ajax({
             url: href,
             method: 'GET',
             success: function (response) {
-                $('#youtube_playlist_label').append($('<option value="any">&nbsp;</option>'));
+                $('#youtube_playlist_label').append($('<option value="any">' + text +'</option>'));
                 $("#youtube_playlist_label").select2({
                     multiple: true,
                     width: 'resolve',
-                    data: response
+                    data: response,
                 });
             },
             error: function (jqXHR, textStatus, errorThrown) {

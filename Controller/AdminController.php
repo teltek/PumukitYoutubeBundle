@@ -368,6 +368,13 @@ class AdminController extends Controller
             ];
         }
 
+        $defaultOption = [
+            'id' => 'any',
+            'text' => $this->get('translator')->trans('Without playlist'),
+        ];
+
+        array_unshift($children, $defaultOption);
+
         return new JsonResponse($children);
     }
 }
