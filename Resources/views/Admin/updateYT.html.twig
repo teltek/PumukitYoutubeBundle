@@ -23,7 +23,7 @@
             <div id="list_playlist">
                 <label for="youtube_playlist_label">
                     {{ "Playlist"|trans }}
-                    {% if multimediaObject.isPrototype() %}
+                    {% if multimediaObject.isPrototype() and (not is_granted('ROLE_TAG_DISABLE_PUCHYOUTUBE') and is_granted('ROLE_ACCESS_YOUTUBE'))%}
                         {% set default_account = youtubeAccounts|first %}
                         <a id="create_yt_playlist" title="{{ "Create new playlist"|trans }}" href="#" data-href="{{ path('pumukit_youtube_create_playlist', {'id': '__account__' }) }}" data-toggle="modal" data-backdrop="static" data-target="#myModal">
                             <i class="mdi-av-playlist-add"></i>
