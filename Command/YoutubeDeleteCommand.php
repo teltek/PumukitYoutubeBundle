@@ -2,6 +2,7 @@
 
 namespace Pumukit\YoutubeBundle\Command;
 
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ODM\MongoDB\DocumentManager;
 use Psr\Log\LoggerInterface;
 use Pumukit\SchemaBundle\Document\EmbeddedBroadcast;
@@ -66,21 +67,12 @@ class YoutubeDeleteCommand extends ContainerAwareCommand
             ->setHelp(
                 <<<'EOT'
 Command to delete controlled videos from Youtube.
-                
+
 EOT
             )
         ;
     }
 
-    /**
-     * @param InputInterface  $input
-     * @param OutputInterface $output
-     *
-     * @throws \Exception
-     * @throws \Doctrine\ODM\MongoDB\MongoDBException
-     *
-     * @return null|int|void
-     */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $youtubeMongoIds = $this->youtubeRepo->getDistinctFieldWithStatusAndForce('_id', Youtube::STATUS_PUBLISHED, false);
@@ -155,11 +147,7 @@ EOT
         $this->dryRun = (true === $input->getOption('dry-run'));
     }
 
-    /**
-     * @param array           $mms
-     * @param OutputInterface $output
-     */
-    private function deleteVideosFromYoutube(array $mms, OutputInterface $output)
+    private function deleteVideosFromYoutube(iterable $mms, OutputInterface $output)
     {
         foreach ($mms as $mm) {
             try {
@@ -193,11 +181,7 @@ EOT
         }
     }
 
-    /**
-     * @param array           $orphanYoutubes
-     * @param OutputInterface $output
-     */
-    private function deleteOrphanVideosFromYoutube(array $orphanYoutubes, OutputInterface $output)
+    private function deleteOrphanVideosFromYoutube(iterable $orphanYoutubes, OutputInterface $output)
     {
         foreach ($orphanYoutubes as $youtube) {
             try {
@@ -245,12 +229,7 @@ EOT
         }
     }
 
-    /**
-     * @param mixed $mongoIds
-     *
-     * @return array
-     */
-    private function getStringIds($mongoIds)
+    private function getStringIds(iterable $mongoIds): array
     {
         $stringIds = [];
         foreach ($mongoIds as $mongoId) {
@@ -260,13 +239,7 @@ EOT
         return $stringIds;
     }
 
-    /**
-     * @param array $youtubeIds
-     * @param array $status
-     *
-     * @return mixed
-     */
-    private function getMultimediaObjectsInYoutubeWithoutStatus(array $youtubeIds, array $status)
+    private function getMultimediaObjectsInYoutubeWithoutStatus(array $youtubeIds, array $status): Collection
     {
         return $this->createYoutubeQueryBuilder($youtubeIds)
             ->field('status')->notIn($status)
@@ -275,13 +248,7 @@ EOT
         ;
     }
 
-    /**
-     * @param array  $youtubeIds
-     * @param string $tagCode
-     *
-     * @return mixed
-     */
-    private function getMultimediaObjectsInYoutubeWithoutTagCode(array $youtubeIds, $tagCode)
+    private function getMultimediaObjectsInYoutubeWithoutTagCode(array $youtubeIds, $tagCode): Collection
     {
         return $this->createYoutubeQueryBuilder($youtubeIds)
             ->field('tags.cod')->notEqual($tagCode)
@@ -290,13 +257,7 @@ EOT
         ;
     }
 
-    /**
-     * @param array  $youtubeIds
-     * @param string $broadcastTypeId
-     *
-     * @return mixed
-     */
-    private function getMultimediaObjectsInYoutubeWithoutEmbeddedBroadcast(array $youtubeIds, $broadcastTypeId = EmbeddedBroadcast::TYPE_PUBLIC)
+    private function getMultimediaObjectsInYoutubeWithoutEmbeddedBroadcast(array $youtubeIds, $broadcastTypeId = EmbeddedBroadcast::TYPE_PUBLIC): Collection
     {
         return $this->createYoutubeQueryBuilder($youtubeIds)
             ->field('embeddedBroadcast.type')->notEqual($broadcastTypeId)
@@ -305,11 +266,6 @@ EOT
         ;
     }
 
-    /**
-     * @param array $youtubeIds
-     *
-     * @return mixed
-     */
     private function createYoutubeQueryBuilder(array $youtubeIds = [])
     {
         $qb = $this->dm->getRepository(MultimediaObject::class)
@@ -372,7 +328,7 @@ EOT
      * @param string          $state
      * @param array           $youtubeDocuments
      */
-    private function showYoutubeMultimediaObjects(OutputInterface $output, $state, array $youtubeDocuments)
+    private function showYoutubeMultimediaObjects(OutputInterface $output, $state, iterable $youtubeDocuments)
     {
         $numberYoutubeDocuments = count($youtubeDocuments);
         $output->writeln(
