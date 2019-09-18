@@ -146,7 +146,7 @@ class YoutubeService
      *
      * @param MultimediaObject $multimediaObject
      *
-     * @return null|int|Track
+     * @return int|Track|null
      */
     public function getTrack(MultimediaObject $multimediaObject)
     {
@@ -574,7 +574,7 @@ class YoutubeService
      *
      * @throws \MongoException
      *
-     * @return null|object|Youtube
+     * @return object|Youtube|null
      */
     public function getYoutubeDocument(MultimediaObject $multimediaObject)
     {
@@ -625,7 +625,7 @@ class YoutubeService
      *
      * @throws \MongoException
      *
-     * @return null|object|Tag
+     * @return object|Tag|null
      */
     public function getMultimediaObjectYoutubeAccount(MultimediaObject $multimediaObject)
     {

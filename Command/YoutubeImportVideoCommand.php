@@ -143,7 +143,7 @@ EOT
      *
      * @throws \Exception
      *
-     * @return null|bool|int
+     * @return bool|int|null
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
@@ -431,7 +431,7 @@ EOT
      * @throws \Doctrine\ODM\MongoDB\LockException
      * @throws \Doctrine\ODM\MongoDB\Mapping\MappingException
      *
-     * @return null|object
+     * @return object|null
      */
     private function getMmObjFromYid($yid)
     {
@@ -454,7 +454,7 @@ EOT
      * @throws \Doctrine\ODM\MongoDB\LockException
      * @throws \Doctrine\ODM\MongoDB\Mapping\MappingException
      *
-     * @return null|object|Series
+     * @return object|Series|null
      */
     private function getSeries($seriesId)
     {

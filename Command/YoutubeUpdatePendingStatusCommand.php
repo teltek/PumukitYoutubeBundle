@@ -30,7 +30,7 @@ EOT
      * @param InputInterface  $input
      * @param OutputInterface $output
      *
-     * @return null|int|void
+     * @return int|void|null
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {

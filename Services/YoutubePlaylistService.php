@@ -220,7 +220,7 @@ class YoutubePlaylistService
             // If these condition is deleted, syncPlaylistRelations brokes and all videos will be without playlist
             $currentDir = __DIR__.'/../Resources/data/accounts/';
 
-            $secondaryPath = $this->kernelRootDir . '/../app/config/youtube_accounts/'.$login.'.json';
+            $secondaryPath = $this->kernelRootDir.'/../app/config/youtube_accounts/'.$login.'.json';
             if (!file_exists($currentDir.$login.'.json') && !file_exists($secondaryPath)) {
                 $this->logger->error("There aren't file for account {$login}");
 
@@ -589,7 +589,7 @@ class YoutubePlaylistService
      *
      * @param string $playlistId
      *
-     * @return null|array|Tag
+     * @return array|Tag|null
      */
     protected function getTagByYoutubeProperty($playlistId)
     {

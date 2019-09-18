@@ -78,7 +78,7 @@ EOT
      *
      * @throws \Exception
      *
-     * @return null|int|void
+     * @return int|void|null
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
@@ -194,7 +194,7 @@ EOT
      * @param Youtube $youtube
      * @param bool    $pumukit1Id
      *
-     * @return null|array|object
+     * @return array|object|null
      */
     private function findByYoutubeIdAndPumukit1Id(Youtube $youtube, $pumukit1Id = false)
     {
@@ -221,7 +221,7 @@ EOT
     /**
      * @param Youtube $youtube
      *
-     * @return null|array|object
+     * @return array|object|null
      */
     private function findByYoutubeId(Youtube $youtube)
     {

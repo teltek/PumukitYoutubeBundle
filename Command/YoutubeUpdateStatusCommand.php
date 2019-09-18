@@ -75,7 +75,7 @@ EOT
      * @throws \Doctrine\ODM\MongoDB\MongoDBException
      * @throws \MongoException
      *
-     * @return null|int|void
+     * @return int|void|null
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
@@ -176,7 +176,7 @@ EOT
      *
      * @throws \MongoException
      *
-     * @return null|array|object
+     * @return array|object|null
      */
     protected function findByYoutubeIdAndPumukit1Id(Youtube $youtube, $pumukit1Id = false)
     {
@@ -204,7 +204,7 @@ EOT
      *
      * @throws \MongoException
      *
-     * @return null|array|object
+     * @return array|object|null
      */
     protected function findByYoutubeId(Youtube $youtube)
     {

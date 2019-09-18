@@ -104,7 +104,7 @@ class YoutubeServiceTest extends WebTestCase
         ;
         $opencastService = null;
         $this->youtubeService = new YoutubeService($this->dm, $this->router, $this->tagService, $this->logger, $this->notificationSender, $this->translator, $this->youtubeProcessService, $this->playlistPrivacyStatus, $locale, $useDefaultPlaylist, $defaultPlaylistCod, $defaultPlaylistTitle, $metatagPlaylistCod, $playlistMaster, $deletePlaylists, $pumukitLocales, $youtubeSyncStatus, $defaultTrackUpload, $generateSbs, $sbsProfileName, $jobService, $opencastService);
-        $this->youtubePlaylistService = new YoutubePlaylistService($this->dm, $this->youtubeService, $this->tagService, $this->logger, $this->translator, $this->youtubeProcessService, $this->playlistPrivacyStatus, $locale, $useDefaultPlaylist, $defaultPlaylistCod, $defaultPlaylistTitle, $metatagPlaylistCod, $playlistMaster, $deletePlaylists, $pumukitLocales, $defaultTrackUpload,$kernelRootDir);
+        $this->youtubePlaylistService = new YoutubePlaylistService($this->dm, $this->youtubeService, $this->tagService, $this->logger, $this->translator, $this->youtubeProcessService, $this->playlistPrivacyStatus, $locale, $useDefaultPlaylist, $defaultPlaylistCod, $defaultPlaylistTitle, $metatagPlaylistCod, $playlistMaster, $deletePlaylists, $pumukitLocales, $defaultTrackUpload, $kernelRootDir);
         $this->resourcesDir = realpath(__DIR__.'/../Resources').'/';
     }
 

@@ -35,7 +35,7 @@ class YoutubeProcessService
      * @param DocumentManager $documentManager
      * @param RouterInterface $router
      * @param LoggerInterface $logger
-     * @param null|float      $process_timeout
+     * @param float|null      $process_timeout
      */
     public function __construct(DocumentManager $documentManager, RouterInterface $router, LoggerInterface $logger, $process_timeout)
     {

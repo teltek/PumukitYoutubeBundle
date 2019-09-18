@@ -65,7 +65,7 @@ EOT
      *
      * @throws \Doctrine\ODM\MongoDB\MongoDBException
      *
-     * @return null|int|void
+     * @return int|void|null
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {

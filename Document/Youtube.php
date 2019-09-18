@@ -292,7 +292,7 @@ class Youtube
      *
      * @param string $key
      *
-     * @return null|Youtube
+     * @return Youtube|null
      */
     public function getPlaylist($key)
     {
@@ -538,7 +538,7 @@ class Youtube
      *
      * @param string $id
      *
-     * @return null|Caption
+     * @return Caption|null
      */
     public function getCaptionById($id)
     {
@@ -556,7 +556,7 @@ class Youtube
      *
      * @param string $captionId
      *
-     * @return null|Caption
+     * @return Caption|null
      */
     public function getCaptionByCaptionId($captionId)
     {
@@ -574,7 +574,7 @@ class Youtube
      *
      * @param string $materialId
      *
-     * @return null|Caption
+     * @return Caption|null
      */
     public function getCaptionByMaterialId($materialId)
     {
@@ -612,7 +612,7 @@ class Youtube
      *
      * @param string $language
      *
-     * @return null|Caption
+     * @return Caption|null
      */
     public function getCaptionByLanguage($language)
     {
