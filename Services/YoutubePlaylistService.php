@@ -54,8 +54,9 @@ class YoutubePlaylistService
     private $DELETE_PLAYLISTS;
     private $ytLocale;
     private $defaultTrackUpload;
+    private $kernelRootDir;
 
-    public function __construct(DocumentManager $documentManager, YoutubeService $youtubeService, TagService $tagService, LoggerInterface $logger, TranslatorInterface $translator, YoutubeProcessService $youtubeProcessService, $playlistPrivacyStatus, $locale, $useDefaultPlaylist, $defaultPlaylistCod, $defaultPlaylistTitle, $metatagPlaylistCod, $playlistMaster, $deletePlaylists, $pumukitLocales, $defaultTrackUpload)
+    public function __construct(DocumentManager $documentManager, YoutubeService $youtubeService, TagService $tagService, LoggerInterface $logger, TranslatorInterface $translator, YoutubeProcessService $youtubeProcessService, $playlistPrivacyStatus, $locale, $useDefaultPlaylist, $defaultPlaylistCod, $defaultPlaylistTitle, $metatagPlaylistCod, $playlistMaster, $deletePlaylists, $pumukitLocales, $defaultTrackUpload, $kernelRootDir)
     {
         $this->documentManager = $documentManager;
         $this->youtubeService = $youtubeService;
@@ -72,6 +73,7 @@ class YoutubePlaylistService
         $this->METATAG_PLAYLIST_COD = $metatagPlaylistCod;
         $this->PLAYLISTS_MASTER = $playlistMaster;
         $this->DELETE_PLAYLISTS = $deletePlaylists;
+        $this->kernelRootDir = $kernelRootDir;
 
         $this->defaultTrackUpload = $defaultTrackUpload;
         if (!in_array($this->ytLocale, $pumukitLocales)) {
@@ -217,7 +219,9 @@ class YoutubePlaylistService
 
             // If these condition is deleted, syncPlaylistRelations brokes and all videos will be without playlist
             $currentDir = __DIR__.'/../Resources/data/accounts/';
-            if (!file_exists($currentDir.$login.'.json')) {
+
+            $secondaryPath = $this->kernelRootDir . '/../app/config/youtube_accounts/'.$login.'.json';
+            if (!file_exists($currentDir.$login.'.json') && !file_exists($secondaryPath)) {
                 $this->logger->error("There aren't file for account {$login}");
 
                 continue;
