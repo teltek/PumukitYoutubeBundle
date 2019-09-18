@@ -239,7 +239,7 @@ EOT
         return $stringIds;
     }
 
-    private function getMultimediaObjectsInYoutubeWithoutStatus(array $youtubeIds, array $status): Collection
+    private function getMultimediaObjectsInYoutubeWithoutStatus(array $youtubeIds, array $status)
     {
         return $this->createYoutubeQueryBuilder($youtubeIds)
             ->field('status')->notIn($status)
@@ -248,7 +248,7 @@ EOT
         ;
     }
 
-    private function getMultimediaObjectsInYoutubeWithoutTagCode(array $youtubeIds, $tagCode): Collection
+    private function getMultimediaObjectsInYoutubeWithoutTagCode(array $youtubeIds, $tagCode)
     {
         return $this->createYoutubeQueryBuilder($youtubeIds)
             ->field('tags.cod')->notEqual($tagCode)
@@ -257,7 +257,7 @@ EOT
         ;
     }
 
-    private function getMultimediaObjectsInYoutubeWithoutEmbeddedBroadcast(array $youtubeIds, $broadcastTypeId = EmbeddedBroadcast::TYPE_PUBLIC): Collection
+    private function getMultimediaObjectsInYoutubeWithoutEmbeddedBroadcast(array $youtubeIds, $broadcastTypeId = EmbeddedBroadcast::TYPE_PUBLIC)
     {
         return $this->createYoutubeQueryBuilder($youtubeIds)
             ->field('embeddedBroadcast.type')->notEqual($broadcastTypeId)
