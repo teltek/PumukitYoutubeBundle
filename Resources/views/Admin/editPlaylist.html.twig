@@ -6,6 +6,9 @@
 </div>
 
 <div class="modal-body">
+    <div class="alert alert-info text-center" role="alert">
+        {{ "Maximum title allowed for playlist are 150 characters."|trans }}
+    </div>
     {% form_theme form 'PumukitNewAdminBundle:Themes:fields.html.twig' %}
     <form autocomplete="off" id="pumukit_youtube_edit_playlist" action="{{ path('pumukit_youtube_edit_playlist', {'id': playlist.getId()}) }}" method="POST">
         {{ form_start(form) }}

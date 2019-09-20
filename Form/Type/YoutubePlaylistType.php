@@ -27,7 +27,7 @@ class YoutubePlaylistType extends AbstractType
 
         $builder->add('i18n_title', TextI18nType::class, [
             'label' => $this->translator->trans('Title', [], null, $this->locale),
-            'attr' => ['class' => 'form-control'],
+            'attr' => ['class' => 'form-control', 'maxlength' => 149],
             'required' => true,
         ]);
     }
