@@ -2,7 +2,6 @@
 
 namespace Pumukit\YoutubeBundle\Command;
 
-use Doctrine\Common\Collections\Collection;
 use Doctrine\ODM\MongoDB\DocumentManager;
 use Psr\Log\LoggerInterface;
 use Pumukit\SchemaBundle\Document\EmbeddedBroadcast;
