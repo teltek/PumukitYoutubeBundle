@@ -241,6 +241,10 @@
         <source>File not saved on database</source>
         <target>Archivo no guardado en la BBDD</target>
       </trans-unit>
+      <trans-unit id="1" resname="The maximum size allowed for the playlist title is 150 characters.">
+        <source>The maximum size allowed for the playlist title is 150 characters.</source>
+        <target>El tamaño máximo permitido para  el título de la playlist es de 150 caracteres</target>
+      </trans-unit>
     </body>
   </file>
 </xliff>
