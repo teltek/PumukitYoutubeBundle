@@ -7,9 +7,6 @@ use Pumukit\SchemaBundle\Document\Tag;
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFunction;
 
-/**
- * Class PumukitExtension.
- */
 class YoutubeExtension extends AbstractExtension
 {
     /**
@@ -17,32 +14,20 @@ class YoutubeExtension extends AbstractExtension
      */
     private $documentManager;
 
-    /**
-     * PumukitExtension constructor.
-     *
-     * @param DocumentManager $documentManager
-     */
     public function __construct(DocumentManager $documentManager)
     {
         $this->documentManager = $documentManager;
     }
 
-    /**
-     * @return array
-     */
-    public function getFunctions()
+    public function getFunctions(): array
     {
         return [
             new TwigFunction('playlist_name', [$this, 'getPlaylistName']),
+            new TwigFunction('status_icon', [$this, 'getStatusIcon']),
         ];
     }
 
-    /**
-     * @param string $youtubePlaylistHash
-     *
-     * @return string
-     */
-    public function getPlaylistName($youtubePlaylistHash)
+    public function getPlaylistName(string $youtubePlaylistHash): string
     {
         $tag = $this->documentManager->getRepository(Tag::class)->findOneBy([
             'properties.youtube' => $youtubePlaylistHash,
@@ -53,5 +38,10 @@ class YoutubeExtension extends AbstractExtension
         }
 
         return $tag->getTitle();
+    }
+
+    public function getStatusIcon(int $status): string
+    {
+        return 'mdi-action-accessibility';
     }
 }
