@@ -9,7 +9,7 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\Template;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 
 /**
- * @Security("is_granted('ROLE_ACCESS_YOUTUBE')")
+ * @Security("is_granted('ROLE_SUPER_ADMIN')")
  * @Route("/stats")
  */
 class StatsController extends Controller
@@ -52,6 +52,18 @@ class StatsController extends Controller
         ];
     }
 
+    /**
+     * @Route("/configuration/", name="pumukit_youtube_configuration")
+     * @Template("PumukitYoutubeBundle:Stats:modal_configuration.html.twig")
+     */
+    public function modalConfigurationAction(): array
+    {
+        $youtubeConfigurationService = $this->container->get('pumukityoutube.youtube_configuration');
+
+        return [
+            'youtubeConfiguration' => $youtubeConfigurationService->getBundleConfiguration(),
+        ];
+    }
     private function processYoutubeDocuments(array $youtubeStatusDocuments): array
     {
         $stats = [];

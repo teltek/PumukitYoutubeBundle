@@ -5,10 +5,12 @@ namespace Pumukit\YoutubeBundle\Services;
 class YoutubeConfigurationService
 {
     private $useDefaultPlaylist;
+    private $playlistPrivateStatus;
     private $defaultPlaylistCod;
     private $defaultPlaylistTitle;
     private $metaTagPlaylistCod;
     private $playlistMaster;
+    private $deletePlaylist;
     private $locale;
     private $publicationChannelsTags;
     private $processTimeOut;
@@ -21,11 +23,13 @@ class YoutubeConfigurationService
     private $uploadRemovedVideos;
 
     public function __construct(
-        string $useDefaultPlaylist,
+        string $playlistPrivateStatus,
+        bool $useDefaultPlaylist,
         string $defaultPlaylistCod,
         string $defaultPlaylistTitle,
         string $metaTagPlaylistCod,
         string $playlistMaster,
+        bool $deletePlaylist,
         string $locale,
         array $publicationChannelsTags,
         int $processTimeOut,
@@ -34,14 +38,16 @@ class YoutubeConfigurationService
         string $defaultImageForAudio,
         array $allowedCaptionMimeTypes,
         bool $generateSbs,
-        string $sbsProfileName,
-        bool $uploadRemovedVideos
+        bool $uploadRemovedVideos,
+        string $sbsProfileName
     ) {
         $this->useDefaultPlaylist = $useDefaultPlaylist;
+        $this->playlistPrivateStatus = $playlistPrivateStatus;
         $this->defaultPlaylistCod = $defaultPlaylistCod;
         $this->defaultPlaylistTitle = $defaultPlaylistTitle;
         $this->metaTagPlaylistCod = $metaTagPlaylistCod;
         $this->playlistMaster = $playlistMaster;
+        $this->deletePlaylist = $deletePlaylist;
         $this->locale = $locale;
         $this->publicationChannelsTags = $publicationChannelsTags;
         $this->processTimeOut = $processTimeOut;
@@ -57,11 +63,13 @@ class YoutubeConfigurationService
     public function getBundleConfiguration(): array
     {
         return [
+            'playlistPrivateStatus' => $this->playlistPrivateStatus,
             'defaultPlaylist' => $this->useDefaultPlaylist,
             'defaultPlaylistCod' => $this->defaultPlaylistCod,
             'defaultPlaylistTitle' => $this->defaultPlaylistTitle,
             'metaTagPlaylistCod' => $this->metaTagPlaylistCod,
             'playlistMaster' => $this->playlistMaster,
+            'deletePlaylist' => $this->deletePlaylist,
             'locale' => $this->locale,
             'publicationChannelsTags' => $this->publicationChannelsTags,
             'processTimeOut' => $this->processTimeOut,

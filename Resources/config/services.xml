@@ -131,8 +131,8 @@
             <argument>%pumukit_youtube.default_image_for_audio%</argument>
             <argument>%pumukit_youtube.allowed_caption_mimetypes%</argument>
             <argument>%pumukit_youtube.generate_sbs%</argument>
-            <argument>%pumukit_youtube.sbs_profile_name%</argument>
             <argument>%pumukit_youtube.upload_removed_videos%</argument>
+            <argument>%pumukit_youtube.sbs_profile_name%</argument>
         </service>
 
         <service id="pumukit_youtube.twig_extension" class="Pumukit\YoutubeBundle\Twig\YoutubeExtension">
