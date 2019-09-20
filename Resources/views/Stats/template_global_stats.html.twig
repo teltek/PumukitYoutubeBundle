@@ -1,40 +1,65 @@
 <h3 class="cab_body_div">
     <ul class="breadcrumb" style="margin-bottom: 5px;">
         <li class="active">
-            {{ "Youtube Global Stats"|trans }}
+            {{ "YouTube Global Stats"|trans }}
         </li>
     </ul>
 </h3>
 
-
 <div class="row">
     <div class="col-md-12">
         <div class="row">
-            {% for status, text in youtubeStatus if status != 0 %}
-                <div class="col-md-4 col-sm-6 col-xs-12">
-                    <div class="info-box">
-                        <span class="info-box-icon bg-warning">
-                            <i class="{{ status_icon(status) }}"></i>
+
+            <div class="col-md-4 col-sm-6 col-xs-12">
+                <div class="info-box">
+                    <span class="info-box-icon bg-yellow">
+                        <i class="glyphicon glyphicon-user"></i>
+                    </span>
+                    <div class="info-box-content">
+                        <span class="info-box-text" data-toggle="tooltip" data-placement="bottom" title="{{ "Number of accounts"|trans }}">{{ "Number of accounts"|trans }}</span>
+                        <span class="info-box-number">
+                            {{ accountsStats|length }}
                         </span>
-                        <div class="info-box-content">
-                            <span class="info-box-number">
-                                <span class="info-box-text"> {{ text|trans }}</span>
-                                {% if youtubeStatusDocuments[status] is defined %}
-                                    {% set number = (youtubeStatusDocuments[status])|length %}
-                                {% else %}
-                                    {% set number = 0 %}
-                                {% endif %}
-                                {{ number }}
-                                <small>
-                                    {% transchoice number %}
-                                        {0} videos|{1} video|]1,Inf] videos
-                                    {% endtranschoice %}
-                                </small>
-                            </span>
-                        </div>
                     </div>
                 </div>
-            {% endfor %}
+            </div>
+
+
+            <div class="col-md-4 col-sm-6 col-xs-12">
+                <div class="info-box">
+                    <span class="info-box-icon bg-yellow">
+                        <i class="glyphicon glyphicon-user"></i>
+                    </span>
+                    <div class="info-box-content">
+                        <span class="info-box-text" data-toggle="tooltip" data-placement="bottom" title="{{ "Number of playlist"|trans }}">{{ "Number of playlist"|trans }}</span>
+                        <span class="info-box-number">
+                            {% set playlistNumber = 0 %}
+                            {% for account in accountsStats %}
+                                {% set playlistNumber = playlistNumber + account|length %}
+                            {% endfor %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4 col-sm-6 col-xs-12">
+                <div class="info-box">
+                    <span class="info-box-icon bg-yellow">
+                        <i class="glyphicon glyphicon-user"></i>
+                    </span>
+                    <div class="info-box-content">
+                        <span class="info-box-text" data-toggle="tooltip" data-placement="bottom" title="{{ "Number of videos"|trans }}">{{ "Number of videos"|trans }}</span>
+                        <span class="info-box-number">
+                            {% set videosNumber = 0 %}
+                            {% for account in accountsStats %}
+                                {% set videosNumber = videosNumber + account|length %}
+                            {% endfor %}
+                            {{ videosNumber }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 </div>

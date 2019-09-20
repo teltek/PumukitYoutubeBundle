@@ -60,8 +60,9 @@
 
     <a href="{{ path('pumukit_youtube_configuration') }}"  data-toggle="modal" data-backdrop="static" data-target="#myModal">Info</a>
 
-    {% include "PumukitYoutubeBundle:Stats:template_accounts.html.twig" %}
     {% include "PumukitYoutubeBundle:Stats:template_global_stats.html.twig" %}
+    {% include "PumukitYoutubeBundle:Stats:template_accounts.html.twig" %}
+    {% include "PumukitYoutubeBundle:Stats:template_status_stats.html.twig" %}
 
 
 {% endblock %}

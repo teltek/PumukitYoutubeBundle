@@ -1,0 +1,40 @@
+<h3 class="cab_body_div">
+    <ul class="breadcrumb" style="margin-bottom: 5px;">
+        <li class="active">
+            {{ "Youtube Status Stats"|trans }}
+        </li>
+    </ul>
+</h3>
+
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="row">
+            {% for status, text in youtubeStatus if status != 0 %}
+                <div class="col-md-4 col-sm-6 col-xs-12">
+                    <div class="info-box">
+                        <span class="info-box-icon bg-warning">
+                            <i class="{{ status_icon(status) }}"></i>
+                        </span>
+                        <div class="info-box-content">
+                            <span class="info-box-number">
+                                <span class="info-box-text"> {{ text|trans }}</span>
+                                {% if youtubeStatusDocuments[status] is defined %}
+                                    {% set number = (youtubeStatusDocuments[status])|length %}
+                                {% else %}
+                                    {% set number = 0 %}
+                                {% endif %}
+                                {{ number }}
+                                <small>
+                                    {% transchoice number %}
+                                        {0} videos|{1} video|]1,Inf] videos
+                                    {% endtranschoice %}
+                                </small>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
