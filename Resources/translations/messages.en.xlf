@@ -245,9 +245,9 @@
         <source>File not saved on database</source>
         <target>File not saved on database</target>
       </trans-unit>
-      <trans-unit id="k_4Bpb1" resname="Maximum title allowed for playlist are 150 characters.">
-        <source>Maximum title allowed for playlist are 150 characters.</source>
-        <target>Maximum title allowed for playlist are 150 characters.</target>
+      <trans-unit id="k_4Bpb1" resname="The maximum size allowed for the playlist title is 150 characters.">
+        <source>The maximum size allowed for the playlist title is 150 characters.</source>
+        <target>The maximum size allowed for the playlist title is 150 characters.</target>
       </trans-unit>
     </body>
   </file>
