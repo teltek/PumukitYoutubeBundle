@@ -253,10 +253,6 @@
         <source>Youtube Status Stats</source>
         <target>Youtube Status Stats</target>
       </trans-unit>
-      <trans-unit id="Ocu8Bnx" resname="Show documents by status">
-        <source>Show documents by status</source>
-        <target>Show documents by status</target>
-      </trans-unit>
       <trans-unit id="3E1teZw" resname="{0} videos|{1} video|]1,Inf] videos">
         <source>{0} videos|{1} video|]1,Inf] videos</source>
         <target>{0} videos|{1} video|]1,Inf] videos</target>
@@ -332,6 +328,58 @@
       <trans-unit id="PWjs23M" resname="Youtube - Accounts">
         <source>Youtube - Accounts</source>
         <target>Youtube - Accounts</target>
+      </trans-unit>
+      <trans-unit id="zJ8cb4J" resname="YouTube Accounts">
+        <source>YouTube Accounts</source>
+        <target>YouTube Accounts</target>
+      </trans-unit>
+      <trans-unit id="OeFeLJ1" resname="uploading">
+        <source>uploading</source>
+        <target>uploading</target>
+      </trans-unit>
+      <trans-unit id="CmPdmqC" resname="processing">
+        <source>processing</source>
+        <target>processing</target>
+      </trans-unit>
+      <trans-unit id="sE5eogG" resname="published">
+        <source>published</source>
+        <target>published</target>
+      </trans-unit>
+      <trans-unit id="9IKVsfk" resname="http error">
+        <source>http error</source>
+        <target>http error</target>
+      </trans-unit>
+      <trans-unit id="G7BckOr" resname="general error">
+        <source>general error</source>
+        <target>general error</target>
+      </trans-unit>
+      <trans-unit id="55FYYJo" resname="duplicated">
+        <source>duplicated</source>
+        <target>duplicated</target>
+      </trans-unit>
+      <trans-unit id="4feXWMx" resname="removed">
+        <source>removed</source>
+        <target>removed</target>
+      </trans-unit>
+      <trans-unit id="ibTsWcs" resname="notified error">
+        <source>notified error</source>
+        <target>notified error</target>
+      </trans-unit>
+      <trans-unit id="1xMwIJ0" resname="to delete">
+        <source>to delete</source>
+        <target>to delete</target>
+      </trans-unit>
+      <trans-unit id="HfD7rzX" resname="update_error">
+        <source>update_error</source>
+        <target>update_error</target>
+      </trans-unit>
+      <trans-unit id="led5zyh" resname="Show documents by status ">
+        <source>Show documents by status </source>
+        <target>Show documents by status </target>
+      </trans-unit>
+      <trans-unit id="aFd2PNJ" resname="Edit multimedia object ">
+        <source>Edit multimedia object </source>
+        <target>Edit multimedia object </target>
       </trans-unit>
     </body>
   </file>
