@@ -241,7 +241,7 @@
         <source>File not saved on database</source>
         <target>Archivo no guardado en la BBDD</target>
       </trans-unit>
-      <trans-unit id="1" resname="The maximum size allowed for the playlist title is 150 characters.">
+      <trans-unit id="SCqj4QU" resname="The maximum size allowed for the playlist title is 150 characters.">
         <source>The maximum size allowed for the playlist title is 150 characters.</source>
         <target>El tamaño máximo permitido para  el título de la playlist es de 150 caracteres</target>
       </trans-unit>
@@ -321,11 +321,11 @@
       <source>Youtube Configuration</source>
       <target>Configuración de Youtube</target>
     </trans-unit>
-      <trans-unit id="1" resname="Youtube - Statistics">
+      <trans-unit id="oPHuMVe" resname="Youtube - Statistics">
         <source>Youtube - Statistics</source>
         <target>Youtube - Estadísticas</target>
       </trans-unit>
-      <trans-unit id="2" resname="Youtube - Accounts">
+      <trans-unit id="PWjs23M" resname="Youtube - Accounts">
         <source>Youtube - Accounts</source>
         <target>Youtube - Cuentas</target>
       </trans-unit>
