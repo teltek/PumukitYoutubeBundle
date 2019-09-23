@@ -12,27 +12,29 @@
         <div class="row">
             {% for status, text in youtubeStatus if status != 0 %}
                 <div class="col-md-4 col-sm-6 col-xs-12">
-                    <div class="info-box">
-                        <span class="info-box-icon bg-warning">
-                            <i class="{{ status_icon(status) }}"></i>
-                        </span>
-                        <div class="info-box-content">
-                            <span class="info-box-number">
-                                <span class="info-box-text"> {{ text|trans }}</span>
-                                {% if youtubeStatusDocuments[status] is defined %}
-                                    {% set number = (youtubeStatusDocuments[status])|length %}
-                                {% else %}
-                                    {% set number = 0 %}
-                                {% endif %}
-                                {{ number }}
-                                <small>
-                                    {% transchoice number %}
-                                        {0} videos|{1} video|]1,Inf] videos
-                                    {% endtranschoice %}
-                                </small>
+                    <a class="youtube_status_link_list" href="{{ path('pumukit_youtube_stat_list', {'status': status }) }}">
+                        <div class="info-box"   data-toggle="tooltip" data-placement="bottom" title="{{ ("Show documents by status "|trans) ~ text }}">
+                            <span class="info-box-icon bg-warning">
+                                {{text|first|upper }}
                             </span>
+                            <div class="info-box-content">
+                                <span class="info-box-number">
+                                    <span class="info-box-text"> {{ text|trans }}</span>
+                                    {% if youtubeStatusDocuments[status] is defined %}
+                                        {% set number = (youtubeStatusDocuments[status])|length %}
+                                    {% else %}
+                                        {% set number = 0 %}
+                                    {% endif %}
+                                    {{ number }}
+                                    <small>
+                                        {% transchoice number %}
+                                            {0} videos|{1} video|]1,Inf] videos
+                                        {% endtranschoice %}
+                                    </small>
+                                </span>
+                            </div>
                         </div>
-                    </div>
+                    </a>
                 </div>
             {% endfor %}
         </div>

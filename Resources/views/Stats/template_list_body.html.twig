@@ -1,0 +1,41 @@
+{% set icon_close = "<i class='mdi-navigation-close'></i>" %}
+
+{% for youtubeDocument in youtubeStatusDocuments %}
+    <tr>
+        <td headers="th-account">
+            {{ youtubeDocument.youtubeAccount }}
+        </td>
+        <td headers="th-youtube-id">
+            {{ youtubeDocument.youtubeId|default(icon_close)|raw }}
+        </td>
+        <td headers="th-youtube-link">
+            {% if youtubeDocument.link %}
+                <a href="{{ youtubeDocument.link }}">
+                    <i class="glyphicon glyphicon-eye-open"></i>
+                </a>
+            {% else %}
+                {{ icon_close|raw }}
+            {% endif %}
+        </td>
+        <td headers="th-youtube-playlist">
+            {% if 0 == (youtubeDocument.playlists|length) %}
+                {{ youtubeDocument.playlists|default(icon_close)|raw }}
+            {% else %}
+                {% for key, playlist in youtubeDocument.playlists %}
+                    {{ playlist_name(key)|default('No title'|trans) }}
+                {% endfor %}
+            {% endif %}
+        </td>
+        <td headers="th-object">
+            <a href="{{ path('pumukitnewadmin_mms_shortener', {'id' : youtubeDocument.multimediaObjectId }) }}" title="{{ ("Edit multimedia object "|trans) ~ youtubeDocument.multimediaObjectId }}">
+                {{ youtubeDocument.multimediaObjectId }}
+            </a>
+        </td>
+        <td headers="th-date">
+            {{ youtubeDocument.uploadDate|localizeddate('medium','medium') }}
+        </td>
+        <td headers="th-file">
+            {{ youtubeDocument.fileUploaded|default(icon_close)|raw }}
+        </td>
+    </tr>
+{% endfor %}

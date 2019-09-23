@@ -137,6 +137,7 @@
 
         <service id="pumukit_youtube.twig_extension" class="Pumukit\YoutubeBundle\Twig\YoutubeExtension">
             <argument type="service" id="doctrine_mongodb.odm.document_manager" />
+            <argument type="service" id="pumukityoutube.youtube_stats" />
             <tag name="twig.extension" />
         </service>
     </services>

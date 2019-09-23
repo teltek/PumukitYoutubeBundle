@@ -56,9 +56,22 @@
         .bg-warning {
             background-color: #00c0ef;
         }
+        .bg-blue {
+            background-color: #0073b7;
+            color: #ffffff;
+        }
+        .bg-green {
+            background-color: #00a65a;
+        }
+        .bg-pumukit {
+            background-color: #c05800;
+            color: #ffffff;
+        }
+        .youtube_status_link_list {
+            text-decoration: none !important;
+            color: #000;
+        }
     </style>
-
-    <a href="{{ path('pumukit_youtube_configuration') }}"  data-toggle="modal" data-backdrop="static" data-target="#myModal">Info</a>
 
     {% include "PumukitYoutubeBundle:Stats:template_global_stats.html.twig" %}
     {% include "PumukitYoutubeBundle:Stats:template_accounts.html.twig" %}

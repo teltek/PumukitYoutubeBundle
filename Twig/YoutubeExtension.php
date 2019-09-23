@@ -4,26 +4,26 @@ namespace Pumukit\YoutubeBundle\Twig;
 
 use Doctrine\ODM\MongoDB\DocumentManager;
 use Pumukit\SchemaBundle\Document\Tag;
+use Pumukit\YoutubeBundle\Services\YoutubeStatsService;
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFunction;
 
 class YoutubeExtension extends AbstractExtension
 {
-    /**
-     * @var DocumentManager
-     */
     private $documentManager;
+    private $youtubeStatsService;
 
-    public function __construct(DocumentManager $documentManager)
+    public function __construct(DocumentManager $documentManager, YoutubeStatsService $youtubeStatsService)
     {
         $this->documentManager = $documentManager;
+        $this->youtubeStatsService = $youtubeStatsService;
     }
 
     public function getFunctions(): array
     {
         return [
             new TwigFunction('playlist_name', [$this, 'getPlaylistName']),
-            new TwigFunction('status_icon', [$this, 'getStatusIcon']),
+            new TwigFunction('status_text', [$this, 'getStatusText']),
         ];
     }
 
@@ -40,8 +40,8 @@ class YoutubeExtension extends AbstractExtension
         return $tag->getTitle();
     }
 
-    public function getStatusIcon(int $status): string
+    public function getStatusText(int $status): string
     {
-        return 'mdi-action-accessibility';
+        return $this->youtubeStatsService->getTextByStatus($status);
     }
 }

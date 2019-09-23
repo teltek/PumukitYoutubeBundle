@@ -2,11 +2,16 @@
 
 namespace Pumukit\YoutubeBundle\Controller;
 
+use Pagerfanta\Adapter\ArrayAdapter;
+use Pagerfanta\Adapter\DoctrineODMMongoDBAdapter;
+use Pagerfanta\Pagerfanta;
 use Pumukit\YoutubeBundle\Document\Youtube;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Template;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
+use Symfony\Component\HttpFoundation\Request;
 
 /**
  * @Security("is_granted('ROLE_SUPER_ADMIN')")
@@ -21,6 +26,9 @@ class StatsController extends Controller
     public function indexAction(): array
     {
         $youtubeService = $this->container->get('pumukityoutube.youtube_stats');
+        if(!$youtubeService) {
+            throw new ServiceNotFoundException('YoutubeService not found');
+        }
 
         $youtubeStatusDocuments = $youtubeService->getYoutubeDocumentsByCriteria();
         $statsYoutubeDocuments = $this->processYoutubeDocuments($youtubeStatusDocuments);
@@ -39,13 +47,21 @@ class StatsController extends Controller
      * @Route("/list/{status}", name="pumukit_youtube_stat_list")
      * @Template("PumukitYoutubeBundle:Stats:template_list.html.twig")
      */
-    public function listAction(string $status): array
+    public function listAction(Request $request, string $status): array
     {
         $youtubeService = $this->container->get('pumukityoutube.youtube_stats');
+        if(!$youtubeService) {
+            throw new ServiceNotFoundException('YoutubeService not found');
+        }
 
-        $youtubeStatusDocuments = $youtubeService->getYoutubeDocumentsByCriteria([
+        $criteria = [
             'status' => (int) $status
-        ]);
+        ];
+
+        $youtubeStatusDocuments = $youtubeService->getYoutubeDocumentsByCriteria($criteria);
+
+        $page = (int) $request->get('page', 1);
+        $youtubeStatusDocuments = $this->createPager($youtubeStatusDocuments, $page, 20);
 
         return [
             'youtubeStatusDocuments' => $youtubeStatusDocuments
@@ -59,11 +75,15 @@ class StatsController extends Controller
     public function modalConfigurationAction(): array
     {
         $youtubeConfigurationService = $this->container->get('pumukityoutube.youtube_configuration');
+        if(!$youtubeConfigurationService) {
+            throw new ServiceNotFoundException('YoutubeConfigurationService not found');
+        }
 
         return [
             'youtubeConfiguration' => $youtubeConfigurationService->getBundleConfiguration(),
         ];
     }
+
     private function processYoutubeDocuments(array $youtubeStatusDocuments): array
     {
         $stats = [];
@@ -73,5 +93,15 @@ class StatsController extends Controller
 
         return $stats;
     }
+
+    private function createPager($objects, $page, $limit = 10): Pagerfanta
+    {
+        $adapter = new ArrayAdapter($objects);
+        $pager = new Pagerfanta($adapter);
+        $pager->setMaxPerPage($limit)->setNormalizeOutOfRangePages(true)->setCurrentPage($page);
+
+        return $pager;
+    }
+
 
 }

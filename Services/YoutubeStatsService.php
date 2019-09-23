@@ -22,6 +22,18 @@ class YoutubeStatsService
         $this->documentManager = $documentManager;
     }
 
+
+    public function getTextByStatus(int $status): string
+    {
+        $allStatus = $this->documentManager->getRepository(Youtube::class)->getAllStatus();
+
+        if(!$allStatus[$status]) {
+            return '';
+        }
+
+        return $allStatus[$status];
+    }
+
     public function getAllYoutubeVideos(): array
     {
         $allYoutubeVideos = $this->documentManager->getRepository(MultimediaObject::class)->findBy([
@@ -42,9 +54,7 @@ class YoutubeStatsService
 
     public function getYoutubeDocumentsByCriteria(array $criteria = []): array
     {
-        $youtubeDocuments = $this->documentManager->getRepository(Youtube::class)->findBy([
-            $criteria
-        ]);
+        $youtubeDocuments = $this->documentManager->getRepository(Youtube::class)->findBy($criteria, ['uploadDate' => -1]);
 
         return $youtubeDocuments;
     }
