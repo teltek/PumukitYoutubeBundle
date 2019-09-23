@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <xliff xmlns="urn:oasis:names:tc:xliff:document:1.2" version="1.2">
-  <file source-language="es" target-language="es" datatype="plaintext" original="file.ext">
+  <file source-language="en" target-language="es" datatype="plaintext" original="file.ext">
     <header>
       <tool tool-id="symfony" tool-name="Symfony"/>
     </header>
@@ -244,6 +244,90 @@
       <trans-unit id="1" resname="The maximum size allowed for the playlist title is 150 characters.">
         <source>The maximum size allowed for the playlist title is 150 characters.</source>
         <target>El tamaño máximo permitido para  el título de la playlist es de 150 caracteres</target>
+      </trans-unit>
+      <trans-unit id=".mWxFSS" resname="Youtube Status Stats">
+        <source>Youtube Status Stats</source>
+        <target>Estadísticas de los estados de Youtube</target>
+      </trans-unit>
+    <trans-unit id="Ocu8Bnx" resname="Show documents by status">
+      <source>Show documents by status</source>
+      <target>Ver documentos por estado</target>
+    </trans-unit>
+    <trans-unit id="3E1teZw" resname="{0} videos|{1} video|]1,Inf] videos">
+      <source>{0} videos|{1} video|]1,Inf] videos</source>
+      <target>{0} videos|{1} video|]1,Inf] videos</target>
+    </trans-unit>
+    <trans-unit id="OEOXHc." resname="ID">
+      <source>ID</source>
+      <target>ID</target>
+    </trans-unit>
+    <trans-unit id="pqMtvFY" resname="Link">
+      <source>Link</source>
+      <target>Link</target>
+    </trans-unit>
+    <trans-unit id="MaEcCRG" resname="Multimedia Object">
+      <source>Multimedia Object</source>
+      <target>Objecto multimedia</target>
+    </trans-unit>
+    <trans-unit id="rArhFm_" resname="Upload date">
+      <source>Upload date</source>
+      <target>Fecha de subida</target>
+    </trans-unit>
+    <trans-unit id="UACc4dp" resname="File">
+      <source>File</source>
+      <target>Archivo</target>
+    </trans-unit>
+    <trans-unit id="7VO065x" resname="{0} playlist|{1} playlist|]1,Inf] playlists">
+      <source>{0} playlist|{1} playlist|]1,Inf] playlists</source>
+      <target>{0} listas de reproducción|{1} lista de reproducción|]1,Inf] listas de reproducción</target>
+    </trans-unit>
+    <trans-unit id="i5JOb1E" resname="YouTube Global Stats">
+      <source>YouTube Global Stats</source>
+      <target>Estadísticas globales de Youtube</target>
+    </trans-unit>
+    <trans-unit id="03w8RGd" resname="Youtube Global Configuration">
+      <source>Youtube Global Configuration</source>
+      <target>Configuración global de YouTube</target>
+    </trans-unit>
+    <trans-unit id="Upc53CP" resname="Number of accounts">
+      <source>Number of accounts</source>
+      <target>Nº de cuentas</target>
+    </trans-unit>
+    <trans-unit id="2uQd0m9" resname="Number of playlist">
+      <source>Number of playlist</source>
+      <target>Nº de listas de reproducción</target>
+    </trans-unit>
+    <trans-unit id="acugIH3" resname="Number of videos">
+      <source>Number of videos</source>
+      <target>Nº de vídeos</target>
+    </trans-unit>
+    <trans-unit id="Ywdy.Ps" resname="YouTube List">
+      <source>YouTube List</source>
+      <target>Listado de YouTube</target>
+    </trans-unit>
+    <trans-unit id="T6vDojo" resname="Without results">
+      <source>Without results</source>
+      <target>Sin resultados</target>
+    </trans-unit>
+    <trans-unit id="MKOwLL7" resname="No title">
+      <source>No title</source>
+      <target>Sín título</target>
+    </trans-unit>
+    <trans-unit id="PWlKoNH" resname="Edit multimedia object">
+      <source>Edit multimedia object</source>
+      <target>Editar objeto multimedia</target>
+    </trans-unit>
+    <trans-unit id="8_skAaA" resname="Youtube Configuration">
+      <source>Youtube Configuration</source>
+      <target>Configuración de Youtube</target>
+    </trans-unit>
+      <trans-unit id="1" resname="Youtube - Statistics">
+        <source>Youtube - Statistics</source>
+        <target>Youtube - Estadísticas</target>
+      </trans-unit>
+      <trans-unit id="2" resname="Youtube - Accounts">
+        <source>Youtube - Accounts</source>
+        <target>Youtube - Cuentas</target>
       </trans-unit>
     </body>
   </file>
