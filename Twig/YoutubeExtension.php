@@ -3,6 +3,7 @@
 namespace Pumukit\YoutubeBundle\Twig;
 
 use Doctrine\ODM\MongoDB\DocumentManager;
+use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\YoutubeBundle\Services\YoutubeStatsService;
 use Twig\Extension\AbstractExtension;
@@ -24,6 +25,7 @@ class YoutubeExtension extends AbstractExtension
         return [
             new TwigFunction('playlist_name', [$this, 'getPlaylistName']),
             new TwigFunction('status_text', [$this, 'getStatusText']),
+            new TwigFunction('multimedia_object_title', [$this, 'getMultimediaObjectTitle']),
         ];
     }
 
@@ -43,5 +45,15 @@ class YoutubeExtension extends AbstractExtension
     public function getStatusText(int $status): string
     {
         return $this->youtubeStatsService->getTextByStatus($status);
+    }
+
+    public function getMultimediaObjectTitle(string $id): ?string
+    {
+        $object = $this->documentManager->getRepository(MultimediaObject::class)->findOneBy(['_id' => new \MongoId($id)]);
+        if (!$object) {
+            return null;
+        }
+
+        return $object->getTitle();
     }
 }

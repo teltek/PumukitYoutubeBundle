@@ -27,9 +27,15 @@
             {% endif %}
         </td>
         <td headers="th-object">
-            <a href="{{ path('pumukitnewadmin_mms_shortener', {'id' : youtubeDocument.multimediaObjectId }) }}" title="{{ ("Edit multimedia object "|trans) ~ youtubeDocument.multimediaObjectId }}">
-                {{ youtubeDocument.multimediaObjectId }}
-            </a>
+            {% set title = multimedia_object_title(youtubeDocument.multimediaObjectId) %}
+            {% if not title %}
+                <i class="mdi-navigation-close"></i>
+            {% else %}
+                <a href="{{ path('pumukitnewadmin_mms_shortener', {'id' : youtubeDocument.multimediaObjectId }) }}" title="{{ ("Edit multimedia object "|trans) ~ youtubeDocument.multimediaObjectId }}">
+                    {{ title }}
+                </a>
+            {% endif %}
+
         </td>
         <td headers="th-date">
             {{ youtubeDocument.uploadDate|localizeddate('medium','medium') }}
