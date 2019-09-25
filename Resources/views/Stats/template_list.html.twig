@@ -6,13 +6,13 @@
         <ul class="breadcrumb" style="margin-bottom: 5px;">
             <li class="active">
                 <a href="{{ path('pumukit_youtube_stat_index') }}">YouTube</a> /
-                {{ "YouTube List"|trans }} ({{ status_text(app.request.get('status'))|capitalize }})
+                {{ "YouTube List"|trans }} ({{ title|trans|capitalize }})
             </li>
         </ul>
     </h3>
 
     <div class="well">
-        {% if youtubeStatusDocuments|length > 0 %}
+        {% if youtubeDocuments|length > 0 %}
             <table class="table table-striped">
                 <thead>
                     {% include "PumukitYoutubeBundle:Stats:template_list_head.html.twig" %}
@@ -23,7 +23,7 @@
             </table>
 
             <div class="text-center">
-                {{ pagerfanta(youtubeStatusDocuments, 'twitter_bootstrap3') }}
+                {{ pagerfanta(youtubeDocuments, 'twitter_bootstrap3') }}
             </div>
 
         {% else %}

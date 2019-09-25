@@ -3,7 +3,6 @@
 namespace Pumukit\YoutubeBundle\Controller;
 
 use Pagerfanta\Adapter\ArrayAdapter;
-use Pagerfanta\Adapter\DoctrineODMMongoDBAdapter;
 use Pagerfanta\Pagerfanta;
 use Pumukit\YoutubeBundle\Document\Youtube;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
@@ -26,7 +25,7 @@ class StatsController extends Controller
     public function indexAction(): array
     {
         $youtubeService = $this->container->get('pumukityoutube.youtube_stats');
-        if(!$youtubeService) {
+        if (!$youtubeService) {
             throw new ServiceNotFoundException('YoutubeService not found');
         }
 
@@ -44,27 +43,54 @@ class StatsController extends Controller
     }
 
     /**
-     * @Route("/list/{status}", name="pumukit_youtube_stat_list")
+     * @Route("/status/list/{status}", name="pumukit_youtube_stat_list")
      * @Template("PumukitYoutubeBundle:Stats:template_list.html.twig")
      */
-    public function listAction(Request $request, string $status): array
+    public function listByStatusAction(Request $request, string $status): array
     {
         $youtubeService = $this->container->get('pumukityoutube.youtube_stats');
-        if(!$youtubeService) {
+        if (!$youtubeService) {
             throw new ServiceNotFoundException('YoutubeService not found');
         }
 
         $criteria = [
-            'status' => (int) $status
+            'status' => (int) $status,
         ];
 
-        $youtubeStatusDocuments = $youtubeService->getYoutubeDocumentsByCriteria($criteria);
+        $youtubeDocuments = $youtubeService->getYoutubeDocumentsByCriteria($criteria);
 
         $page = (int) $request->get('page', 1);
-        $youtubeStatusDocuments = $this->createPager($youtubeStatusDocuments, $page, 20);
+        $youtubeDocuments = $this->createPager($youtubeDocuments, $page, 20);
 
         return [
-            'youtubeStatusDocuments' => $youtubeStatusDocuments
+            'youtubeDocuments' => $youtubeDocuments,
+            'title' => $youtubeService->getTextByStatus($status),
+        ];
+    }
+
+    /**
+     * @Route("/account/list/{account}", name="pumukit_youtube_stat_account_list")
+     * @Template("PumukitYoutubeBundle:Stats:template_list.html.twig")
+     */
+    public function listByAccountAction(Request $request, string $account): array
+    {
+        $youtubeService = $this->container->get('pumukityoutube.youtube_stats');
+        if (!$youtubeService) {
+            throw new ServiceNotFoundException('YoutubeService not found');
+        }
+
+        $criteria = [
+            'youtubeAccount' => $account,
+        ];
+
+        $youtubeDocuments = $youtubeService->getYoutubeDocumentsByCriteria($criteria);
+
+        $page = (int) $request->get('page', 1);
+        $youtubeDocuments = $this->createPager($youtubeDocuments, $page, 20);
+
+        return [
+            'youtubeDocuments' => $youtubeDocuments,
+            'title' => $account,
         ];
     }
 
@@ -75,7 +101,7 @@ class StatsController extends Controller
     public function modalConfigurationAction(): array
     {
         $youtubeConfigurationService = $this->container->get('pumukityoutube.youtube_configuration');
-        if(!$youtubeConfigurationService) {
+        if (!$youtubeConfigurationService) {
             throw new ServiceNotFoundException('YoutubeConfigurationService not found');
         }
 
@@ -102,6 +128,4 @@ class StatsController extends Controller
 
         return $pager;
     }
-
-
 }

@@ -9,7 +9,6 @@ use Pumukit\YoutubeBundle\Document\Youtube;
 
 class YoutubeStatsService
 {
-
     public const YOUTUBE_PUBCHANNEL_TAG_COD = 'PUCHYOUTUBE';
     public const YOUTUBE_TAG_COD = 'YOUTUBE';
 
@@ -22,12 +21,11 @@ class YoutubeStatsService
         $this->documentManager = $documentManager;
     }
 
-
     public function getTextByStatus(int $status): string
     {
         $allStatus = $this->documentManager->getRepository(Youtube::class)->getAllStatus();
 
-        if(!$allStatus[$status]) {
+        if (!$allStatus[$status]) {
             return '';
         }
 
@@ -36,27 +34,21 @@ class YoutubeStatsService
 
     public function getAllYoutubeVideos(): array
     {
-        $allYoutubeVideos = $this->documentManager->getRepository(MultimediaObject::class)->findBy([
-            'tags.cod' => self::YOUTUBE_PUBCHANNEL_TAG_COD
+        return $this->documentManager->getRepository(MultimediaObject::class)->findBy([
+            'tags.cod' => self::YOUTUBE_PUBCHANNEL_TAG_COD,
         ]);
-
-        return $allYoutubeVideos;
     }
 
     public function getYoutubeAccounts(): array
     {
-        $youtubeAccounts = $this->documentManager->getRepository(Tag::class)->findBy([
-            'properties.login' => ['$exists' => true]
+        return $this->documentManager->getRepository(Tag::class)->findBy([
+            'properties.login' => ['$exists' => true],
         ]);
-
-        return $youtubeAccounts;
     }
 
     public function getYoutubeDocumentsByCriteria(array $criteria = []): array
     {
-        $youtubeDocuments = $this->documentManager->getRepository(Youtube::class)->findBy($criteria, ['uploadDate' => -1]);
-
-        return $youtubeDocuments;
+        return $this->documentManager->getRepository(Youtube::class)->findBy($criteria, ['uploadDate' => -1]);
     }
 
     public function getAccountsStats(): array
@@ -64,7 +56,7 @@ class YoutubeStatsService
         $youtubeAccounts = $this->getYoutubeAccounts();
 
         $stats = [];
-        foreach($youtubeAccounts as $account) {
+        foreach ($youtubeAccounts as $account) {
             $stats[$account->getProperty('login')] = $this->getStatsByAccount($account);
         }
 
@@ -74,11 +66,11 @@ class YoutubeStatsService
     public function getStatsByAccount(Tag $account): array
     {
         $youtubeDocuments = $this->documentManager->getRepository(Youtube::class)->findBy([
-            'youtubeAccount' => $account->getProperty('login')
+            'youtubeAccount' => $account->getProperty('login'),
         ]);
 
         $stats = [];
-        foreach($youtubeDocuments as $document) {
+        foreach ($youtubeDocuments as $document) {
             $stats[] = $document->getMultimediaObjectId();
         }
 
