@@ -3,8 +3,10 @@
 <container xmlns="http://symfony.com/schema/dic/services"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
+
     <services>
         <defaults public="true" />
+
         <service id="pumukityoutube.youtube" class="Pumukit\YoutubeBundle\Services\YoutubeService">
             <argument type="service" id="doctrine_mongodb.odm.document_manager"/>
             <argument type="service" id="router"/>
@@ -51,6 +53,10 @@
         </service>
 
         <service id="pumukityoutube.menu" class="Pumukit\YoutubeBundle\Services\MenuService">
+            <tag name="pumukitnewadmin.menuitem" />
+        </service>
+
+        <service id="pumukityoutube.menu_stat" class="Pumukit\YoutubeBundle\Services\MenuStatService">
             <tag name="pumukitnewadmin.menuitem" />
         </service>
 
@@ -105,8 +111,33 @@
             <tag name="monolog.logger" channel="youtube"/>
         </service>
 
+        <service id="pumukityoutube.youtube_stats" class="Pumukit\YoutubeBundle\Services\YoutubeStatsService">
+            <argument type="service" id="doctrine_mongodb.odm.document_manager"/>
+        </service>
+
+        <service id="pumukityoutube.youtube_configuration" class="Pumukit\YoutubeBundle\Services\YoutubeConfigurationService">
+            <argument>%pumukit_youtube.playlist_privacy_status%</argument>
+            <argument>%pumukit_youtube.use_default_playlist%</argument>
+            <argument>%pumukit_youtube.default_playlist_cod%</argument>
+            <argument>%pumukit_youtube.default_playlist_title%</argument>
+            <argument>%pumukit_youtube.metatag_playlist_cod%</argument>
+            <argument>%pumukit_youtube.playlists_master%</argument>
+            <argument>%pumukit_youtube.delete_playlists%</argument>
+            <argument>%pumukit_youtube.locale%</argument>
+            <argument>%pumukit_youtube.pub_channels_tags%</argument>
+            <argument>%pumukit_youtube.process_timeout%</argument>
+            <argument>%pumukit_youtube.sync_status%</argument>
+            <argument>%pumukit_youtube.default_track_upload%</argument>
+            <argument>%pumukit_youtube.default_image_for_audio%</argument>
+            <argument>%pumukit_youtube.allowed_caption_mimetypes%</argument>
+            <argument>%pumukit_youtube.generate_sbs%</argument>
+            <argument>%pumukit_youtube.upload_removed_videos%</argument>
+            <argument>%pumukit_youtube.sbs_profile_name%</argument>
+        </service>
+
         <service id="pumukit_youtube.twig_extension" class="Pumukit\YoutubeBundle\Twig\YoutubeExtension">
             <argument type="service" id="doctrine_mongodb.odm.document_manager" />
+            <argument type="service" id="pumukityoutube.youtube_stats" />
             <tag name="twig.extension" />
         </service>
     </services>

@@ -1,0 +1,70 @@
+<h3 class="cab_body_div">
+    <ul class="breadcrumb" style="margin-bottom: 5px;">
+        <li class="active">
+            {{ "YouTube Global Stats"|trans }}
+            <a href="{{ path('pumukit_youtube_configuration') }}"  data-toggle="modal" data-backdrop="static" data-target="#myModal" title="{{ "Youtube Global Configuration"|trans }}">
+                <i class="text-info glyphicon glyphicon-info-sign"></i>
+            </a>
+        </li>
+    </ul>
+</h3>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="row">
+
+            <div class="col-md-4 col-sm-6 col-xs-12">
+                <div class="info-box">
+                    <span class="info-box-icon bg-yellow">
+                        <i class="glyphicon glyphicon-user"></i>
+                    </span>
+                    <div class="info-box-content">
+                        <span class="info-box-text" data-toggle="tooltip" data-placement="bottom" title="{{ "Number of accounts"|trans }}">{{ "Number of accounts"|trans }}</span>
+                        <span class="info-box-number">
+                            {{ accountsStats|length }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="col-md-4 col-sm-6 col-xs-12">
+                <div class="info-box">
+                    <span class="info-box-icon bg-blue">
+                        <i class="glyphicon glyphicon-list"></i>
+
+                    </span>
+                    <div class="info-box-content">
+                        <span class="info-box-text" data-toggle="tooltip" data-placement="bottom" title="{{ "Number of playlist"|trans }}">{{ "Number of playlist"|trans }}</span>
+                        <span class="info-box-number">
+                            {% set playlistNumber = 0 %}
+                            {% for account in youtubeAccounts %}
+                                {% set playlistNumber = playlistNumber + account.getChildren()|length %}
+                            {% endfor %}
+                            {{ playlistNumber }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4 col-sm-6 col-xs-12">
+                <div class="info-box">
+                    <span class="info-box-icon bg-green">
+                        <i class="glyphicon glyphicon-play"></i>
+                    </span>
+                    <div class="info-box-content">
+                        <span class="info-box-text" data-toggle="tooltip" data-placement="bottom" title="{{ "Number of videos"|trans }}">{{ "Number of videos"|trans }}</span>
+                        <span class="info-box-number">
+                            {% set videosNumber = 0 %}
+                            {% for account in accountsStats %}
+                                {% set videosNumber = videosNumber + account|length %}
+                            {% endfor %}
+                            {{ videosNumber }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>

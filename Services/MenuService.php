@@ -8,7 +8,7 @@ class MenuService implements ItemInterface
 {
     public function getName()
     {
-        return 'Youtube';
+        return 'Youtube - Accounts';
     }
 
     public function getUri()

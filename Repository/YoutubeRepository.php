@@ -3,6 +3,7 @@
 namespace Pumukit\YoutubeBundle\Repository;
 
 use Doctrine\ODM\MongoDB\DocumentRepository;
+use Pumukit\YoutubeBundle\Document\Youtube;
 
 /**
  * YoutubeRepository.
@@ -12,6 +13,23 @@ use Doctrine\ODM\MongoDB\DocumentRepository;
  */
 class YoutubeRepository extends DocumentRepository
 {
+    public function getAllStatus(): array
+    {
+        return [
+            Youtube::STATUS_DEFAULT => 'default',
+            Youtube::STATUS_UPLOADING => 'uploading',
+            Youtube::STATUS_PROCESSING => 'processing',
+            Youtube::STATUS_PUBLISHED => 'published',
+            Youtube::STATUS_HTTP_ERROR => 'http error',
+            Youtube::STATUS_ERROR => 'general error',
+            Youtube::STATUS_UPDATE_ERROR => 'update_error',
+            Youtube::STATUS_DUPLICATED => 'duplicated',
+            Youtube::STATUS_REMOVED => 'removed',
+            Youtube::STATUS_NOTIFIED_ERROR => 'notified error',
+            Youtube::STATUS_TO_DELETE => 'to delete',
+        ];
+    }
+
     /**
      * Get with any status query builder.
      *
