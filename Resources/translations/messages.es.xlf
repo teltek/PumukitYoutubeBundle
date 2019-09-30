@@ -263,7 +263,7 @@
     </trans-unit>
     <trans-unit id="MaEcCRG" resname="Multimedia Object">
       <source>Multimedia Object</source>
-      <target>Objecto multimedia</target>
+      <target>Objeto multimedia</target>
     </trans-unit>
     <trans-unit id="rArhFm_" resname="Upload date">
       <source>Upload date</source>
@@ -376,6 +376,14 @@
       <trans-unit id="aFd2PNJ" resname="Edit multimedia object ">
         <source>Edit multimedia object </source>
         <target>Editar objeto multimedia </target>
+      </trans-unit>
+      <trans-unit id="1A5peHy" resname="YouTube Playlist">
+        <source>YouTube Playlist</source>
+        <target>Lista de reproducción de YouTube</target>
+      </trans-unit>
+      <trans-unit id="2VfyJCQ" resname="File of PuMuKIT">
+        <source>File of PuMuKIT</source>
+        <target>Archivo de PuMuKIT</target>
       </trans-unit>
     </body>
   </file>

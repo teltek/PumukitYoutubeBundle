@@ -381,6 +381,18 @@
         <source>Edit multimedia object </source>
         <target>Edit multimedia object </target>
       </trans-unit>
+      <trans-unit id="Ocu8Bnx" resname="Show documents by status">
+        <source>Show documents by status</source>
+        <target>Show documents by status</target>
+      </trans-unit>
+      <trans-unit id="1A5peHy" resname="YouTube Playlist">
+        <source>YouTube Playlist</source>
+        <target>YouTube Playlist</target>
+      </trans-unit>
+      <trans-unit id="2VfyJCQ" resname="File of PuMuKIT">
+        <source>File of PuMuKIT</source>
+        <target>File of PuMuKIT</target>
+      </trans-unit>
     </body>
   </file>
 </xliff>
