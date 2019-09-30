@@ -13,7 +13,7 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
- * @Security("is_granted('ROLE_SUPER_ADMIN')")
+ * @Security("is_granted('ROLE_ACCESS_YOUTUBE')")
  * @Route("/stats")
  */
 class StatsController extends Controller
