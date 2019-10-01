@@ -18,7 +18,7 @@ class YoutubeRepository extends DocumentRepository
             Youtube::STATUS_DUPLICATED => 'duplicated',
             Youtube::STATUS_REMOVED => 'removed',
             Youtube::STATUS_TO_DELETE => 'to delete',
-            Youtube::STATUS_TO_REVIEW => 'to review',
+            //            Youtube::STATUS_TO_REVIEW => 'to review',
         ];
     }
 

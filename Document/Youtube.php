@@ -23,69 +23,81 @@ class Youtube
     public const STATUS_TO_DELETE = 10;
     public const STATUS_TO_REVIEW = 99;
 
-    //    const STATUS_HTTP_ERROR = 4;
-    //    const STATUS_UPDATE_ERROR = 6;
-    //    const STATUS_NOTIFIED_ERROR = 9;
     /**
      * @MongoDB\Id
      */
     private $id;
+
     /**
      * @MongoDB\Field(type="string")
      */
     private $multimediaObjectId;
+
     /**
      * @MongoDB\Field(type="string")
      */
     private $youtubeId;
+
     /**
      * @MongoDB\Field(type="string")
      */
     private $youtubeAccount;
+
     /**
      * @MongoDB\Field(type="string")
      */
     private $link = '';
+
     /**
      * @MongoDB\Field(type="string")
      */
     private $embed = '';
+
     /**
      * @MongoDB\Field(type="int")
      */
     private $status = self::STATUS_DEFAULT;
+
     /**
      * @MongoDB\Field(type="raw")
      */
     private $playlists = [];
+
     /**
      * @MongoDB\Field(type="boolean")
      */
     private $force = false;
+
     /**
      * @MongoDB\Field(type="boolean")
      */
     private $updatePlaylist = false;
+
     /**
      * @MongoDB\Field(type="date")
      */
     private $multimediaObjectUpdateDate;
+
     /**
      * @MongoDB\Field(type="date")
      */
     private $syncMetadataDate;
+
     /**
      * @MongoDB\Field(type="date")
      */
     private $syncCaptionsDate;
+
     /**
      * @MongoDB\Field(type="date")
      */
     private $uploadDate;
+
     /**
      * @MongoDB\EmbedMany(targetDocument="Caption")
      */
     private $captions;
+
     /**
      * @MongoDB\Field(type="string")
      */
@@ -131,7 +143,7 @@ class Youtube
         $this->link = $link;
     }
 
-    public function getLink(): ?string
+    public function getLink(): string
     {
         return $this->link;
     }
@@ -141,7 +153,7 @@ class Youtube
         $this->embed = $embed;
     }
 
-    public function getEmbed(): ?string
+    public function getEmbed(): string
     {
         return $this->embed;
     }
