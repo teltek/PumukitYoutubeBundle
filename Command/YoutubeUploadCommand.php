@@ -287,7 +287,7 @@ EOT
      */
     private function checkIfMultimediaObjectHaveAccount(MultimediaObject $mm)
     {
-        $youtubeTag = $this->dm->getRepository(Tag::class)->findOneBy(['cod' => 'YOUTUBE']);
+        $youtubeTag = $this->dm->getRepository(Tag::class)->findOneBy(['cod' => Youtube::YOUTUBE_TAG_CODE]);
         $haveAccount = false;
         foreach ($mm->getTags() as $tag) {
             if ($tag->isChildOf($youtubeTag)) {

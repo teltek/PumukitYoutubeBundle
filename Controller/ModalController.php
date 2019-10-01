@@ -16,64 +16,31 @@ class ModalController extends Controller
     /**
      * @Route ("/modal/mm/{id}", name="pumukityoutube_modal_index")
      * @Template()
-     *
-     * @param MultimediaObject $mm
-     *
-     * @return array|\Symfony\Component\HttpFoundation\Response
      */
     public function indexAction(MultimediaObject $mm)
     {
-        $dm = $this->get('doctrine_mongodb')->getManager();
-        $youtubeRepo = $dm->getRepository('PumukitYoutubeBundle:Youtube');
-        $youtube = $youtubeRepo->find($mm->getProperty('youtube'));
+        $dm = $this->get('doctrine_mongodb.odm.document_manager');
 
+        $youtube = $dm->getRepository(Youtube::class)->find($mm->getProperty('youtube'));
         if (!isset($youtube)) {
             return $this->render('PumukitYoutubeBundle:Modal:404notfound.html.twig', ['mm' => $mm]);
         }
 
-        $youtubeStatus = 'none';
-        switch ($youtube->getStatus()) {
-            case Youtube::STATUS_DEFAULT:
-            case Youtube::STATUS_UPLOADING:
-            case Youtube::STATUS_PROCESSING:
-                $youtubeStatus = 'proccessing';
+        $youtubeStatus = $youtube->getStatusText();
 
-                break;
-            case Youtube::STATUS_PUBLISHED:
-                $youtubeStatus = 'published';
-
-                break;
-            case Youtube::STATUS_ERROR:
-                $youtubeStatus = 'error';
-
-                break;
-            case Youtube::STATUS_DUPLICATED:
-                $youtubeStatus = 'duplicated';
-
-                break;
-            case Youtube::STATUS_REMOVED:
-                $youtubeStatus = 'removed';
-
-                break;
-            case Youtube::STATUS_TO_DELETE:
-                $youtubeStatus = 'to delete';
-
-                break;
-        }
-
-        return ['mm' => $mm, 'youtube' => $youtube, 'youtube_status' => $youtubeStatus];
+        return [
+            'mm' => $mm,
+            'youtube' => $youtube,
+            'youtube_status' => $youtubeStatus,
+        ];
     }
 
     /**
      * @Route ("/updateplaylist/mm/{id}", name="pumukityoutube_updateplaylist")
      *
-     * @param MultimediaObject $multimediaObject
-     *
      * @throws \Exception
-     *
-     * @return JsonResponse
      */
-    public function updateplaylistAction(MultimediaObject $multimediaObject)
+    public function updateplaylistAction(MultimediaObject $multimediaObject): JsonResponse
     {
         $youtubePlaylistService = $this->get('pumukityoutube.youtube_playlist');
         $out = $youtubePlaylistService->updatePlaylists($multimediaObject);
@@ -84,34 +51,25 @@ class ModalController extends Controller
     /**
      * @Route ("/forceuploads/mm/{id}", name="pumukityoutube_force_upload")
      *
-     * @param MultimediaObject $multimediaObject
-     *
      * @throws \Exception
-     *
-     * @return JsonResponse
      */
-    public function forceUploadAction(MultimediaObject $multimediaObject)
+    public function forceUploadAction(MultimediaObject $multimediaObject): JsonResponse
     {
         $syncStatus = $this->container->getParameter('pumukit_youtube.sync_status');
-
         $youtubeService = $this->get('pumukityoutube.youtube');
         $tagService = $this->get('pumukitschema.tag');
-
         $saveYoutubeAccount = $youtubeService->getMultimediaObjectYoutubeAccount($multimediaObject);
         $saveYoutubePlaylists = $youtubeService->getMultimediaObjectYoutubePlaylists($multimediaObject, $saveYoutubeAccount);
-
         $out = $youtubeService->delete($multimediaObject);
         if (0 !== $out) {
             return new JsonResponse($out);
         }
-
         $tagService->addTagToMultimediaObject($multimediaObject, $saveYoutubeAccount->getId());
         foreach ($saveYoutubePlaylists as $playlist) {
             if ($playlist instanceof Tag) {
                 $tagService->addTagToMultimediaObject($multimediaObject, $playlist->getId());
             }
         }
-
         $status = 'public';
         if ($syncStatus) {
             $status = YoutubeService::$status[$multimediaObject->getStatus()];

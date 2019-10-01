@@ -213,7 +213,7 @@ class YoutubeService
             $youtube = new Youtube();
             $youtube->setMultimediaObjectId($multimediaObject->getId());
 
-            $youtubeTag = $this->dm->getRepository(Tag::class)->findOneBy(['cod' => 'YOUTUBE']);
+            $youtubeTag = $this->dm->getRepository(Tag::class)->findOneBy(['cod' => Youtube::YOUTUBE_TAG_CODE]);
             $youtubeTagAccount = null;
             foreach ($multimediaObject->getTags() as $tag) {
                 if ($tag->isChildOf($youtubeTag)) {
@@ -393,7 +393,7 @@ class YoutubeService
         $multimediaObject = $this->mmobjRepo->find($youtube->getMultimediaObjectId());
 
         if (!$youtube->getYoutubeAccount()) {
-            $youtubeTag = $this->dm->getRepository(Tag::class)->findOneBy(['cod' => 'YOUTUBE']);
+            $youtubeTag = $this->dm->getRepository(Tag::class)->findOneBy(['cod' => Youtube::YOUTUBE_TAG_CODE]);
             $account = null;
             foreach ($multimediaObject->getTags() as $tag) {
                 if (!$tag->isChildOf($youtubeTag)) {
@@ -596,7 +596,7 @@ class YoutubeService
         }
 
         if ($youtube && !$youtube->getYoutubeAccount()) {
-            $youtubeTag = $this->dm->getRepository(Tag::class)->findOneBy(['cod' => 'YOUTUBE']);
+            $youtubeTag = $this->dm->getRepository(Tag::class)->findOneBy(['cod' => Youtube::YOUTUBE_TAG_CODE]);
             foreach ($multimediaObject->getTags() as $embeddedTag) {
                 if ($embeddedTag->isChildOf($youtubeTag)) {
                     $tag = $this->dm->getRepository(Tag::class)->findOneBy(['_id' => new \MongoId($embeddedTag->getId())]);
@@ -636,7 +636,7 @@ class YoutubeService
      */
     public function getMultimediaObjectYoutubeAccount(MultimediaObject $multimediaObject)
     {
-        $youtubeTag = $this->dm->getRepository(Tag::class)->findOneBy(['cod' => 'YOUTUBE']);
+        $youtubeTag = $this->dm->getRepository(Tag::class)->findOneBy(['cod' => Youtube::YOUTUBE_TAG_CODE]);
         foreach ($multimediaObject->getTags() as $embeddedTag) {
             if ($embeddedTag->isChildOf($youtubeTag)) {
                 return $this->dm->getRepository(Tag::class)->findOneBy(['_id' => new \MongoId($embeddedTag->getId())]);
@@ -943,7 +943,7 @@ class YoutubeService
         $youtube->setEmbed($this->getEmbed($youtubeId));
         $youtube->setYoutubeId($youtubeId);
 
-        $youtubeTag = $this->dm->getRepository(Tag::class)->findOneBy(['cod' => 'YOUTUBE']);
+        $youtubeTag = $this->dm->getRepository(Tag::class)->findOneBy(['cod' => Youtube::YOUTUBE_TAG_CODE]);
         foreach ($multimediaObject->getTags() as $embeddedTag) {
             if ($embeddedTag->isChildOf($youtubeTag)) {
                 $tag = $this->dm->getRepository(Tag::class)->findOneBy(['_id' => new \MongoId($embeddedTag->getId())]);

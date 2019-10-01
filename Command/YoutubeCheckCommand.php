@@ -110,7 +110,7 @@ EOT
         $this->mmobjRepo = $this->dm->getRepository(MultimediaObject::class);
         $this->youtubeRepo = $this->dm->getRepository('PumukitYoutubeBundle:Youtube');
 
-        $this->youtubeTag = $this->tagRepo->findOneBy(['cod' => 'YOUTUBE']);
+        $this->youtubeTag = $this->tagRepo->findOneBy(['cod' => Youtube::YOUTUBE_TAG_CODE]);
         if (!$this->youtubeTag) {
             throw new \Exception('No tag with code YOUTUBE');
         }

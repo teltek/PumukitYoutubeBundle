@@ -5,6 +5,7 @@ namespace Pumukit\YoutubeBundle\Command;
 use Doctrine\ODM\MongoDB\DocumentManager;
 use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\SchemaBundle\Repository\TagRepository;
+use Pumukit\YoutubeBundle\Document\Youtube;
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -60,7 +61,7 @@ EOT
                 'Tag persisted - new id: '.$youtubePublicationChannelTag->getId().
                 ' cod: '.$youtubePublicationChannelTag->getCod()
             );
-            $youtubePlaylistTag = $this->createTagWithCode('YOUTUBE', 'YouTube', 'ROOT', true);
+            $youtubePlaylistTag = $this->createTagWithCode(Youtube::YOUTUBE_TAG_CODE, 'YouTube', 'ROOT', true);
             $youtubePlaylistTag->setProperty(
                 'hide_in_tag_group',
                 true

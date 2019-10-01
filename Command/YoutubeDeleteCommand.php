@@ -201,7 +201,7 @@ EOT
 
                     continue;
                 }
-                $youtubeTag = $this->dm->getRepository(Tag::class)->findOneBy(['cod' => 'YOUTUBE']);
+                $youtubeTag = $this->dm->getRepository(Tag::class)->findOneBy(['cod' => Youtube::YOUTUBE_TAG_CODE]);
                 $multimediaObject = $this->dm->getRepository(MultimediaObject::class)->findOneBy(['_id' => new \MongoId($youtube->getMultimediaObjectId())]);
                 if ($multimediaObject) {
                     foreach ($multimediaObject->getTags() as $embeddedTag) {

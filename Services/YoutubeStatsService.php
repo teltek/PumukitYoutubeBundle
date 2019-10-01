@@ -10,7 +10,6 @@ use Pumukit\YoutubeBundle\Document\Youtube;
 class YoutubeStatsService
 {
     public const YOUTUBE_PUBCHANNEL_TAG_COD = 'PUCHYOUTUBE';
-    public const YOUTUBE_TAG_COD = 'YOUTUBE';
 
     public const YOUTUBE_NOT_FOUND_COD_EXCEPTION = 'YOUTUBE tag not found';
 

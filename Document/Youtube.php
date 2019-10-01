@@ -168,6 +168,42 @@ class Youtube
         return $this->status;
     }
 
+    public function getStatusText(): string
+    {
+        switch ($this->status) {
+            case self::STATUS_DEFAULT:
+            case self::STATUS_UPLOADING:
+            case self::STATUS_PROCESSING:
+                $youtubeStatusText = 'proccessing';
+
+                break;
+            case self::STATUS_PUBLISHED:
+                $youtubeStatusText = 'published';
+
+                break;
+            case self::STATUS_ERROR:
+                $youtubeStatusText = 'error';
+
+                break;
+            case self::STATUS_DUPLICATED:
+                $youtubeStatusText = 'duplicated';
+
+                break;
+            case self::STATUS_REMOVED:
+                $youtubeStatusText = 'removed';
+
+                break;
+            case self::STATUS_TO_DELETE:
+                $youtubeStatusText = 'to delete';
+
+                break;
+            default:
+                $youtubeStatusText = 'none';
+        }
+
+        return $youtubeStatusText;
+    }
+
     public function setPlaylists(array $playlists): void
     {
         $this->playlists = $playlists;

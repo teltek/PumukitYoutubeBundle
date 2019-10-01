@@ -49,7 +49,7 @@ class BackofficeListener
     {
         $request = $event->getRequest();
         $multimediaObject = $event->getMultimediaObject();
-        $youtubeTag = $this->dm->getRepository(Tag::class)->findOneBy(['cod' => 'YOUTUBE']);
+        $youtubeTag = $this->dm->getRepository(Tag::class)->findOneBy(['cod' => Youtube::YOUTUBE_TAG_CODE]);
         if (!$youtubeTag) {
             return false;
         }
