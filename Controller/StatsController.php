@@ -33,6 +33,7 @@ class StatsController extends Controller
         $statsYoutubeDocuments = $this->processYoutubeDocuments($youtubeStatusDocuments);
 
         $youtubeStatus = Youtube::$statusTexts;
+
         return [
             'youtubeAccounts' => $youtubeService->getYoutubeAccounts(),
             'accountsStats' => $youtubeService->getAccountsStats(),
