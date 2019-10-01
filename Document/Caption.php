@@ -5,197 +5,111 @@ namespace Pumukit\YoutubeBundle\Document;
 use Doctrine\ODM\MongoDB\Mapping\Annotations as MongoDB;
 
 /**
- * Pumukit\YoutubeBundle\Document\Caption.
- *
  * @MongoDB\EmbeddedDocument
  */
 class Caption
 {
     /**
-     * @var int
-     *
      * @MongoDB\Id
      */
     private $id;
 
     /**
-     * @var string
-     *
      * @MongoDB\Field(type="string")
      */
     private $materialId;
 
     /**
-     * @var string
-     *
      * @MongoDB\Field(type="string")
      */
     private $captionId;
 
     /**
-     * @var string
-     *
      * @MongoDB\Field(type="string")
      */
     private $language = 'en';
 
     /**
-     * @var string
-     *
      * @MongoDB\Field(type="string")
      */
     private $name;
 
     /**
-     * @var \DateTime
-     *
      * @MongoDB\Field(type="date")
      */
     private $lastUpdated;
 
     /**
-     * @var bool
-     *
      * @MongoDB\Field(type="boolean")
      */
     private $isDraft = false;
 
-    /**
-     * Get id.
-     *
-     * @return string
-     */
     public function getId()
     {
         return $this->id;
     }
 
-    /**
-     * Set materialId.
-     *
-     * @param string $materialId
-     */
-    public function setMaterialId($materialId)
+    public function setMaterialId(string $materialId): void
     {
         $this->materialId = $materialId;
     }
 
-    /**
-     * Get materialId.
-     *
-     * @return string
-     */
-    public function getMaterialId()
+    public function getMaterialId(): string
     {
         return $this->materialId;
     }
 
-    /**
-     * Set captionId.
-     *
-     * @param string $captionId
-     */
-    public function setCaptionId($captionId)
+    public function setCaptionId(string $captionId): void
     {
         $this->captionId = $captionId;
     }
 
-    /**
-     * Get captionId.
-     *
-     * @return string
-     */
-    public function getCaptionId()
+    public function getCaptionId(): string
     {
         return $this->captionId;
     }
 
-    /**
-     * Set language.
-     *
-     * @param string $language
-     */
-    public function setLanguage($language)
+    public function setLanguage(string $language): void
     {
         $this->language = $language;
     }
 
-    /**
-     * Get language.
-     *
-     * @return string
-     */
-    public function getLanguage()
+    public function getLanguage(): string
     {
         return $this->language;
     }
 
-    /**
-     * Set name.
-     *
-     * @param string $name
-     */
-    public function setName($name)
+    public function setName(string $name): void
     {
         $this->name = $name;
     }
 
-    /**
-     * Get name.
-     *
-     * @return string
-     */
-    public function getName()
+    public function getName(): string
     {
         return $this->name;
     }
 
-    /**
-     * Set lastUpdated.
-     *
-     * @param string $lastUpdated
-     */
-    public function setLastUpdated($lastUpdated)
+    public function setLastUpdated(\DateTime $lastUpdated): void
     {
         $this->lastUpdated = $lastUpdated;
     }
 
-    /**
-     * Get lastUpdated.
-     *
-     * @return string
-     */
-    public function getLastUpdated()
+    public function getLastUpdated(): \DateTime
     {
         return $this->lastUpdated;
     }
 
-    /**
-     * Set isDraft.
-     *
-     * @param string $isDraft
-     */
-    public function setIsDraft($isDraft)
+    public function setIsDraft(bool $isDraft): void
     {
         $this->isDraft = $isDraft;
     }
 
-    /**
-     * Get isDraft.
-     *
-     * @return string
-     */
-    public function getIsDraft()
+    public function getIsDraft(): bool
     {
-        return $this->isDraft;
+        return $this->isDraft();
     }
 
-    /**
-     * Is Draft.
-     *
-     * @return string
-     */
-    public function isDraft()
+    public function isDraft(): bool
     {
         return $this->isDraft;
     }

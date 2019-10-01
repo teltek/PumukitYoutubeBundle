@@ -43,9 +43,7 @@ class ModalController extends Controller
                 $youtubeStatus = 'published';
 
                 break;
-            case Youtube::STATUS_HTTP_ERROR:
             case Youtube::STATUS_ERROR:
-            case Youtube::STATUS_UPDATE_ERROR:
                 $youtubeStatus = 'error';
 
                 break;
@@ -55,10 +53,6 @@ class ModalController extends Controller
                 break;
             case Youtube::STATUS_REMOVED:
                 $youtubeStatus = 'removed';
-
-                break;
-            case Youtube::STATUS_NOTIFIED_ERROR:
-                $youtubeStatus = 'notified error';
 
                 break;
             case Youtube::STATUS_TO_DELETE:

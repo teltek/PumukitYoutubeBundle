@@ -204,6 +204,7 @@ class YoutubeService
         if (false !== strpos($trackPath, '.m4v')) {
             $errorLog = __CLASS__.' ['.__FUNCTION__.'] Youtube not support m4v files. To upload this video to Youtube, convert to mp4.'.$trackPath;
             $this->logger->error($errorLog);
+
             throw new \Exception($errorLog);
         }
 

@@ -87,9 +87,7 @@ EOT
         $this->uploadVideosToYoutube($newMultimediaObjects, $output);
 
         $errorStatus = [
-            Youtube::STATUS_HTTP_ERROR,
             Youtube::STATUS_ERROR,
-            Youtube::STATUS_UPDATE_ERROR,
         ];
         $failureMultimediaObjects = $this->getUploadsByStatus($errorStatus);
         $this->uploadVideosToYoutube($failureMultimediaObjects, $output);

@@ -79,7 +79,7 @@ EOT
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $statusArray = [Youtube::STATUS_REMOVED, Youtube::STATUS_NOTIFIED_ERROR, Youtube::STATUS_DUPLICATED];
+        $statusArray = [Youtube::STATUS_REMOVED, Youtube::STATUS_DUPLICATED];
         $youtubes = $this->youtubeRepo->getWithoutAnyStatus($statusArray);
 
         $this->updateVideoStatusInYoutube($youtubes, $output);

@@ -139,7 +139,7 @@ EOT
             'ok' => 0,
         ];
 
-        $statusArray = [Youtube::STATUS_REMOVED, Youtube::STATUS_NOTIFIED_ERROR, Youtube::STATUS_DUPLICATED];
+        $statusArray = [Youtube::STATUS_REMOVED, Youtube::STATUS_DUPLICATED];
         $youtubes = $this->youtubeRepo->getWithoutAnyStatus($statusArray);
 
         foreach ($youtubes as $youtube) {

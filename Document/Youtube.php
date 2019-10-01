@@ -6,544 +6,313 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ODM\MongoDB\Mapping\Annotations as MongoDB;
 
 /**
- * Pumukit\YoutubeBundle\Document\Youtube.
- *
  * @MongoDB\Document(repositoryClass="Pumukit\YoutubeBundle\Repository\YoutubeRepository")
  */
 class Youtube
 {
-    const STATUS_DEFAULT = 0;
-    const STATUS_UPLOADING = 1;
-    const STATUS_PROCESSING = 2;
-    const STATUS_PUBLISHED = 3;
-    const STATUS_HTTP_ERROR = 4;
-    const STATUS_ERROR = 5;
-    const STATUS_UPDATE_ERROR = 6;
-    const STATUS_DUPLICATED = 7;
-    const STATUS_REMOVED = 8;
-    const STATUS_NOTIFIED_ERROR = 9;
-    const STATUS_TO_DELETE = 10;
+    public const YOUTUBE_TAG_CODE = 'YOUTUBE';
+    public const YOUTUBE_PUBLICATION_CHANNEL_CODE = 'PUCHYOUTUBE';
 
+    public const STATUS_DEFAULT = 0;
+    public const STATUS_UPLOADING = 1;
+    public const STATUS_PROCESSING = 2;
+    public const STATUS_PUBLISHED = 3;
+    public const STATUS_ERROR = 5;
+    public const STATUS_DUPLICATED = 7;
+    public const STATUS_REMOVED = 8;
+    public const STATUS_TO_DELETE = 10;
+    public const STATUS_TO_REVIEW = 99;
+
+    //    const STATUS_HTTP_ERROR = 4;
+    //    const STATUS_UPDATE_ERROR = 6;
+    //    const STATUS_NOTIFIED_ERROR = 9;
     /**
-     * @var string
      * @MongoDB\Id
      */
     private $id;
-
     /**
-     * @var string
-     *
      * @MongoDB\Field(type="string")
      */
     private $multimediaObjectId;
-
     /**
-     * @var string
-     *
      * @MongoDB\Field(type="string")
      */
     private $youtubeId;
-
     /**
-     * @var string
-     *
      * @MongoDB\Field(type="string")
      */
     private $youtubeAccount;
-
     /**
-     * @var string
-     *
      * @MongoDB\Field(type="string")
      */
     private $link = '';
-
     /**
-     * @var string
-     *
      * @MongoDB\Field(type="string")
      */
     private $embed = '';
-
     /**
-     * @var int
-     *
      * @MongoDB\Field(type="int")
      */
     private $status = self::STATUS_DEFAULT;
-
     /**
-     * @var array
-     *
      * @MongoDB\Field(type="raw")
      */
     private $playlists = [];
-
     /**
-     * @var bool
-     *
      * @MongoDB\Field(type="boolean")
      */
     private $force = false;
-
     /**
-     * @var bool
-     *
      * @MongoDB\Field(type="boolean")
      */
     private $updatePlaylist = false;
-
     /**
-     * @var \DateTime
-     *
      * @MongoDB\Field(type="date")
      */
     private $multimediaObjectUpdateDate;
-
     /**
-     * @var \DateTime
-     *
      * @MongoDB\Field(type="date")
      */
     private $syncMetadataDate;
-
     /**
-     * @var \DateTime
-     *
      * @MongoDB\Field(type="date")
      */
     private $syncCaptionsDate;
-
     /**
-     * @var \DateTime
-     *
      * @MongoDB\Field(type="date")
      */
     private $uploadDate;
-
     /**
-     * @var ArrayCollection
      * @MongoDB\EmbedMany(targetDocument="Caption")
      */
     private $captions;
-
     /**
-     * @var string
-     *
      * @MongoDB\Field(type="string")
      */
     private $fileUploaded;
 
-    /**
-     * Constructor.
-     */
     public function __construct()
     {
+        $initializeSyncDate = new \DateTime('1980-01-01 10:00');
         $this->multimediaObjectUpdateDate = new \DateTime('1970-01-01 09:00');
-        $this->syncMetadataDate = new \DateTime('1980-01-01 10:00');
-        $this->syncCaptionsDate = new \DateTime('1980-01-01 10:00');
-        $this->uploadDate = new \DateTime('1980-01-01 10:00');
+        $this->syncMetadataDate = $initializeSyncDate;
+        $this->syncCaptionsDate = $initializeSyncDate;
+        $this->uploadDate = $initializeSyncDate;
         $this->captions = new ArrayCollection();
     }
 
-    /**
-     * Get id.
-     *
-     * @return string
-     */
     public function getId()
     {
         return $this->id;
     }
 
-    /**
-     * Set MultimediaObjectId.
-     *
-     * @param string $multimediaObjectId
-     */
-    public function setMultimediaObjectId($multimediaObjectId)
+    public function setMultimediaObjectId(string $multimediaObjectId): void
     {
         $this->multimediaObjectId = $multimediaObjectId;
     }
 
-    /**
-     * Get MultimediaObjectId.
-     *
-     * @return string
-     */
-    public function getMultimediaObjectId()
+    public function getMultimediaObjectId(): string
     {
         return $this->multimediaObjectId;
     }
 
-    /**
-     * Set youtubeId.
-     *
-     * @param string $youtubeId
-     */
-    public function setYoutubeId($youtubeId)
+    public function setYoutubeId(string $youtubeId): void
     {
         $this->youtubeId = $youtubeId;
     }
 
-    /**
-     * Get youtubeId.
-     *
-     * @return string
-     */
-    public function getYoutubeId()
+    public function getYoutubeId(): string
     {
         return $this->youtubeId;
     }
 
-    /**
-     * Set link.
-     *
-     * @param string $link
-     */
-    public function setLink($link)
+    public function setLink(string $link): void
     {
         $this->link = $link;
     }
 
-    /**
-     * Get link.
-     *
-     * @return string
-     */
-    public function getLink()
+    public function getLink(): ?string
     {
         return $this->link;
     }
 
-    /**
-     * Set embed.
-     *
-     * @param string $embed
-     */
-    public function setEmbed($embed)
+    public function setEmbed(string $embed): void
     {
         $this->embed = $embed;
     }
 
-    /**
-     * Get embed.
-     *
-     * @return string
-     */
-    public function getEmbed()
+    public function getEmbed(): ?string
     {
         return $this->embed;
     }
 
-    /**
-     * Set status.
-     *
-     * @param int $status
-     */
-    public function setStatus($status)
+    public function setStatus(int $status): void
     {
         $this->status = $status;
     }
 
-    /**
-     * Get status.
-     *
-     * @return int
-     */
-    public function getStatus()
+    public function getStatus(): int
     {
         return $this->status;
     }
 
-    /**
-     * Set playlists.
-     *
-     * @param array $playlists
-     */
-    public function setPlaylists($playlists)
+    public function setPlaylists(array $playlists): void
     {
         $this->playlists = $playlists;
     }
 
-    /**
-     * Get playlists.
-     *
-     * @return array
-     */
-    public function getPlaylists()
+    public function getPlaylists(): array
     {
         return $this->playlists;
     }
 
-    /**
-     * Set playlist.
-     *
-     * @param string $key
-     * @param string $value
-     */
-    public function setPlaylist($key, $value)
+    public function setPlaylist(string $key, string $value): void
     {
         $this->playlists[$key] = $value;
     }
 
-    /**
-     * Get playlist.
-     *
-     * @param string $key
-     *
-     * @return Youtube|null
-     */
-    public function getPlaylist($key)
+    public function getPlaylist(string $key): ?string
     {
-        if (isset($this->playlists[$key])) {
-            return $this->playlists[$key];
+        if (!isset($this->playlists[$key])) {
+            return null;
         }
+
+        return $this->playlists[$key];
     }
 
-    /**
-     * Remove playlist.
-     *
-     * @param string $key
-     */
-    public function removePlaylist($key)
+    public function removePlaylist(string $key): void
     {
-        if (isset($this->playlists[$key])) {
-            unset($this->playlists[$key]);
+        if (!isset($this->playlists[$key])) {
+            return;
         }
+        unset($this->playlists[$key]);
     }
 
-    /**
-     * Set force.
-     *
-     * @param bool $force
-     */
-    public function setForce($force)
+    public function setForce(bool $force): void
     {
         $this->force = $force;
     }
 
-    /**
-     * Get force.
-     *
-     * @return bool
-     */
-    public function getForce()
+    public function getForce(): bool
     {
         return $this->force;
     }
 
-    /**
-     * Set updatePlaylist.
-     *
-     * @param bool $updatePlaylist
-     */
-    public function setUpdatePlaylist($updatePlaylist)
+    public function setUpdatePlaylist(bool $updatePlaylist): void
     {
         $this->updatePlaylist = $updatePlaylist;
     }
 
-    /**
-     * Get updatePlaylist.
-     *
-     * @return bool
-     */
-    public function getUpdatePlaylist()
+    public function getUpdatePlaylist(): bool
     {
         return $this->updatePlaylist;
     }
 
-    /**
-     * Set multimediaObjectUpdateDate.
-     *
-     * @param \DateTime $multimediaObjectUpdateDate
-     */
-    public function setMultimediaObjectUpdateDate($multimediaObjectUpdateDate)
+    public function setMultimediaObjectUpdateDate(\DateTime $multimediaObjectUpdateDate): void
     {
         $this->multimediaObjectUpdateDate = $multimediaObjectUpdateDate;
     }
 
-    /**
-     * Get multimediaObjectUpdateDate.
-     *
-     * @return \DateTime
-     */
-    public function getMultimediaObjectUpdateDate()
+    public function getMultimediaObjectUpdateDate(): \DateTime
     {
         return $this->multimediaObjectUpdateDate;
     }
 
-    /**
-     * Set syncMetadataDate.
-     *
-     * @param \DateTime $syncMetadataDate
-     */
-    public function setSyncMetadataDate($syncMetadataDate)
+    public function setSyncMetadataDate(\DateTime $syncMetadataDate): void
     {
         $this->syncMetadataDate = $syncMetadataDate;
     }
 
-    /**
-     * Get syncMetadataDate.
-     *
-     * @return \DateTime
-     */
-    public function getSyncMetadataDate()
+    public function getSyncMetadataDate(): \DateTime
     {
         return $this->syncMetadataDate;
     }
 
-    /**
-     * Set syncCaptionsDate.
-     *
-     * @param \DateTime $syncCaptionsDate
-     */
-    public function setSyncCaptionsDate($syncCaptionsDate)
+    public function setSyncCaptionsDate(\DateTime $syncCaptionsDate): void
     {
         $this->syncCaptionsDate = $syncCaptionsDate;
     }
 
-    /**
-     * Get syncCaptionsDate.
-     *
-     * @return \DateTime
-     */
-    public function getSyncCaptionsDate()
+    public function getSyncCaptionsDate(): \DateTime
     {
         return $this->syncCaptionsDate;
     }
 
-    /**
-     * Set uploadDate.
-     *
-     * @param \DateTime $uploadDate
-     */
-    public function setUploadDate($uploadDate)
+    public function setUploadDate(\DateTime $uploadDate): void
     {
         $this->uploadDate = $uploadDate;
     }
 
-    /**
-     * Get uploadDate.
-     *
-     * @return \DateTime
-     */
-    public function getUploadDate()
+    public function getUploadDate(): \DateTime
     {
         return $this->uploadDate;
     }
 
-    /**
-     * @return string
-     */
-    public function getYoutubeAccount()
+    public function getYoutubeAccount(): string
     {
         return $this->youtubeAccount;
     }
 
-    /**
-     * @param string $youtubeAccount
-     */
-    public function setYoutubeAccount($youtubeAccount)
+    public function setYoutubeAccount(string $youtubeAccount): void
     {
         $this->youtubeAccount = $youtubeAccount;
     }
 
-    // Caption getter section
-
-    /**
-     * Add caption.
-     *
-     * @param Caption $caption
-     */
-    public function addCaption(Caption $caption)
+    public function addCaption(Caption $caption): void
     {
         $this->captions->add($caption);
     }
 
-    /**
-     * Remove caption.
-     *
-     * @param Caption $caption
-     */
-    public function removeCaption(Caption $caption)
+    public function removeCaption(Caption $caption): void
     {
         $this->captions->removeElement($caption);
         $this->captions = new ArrayCollection(array_values($this->captions->toArray()));
     }
 
-    /**
-     * Remove caption by id.
-     *
-     * @param string $id
-     */
-    public function removeCaptionById($id)
+    public function removeCaptionById(string $id): void
     {
-        $this->captions = $this->captions->filter(function ($caption) use ($id) {
-            return $caption->getId() !== $id;
-        });
+        $this->captions = $this->captions->filter(
+            static function (Caption $caption) use ($id) {
+                return $caption->getId() !== $id;
+            }
+        );
         $this->captions = new ArrayCollection(array_values($this->captions->toArray()));
     }
 
-    /**
-     * Remove caption by caption id.
-     *
-     * @param string $captionId
-     */
-    public function removeCaptionByCaptionId($captionId)
+    public function removeCaptionByCaptionId(string $captionId): void
     {
-        $this->captions = $this->captions->filter(function ($caption) use ($captionId) {
-            return $caption->getCaptionId() !== $captionId;
-        });
+        $this->captions = $this->captions->filter(
+            static function (Caption $caption) use ($captionId) {
+                return $caption->getCaptionId() !== $captionId;
+            }
+        );
         $this->captions = new ArrayCollection(array_values($this->captions->toArray()));
     }
 
-    /**
-     * Remove caption by material id.
-     *
-     * @param string $materialId
-     */
-    public function removeCaptionByMaterialId($materialId)
+    public function removeCaptionByMaterialId(string $materialId): void
     {
-        $this->captions = $this->captions->filter(function ($caption) use ($materialId) {
-            return $caption->getMaterialId() !== $materialId;
-        });
+        $this->captions = $this->captions->filter(
+            static function (Caption $caption) use ($materialId) {
+                return $caption->getMaterialId() !== $materialId;
+            }
+        );
         $this->captions = new ArrayCollection(array_values($this->captions->toArray()));
     }
 
-    /**
-     * Contains caption.
-     *
-     * @param Caption $caption
-     *
-     * @return bool
-     */
-    public function containsCaption(Caption $caption)
+    public function containsCaption(Caption $caption): bool
     {
         return $this->captions->contains($caption);
     }
 
-    /**
-     * Get captions.
-     *
-     * @return ArrayCollection
-     */
-    public function getCaptions()
+    public function getCaptions(): ?ArrayCollection
     {
         return $this->captions;
     }
 
-    /**
-     * Get caption by id.
-     *
-     * @param string $id
-     *
-     * @return Caption|null
-     */
-    public function getCaptionById($id)
+    public function getCaptionById(string $id): ?Caption
     {
         foreach ($this->captions as $caption) {
-            if ($caption->getId() == $id) {
+            if ((string) $caption->getId() === $id) {
                 return $caption;
             }
         }
@@ -551,17 +320,10 @@ class Youtube
         return null;
     }
 
-    /**
-     * Get caption by caption id.
-     *
-     * @param string $captionId
-     *
-     * @return Caption|null
-     */
-    public function getCaptionByCaptionId($captionId)
+    public function getCaptionByCaptionId(string $captionId): ?Caption
     {
         foreach ($this->captions as $caption) {
-            if ($caption->getCaptionId() == $captionId) {
+            if ((string) $caption->getCaptionId() === $captionId) {
                 return $caption;
             }
         }
@@ -569,17 +331,10 @@ class Youtube
         return null;
     }
 
-    /**
-     * Get caption by material id.
-     *
-     * @param string $materialId
-     *
-     * @return Caption|null
-     */
-    public function getCaptionByMaterialId($materialId)
+    public function getCaptionByMaterialId(string $materialId): ?Caption
     {
         foreach ($this->captions as $caption) {
-            if ($caption->getMaterialId() == $materialId) {
+            if ($caption->getMaterialId() === $materialId) {
                 return $caption;
             }
         }
@@ -587,17 +342,9 @@ class Youtube
         return null;
     }
 
-    /**
-     * Get captions by language.
-     *
-     * @param string $language
-     *
-     * @return array
-     */
-    public function getCaptionsByLanguage($language)
+    public function getCaptionsByLanguage(string $language): array
     {
         $r = [];
-
         foreach ($this->captions as $caption) {
             if ($caption->getLanguage() === $language) {
                 $r[] = $caption;
@@ -607,14 +354,7 @@ class Youtube
         return $r;
     }
 
-    /**
-     * Get caption by language.
-     *
-     * @param string $language
-     *
-     * @return Caption|null
-     */
-    public function getCaptionByLanguage($language)
+    public function getCaptionByLanguage(string $language): ?Caption
     {
         foreach ($this->captions as $caption) {
             if ($caption->getLanguage() === $language) {
@@ -625,18 +365,12 @@ class Youtube
         return null;
     }
 
-    /**
-     * @return string
-     */
-    public function getFileUploaded()
+    public function getFileUploaded(): ?string
     {
         return $this->fileUploaded;
     }
 
-    /**
-     * @param string $fileUploaded
-     */
-    public function setFileUploaded(string $fileUploaded)
+    public function setFileUploaded(string $fileUploaded): void
     {
         $this->fileUploaded = $fileUploaded;
     }

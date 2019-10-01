@@ -541,6 +541,7 @@ class CaptionServiceTest extends WebTestCase
         $youtube->setMultimediaObjectId($multimediaObject->getId());
         $youtubeId = '12345678909';
         $youtubeUrl = 'https://www.youtube.com/watch?v='.$youtubeId;
+        $youtube->setYoutubeAccount('account_test');
         $youtube->setYoutubeId($youtubeId);
         $youtube->setLink($youtubeUrl);
         $youtube->setStatus(Youtube::STATUS_PUBLISHED);
