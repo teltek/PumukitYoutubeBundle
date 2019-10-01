@@ -507,7 +507,7 @@ class CaptionServiceTest extends WebTestCase
         $this->dm->persist($youtubeTag);
         $this->dm->flush();
 
-        $youtubeEduTag = $this->createTagWithCode('PUCHYOUTUBE', 'YouTubeEDU', 'PUBCHANNELS', false, true);
+        $youtubeEduTag = $this->createTagWithCode(Youtube::YOUTUBE_PUBLICATION_CHANNEL_CODE, 'YouTubeEDU', 'PUBCHANNELS', false, true);
         $playlistTag = $this->createTagWithCode('YOUTUBETEST', 'Test Playlist', Youtube::YOUTUBE_TAG_CODE, false, true);
         $this->dm->persist($youtubeEduTag);
         $this->dm->persist($playlistTag);

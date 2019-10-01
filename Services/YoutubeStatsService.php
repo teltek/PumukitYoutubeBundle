@@ -9,8 +9,6 @@ use Pumukit\YoutubeBundle\Document\Youtube;
 
 class YoutubeStatsService
 {
-    public const YOUTUBE_PUBCHANNEL_TAG_COD = 'PUCHYOUTUBE';
-
     public const YOUTUBE_NOT_FOUND_COD_EXCEPTION = 'YOUTUBE tag not found';
 
     private $documentManager;
@@ -34,7 +32,7 @@ class YoutubeStatsService
     public function getAllYoutubeVideos(): array
     {
         return $this->documentManager->getRepository(MultimediaObject::class)->findBy([
-            'tags.cod' => self::YOUTUBE_PUBCHANNEL_TAG_COD,
+            'tags.cod' => Youtube::YOUTUBE_PUBLICATION_CHANNEL_CODE,
         ]);
     }
 

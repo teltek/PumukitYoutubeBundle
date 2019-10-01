@@ -23,7 +23,6 @@ use Symfony\Component\Console\Output\OutputInterface;
 class YoutubeDeleteCommand extends ContainerAwareCommand
 {
     const PUB_CHANNEL_WEBTV = 'PUCHWEBTV';
-    const PUB_CHANNEL_YOUTUBE = 'PUCHYOUTUBE';
     const PUB_DECISION_AUTONOMOUS = 'PUDEAUTO';
     /**
      * @var DocumentManager
@@ -283,12 +282,12 @@ EOT
      */
     private function checkResultsAndSendEmail()
     {
-        $youtubeTag = $this->dm->getRepository(Tag::class)->findOneBy(['cod' => self::PUB_CHANNEL_YOUTUBE]);
+        $youtubeTag = $this->dm->getRepository(Tag::class)->findOneBy(['cod' => Youtube::YOUTUBE_PUBLICATION_CHANNEL_CODE]);
         if (null !== $youtubeTag) {
             foreach ($this->okRemoved as $mm) {
                 if ($mm instanceof MultimediaObject) {
                     $youtubeDocument = $this->dm->getRepository(Youtube::class)->findOneBy(['status' => Youtube::STATUS_REMOVED]);
-                    if ($mm->containsTagWithCod(self::PUB_CHANNEL_YOUTUBE) && $youtubeDocument) {
+                    if ($mm->containsTagWithCod(Youtube::YOUTUBE_PUBLICATION_CHANNEL_CODE) && $youtubeDocument) {
                         $this->tagService->removeTagFromMultimediaObject($mm, $youtubeTag->getId(), false);
                     }
                 }

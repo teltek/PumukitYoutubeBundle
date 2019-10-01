@@ -49,7 +49,7 @@ EOT
         $this->dm = $this->getContainer()->get('doctrine_mongodb')->getManager();
         $this->tagRepo = $this->dm->getRepository(Tag::class);
         if ($input->getOption('force')) {
-            $youtubePublicationChannelTag = $this->createTagWithCode('PUCHYOUTUBE', 'YouTubeEDU', 'PUBCHANNELS', false);
+            $youtubePublicationChannelTag = $this->createTagWithCode(Youtube::YOUTUBE_PUBLICATION_CHANNEL_CODE, 'YouTubeEDU', 'PUBCHANNELS', false);
             $youtubePublicationChannelTag->setProperty('modal_path', 'pumukityoutube_modal_index');
             $youtubePublicationChannelTag->setProperty(
                 'advanced_configuration',

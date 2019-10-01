@@ -24,8 +24,6 @@ class BackofficeListener
      */
     private $tagService;
 
-    private $pubChannelYoutube = 'PUCHYOUTUBE';
-
     /**
      * BackofficeListener constructor.
      *
@@ -65,7 +63,7 @@ class BackofficeListener
         }
 
         $pubChannels = array_keys($request->request->get('pub_channels'));
-        if (!in_array($this->pubChannelYoutube, $pubChannels)) {
+        if (!in_array(Youtube::YOUTUBE_PUBLICATION_CHANNEL_CODE, $pubChannels)) {
             return false;
         }
 

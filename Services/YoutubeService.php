@@ -21,7 +21,6 @@ use Symfony\Component\Translation\TranslatorInterface;
 class YoutubeService
 {
     const YOUTUBE_PLAYLIST_URL = 'https://www.youtube.com/playlist?list=';
-    const PUB_CHANNEL_YOUTUBE = 'PUCHYOUTUBE';
 
     public static $status = [
         0 => 'public',
@@ -274,7 +273,8 @@ class YoutubeService
         $youtube->setUploadDate($now);
         $this->dm->persist($youtube);
         $this->dm->flush();
-        $youtubeTag = $this->tagRepo->findOneBy(['cod' => self::PUB_CHANNEL_YOUTUBE]);
+
+        $youtubeTag = $this->tagRepo->findOneBy(['cod' => Youtube::YOUTUBE_PUBLICATION_CHANNEL_CODE]);
         if (null != $youtubeTag) {
             $this->tagService->addTagToMultimediaObject($multimediaObject, $youtubeTag->getId());
         } else {
@@ -308,14 +308,14 @@ class YoutubeService
         $this->dm->persist($multimediaObject);
 
         $this->dm->flush();
-        $youtubeEduTag = $this->tagRepo->findOneBy(['cod' => self::PUB_CHANNEL_YOUTUBE]);
-        $youtubeTag = $this->tagRepo->findOneBy(['cod' => self::PUB_CHANNEL_YOUTUBE]);
+        $youtubeEduTag = $this->tagRepo->findOneBy(['cod' => Youtube::YOUTUBE_PUBLICATION_CHANNEL_CODE]);
+        $youtubeTag = $this->tagRepo->findOneBy(['cod' => Youtube::YOUTUBE_PUBLICATION_CHANNEL_CODE]);
         if (null != $youtubeTag) {
             if ($multimediaObject->containsTag($youtubeEduTag)) {
                 $this->tagService->removeTagFromMultimediaObject($multimediaObject, $youtubeEduTag->getId());
             }
         } else {
-            $errorLog = __CLASS__.' ['.__FUNCTION__."] There is no Youtube tag defined with code '".self::PUB_CHANNEL_YOUTUBE."'";
+            $errorLog = __CLASS__.' ['.__FUNCTION__."] There is no Youtube tag defined with code '".Youtube::YOUTUBE_PUBLICATION_CHANNEL_CODE."'";
             $this->logger->error($errorLog);
 
             throw new \Exception($errorLog);
@@ -442,14 +442,14 @@ class YoutubeService
                 $this->logger->error('ERROR - Setting status removed '.$youtube->getId().' ( '.$youtube->getMultimediaObjectId().')'.$aResult['error_out'].' - '.__FUNCTION__);
                 $youtube->setStatus(Youtube::STATUS_REMOVED);
                 $this->dm->persist($youtube);
-                $youtubeEduTag = $this->tagRepo->findOneBy(['cod' => self::PUB_CHANNEL_YOUTUBE]);
+                $youtubeEduTag = $this->tagRepo->findOneBy(['cod' => Youtube::YOUTUBE_PUBLICATION_CHANNEL_CODE]);
 
                 if (null !== $youtubeEduTag) {
                     if ($multimediaObject->containsTag($youtubeEduTag)) {
                         $this->tagService->removeTagFromMultimediaObject($multimediaObject, $youtubeEduTag->getId());
                     }
                 } else {
-                    $errorLog = __CLASS__.' ['.__FUNCTION__."] There is no Youtube tag defined with code '".self::PUB_CHANNEL_YOUTUBE."'";
+                    $errorLog = __CLASS__.' ['.__FUNCTION__."] There is no Youtube tag defined with code '".Youtube::YOUTUBE_PUBLICATION_CHANNEL_CODE."'";
                     $this->logger->warning($errorLog);
                     // throw new \Exception($errorLog);
                 }

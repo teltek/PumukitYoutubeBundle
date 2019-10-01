@@ -19,7 +19,6 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 class YoutubeUploadCommand extends ContainerAwareCommand
 {
-    const PUB_CHANNEL_YOUTUBE = 'PUCHYOUTUBE';
     const PUB_DECISION_AUTONOMOUS = 'PUDEAUTO';
     /**
      * @var DocumentManager
@@ -266,10 +265,10 @@ EOT
 
     private function checkResultsAndSendEmail()
     {
-        $youtubeTag = $this->tagRepo->findOneBy(['cod' => self::PUB_CHANNEL_YOUTUBE]);
+        $youtubeTag = $this->tagRepo->findOneBy(['cod' => Youtube::YOUTUBE_PUBLICATION_CHANNEL_CODE]);
         if (null != $youtubeTag) {
             foreach ($this->okUploads as $mm) {
-                if (!$mm->containsTagWithCod(self::PUB_CHANNEL_YOUTUBE)) {
+                if (!$mm->containsTagWithCod(Youtube::YOUTUBE_PUBLICATION_CHANNEL_CODE)) {
                     $addedTags = $this->tagService->addTagToMultimediaObject($mm, $youtubeTag->getId(), false);
                 }
             }
