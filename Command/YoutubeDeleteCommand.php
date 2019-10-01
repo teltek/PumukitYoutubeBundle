@@ -131,7 +131,7 @@ EOT
      */
     protected function initialize(InputInterface $input, OutputInterface $output)
     {
-        $this->dm = $this->getContainer()->get('doctrine_mongodb')->getManager();
+        $this->dm = $this->getContainer()->get('doctrine_mongodb.odm.document_manager');
         $this->tagRepo = $this->dm->getRepository(Tag::class);
         $this->youtubeRepo = $this->dm->getRepository(Youtube::class);
         $this->syncStatus = $this->getContainer()->getParameter('pumukit_youtube.sync_status');

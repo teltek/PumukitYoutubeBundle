@@ -38,7 +38,7 @@ class AdminController extends Controller
      */
     public function listAction(): array
     {
-        $dm = $this->get('doctrine_mongodb')->getManager();
+        $dm = $this->get('doctrine_mongodb.odm.document_manager');
         $translator = $this->get('translator');
         $youtubeAccounts = $dm->getRepository(Tag::class)->findOneBy(['cod' => Youtube::YOUTUBE_TAG_CODE]);
         if (!$youtubeAccounts) {
@@ -55,7 +55,7 @@ class AdminController extends Controller
      */
     public function createAction(Request $request)
     {
-        $dm = $this->get('doctrine_mongodb')->getManager();
+        $dm = $this->get('doctrine_mongodb.odm.document_manager');
         $translator = $this->get('translator');
         $locale = $request->getLocale();
         $form = $this->createForm(AccountType::class, null, ['translator' => $translator, 'locale' => $locale]);

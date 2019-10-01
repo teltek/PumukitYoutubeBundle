@@ -21,8 +21,7 @@ class YoutubeRepositoryTest extends WebTestCase
         $options = ['environment' => 'test'];
         $kernel = static::createKernel($options);
         $kernel->boot();
-        $this->dm = $kernel->getContainer()
-            ->get('doctrine_mongodb')->getManager();
+        $this->dm = $kernel->getContainer()->get('doctrine_mongodb.odm.document_manager');
         $this->repo = $this->dm
             ->getRepository(Youtube::class)
         ;

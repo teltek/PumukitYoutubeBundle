@@ -40,7 +40,7 @@ class CaptionServiceTest extends WebTestCase
         $kernel = static::createKernel($options);
         $kernel->boot();
         $this->dm = $kernel->getContainer()
-            ->get('doctrine_mongodb')->getManager();
+            ->get('doctrine_mongodb.odm.document_manager');
         $this->youtubeRepo = $this->dm
             ->getRepository('PumukitYoutubeBundle:Youtube')
         ;
