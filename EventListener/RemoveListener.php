@@ -26,22 +26,19 @@ class RemoveListener
     }
 
     /**
-     * @param LifecycleEventArgs $args
-     *
      * @throws \Doctrine\ODM\MongoDB\LockException
      * @throws \Doctrine\ODM\MongoDB\Mapping\MappingException
      */
-    public function preRemove(LifecycleEventArgs $args)
+    public function preRemove(LifecycleEventArgs $args): void
     {
         $document = $args->getDocument();
 
         if ($document instanceof MultimediaObject) {
-            if (null !== $youtubeId = $document->getProperty('youtube')) {
-                if (null != $youtube = $this->youtubeRepo->find($youtubeId)) {
-                    $youtube->setStatus(Youtube::STATUS_TO_DELETE);
-                    $this->documentManager->persist($youtube);
-                    $this->documentManager->flush();
-                }
+            $youtubeId = $document->getProperty('youtube');
+            if ((null !== $youtubeId) && null !== $youtube = $this->youtubeRepo->find($youtubeId)) {
+                $youtube->setStatus(Youtube::STATUS_TO_DELETE);
+                $this->documentManager->persist($youtube);
+                $this->documentManager->flush();
             }
         }
     }

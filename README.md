@@ -5,7 +5,7 @@ Bundle based on [Symfony](http://symfony.com/) to work with the [PuMuKIT Video P
 
 This bundle allows to upload and publish videos from PuMuKIT into a YouTube channel.
 
-This bundle needs to synchronize Youtube with PuMuKIT 2.1 or higher. This synchronization can be done manually from the command line or configurating the Cron tool to do it automatically according to a timeschedule. You can find more information on this in the Configuration guide.
+This synchronization can be done manually from the command line or configurating the Cron tool to do it automatically according to a timeschedule. You can find more information on this in the Configuration guide.
 
 
 Documentation
