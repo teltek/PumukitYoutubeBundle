@@ -42,7 +42,7 @@ class YoutubeServiceTest extends WebTestCase
         $kernel->boot();
         $this->dm = $kernel->getContainer()->get('doctrine_mongodb.odm.document_manager');
         $this->youtubeRepo = $this->dm
-            ->getRepository('PumukitYoutubeBundle:Youtube')
+            ->getRepository(Youtube::class)
         ;
         $this->mmobjRepo = $this->dm
             ->getRepository(MultimediaObject::class)

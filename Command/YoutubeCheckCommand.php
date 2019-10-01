@@ -108,7 +108,7 @@ EOT
         $this->dm = $this->getContainer()->get('doctrine_mongodb.odm.document_manager');
         $this->tagRepo = $this->dm->getRepository(Tag::class);
         $this->mmobjRepo = $this->dm->getRepository(MultimediaObject::class);
-        $this->youtubeRepo = $this->dm->getRepository('PumukitYoutubeBundle:Youtube');
+        $this->youtubeRepo = $this->dm->getRepository(Youtube::class);
 
         $this->youtubeTag = $this->tagRepo->findOneBy(['cod' => Youtube::YOUTUBE_TAG_CODE]);
         if (!$this->youtubeTag) {
