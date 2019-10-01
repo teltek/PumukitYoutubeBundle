@@ -7,21 +7,6 @@ use Pumukit\YoutubeBundle\Document\Youtube;
 
 class YoutubeRepository extends DocumentRepository
 {
-    public function getAllStatus(): array
-    {
-        return [
-            Youtube::STATUS_DEFAULT => 'default',
-            Youtube::STATUS_UPLOADING => 'uploading',
-            Youtube::STATUS_PROCESSING => 'processing',
-            Youtube::STATUS_PUBLISHED => 'published',
-            Youtube::STATUS_ERROR => 'general error',
-            Youtube::STATUS_DUPLICATED => 'duplicated',
-            Youtube::STATUS_REMOVED => 'removed',
-            Youtube::STATUS_TO_DELETE => 'to delete',
-            //            Youtube::STATUS_TO_REVIEW => 'to review',
-        ];
-    }
-
     /**
      * Get with any status query builder.
      *

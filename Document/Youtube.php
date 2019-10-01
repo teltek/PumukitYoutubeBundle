@@ -23,6 +23,17 @@ class Youtube
     public const STATUS_TO_DELETE = 10;
     public const STATUS_TO_REVIEW = 99;
 
+    public static $statusTexts = [
+        self::STATUS_DEFAULT => 'Processing',
+        self::STATUS_UPLOADING => 'Uploading',
+        self::STATUS_PROCESSING => 'Processing',
+        self::STATUS_PUBLISHED => 'Published',
+        self::STATUS_ERROR => 'Error',
+        self::STATUS_DUPLICATED => 'Duplicated',
+        self::STATUS_REMOVED => 'Removed',
+        self::STATUS_TO_DELETE => 'To delete',
+    ];
+
     /**
      * @MongoDB\Id
      */
@@ -170,38 +181,7 @@ class Youtube
 
     public function getStatusText(): string
     {
-        switch ($this->status) {
-            case self::STATUS_DEFAULT:
-            case self::STATUS_UPLOADING:
-            case self::STATUS_PROCESSING:
-                $youtubeStatusText = 'proccessing';
-
-                break;
-            case self::STATUS_PUBLISHED:
-                $youtubeStatusText = 'published';
-
-                break;
-            case self::STATUS_ERROR:
-                $youtubeStatusText = 'error';
-
-                break;
-            case self::STATUS_DUPLICATED:
-                $youtubeStatusText = 'duplicated';
-
-                break;
-            case self::STATUS_REMOVED:
-                $youtubeStatusText = 'removed';
-
-                break;
-            case self::STATUS_TO_DELETE:
-                $youtubeStatusText = 'to delete';
-
-                break;
-            default:
-                $youtubeStatusText = 'none';
-        }
-
-        return $youtubeStatusText;
+        return self::$statusTexts[$this->status];
     }
 
     public function setPlaylists(array $playlists): void
