@@ -6,48 +6,33 @@ use Doctrine\ODM\MongoDB\DocumentManager;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\YoutubeBundle\Document\Youtube;
+use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 use Symfony\Component\Finder\Finder;
 
-/**
- * Class MigrationCommand.
- */
 class MigrationCommand extends ContainerAwareCommand
 {
-    /**
-     * @var DocumentManager
-     */
+    /** @var DocumentManager */
     private $dm;
-
     private $puchYoutubeCod = 'PUCHYOUTUBE';
-
-    /**
-     * Information taken from YoutubeInitTagsCommand.
-     *
-     * @var array
-     */
     private $pubChannelProperties = [
         'modal_path' => 'pumukityoutube_modal_index',
         'advanced_configuration' => 'pumukityoutube_advance_configuration_index',
     ];
 
     private $locales;
-
     private $accountName;
-
     private $tagYoutubeCod = 'YOUTUBE';
-
     private $youtubeTagProperties = [
         'hide_in_tag_group' => true,
     ];
 
     private $force;
 
-    protected function configure()
+    protected function configure(): void
     {
         $this
             ->setName('youtube:migration:schema')
@@ -81,14 +66,11 @@ class MigrationCommand extends ContainerAwareCommand
                 
                 php app/console youtube:migration:schema --single_account_name=my_name_account --force
 EOT
-            );
+            )
+        ;
     }
 
-    /**
-     * @param InputInterface  $input
-     * @param OutputInterface $output
-     */
-    protected function initialize(InputInterface $input, OutputInterface $output)
+    protected function initialize(InputInterface $input, OutputInterface $output): void
     {
         $this->dm = $this->getContainer()->get('doctrine.odm.mongodb.document_manager');
         $this->locales = $this->getContainer()->getParameter('pumukit2.locales');
@@ -98,11 +80,6 @@ EOT
     }
 
     /**
-     * @param InputInterface  $input
-     * @param OutputInterface $output
-     *
-     * @return bool|void
-     *
      * @throws \Exception
      */
     protected function execute(InputInterface $input, OutputInterface $output)
@@ -180,18 +157,16 @@ EOT
             ]
         );
         $this->updateMultimediaObjectsWithAccountTag($output);
+
+        return true;
     }
 
     /**
-     * @param OutputInterface $output
-     *
      * @throws \Exception
      */
-    private function migratePubChannelYoutube(OutputInterface $output)
+    private function migratePubChannelYoutube(OutputInterface $output): void
     {
-        $puchYoutube = $this->dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(
-            ['cod' => $this->puchYoutubeCod]
-        );
+        $puchYoutube = $this->dm->getRepository(Tag::class)->findOneBy(['cod' => $this->puchYoutubeCod]);
 
         if (!$puchYoutube) {
             throw new \Exception(' ERROR - '.$this->puchYoutubeCod." doesn't exists");
@@ -207,20 +182,18 @@ EOT
     }
 
     /**
-     * @param OutputInterface $output
-     *
      * @throws \Exception
      */
-    private function migrateYoutubeAccount(OutputInterface $output)
+    private function migrateYoutubeAccount(OutputInterface $output): void
     {
         $existsFile = $this->findJsonAccount();
         if (!$existsFile) {
             throw new \Exception($this->accountName.' file doesnt exists');
         }
 
-        $youtubeTag = $this->dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(
-            ['cod' => $this->tagYoutubeCod]
-        );
+        $youtubeTag = $this->dm->getRepository(Tag::class)->findOneBy([
+            'cod' => $this->tagYoutubeCod,
+        ]);
 
         if (!$youtubeTag) {
             throw new \Exception('Youtube - ERROR - '.$this->tagYoutubeCod." doesn't exists");
@@ -231,15 +204,9 @@ EOT
         $output->writeln('Youtube - SKIP - Created Youtube tag account with name: '.$this->accountName);
     }
 
-    /**
-     * @param OutputInterface $output
-     * @param Tag             $youtubeTag
-     */
-    private function createYoutubeTagAccount(OutputInterface $output, Tag $youtubeTag)
+    private function createYoutubeTagAccount(OutputInterface $output, Tag $youtubeTag): void
     {
-        $tagAccount = $this->dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(
-            ['properties.login' => $this->accountName]
-        );
+        $tagAccount = $this->dm->getRepository(Tag::class)->findOneBy(['properties.login' => $this->accountName]);
 
         if ($tagAccount) {
             $output->writeln('Tag account with login '.$this->accountName.' exists on BBDD');
@@ -263,14 +230,9 @@ EOT
         $this->dm->flush();
     }
 
-    /**
-     * @param OutputInterface $output
-     */
-    private function migrateYoutubeTag(OutputInterface $output)
+    private function migrateYoutubeTag(OutputInterface $output): void
     {
-        $youtubeTag = $this->dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(
-            ['cod' => $this->tagYoutubeCod]
-        );
+        $youtubeTag = $this->dm->getRepository(Tag::class)->findOneBy(['cod' => $this->tagYoutubeCod]);
 
         foreach ($this->youtubeTagProperties as $key => $value) {
             $youtubeTag->setProperty($key, $value);
@@ -284,17 +246,11 @@ EOT
     }
 
     /**
-     * @param OutputInterface $output
-     *
-     * @return bool
-     *
      * @throws \Exception
      */
-    private function migrateYoutubeDocuments(OutputInterface $output)
+    private function migrateYoutubeDocuments(OutputInterface $output): bool
     {
-        $youtubeDocuments = $this->dm->getRepository('PumukitYoutubeBundle:Youtube')->findBy(
-            ['youtubeAccount' => ['$exists' => false]]
-        );
+        $youtubeDocuments = $this->dm->getRepository(Youtube::class)->findBy(['youtubeAccount' => ['$exists' => false]]);
 
         if (!$youtubeDocuments) {
             $output->writeln('Youtube - SKIP - No documents to update');
@@ -307,9 +263,7 @@ EOT
 
         $progress->start();
 
-        $tagAccount = $this->dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(
-            ['properties.login' => $this->accountName]
-        );
+        $tagAccount = $this->dm->getRepository(Tag::class)->findOneBy(['properties.login' => $this->accountName]);
         if (!$tagAccount) {
             throw new \Exception('Youtube - ERROR - '.$this->accountName." tag doesn't exists");
         }
@@ -330,27 +284,21 @@ EOT
         return true;
     }
 
-    /**
-     * @param Youtube $youtube
-     * @param Tag     $tagAccount
-     */
-    private function addYoutubeAccount(Youtube $youtube, Tag $tagAccount)
+    private function addYoutubeAccount(Youtube $youtube, Tag $tagAccount): void
     {
         $youtube->setYoutubeAccount($tagAccount->getProperty('login'));
     }
 
     /**
-     * @param OutputInterface $output
-     *
      * @throws \Exception
      */
-    private function moveAllPlaylistTags(OutputInterface $output)
+    private function moveAllPlaylistTags(OutputInterface $output): void
     {
-        $youtubeTag = $this->dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(
+        $youtubeTag = $this->dm->getRepository(Tag::class)->findOneBy(
             ['cod' => $this->tagYoutubeCod]
         );
 
-        $playlistTags = $this->dm->getRepository('PumukitSchemaBundle:Tag')->findBy(
+        $playlistTags = $this->dm->getRepository(Tag::class)->findBy(
             [
                 'properties.login' => ['$exists' => false],
                 'parent.$id' => new \MongoId($youtubeTag->getId()),
@@ -366,9 +314,7 @@ EOT
 
         $progress->start();
 
-        $tagAccount = $this->dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(
-            ['properties.login' => $this->accountName]
-        );
+        $tagAccount = $this->dm->getRepository(Tag::class)->findOneBy(['properties.login' => $this->accountName]);
 
         if (!$tagAccount) {
             throw new \Exception('Youtube - ERROR - '.$this->accountName." tag doesn't exists");
@@ -383,13 +329,7 @@ EOT
         $progress->finish();
     }
 
-    /**
-     * @param Tag $playlistTag
-     * @param     $tagAccount
-     *
-     * @return bool
-     */
-    private function refactorPlaylistTag(Tag $playlistTag, $tagAccount)
+    private function refactorPlaylistTag(Tag $playlistTag, $tagAccount): bool
     {
         if ($playlistTag->getProperty('login')) {
             return false;
@@ -401,10 +341,7 @@ EOT
         return true;
     }
 
-    /**
-     * @return bool
-     */
-    private function findJsonAccount()
+    private function findJsonAccount(): bool
     {
         $finder = new Finder();
         $files = $finder->files()->in(__DIR__.'/../Resources/data/accounts');
@@ -417,14 +354,9 @@ EOT
         return false;
     }
 
-    /**
-     * @param OutputInterface $output
-     *
-     * @return bool
-     */
-    private function updateMultimediaObjectsWithAccountTag(OutputInterface $output)
+    private function updateMultimediaObjectsWithAccountTag(OutputInterface $output): bool
     {
-        $multimediaObjects = $this->dm->getRepository('PumukitSchemaBundle:MultimediaObject')->findBy(
+        $multimediaObjects = $this->dm->getRepository(MultimediaObject::class)->findBy(
             [
                 'tags.cod' => [
                     '$all' => [
@@ -441,11 +373,7 @@ EOT
             return false;
         }
 
-        $tagAccount = $this->dm->getRepository('PumukitSchemaBundle:Tag')->findOneBy(
-            [
-                'properties.login' => $this->accountName,
-            ]
-        );
+        $tagAccount = $this->dm->getRepository(Tag::class)->findOneBy(['properties.login' => $this->accountName]);
 
         $progress = new ProgressBar($output, count($multimediaObjects));
         $progress->setFormat('verbose');
@@ -468,21 +396,14 @@ EOT
         return true;
     }
 
-    /**
-     * @param MultimediaObject $multimediaObject
-     * @param Tag              $tagAccount
-     */
-    private function addTagAccountOnMultimediaObject(MultimediaObject $multimediaObject, Tag $tagAccount)
+    private function addTagAccountOnMultimediaObject(MultimediaObject $multimediaObject, Tag $tagAccount): void
     {
         $multimediaObject->addTag($tagAccount);
     }
 
-    /**
-     * @param OutputInterface $output
-     */
-    private function checkAccountExists(OutputInterface $output)
+    private function checkAccountExists(OutputInterface $output): void
     {
-        $tagAccount = $this->dm->getRepository('PumukitSchemaBundle:Tag')->findBy(
+        $tagAccount = $this->dm->getRepository(Tag::class)->findBy(
             [
                 'properties.login' => $this->accountName,
             ]
