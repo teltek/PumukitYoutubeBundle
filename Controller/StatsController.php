@@ -32,7 +32,7 @@ class StatsController extends Controller
         $youtubeStatusDocuments = $youtubeService->getYoutubeDocumentsByCriteria();
         $statsYoutubeDocuments = $this->processYoutubeDocuments($youtubeStatusDocuments);
 
-        $youtubeStatus = $this->get('doctrine_mongodb.odm.document_manager')->getRepository(Youtube::class)->getAllStatus();
+        $youtubeStatus = Youtube::$statusTexts;
 
         return [
             'youtubeAccounts' => $youtubeService->getYoutubeAccounts(),

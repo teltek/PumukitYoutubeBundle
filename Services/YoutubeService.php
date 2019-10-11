@@ -21,7 +21,6 @@ use Symfony\Component\Translation\TranslatorInterface;
 class YoutubeService
 {
     const YOUTUBE_PLAYLIST_URL = 'https://www.youtube.com/playlist?list=';
-    const PUB_CHANNEL_YOUTUBE = 'PUCHYOUTUBE';
 
     public static $status = [
         0 => 'public',
@@ -204,6 +203,7 @@ class YoutubeService
         if (false !== strpos($trackPath, '.m4v')) {
             $errorLog = __CLASS__.' ['.__FUNCTION__.'] Youtube not support m4v files. To upload this video to Youtube, convert to mp4.'.$trackPath;
             $this->logger->error($errorLog);
+
             throw new \Exception($errorLog);
         }
 
@@ -212,7 +212,7 @@ class YoutubeService
             $youtube = new Youtube();
             $youtube->setMultimediaObjectId($multimediaObject->getId());
 
-            $youtubeTag = $this->dm->getRepository(Tag::class)->findOneBy(['cod' => 'YOUTUBE']);
+            $youtubeTag = $this->dm->getRepository(Tag::class)->findOneBy(['cod' => Youtube::YOUTUBE_TAG_CODE]);
             $youtubeTagAccount = null;
             foreach ($multimediaObject->getTags() as $tag) {
                 if ($tag->isChildOf($youtubeTag)) {
@@ -273,7 +273,8 @@ class YoutubeService
         $youtube->setUploadDate($now);
         $this->dm->persist($youtube);
         $this->dm->flush();
-        $youtubeTag = $this->tagRepo->findOneBy(['cod' => self::PUB_CHANNEL_YOUTUBE]);
+
+        $youtubeTag = $this->tagRepo->findOneBy(['cod' => Youtube::YOUTUBE_PUBLICATION_CHANNEL_CODE]);
         if (null != $youtubeTag) {
             $this->tagService->addTagToMultimediaObject($multimediaObject, $youtubeTag->getId());
         } else {
@@ -307,14 +308,14 @@ class YoutubeService
         $this->dm->persist($multimediaObject);
 
         $this->dm->flush();
-        $youtubeEduTag = $this->tagRepo->findOneBy(['cod' => self::PUB_CHANNEL_YOUTUBE]);
-        $youtubeTag = $this->tagRepo->findOneBy(['cod' => self::PUB_CHANNEL_YOUTUBE]);
+        $youtubeEduTag = $this->tagRepo->findOneBy(['cod' => Youtube::YOUTUBE_PUBLICATION_CHANNEL_CODE]);
+        $youtubeTag = $this->tagRepo->findOneBy(['cod' => Youtube::YOUTUBE_PUBLICATION_CHANNEL_CODE]);
         if (null != $youtubeTag) {
             if ($multimediaObject->containsTag($youtubeEduTag)) {
                 $this->tagService->removeTagFromMultimediaObject($multimediaObject, $youtubeEduTag->getId());
             }
         } else {
-            $errorLog = __CLASS__.' ['.__FUNCTION__."] There is no Youtube tag defined with code '".self::PUB_CHANNEL_YOUTUBE."'";
+            $errorLog = __CLASS__.' ['.__FUNCTION__."] There is no Youtube tag defined with code '".Youtube::YOUTUBE_PUBLICATION_CHANNEL_CODE."'";
             $this->logger->error($errorLog);
 
             throw new \Exception($errorLog);
@@ -392,7 +393,7 @@ class YoutubeService
         $multimediaObject = $this->mmobjRepo->find($youtube->getMultimediaObjectId());
 
         if (!$youtube->getYoutubeAccount()) {
-            $youtubeTag = $this->dm->getRepository(Tag::class)->findOneBy(['cod' => 'YOUTUBE']);
+            $youtubeTag = $this->dm->getRepository(Tag::class)->findOneBy(['cod' => Youtube::YOUTUBE_TAG_CODE]);
             $account = null;
             foreach ($multimediaObject->getTags() as $tag) {
                 if (!$tag->isChildOf($youtubeTag)) {
@@ -441,14 +442,14 @@ class YoutubeService
                 $this->logger->error('ERROR - Setting status removed '.$youtube->getId().' ( '.$youtube->getMultimediaObjectId().')'.$aResult['error_out'].' - '.__FUNCTION__);
                 $youtube->setStatus(Youtube::STATUS_REMOVED);
                 $this->dm->persist($youtube);
-                $youtubeEduTag = $this->tagRepo->findOneBy(['cod' => self::PUB_CHANNEL_YOUTUBE]);
+                $youtubeEduTag = $this->tagRepo->findOneBy(['cod' => Youtube::YOUTUBE_PUBLICATION_CHANNEL_CODE]);
 
                 if (null !== $youtubeEduTag) {
                     if ($multimediaObject->containsTag($youtubeEduTag)) {
                         $this->tagService->removeTagFromMultimediaObject($multimediaObject, $youtubeEduTag->getId());
                     }
                 } else {
-                    $errorLog = __CLASS__.' ['.__FUNCTION__."] There is no Youtube tag defined with code '".self::PUB_CHANNEL_YOUTUBE."'";
+                    $errorLog = __CLASS__.' ['.__FUNCTION__."] There is no Youtube tag defined with code '".Youtube::YOUTUBE_PUBLICATION_CHANNEL_CODE."'";
                     $this->logger->warning($errorLog);
                     // throw new \Exception($errorLog);
                 }
@@ -595,7 +596,7 @@ class YoutubeService
         }
 
         if ($youtube && !$youtube->getYoutubeAccount()) {
-            $youtubeTag = $this->dm->getRepository(Tag::class)->findOneBy(['cod' => 'YOUTUBE']);
+            $youtubeTag = $this->dm->getRepository(Tag::class)->findOneBy(['cod' => Youtube::YOUTUBE_TAG_CODE]);
             foreach ($multimediaObject->getTags() as $embeddedTag) {
                 if ($embeddedTag->isChildOf($youtubeTag)) {
                     $tag = $this->dm->getRepository(Tag::class)->findOneBy(['_id' => new \MongoId($embeddedTag->getId())]);
@@ -635,7 +636,7 @@ class YoutubeService
      */
     public function getMultimediaObjectYoutubeAccount(MultimediaObject $multimediaObject)
     {
-        $youtubeTag = $this->dm->getRepository(Tag::class)->findOneBy(['cod' => 'YOUTUBE']);
+        $youtubeTag = $this->dm->getRepository(Tag::class)->findOneBy(['cod' => Youtube::YOUTUBE_TAG_CODE]);
         foreach ($multimediaObject->getTags() as $embeddedTag) {
             if ($embeddedTag->isChildOf($youtubeTag)) {
                 return $this->dm->getRepository(Tag::class)->findOneBy(['_id' => new \MongoId($embeddedTag->getId())]);
@@ -942,7 +943,7 @@ class YoutubeService
         $youtube->setEmbed($this->getEmbed($youtubeId));
         $youtube->setYoutubeId($youtubeId);
 
-        $youtubeTag = $this->dm->getRepository(Tag::class)->findOneBy(['cod' => 'YOUTUBE']);
+        $youtubeTag = $this->dm->getRepository(Tag::class)->findOneBy(['cod' => Youtube::YOUTUBE_TAG_CODE]);
         foreach ($multimediaObject->getTags() as $embeddedTag) {
             if ($embeddedTag->isChildOf($youtubeTag)) {
                 $tag = $this->dm->getRepository(Tag::class)->findOneBy(['_id' => new \MongoId($embeddedTag->getId())]);

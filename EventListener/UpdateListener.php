@@ -11,29 +11,20 @@ use Pumukit\YoutubeBundle\Document\Youtube;
 
 class UpdateListener
 {
-    const YOUTUBE_CODE = 'YOUTUBE';
     /**
      * @var DocumentManager
      */
     private $documentManager;
 
-    /**
-     * UpdateListener constructor.
-     *
-     * @param DocumentManager $documentManager
-     */
     public function __construct(DocumentManager $documentManager)
     {
         $this->documentManager = $documentManager;
     }
 
     /**
-     * @param MultimediaObjectEvent $event
-     *
-     * @throws \MongoException
      * @throws \Exception
      */
-    public function onMultimediaObjectUpdate(MultimediaObjectEvent $event)
+    public function onMultimediaObjectUpdate(MultimediaObjectEvent $event): void
     {
         $multimediaObject = $event->getMultimediaObject();
 
@@ -43,11 +34,9 @@ class UpdateListener
     }
 
     /**
-     * @param MultimediaObject $multimediaObject
-     *
      * @throws \Exception
      */
-    private function updateYoutubeDocument(MultimediaObject $multimediaObject)
+    private function updateYoutubeDocument(MultimediaObject $multimediaObject): void
     {
         $youtubeRepo = $this->documentManager->getRepository(Youtube::class);
         $youtube = $youtubeRepo->createQueryBuilder()
@@ -56,7 +45,7 @@ class UpdateListener
             ->getSingleResult()
         ;
 
-        if (null !== $youtube && $youtube instanceof Youtube) {
+        if ($youtube instanceof Youtube) {
             $youtube->setMultimediaObjectUpdateDate(new \DateTime());
             $this->documentManager->persist($youtube);
             $this->documentManager->flush();
@@ -66,18 +55,16 @@ class UpdateListener
     /**
      * Set YouTube account ( from template ) on multimedia object that was cut (TTK-22155).
      *
-     * @param MultimediaObject $multimediaObject
-     *
-     * @throws \MongoException
+     * @throws \Exception
      */
-    private function setYoutubeAccount(MultimediaObject $multimediaObject)
+    private function setYoutubeAccount(MultimediaObject $multimediaObject): void
     {
         $youtubeTag = $this->documentManager->getRepository(Tag::class)->findOneBy([
-            'cod' => self::YOUTUBE_CODE,
+            'cod' => Youtube::YOUTUBE_TAG_CODE,
         ]);
 
         if (!$youtubeTag) {
-            throw new \Exception(self::YOUTUBE_CODE.' tag not found');
+            throw new \Exception(Youtube::YOUTUBE_TAG_CODE.' tag not found');
         }
 
         if (!$multimediaObject->isPrototype() && !$multimediaObject->containsTag($youtubeTag)) {
@@ -98,11 +85,7 @@ class UpdateListener
         }
     }
 
-    /**
-     * @param EmbeddedTag      $tag
-     * @param MultimediaObject $multimediaObject
-     */
-    private function updateTagsFromPrototype(EmbeddedTag $tag, MultimediaObject $multimediaObject)
+    private function updateTagsFromPrototype(EmbeddedTag $tag, MultimediaObject $multimediaObject): void
     {
         $multimediaObject->addTag($tag);
     }

@@ -80,7 +80,7 @@ EOT
      */
     protected function initialize(InputInterface $input, OutputInterface $output)
     {
-        $this->dm = $this->getContainer()->get('doctrine_mongodb')->getManager();
+        $this->dm = $this->getContainer()->get('doctrine_mongodb.odm.document_manager');
         $this->mmobjRepo = $this->dm->getRepository(MultimediaObject::class);
         $this->captionService = $this->getContainer()->get('pumukityoutube.caption');
         $this->logger = $this->getContainer()->get('monolog.logger.youtube');

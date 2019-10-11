@@ -5,6 +5,7 @@ namespace Pumukit\YoutubeBundle\Command;
 use Doctrine\ODM\MongoDB\DocumentManager;
 use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\SchemaBundle\Repository\TagRepository;
+use Pumukit\YoutubeBundle\Document\Youtube;
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -45,10 +46,10 @@ EOT
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $this->dm = $this->getContainer()->get('doctrine_mongodb')->getManager();
+        $this->dm = $this->getContainer()->get('doctrine_mongodb.odm.document_manager');
         $this->tagRepo = $this->dm->getRepository(Tag::class);
         if ($input->getOption('force')) {
-            $youtubePublicationChannelTag = $this->createTagWithCode('PUCHYOUTUBE', 'YouTubeEDU', 'PUBCHANNELS', false);
+            $youtubePublicationChannelTag = $this->createTagWithCode(Youtube::YOUTUBE_PUBLICATION_CHANNEL_CODE, 'YouTubeEDU', 'PUBCHANNELS', false);
             $youtubePublicationChannelTag->setProperty('modal_path', 'pumukityoutube_modal_index');
             $youtubePublicationChannelTag->setProperty(
                 'advanced_configuration',
@@ -60,7 +61,7 @@ EOT
                 'Tag persisted - new id: '.$youtubePublicationChannelTag->getId().
                 ' cod: '.$youtubePublicationChannelTag->getCod()
             );
-            $youtubePlaylistTag = $this->createTagWithCode('YOUTUBE', 'YouTube', 'ROOT', true);
+            $youtubePlaylistTag = $this->createTagWithCode(Youtube::YOUTUBE_TAG_CODE, 'YouTube', 'ROOT', true);
             $youtubePlaylistTag->setProperty(
                 'hide_in_tag_group',
                 true

@@ -15,7 +15,7 @@
                     <a class="youtube_status_link_list" href="{{ path('pumukit_youtube_stat_list', {'status': status }) }}">
                         <div class="info-box"   data-toggle="tooltip" data-placement="bottom" title="{{ ("Show documents by status "|trans) ~ text|trans }}">
                             <span class="info-box-icon bg-warning">
-                                {{text|first|upper }}
+                                {{ text|trans|first|upper }}
                             </span>
                             <div class="info-box-content">
                                 <span class="info-box-number">

@@ -8,6 +8,7 @@ use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\SchemaBundle\Repository\MultimediaObjectRepository;
 use Pumukit\SchemaBundle\Repository\TagRepository;
+use Pumukit\YoutubeBundle\Document\Youtube;
 use Pumukit\YoutubeBundle\Repository\YoutubeRepository;
 use Pumukit\YoutubeBundle\Services\YoutubePlaylistService;
 use Pumukit\YoutubeBundle\Services\YoutubeService;
@@ -126,7 +127,7 @@ EOT
         $this->dm = $this->getContainer()->get('doctrine_mongodb.odm.document_manager');
         $this->tagRepo = $this->dm->getRepository(Tag::class);
         $this->mmobjRepo = $this->dm->getRepository(MultimediaObject::class);
-        $this->youtubeRepo = $this->dm->getRepository('PumukitYoutubeBundle:Youtube');
+        $this->youtubeRepo = $this->dm->getRepository(Youtube::class);
 
         $this->youtubeService = $this->getContainer()->get('pumukityoutube.youtube');
         $this->youtubePlaylistService = $this->getContainer()->get('pumukityoutube.youtube_playlist');

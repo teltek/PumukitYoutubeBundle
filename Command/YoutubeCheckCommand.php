@@ -105,12 +105,12 @@ EOT
      */
     protected function initialize(InputInterface $input, OutputInterface $output)
     {
-        $this->dm = $this->getContainer()->get('doctrine_mongodb')->getManager();
+        $this->dm = $this->getContainer()->get('doctrine_mongodb.odm.document_manager');
         $this->tagRepo = $this->dm->getRepository(Tag::class);
         $this->mmobjRepo = $this->dm->getRepository(MultimediaObject::class);
-        $this->youtubeRepo = $this->dm->getRepository('PumukitYoutubeBundle:Youtube');
+        $this->youtubeRepo = $this->dm->getRepository(Youtube::class);
 
-        $this->youtubeTag = $this->tagRepo->findOneBy(['cod' => 'YOUTUBE']);
+        $this->youtubeTag = $this->tagRepo->findOneBy(['cod' => Youtube::YOUTUBE_TAG_CODE]);
         if (!$this->youtubeTag) {
             throw new \Exception('No tag with code YOUTUBE');
         }
@@ -139,7 +139,7 @@ EOT
             'ok' => 0,
         ];
 
-        $statusArray = [Youtube::STATUS_REMOVED, Youtube::STATUS_NOTIFIED_ERROR, Youtube::STATUS_DUPLICATED];
+        $statusArray = [Youtube::STATUS_REMOVED, Youtube::STATUS_DUPLICATED];
         $youtubes = $this->youtubeRepo->getWithoutAnyStatus($statusArray);
 
         foreach ($youtubes as $youtube) {

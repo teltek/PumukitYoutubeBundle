@@ -40,9 +40,10 @@ class CaptionServiceTest extends WebTestCase
         $kernel = static::createKernel($options);
         $kernel->boot();
         $this->dm = $kernel->getContainer()
-            ->get('doctrine_mongodb')->getManager();
+            ->get('doctrine_mongodb.odm.document_manager')
+        ;
         $this->youtubeRepo = $this->dm
-            ->getRepository('PumukitYoutubeBundle:Youtube')
+            ->getRepository(Youtube::class)
         ;
         $this->mmobjRepo = $this->dm
             ->getRepository(MultimediaObject::class)
@@ -83,7 +84,7 @@ class CaptionServiceTest extends WebTestCase
         $useDefaultPlaylist = false;
         $defaultPlaylistCod = 'YOUTUBECONFERENCES';
         $defaultPlaylistTitle = 'Conferences';
-        $metatagPlaylistCod = 'YOUTUBE';
+        $metatagPlaylistCod = Youtube::YOUTUBE_TAG_CODE;
         $playlistMaster = ['pumukit', 'youtube'];
         $deletePlaylists = false;
         $pumukitLocales = ['en'];
@@ -502,13 +503,13 @@ class CaptionServiceTest extends WebTestCase
         $this->dm->flush();
 
         $pubChannelTag = $this->createTagWithCode('PUBCHANNELS', 'PUBCHANNELS', 'ROOT', true, false);
-        $youtubeTag = $this->createTagWithCode('YOUTUBE', 'YouTube Playlists', 'ROOT', true, true);
+        $youtubeTag = $this->createTagWithCode(Youtube::YOUTUBE_TAG_CODE, 'YouTube Playlists', 'ROOT', true, true);
         $this->dm->persist($pubChannelTag);
         $this->dm->persist($youtubeTag);
         $this->dm->flush();
 
-        $youtubeEduTag = $this->createTagWithCode('PUCHYOUTUBE', 'YouTubeEDU', 'PUBCHANNELS', false, true);
-        $playlistTag = $this->createTagWithCode('YOUTUBETEST', 'Test Playlist', 'YOUTUBE', false, true);
+        $youtubeEduTag = $this->createTagWithCode(Youtube::YOUTUBE_PUBLICATION_CHANNEL_CODE, 'YouTubeEDU', 'PUBCHANNELS', false, true);
+        $playlistTag = $this->createTagWithCode('YOUTUBETEST', 'Test Playlist', Youtube::YOUTUBE_TAG_CODE, false, true);
         $this->dm->persist($youtubeEduTag);
         $this->dm->persist($playlistTag);
         $this->dm->flush();
@@ -541,6 +542,7 @@ class CaptionServiceTest extends WebTestCase
         $youtube->setMultimediaObjectId($multimediaObject->getId());
         $youtubeId = '12345678909';
         $youtubeUrl = 'https://www.youtube.com/watch?v='.$youtubeId;
+        $youtube->setYoutubeAccount('account_test');
         $youtube->setYoutubeId($youtubeId);
         $youtube->setLink($youtubeUrl);
         $youtube->setStatus(Youtube::STATUS_PUBLISHED);

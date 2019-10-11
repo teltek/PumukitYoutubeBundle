@@ -9,9 +9,6 @@ use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\SchemaBundle\Services\TagService;
 use Pumukit\YoutubeBundle\Document\Youtube;
 
-/**
- * Class BackofficeListener.
- */
 class BackofficeListener
 {
     /**
@@ -24,14 +21,6 @@ class BackofficeListener
      */
     private $tagService;
 
-    private $pubChannelYoutube = 'PUCHYOUTUBE';
-
-    /**
-     * BackofficeListener constructor.
-     *
-     * @param DocumentManager $documentManager
-     * @param TagService      $tagService
-     */
     public function __construct(DocumentManager $documentManager, TagService $tagService)
     {
         $this->dm = $documentManager;
@@ -39,17 +28,13 @@ class BackofficeListener
     }
 
     /**
-     * @param PublicationSubmitEvent $event
-     *
      * @throws \Exception
-     *
-     * @return bool
      */
-    public function onPublicationSubmit(PublicationSubmitEvent $event)
+    public function onPublicationSubmit(PublicationSubmitEvent $event): bool
     {
         $request = $event->getRequest();
         $multimediaObject = $event->getMultimediaObject();
-        $youtubeTag = $this->dm->getRepository(Tag::class)->findOneBy(['cod' => 'YOUTUBE']);
+        $youtubeTag = $this->dm->getRepository(Tag::class)->findOneBy(['cod' => Youtube::YOUTUBE_TAG_CODE]);
         if (!$youtubeTag) {
             return false;
         }
@@ -65,11 +50,11 @@ class BackofficeListener
         }
 
         $pubChannels = array_keys($request->request->get('pub_channels'));
-        if (!in_array($this->pubChannelYoutube, $pubChannels)) {
+        if (!in_array(Youtube::YOUTUBE_PUBLICATION_CHANNEL_CODE, $pubChannels, true)) {
             return false;
         }
 
-        if (!$request->request->has('youtube_label') and !$request->request->has('youtube_playlist_label')) {
+        if (!$request->request->has('youtube_label') && !$request->request->has('youtube_playlist_label')) {
             return false;
         }
 
@@ -94,12 +79,9 @@ class BackofficeListener
     }
 
     /**
-     * @param MultimediaObject $multimediaObject
-     * @param array            $multiplePlaylist
-     *
      * @throws \Exception
      */
-    private function addPlaylistToMultimediaObject(MultimediaObject $multimediaObject, array $multiplePlaylist)
+    private function addPlaylistToMultimediaObject(MultimediaObject $multimediaObject, array $multiplePlaylist): void
     {
         foreach ($multiplePlaylist as $playlist) {
             if ('any' !== $playlist) {

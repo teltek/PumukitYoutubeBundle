@@ -79,7 +79,7 @@ EOT
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $statusArray = [Youtube::STATUS_REMOVED, Youtube::STATUS_NOTIFIED_ERROR, Youtube::STATUS_DUPLICATED];
+        $statusArray = [Youtube::STATUS_REMOVED, Youtube::STATUS_DUPLICATED];
         $youtubes = $this->youtubeRepo->getWithoutAnyStatus($statusArray);
 
         $this->updateVideoStatusInYoutube($youtubes, $output);
@@ -92,10 +92,10 @@ EOT
      */
     protected function initialize(InputInterface $input, OutputInterface $output)
     {
-        $this->dm = $this->getContainer()->get('doctrine_mongodb')->getManager();
+        $this->dm = $this->getContainer()->get('doctrine_mongodb.odm.document_manager');
         $this->tagRepo = $this->dm->getRepository(Tag::class);
         $this->mmobjRepo = $this->dm->getRepository(MultimediaObject::class);
-        $this->youtubeRepo = $this->dm->getRepository('PumukitYoutubeBundle:Youtube');
+        $this->youtubeRepo = $this->dm->getRepository(Youtube::class);
 
         $this->youtubeService = $this->getContainer()->get('pumukityoutube.youtube');
 

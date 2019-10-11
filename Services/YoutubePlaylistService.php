@@ -212,7 +212,7 @@ class YoutubePlaylistService
         if ($this->USE_DEFAULT_PLAYLIST) {
             $this->getOrCreateDefaultTag();
         }
-        $youtubeAccount = $this->documentManager->getRepository(Tag::class)->findOneBy(['cod' => 'YOUTUBE']);
+        $youtubeAccount = $this->documentManager->getRepository(Tag::class)->findOneBy(['cod' => Youtube::YOUTUBE_TAG_CODE]);
         foreach ($youtubeAccount->getChildren() as $account) {
             $allPlaylistTags = $account->getChildren();
             $login = $account->getProperty('login');

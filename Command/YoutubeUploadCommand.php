@@ -19,7 +19,6 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 class YoutubeUploadCommand extends ContainerAwareCommand
 {
-    const PUB_CHANNEL_YOUTUBE = 'PUCHYOUTUBE';
     const PUB_DECISION_AUTONOMOUS = 'PUDEAUTO';
     /**
      * @var DocumentManager
@@ -87,9 +86,7 @@ EOT
         $this->uploadVideosToYoutube($newMultimediaObjects, $output);
 
         $errorStatus = [
-            Youtube::STATUS_HTTP_ERROR,
             Youtube::STATUS_ERROR,
-            Youtube::STATUS_UPDATE_ERROR,
         ];
         $failureMultimediaObjects = $this->getUploadsByStatus($errorStatus);
         $this->uploadVideosToYoutube($failureMultimediaObjects, $output);
@@ -109,10 +106,10 @@ EOT
      */
     protected function initialize(InputInterface $input, OutputInterface $output)
     {
-        $this->dm = $this->getContainer()->get('doctrine_mongodb')->getManager();
+        $this->dm = $this->getContainer()->get('doctrine_mongodb.odm.document_manager');
         $this->tagRepo = $this->dm->getRepository(Tag::class);
         $this->mmobjRepo = $this->dm->getRepository(MultimediaObject::class);
-        $this->youtubeRepo = $this->dm->getRepository('PumukitYoutubeBundle:Youtube');
+        $this->youtubeRepo = $this->dm->getRepository(Youtube::class);
 
         $container = $this->getContainer();
         $this->youtubeService = $container->get('pumukityoutube.youtube');
@@ -268,10 +265,10 @@ EOT
 
     private function checkResultsAndSendEmail()
     {
-        $youtubeTag = $this->tagRepo->findOneBy(['cod' => self::PUB_CHANNEL_YOUTUBE]);
+        $youtubeTag = $this->tagRepo->findOneBy(['cod' => Youtube::YOUTUBE_PUBLICATION_CHANNEL_CODE]);
         if (null != $youtubeTag) {
             foreach ($this->okUploads as $mm) {
-                if (!$mm->containsTagWithCod(self::PUB_CHANNEL_YOUTUBE)) {
+                if (!$mm->containsTagWithCod(Youtube::YOUTUBE_PUBLICATION_CHANNEL_CODE)) {
                     $addedTags = $this->tagService->addTagToMultimediaObject($mm, $youtubeTag->getId(), false);
                 }
             }
@@ -289,7 +286,7 @@ EOT
      */
     private function checkIfMultimediaObjectHaveAccount(MultimediaObject $mm)
     {
-        $youtubeTag = $this->dm->getRepository(Tag::class)->findOneBy(['cod' => 'YOUTUBE']);
+        $youtubeTag = $this->dm->getRepository(Tag::class)->findOneBy(['cod' => Youtube::YOUTUBE_TAG_CODE]);
         $haveAccount = false;
         foreach ($mm->getTags() as $tag) {
             if ($tag->isChildOf($youtubeTag)) {

@@ -12,11 +12,11 @@ use Pumukit\YoutubeBundle\Document\Youtube;
  */
 class YoutubeTest extends TestCase
 {
-    public function testSetterAndGetter()
+    public function testSetterAndGetter(): void
     {
         $youtubeId = 'j7nFiNk157o';
         $link = 'https://www.youtube.com/watch?v=j7nFiNk157o';
-        $embed = '<iframe width="560" height="315" src="https://www.youtube.com/embed/j7nFiNk157o" frameborder="0" allowfullscreen></iframe>';
+        $embed = '<iframe width="560" height="315" src="https://www.youtube.com/embed/j7nFiNk157o" allowfullscreen></iframe>';
         $status = Youtube::STATUS_UPLOADING;
         $playlist = 'PLmXxqSJJq-yUfrjvKe5c5LX_1x7nGVF6c';
         $playlistItem = 'PLAwsTYpyHbLgugOuQwrVaPIEnH3QiSoTyXoxRcXf9zm0';
@@ -25,6 +25,8 @@ class YoutubeTest extends TestCase
         $multimediaObjectUpdateDate = new \DateTime('2015-08-14 03:05');
         $syncMetadataDate = new \DateTime('2015-08-14 04:05');
         $syncCaptionsDate = new \DateTime('2015-08-14 04:15');
+        $fileUploaded = 'video.mp4';
+        $youtubeAccount = 'account_test';
 
         $caption = new Caption();
         $materialId = 'materialId';
@@ -43,6 +45,7 @@ class YoutubeTest extends TestCase
         $youtube = new Youtube();
 
         $youtube->setYoutubeId($youtubeId);
+        $youtube->setYoutubeAccount($youtubeAccount);
         $youtube->setLink($link);
         $youtube->setEmbed($embed);
         $youtube->setStatus($status);
@@ -52,6 +55,7 @@ class YoutubeTest extends TestCase
         $youtube->setMultimediaObjectUpdateDate($multimediaObjectUpdateDate);
         $youtube->setSyncMetadataDate($syncMetadataDate);
         $youtube->setSyncCaptionsDate($syncCaptionsDate);
+        $youtube->setFileUploaded($fileUploaded);
         $youtube->addCaption($caption);
 
         $this->assertEquals($youtubeId, $youtube->getYoutubeId());
@@ -65,6 +69,8 @@ class YoutubeTest extends TestCase
         $this->assertEquals($syncMetadataDate, $youtube->getSyncMetadataDate());
         $this->assertEquals($syncCaptionsDate, $youtube->getSyncCaptionsDate());
         $this->assertEquals($caption, $youtube->getCaptionByLanguage($language));
+        $this->assertEquals($fileUploaded, $youtube->getFileUploaded());
+        $this->assertEquals($youtubeAccount, $youtube->getYoutubeAccount());
 
         $yCaption = $youtube->getCaptions()[0];
 
@@ -81,7 +87,7 @@ class YoutubeTest extends TestCase
         $this->assertEmpty($youtube->getCaptions());
     }
 
-    public function testGetAndRemoveCaptionByCaptionId()
+    public function testGetAndRemoveCaptionByCaptionId(): void
     {
         $caption1 = new Caption();
         $captionId1 = 'captionid1';
@@ -130,7 +136,7 @@ class YoutubeTest extends TestCase
         $this->assertNotEquals($caption3, $youtube->getCaptionByCaptionId($captionId3));
     }
 
-    public function testGetAndRemoveCaptionByMaterialId()
+    public function testGetAndRemoveCaptionByMaterialId(): void
     {
         $caption1 = new Caption();
         $materialId1 = 'materialid1';
@@ -179,7 +185,7 @@ class YoutubeTest extends TestCase
         $this->assertNotEquals($caption3, $youtube->getCaptionByMaterialId($materialId3));
     }
 
-    public function testContainsCaption()
+    public function testContainsCaption(): void
     {
         $caption1 = new Caption();
         $materialId1 = 'materialid1';
@@ -202,7 +208,7 @@ class YoutubeTest extends TestCase
         $this->assertTrue($youtube->containsCaption($caption3));
     }
 
-    public function testGetCaptionsByLanguage()
+    public function testGetCaptionsByLanguage(): void
     {
         $caption1 = new Caption();
         $language1 = 'en';
