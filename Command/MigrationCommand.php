@@ -17,7 +17,6 @@ class MigrationCommand extends ContainerAwareCommand
 {
     /** @var DocumentManager */
     private $dm;
-    private $puchYoutubeCod = 'PUCHYOUTUBE';
     private $pubChannelProperties = [
         'modal_path' => 'pumukityoutube_modal_index',
         'advanced_configuration' => 'pumukityoutube_advance_configuration_index',
@@ -25,7 +24,6 @@ class MigrationCommand extends ContainerAwareCommand
 
     private $locales;
     private $accountName;
-    private $tagYoutubeCod = 'YOUTUBE';
     private $youtubeTagProperties = [
         'hide_in_tag_group' => true,
     ];
@@ -166,10 +164,11 @@ EOT
      */
     private function migratePubChannelYoutube(OutputInterface $output): void
     {
-        $puchYoutube = $this->dm->getRepository(Tag::class)->findOneBy(['cod' => $this->puchYoutubeCod]);
+
+        $puchYoutube = $this->dm->getRepository(Tag::class)->findOneBy(['cod' => Youtube::YOUTUBE_PUBLICATION_CHANNEL_CODE]);
 
         if (!$puchYoutube) {
-            throw new \Exception(' ERROR - '.$this->puchYoutubeCod." doesn't exists");
+            throw new \Exception(' ERROR - '.Youtube::YOUTUBE_PUBLICATION_CHANNEL_CODE." doesn't exists");
         }
 
         foreach ($this->pubChannelProperties as $key => $value) {
@@ -178,7 +177,7 @@ EOT
 
         $this->dm->flush();
 
-        $output->writeln('Youtube - SKIP - Added properties to '.$this->puchYoutubeCod);
+        $output->writeln('Youtube - SKIP - Added properties to '.Youtube::YOUTUBE_PUBLICATION_CHANNEL_CODE);
     }
 
     /**
@@ -192,11 +191,11 @@ EOT
         }
 
         $youtubeTag = $this->dm->getRepository(Tag::class)->findOneBy([
-            'cod' => $this->tagYoutubeCod,
+            'cod' => Youtube::YOUTUBE_TAG_CODE,
         ]);
 
         if (!$youtubeTag) {
-            throw new \Exception('Youtube - ERROR - '.$this->tagYoutubeCod." doesn't exists");
+            throw new \Exception('Youtube - ERROR - '.Youtube::YOUTUBE_TAG_CODE." doesn't exists");
         }
 
         $this->createYoutubeTagAccount($output, $youtubeTag);
@@ -232,7 +231,7 @@ EOT
 
     private function migrateYoutubeTag(OutputInterface $output): void
     {
-        $youtubeTag = $this->dm->getRepository(Tag::class)->findOneBy(['cod' => $this->tagYoutubeCod]);
+        $youtubeTag = $this->dm->getRepository(Tag::class)->findOneBy(['cod' => Youtube::YOUTUBE_TAG_CODE]);
 
         foreach ($this->youtubeTagProperties as $key => $value) {
             $youtubeTag->setProperty($key, $value);
@@ -240,7 +239,7 @@ EOT
 
         $this->dm->flush();
 
-        $output->writeln('Youtube - SKIP - Added properties to '.$this->tagYoutubeCod);
+        $output->writeln('Youtube - SKIP - Added properties to '.Youtube::YOUTUBE_TAG_CODE);
 
         $this->dm->clear();
     }
@@ -295,7 +294,7 @@ EOT
     private function moveAllPlaylistTags(OutputInterface $output): void
     {
         $youtubeTag = $this->dm->getRepository(Tag::class)->findOneBy(
-            ['cod' => $this->tagYoutubeCod]
+            ['cod' => Youtube::YOUTUBE_TAG_CODE]
         );
 
         $playlistTags = $this->dm->getRepository(Tag::class)->findBy(
@@ -360,8 +359,8 @@ EOT
             [
                 'tags.cod' => [
                     '$all' => [
-                        $this->puchYoutubeCod,
-                        $this->tagYoutubeCod,
+                        Youtube::YOUTUBE_PUBLICATION_CHANNEL_CODE,
+                        Youtube::YOUTUBE_TAG_CODE,
                     ],
                 ],
             ]
