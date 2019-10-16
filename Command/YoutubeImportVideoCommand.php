@@ -77,7 +77,7 @@ Steps:
 
 
 EOT
-          );
+            );
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)

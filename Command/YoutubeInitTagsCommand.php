@@ -26,7 +26,7 @@ Command to load a controlled Youtube tags data into a database. Useful for init 
 The --force parameter has to be used to actually drop the database.
 
 EOT
-          );
+            );
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)

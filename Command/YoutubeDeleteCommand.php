@@ -45,7 +45,7 @@ class YoutubeDeleteCommand extends ContainerAwareCommand
 Command to delete controlled videos from Youtube.
                 
 EOT
-          );
+            );
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)

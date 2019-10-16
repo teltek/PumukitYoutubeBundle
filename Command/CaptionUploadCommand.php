@@ -35,7 +35,7 @@ class CaptionUploadCommand extends ContainerAwareCommand
 Command to upload a controlled set of captions to Youtube.
 
 EOT
-          );
+            );
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)

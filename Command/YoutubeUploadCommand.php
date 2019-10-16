@@ -44,7 +44,7 @@ class YoutubeUploadCommand extends ContainerAwareCommand
 Command to upload a controlled videos to Youtube.
 
 EOT
-          );
+            );
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
