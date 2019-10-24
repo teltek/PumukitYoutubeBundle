@@ -51,6 +51,8 @@ def insert_video(playlist_id, video_id, account, position):
         error = "A retriable HTTP error %d occurred:\n%s" % (e.resp.status,
                                                              e.content)
     else:
+      print e.resp.status
+      print e.content
       raise
   except RETRIABLE_EXCEPTIONS, e:
     error = "A retriable error occurred: %s" % e
@@ -70,7 +72,7 @@ if __name__ == "__main__":
   parser = OptionParser()
   parser.add_option("--videoid", dest="videoid",
     help="video ID.")
-  parser.add_option("--videorank", dest="videorank",
+  parser.add_option("--videorank", type="int", dest="videorank",
     help="video ID.")
   parser.add_option("--playlistid", dest="playlistid",
     help="playlist ID.")
