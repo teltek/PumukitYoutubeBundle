@@ -6,17 +6,17 @@ use Pumukit\NewAdminBundle\Menu\ItemInterface;
 
 class MenuService implements ItemInterface
 {
-    public function getName()
+    public function getName(): string
     {
         return 'Youtube - Accounts';
     }
 
-    public function getUri()
+    public function getUri(): string
     {
         return 'pumukit_youtube_admin_index';
     }
 
-    public function getAccessRole()
+    public function getAccessRole(): string
     {
         return 'ROLE_ACCESS_YOUTUBE';
     }
