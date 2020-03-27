@@ -2,13 +2,17 @@
 
 namespace Pumukit\YoutubeBundle\Tests\Services;
 
-use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
-use Pumukit\YoutubeBundle\Services\YoutubeService;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\SchemaBundle\Document\Track;
 use Pumukit\SchemaBundle\Services\TagService;
+use Pumukit\YoutubeBundle\Services\YoutubeService;
+use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
+/**
+ * @internal
+ * @coversNothing
+ */
 class YoutubeServiceTest extends WebTestCase
 {
     private $dm;
@@ -29,56 +33,68 @@ class YoutubeServiceTest extends WebTestCase
 
     public function setUp()
     {
-        $options = array('environment' => 'test');
+        $options = ['environment' => 'test'];
         $kernel = static::createKernel($options);
         $kernel->boot();
         $this->dm = $kernel->getContainer()
-          ->get('doctrine_mongodb')->getManager();
+            ->get('doctrine_mongodb')->getManager();
         $this->youtubeRepo = $this->dm
-          ->getRepository('PumukitYoutubeBundle:Youtube');
+            ->getRepository('PumukitYoutubeBundle:Youtube')
+        ;
         $this->mmobjRepo = $this->dm
-          ->getRepository('PumukitSchemaBundle:MultimediaObject');
+            ->getRepository('PumukitSchemaBundle:MultimediaObject')
+        ;
         $this->tagRepo = $this->dm
-          ->getRepository('PumukitSchemaBundle:Tag');
+            ->getRepository('PumukitSchemaBundle:Tag')
+        ;
         $this->router = $kernel->getContainer()
-          ->get('router');
+            ->get('router')
+        ;
         $this->logger = $kernel->getContainer()
-          ->get('logger');
+            ->get('logger')
+        ;
         $this->factoryService = $kernel->getContainer()
-          ->get('pumukitschema.factory');
+            ->get('pumukitschema.factory')
+        ;
         $this->notificationSender = null;
         $this->translator = $kernel->getContainer()
-          ->get('translator');
+            ->get('translator')
+        ;
         $this->playlistPrivacyStatus = $kernel->getContainer()
-          ->getParameter('pumukit_youtube.playlist_privacy_status');
-        $this->dm->getDocumentCollection('PumukitSchemaBundle:MultimediaObject')->remove(array());
-        $this->dm->getDocumentCollection('PumukitSchemaBundle:Series')->remove(array());
-        $this->dm->getDocumentCollection('PumukitSchemaBundle:Tag')->remove(array());
-        $this->dm->getDocumentCollection('PumukitYoutubeBundle:Youtube')->remove(array());
+            ->getParameter('pumukit_youtube.playlist_privacy_status')
+        ;
+        $this->dm->getDocumentCollection('PumukitSchemaBundle:MultimediaObject')->remove([]);
+        $this->dm->getDocumentCollection('PumukitSchemaBundle:Series')->remove([]);
+        $this->dm->getDocumentCollection('PumukitSchemaBundle:Tag')->remove([]);
+        $this->dm->getDocumentCollection('PumukitYoutubeBundle:Youtube')->remove([]);
         $this->dm->flush();
         $this->multimediaobject_dispatcher = $kernel->getContainer()
-          ->get('pumukitschema.multimediaobject_dispatcher');
+            ->get('pumukitschema.multimediaobject_dispatcher')
+        ;
         $this->tagService = new TagService($this->dm, $this->multimediaobject_dispatcher);
         $this->youtubeProcessService = $kernel->getContainer()
-          ->get('pumukityoutube.youtubeprocess');
+            ->get('pumukityoutube.youtubeprocess')
+        ;
         $locale = 'en';
         $useDefaultPlaylist = false;
         $defaultPlaylistCod = 'YOUTUBECONFERENCES';
         $defaultPlaylistTitle = 'Conferences';
         $metatagPlaylistCod = 'YOUTUBE';
-        $playlistMaster = array('pumukit', 'youtube');
+        $playlistMaster = ['pumukit', 'youtube'];
         $deletePlaylists = false;
-        $pumukitLocales = array('en');
+        $pumukitLocales = ['en'];
         $youtubeSyncStatus = false;
         $defaultTrackUpload = 'master';
         $generateSbs = true;
         $sbsProfileName = 'sbs';
         $jobService = $this->getMockBuilder('Pumukit\EncoderBundle\Services\JobService')
-                           ->disableOriginalConstructor()
-                           ->getMock();
+            ->disableOriginalConstructor()
+            ->getMock()
+        ;
         $jobService->expects($this->any())
-                   ->method('addJob')
-                   ->will($this->returnValue(0));
+            ->method('addJob')
+            ->will($this->returnValue(0))
+        ;
         $opencastService = null;
         $this->youtubeService = new YoutubeService($this->dm, $this->router, $this->tagService, $this->logger, $this->notificationSender, $this->translator, $this->youtubeProcessService, $this->playlistPrivacyStatus, $locale, $useDefaultPlaylist, $defaultPlaylistCod, $defaultPlaylistTitle, $metatagPlaylistCod, $playlistMaster, $deletePlaylists, $pumukitLocales, $youtubeSyncStatus, $defaultTrackUpload, $generateSbs, $sbsProfileName, $jobService, $opencastService);
         $this->resourcesDir = realpath(__DIR__.'/../Resources').'/';

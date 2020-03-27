@@ -2,10 +2,10 @@
 
 namespace Pumukit\YoutubeBundle\Command;
 
+use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 
 class YoutubeUpdatePlaylistCommand extends ContainerAwareCommand
 {
@@ -14,16 +14,16 @@ class YoutubeUpdatePlaylistCommand extends ContainerAwareCommand
     const DEFAULT_PLAYLIST_COD = 'YOUTUBECONFERENCES';
     const DEFAULT_PLAYLIST_TITLE = 'Conferences';
 
-    private $dm = null;
-    private $tagRepo = null;
-    private $mmobjRepo = null;
-    private $youtubeRepo = null;
+    private $dm;
+    private $tagRepo;
+    private $mmobjRepo;
+    private $youtubeRepo;
 
     private $youtubeService;
 
-    private $okUpdates = array();
-    private $failedUpdates = array();
-    private $errors = array();
+    private $okUpdates = [];
+    private $failedUpdates = [];
+    private $errors = [];
 
     private $logger;
 
@@ -38,7 +38,8 @@ class YoutubeUpdatePlaylistCommand extends ContainerAwareCommand
 Command to update playlist in Youtube.
 
 EOT
-            );
+            )
+        ;
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
@@ -49,7 +50,8 @@ EOT
         $multimediaObjects = $this->createYoutubeQueryBuilder()
             ->field('properties.youtube')->exists(true)
             ->getQuery()
-            ->execute();
+            ->execute()
+        ;
 
         $this->youtubeService->syncPlaylistsRelations($dryRun);
 
@@ -66,6 +68,7 @@ EOT
                     $output->writeln($errorLog);
                     $this->failedUpdates[] = $multimediaObject;
                     $this->errors[] = $errorLog;
+
                     continue;
                 }
                 $infoLog = sprintf('%s [%s] Updated all playlists of MultimediaObject with id %s', __CLASS__, __FUNCTION__, $multimediaObject->getId());
@@ -92,9 +95,9 @@ EOT
 
         $this->youtubeService = $this->getContainer()->get('pumukityoutube.youtube');
 
-        $this->okUpdates = array();
-        $this->failedUpdates = array();
-        $this->errors = array();
+        $this->okUpdates = [];
+        $this->failedUpdates = [];
+        $this->errors = [];
 
         $this->logger = $this->getContainer()->get('monolog.logger.youtube');
     }

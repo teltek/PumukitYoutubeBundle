@@ -2,15 +2,19 @@
 
 namespace Pumukit\YoutubeBundle\Tests\Services;
 
-use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
-use Pumukit\YoutubeBundle\Services\CaptionService;
-use Pumukit\YoutubeBundle\Document\Youtube;
-use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Material;
+use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\SchemaBundle\Document\Track;
 use Pumukit\SchemaBundle\Services\TagService;
+use Pumukit\YoutubeBundle\Document\Youtube;
+use Pumukit\YoutubeBundle\Services\CaptionService;
+use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
+/**
+ * @internal
+ * @coversNothing
+ */
 class CaptionServiceTest extends WebTestCase
 {
     private $dm;
@@ -31,57 +35,69 @@ class CaptionServiceTest extends WebTestCase
 
     public function setUp()
     {
-        $options = array('environment' => 'test');
+        $options = ['environment' => 'test'];
         $kernel = static::createKernel($options);
         $kernel->boot();
         $this->dm = $kernel->getContainer()
-          ->get('doctrine_mongodb')->getManager();
+            ->get('doctrine_mongodb')->getManager();
         $this->youtubeRepo = $this->dm
-          ->getRepository('PumukitYoutubeBundle:Youtube');
+            ->getRepository('PumukitYoutubeBundle:Youtube')
+        ;
         $this->mmobjRepo = $this->dm
-          ->getRepository('PumukitSchemaBundle:MultimediaObject');
+            ->getRepository('PumukitSchemaBundle:MultimediaObject')
+        ;
         $this->tagRepo = $this->dm
-          ->getRepository('PumukitSchemaBundle:Tag');
+            ->getRepository('PumukitSchemaBundle:Tag')
+        ;
         $this->router = $kernel->getContainer()
-          ->get('router');
+            ->get('router')
+        ;
         $this->logger = $kernel->getContainer()
-          ->get('logger');
+            ->get('logger')
+        ;
         $this->factoryService = $kernel->getContainer()
-          ->get('pumukitschema.factory');
+            ->get('pumukitschema.factory')
+        ;
         $this->notificationSender = null;
         $this->translator = $kernel->getContainer()
-          ->get('translator');
+            ->get('translator')
+        ;
         $this->playlistPrivacyStatus = $kernel->getContainer()
-          ->getParameter('pumukit_youtube.playlist_privacy_status');
-        $this->dm->getDocumentCollection('PumukitSchemaBundle:MultimediaObject')->remove(array());
-        $this->dm->getDocumentCollection('PumukitSchemaBundle:Series')->remove(array());
-        $this->dm->getDocumentCollection('PumukitSchemaBundle:Tag')->remove(array());
-        $this->dm->getDocumentCollection('PumukitYoutubeBundle:Youtube')->remove(array());
+            ->getParameter('pumukit_youtube.playlist_privacy_status')
+        ;
+        $this->dm->getDocumentCollection('PumukitSchemaBundle:MultimediaObject')->remove([]);
+        $this->dm->getDocumentCollection('PumukitSchemaBundle:Series')->remove([]);
+        $this->dm->getDocumentCollection('PumukitSchemaBundle:Tag')->remove([]);
+        $this->dm->getDocumentCollection('PumukitYoutubeBundle:Youtube')->remove([]);
         $this->dm->flush();
         $this->multimediaobject_dispatcher = $kernel->getContainer()
-          ->get('pumukitschema.multimediaobject_dispatcher');
+            ->get('pumukitschema.multimediaobject_dispatcher')
+        ;
         $this->tagService = new TagService($this->dm, $this->multimediaobject_dispatcher);
         $this->youtubeProcessService = $this->getMockBuilder('Pumukit\YoutubeBundle\Services\YoutubeProcessService')
             ->disableOriginalConstructor()
-            ->getMock();
+            ->getMock()
+        ;
         $locale = 'en';
         $useDefaultPlaylist = false;
         $defaultPlaylistCod = 'YOUTUBECONFERENCES';
         $defaultPlaylistTitle = 'Conferences';
         $metatagPlaylistCod = 'YOUTUBE';
-        $playlistMaster = array('pumukit', 'youtube');
+        $playlistMaster = ['pumukit', 'youtube'];
         $deletePlaylists = false;
-        $pumukitLocales = array('en');
+        $pumukitLocales = ['en'];
         $youtubeSyncStatus = false;
         $defaultTrackUpload = 'master';
         $generateSbs = true;
         $sbsProfileName = 'sbs';
         $jobService = $this->getMockBuilder('Pumukit\EncoderBundle\Services\JobService')
-                           ->disableOriginalConstructor()
-                           ->getMock();
+            ->disableOriginalConstructor()
+            ->getMock()
+        ;
         $jobService->expects($this->any())
-                   ->method('addJob')
-                   ->will($this->returnValue(0));
+            ->method('addJob')
+            ->will($this->returnValue(0))
+        ;
         $opencastService = null;
         $this->captionService = new CaptionService($this->dm, $this->router, $this->tagService, $this->logger, $this->notificationSender, $this->translator, $this->youtubeProcessService, $this->playlistPrivacyStatus, $locale, $useDefaultPlaylist, $defaultPlaylistCod, $defaultPlaylistTitle, $metatagPlaylistCod, $playlistMaster, $deletePlaylists, $pumukitLocales, $youtubeSyncStatus, $defaultTrackUpload, $generateSbs, $sbsProfileName, $jobService, $opencastService);
         $this->resourcesDir = realpath(__DIR__.'/../Resources').'/';
@@ -114,32 +130,33 @@ class CaptionServiceTest extends WebTestCase
         $multimediaObject = $this->initMultimediaObject();
         $youtube = $this->initYoutube($multimediaObject);
 
-        $listOutput = array(
-            'out' => array(
-                'Youtube-Caption-Id-1' => array(
+        $listOutput = [
+            'out' => [
+                'Youtube-Caption-Id-1' => [
                     'name' => 'Subtitle in English',
                     'language' => 'en',
                     'is_draft' => false,
                     'last_updated' => '2018-01-31 09:00:00',
-                ),
-                'Youtube-Caption-Id-2' => array(
+                ],
+                'Youtube-Caption-Id-2' => [
                     'name' => 'Subtitle in Spanish',
                     'language' => 'es',
                     'is_draft' => false,
                     'last_updated' => '2018-01-31 09:01:00',
-                ),
-                'Youtube-Caption-Id-3' => array(
+                ],
+                'Youtube-Caption-Id-3' => [
                     'name' => 'Subtitle in French',
                     'language' => 'fr',
                     'is_draft' => false,
                     'last_updated' => '2018-01-31 09:02:00',
-                ),
-            ),
+                ],
+            ],
             'error' => false,
-        );
+        ];
         $this->youtubeProcessService->expects($this->any())
             ->method('listCaptions')
-            ->will($this->returnValue($listOutput));
+            ->will($this->returnValue($listOutput))
+        ;
 
         $out = $this->captionService->listAllCaptions($multimediaObject);
         $this->assertEquals($listOutput['out'], $out);
@@ -196,15 +213,18 @@ class CaptionServiceTest extends WebTestCase
 
         $this->youtubeProcessService->expects($this->at(0))
             ->method('insertCaption')
-            ->will($this->returnValue($insertOutput1));
+            ->will($this->returnValue($insertOutput1))
+        ;
         $this->youtubeProcessService->expects($this->at(1))
             ->method('insertCaption')
-            ->will($this->returnValue($insertOutput2));
+            ->will($this->returnValue($insertOutput2))
+        ;
         $this->youtubeProcessService->expects($this->at(2))
             ->method('insertCaption')
-            ->will($this->returnValue($insertOutput3));
+            ->will($this->returnValue($insertOutput3))
+        ;
 
-        $materialIds1 = array();
+        $materialIds1 = [];
         $materialIds1[] = $material1->getId();
         $out1 = $this->captionService->uploadCaption($multimediaObject, $materialIds1);
         $this->assertEquals($insertOutput1['out'], $out1[0]);
@@ -219,7 +239,7 @@ class CaptionServiceTest extends WebTestCase
         $this->assertNull($youtube->getCaptionByMaterialId($material2->getId()));
         $this->assertNull($youtube->getCaptionByMaterialId($material3->getId()));
 
-        $materialIds2 = array();
+        $materialIds2 = [];
         $materialIds2[] = $material2->getId();
         $materialIds2[] = $material3->getId();
 
@@ -293,15 +313,18 @@ class CaptionServiceTest extends WebTestCase
 
         $this->youtubeProcessService->expects($this->at(0))
             ->method('insertCaption')
-            ->will($this->returnValue($insertOutput1));
+            ->will($this->returnValue($insertOutput1))
+        ;
         $this->youtubeProcessService->expects($this->at(1))
             ->method('insertCaption')
-            ->will($this->returnValue($insertOutput2));
+            ->will($this->returnValue($insertOutput2))
+        ;
         $this->youtubeProcessService->expects($this->at(2))
             ->method('insertCaption')
-            ->will($this->returnValue($insertOutput3));
+            ->will($this->returnValue($insertOutput3))
+        ;
 
-        $materialIds = array();
+        $materialIds = [];
         $materialIds[] = $material1->getId();
         $materialIds[] = $material2->getId();
         $materialIds[] = $material3->getId();
@@ -311,14 +334,15 @@ class CaptionServiceTest extends WebTestCase
         $this->assertNotNull($youtube->getCaptionByMaterialId($material2->getId()));
         $this->assertNotNull($youtube->getCaptionByMaterialId($material3->getId()));
 
-        $deleteOutput = array(
+        $deleteOutput = [
             'error' => false,
-        );
+        ];
         $this->youtubeProcessService->expects($this->any())
             ->method('deleteCaption')
-            ->will($this->returnValue($deleteOutput));
+            ->will($this->returnValue($deleteOutput))
+        ;
 
-        $captionIds1 = array();
+        $captionIds1 = [];
         $captionIds1[] = $captionId2;
         $out2 = $this->captionService->deleteCaption($multimediaObject, $captionIds1);
 
@@ -326,7 +350,7 @@ class CaptionServiceTest extends WebTestCase
         $this->assertNull($youtube->getCaptionByCaptionId($captionId2));
         $this->assertNotNull($youtube->getCaptionByCaptionId($captionId3));
 
-        $captionIds2 = array();
+        $captionIds2 = [];
         $captionIds2[] = $captionId1;
         $captionIds2[] = $captionId3;
         $out3 = $this->captionService->deleteCaption($multimediaObject, $captionIds2);
@@ -345,13 +369,14 @@ class CaptionServiceTest extends WebTestCase
         $multimediaObject = $this->initMultimediaObject();
         $youtube = $this->initYoutube($multimediaObject);
 
-        $listOutput = array(
+        $listOutput = [
             'error_out' => 'Not able to connect to server.',
             'error' => true,
-        );
+        ];
         $this->youtubeProcessService->expects($this->any())
             ->method('listCaptions')
-            ->will($this->returnValue($listOutput));
+            ->will($this->returnValue($listOutput))
+        ;
 
         $out = $this->captionService->listAllCaptions($multimediaObject);
         $this->assertEquals($listOutput['out'], $out);
@@ -372,16 +397,17 @@ class CaptionServiceTest extends WebTestCase
         $filename = 'caption_en.vtt';
         $material = $this->initMaterial($multimediaObject, $name, $language, $mimeType, $filename);
 
-        $insertOutput = array(
+        $insertOutput = [
             'error_out' => 'Caption with that name already exists.',
             'error' => true,
-        );
+        ];
         $this->youtubeProcessService->expects($this->any())
             ->method('insertCaption')
-            ->will($this->returnValue($insertOutput));
+            ->will($this->returnValue($insertOutput))
+        ;
 
         $materials = $multimediaObject->getMaterials();
-        $materialIds = array();
+        $materialIds = [];
         foreach ($materials as $material) {
             $materialIds[] = $material->getId();
         }
@@ -405,36 +431,66 @@ class CaptionServiceTest extends WebTestCase
 
         $captionId = 'Youtube-Caption-Id';
 
-        $insertOutput = array(
-            'out' => array(
+        $insertOutput = [
+            'out' => [
                 'captionid' => $captionId,
                 'name' => 'Caption in English',
                 'language' => 'en',
                 'is_draft' => false,
                 'last_updated' => '2018-01-31 09:00:00',
-            ),
+            ],
             'error' => false,
-        );
+        ];
 
         $this->youtubeProcessService->expects($this->any())
             ->method('insertCaption')
-            ->will($this->returnValue($insertOutput));
+            ->will($this->returnValue($insertOutput))
+        ;
 
-        $materialIds = array();
+        $materialIds = [];
         $materialIds[] = $material->getId();
         $out = $this->captionService->uploadCaption($multimediaObject, $materialIds);
 
-        $deleteOutput = array(
+        $deleteOutput = [
             'error_out' => 'Caption with that name does not exists.',
             'error' => true,
-        );
+        ];
         $this->youtubeProcessService->expects($this->any())
             ->method('deleteCaption')
-            ->will($this->returnValue($deleteOutput));
+            ->will($this->returnValue($deleteOutput))
+        ;
 
-        $captionIds1 = array();
+        $captionIds1 = [];
         $captionIds1[] = $captionId;
         $out2 = $this->captionService->deleteCaption($multimediaObject, $captionIds1);
+    }
+
+    public function initMaterial(MultimediaObject $multimediaObject, $name, $language, $mimeType, $filename)
+    {
+        $material = new Material();
+        $material->setName($name);
+        $material->setLanguage($language);
+        $material->setMimeType($mimeType);
+        $material->setPath($this->resourcesDir.$filename);
+        $multimediaObject->addMaterial($material);
+        $this->dm->persist($multimediaObject);
+        $this->dm->flush();
+
+        return $material;
+    }
+
+    public function initInsertOutput($captionId, $name, $language, $isDraft, $lastUpdatedString)
+    {
+        return [
+            'out' => [
+                'captionid' => $captionId,
+                'name' => $name,
+                'language' => $language,
+                'is_draft' => $isDraft,
+                'last_updated' => $lastUpdatedString,
+            ],
+            'error' => false,
+        ];
     }
 
     private function initMultimediaObject()
@@ -523,35 +579,5 @@ class CaptionServiceTest extends WebTestCase
         $this->dm->flush();
 
         return $tag;
-    }
-
-    public function initMaterial(MultimediaObject $multimediaObject, $name, $language, $mimeType, $filename)
-    {
-        $material = new Material();
-        $material->setName($name);
-        $material->setLanguage($language);
-        $material->setMimeType($mimeType);
-        $material->setPath($this->resourcesDir.$filename);
-        $multimediaObject->addMaterial($material);
-        $this->dm->persist($multimediaObject);
-        $this->dm->flush();
-
-        return $material;
-    }
-
-    public function initInsertOutput($captionId, $name, $language, $isDraft, $lastUpdatedString)
-    {
-        $insertOutput = array(
-            'out' => array(
-                'captionid' => $captionId,
-                'name' => $name,
-                'language' => $language,
-                'is_draft' => $isDraft,
-                'last_updated' => $lastUpdatedString,
-            ),
-            'error' => false,
-        );
-
-        return $insertOutput;
     }
 }

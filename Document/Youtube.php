@@ -2,8 +2,8 @@
 
 namespace Pumukit\YoutubeBundle\Document;
 
-use Doctrine\ODM\MongoDB\Mapping\Annotations as MongoDB;
 use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\ODM\MongoDB\Mapping\Annotations as MongoDB;
 
 /**
  * Pumukit\YoutubeBundle\Document\Youtube.
@@ -71,7 +71,7 @@ class Youtube
      *
      * @MongoDB\Field(type="raw")
      */
-    private $playlists = array();
+    private $playlists = [];
 
     /**
      * @var bool
@@ -122,16 +122,6 @@ class Youtube
     private $captions;
 
     /**
-     * Get id.
-     *
-     * @return string
-     */
-    public function getId()
-    {
-        return $this->id;
-    }
-
-    /**
      * Constructor.
      */
     public function __construct()
@@ -141,6 +131,16 @@ class Youtube
         $this->syncCaptionsDate = new \DateTime('1980-01-01 10:00');
         $this->uploadDate = new \DateTime('1980-01-01 10:00');
         $this->captions = new ArrayCollection();
+    }
+
+    /**
+     * Get id.
+     *
+     * @return string
+     */
+    public function getId()
+    {
+        return $this->id;
     }
 
     /**
@@ -286,8 +286,6 @@ class Youtube
         if (isset($this->playlists[$key])) {
             return $this->playlists[$key];
         }
-
-        return;
     }
 
     /**
@@ -569,7 +567,7 @@ class Youtube
      */
     public function getCaptionsByLanguage($language)
     {
-        $r = array();
+        $r = [];
 
         foreach ($this->captions as $caption) {
             if ($caption->getLanguage() === $language) {

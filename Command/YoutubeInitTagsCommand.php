@@ -2,16 +2,16 @@
 
 namespace Pumukit\YoutubeBundle\Command;
 
+use Pumukit\SchemaBundle\Document\Tag;
+use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
-use Pumukit\SchemaBundle\Document\Tag;
 
 class YoutubeInitTagsCommand extends ContainerAwareCommand
 {
-    private $dm = null;
-    private $tagRepo = null;
+    private $dm;
+    private $tagRepo;
 
     protected function configure()
     {
@@ -26,7 +26,8 @@ Command to load a controlled Youtube tags data into a database. Useful for init 
 The --force parameter has to be used to actually drop the database.
 
 EOT
-            );
+            )
+        ;
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)

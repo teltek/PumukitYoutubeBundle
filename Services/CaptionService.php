@@ -15,17 +15,18 @@ class CaptionService extends YoutubeService
             $errorLog = __CLASS__.' ['.__FUNCTION__
                        .'] Error in retrieve captions list: '.$result['error_out'];
             $this->logger->addError($errorLog);
+
             throw new \Exception($errorLog);
         }
 
         return $result['out'];
     }
 
-    public function uploadCaption(MultimediaObject $multimediaObject, array $materialIds = array())
+    public function uploadCaption(MultimediaObject $multimediaObject, array $materialIds = [])
     {
         $youtube = $this->getYoutubeDocument($multimediaObject);
-        $uploaded = array();
-        $result = array();
+        $uploaded = [];
+        $result = [];
         foreach ($materialIds as $materialId) {
             $material = $multimediaObject->getMaterialById($materialId);
             if ($material) {
@@ -37,6 +38,7 @@ class CaptionService extends YoutubeService
                   .$youtube->getId()."' and material Id '"
                   .$materialId."': ".$result['error_out'];
                 $this->logger->addError($errorLog);
+
                 throw new \Exception($errorLog);
             }
             $caption = $this->createCaption($material, $result['out']);
@@ -54,11 +56,11 @@ class CaptionService extends YoutubeService
      *
      * @param MultimediaObject $multimediaObject
      *
-     * @return int
-     *
      * @throws \Exception
+     *
+     * @return int
      */
-    public function deleteCaption(MultimediaObject $multimediaObject, array $captionIds = array())
+    public function deleteCaption(MultimediaObject $multimediaObject, array $captionIds = [])
     {
         $youtube = $this->getYoutubeDocument($multimediaObject);
         foreach ($captionIds as $captionId) {
@@ -70,6 +72,7 @@ class CaptionService extends YoutubeService
                         .$youtube->getId()."' and Caption id '"
                         .$captionId."': ".$result['error_out'];
                     $this->logger->addError($errorLog);
+
                     throw new \Exception($errorLog);
                 }
             }

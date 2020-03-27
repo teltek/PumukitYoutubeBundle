@@ -2,25 +2,25 @@
 
 namespace Pumukit\YoutubeBundle\Command;
 
-use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\YoutubeBundle\Document\Youtube;
+use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\OutputInterface;
 
 class CaptionDeleteCommand extends ContainerAwareCommand
 {
-    private $dm = null;
-    private $mmobjRepo = null;
+    private $dm;
+    private $mmobjRepo;
 
     private $logger;
     private $captionService;
     private $allowedCaptionMimeTypes;
     private $syncStatus;
 
-    private $okDelete = array();
-    private $failedDelete = array();
-    private $errors = array();
+    private $okDelete = [];
+    private $failedDelete = [];
+    private $errors = [];
 
     private $input;
     private $output;
@@ -35,7 +35,8 @@ class CaptionDeleteCommand extends ContainerAwareCommand
 Command to delete a controlled set of captions from Youtube.
 
 EOT
-            );
+            )
+        ;
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
@@ -54,9 +55,9 @@ EOT
         $this->logger = $container->get('monolog.logger.youtube');
         $this->syncStatus = $container->getParameter('pumukit_youtube.sync_status');
         $this->allowedCaptionMimeTypes = $container->getParameter('pumukit_youtube.allowed_caption_mimetypes');
-        $this->okDelete = array();
-        $this->failedDelete = array();
-        $this->errors = array();
+        $this->okDelete = [];
+        $this->failedDelete = [];
+        $this->errors = [];
         $this->input = $input;
         $this->output = $output;
     }
@@ -78,6 +79,7 @@ EOT
                         $this->output->writeln($errorLog);
                         $this->failedDelete[] = $multimediaObject;
                         $this->errors[] = $errorLog;
+
                         continue;
                     }
                     $this->okDelete[] = $multimediaObject;
@@ -98,30 +100,31 @@ EOT
 
         $syncStatus = $this->getContainer()->getParameter('pumukit_youtube.sync_status');
         if ($syncStatus) {
-            $aStatus = array(MultimediaObject::STATUS_PUBLISHED, MultimediaObject::STATUS_BLOCKED, MultimediaObject::STATUS_HIDDEN);
+            $aStatus = [MultimediaObject::STATUS_PUBLISHED, MultimediaObject::STATUS_BLOCKED, MultimediaObject::STATUS_HIDDEN];
         } else {
-            $aStatus = array(MultimediaObject::STATUS_PUBLISHED);
+            $aStatus = [MultimediaObject::STATUS_PUBLISHED];
         }
 
         return $this->mmobjRepo->createQueryBuilder()
-          ->field('properties.pumukit1id')->exists(false)
-          ->field('properties.origin')->notEqual('youtube')
-          ->field('status')->in($aStatus)
-          ->field('embeddedBroadcast.type')->equals('public')
-          ->field('tags.cod')->all($array_pub_tags);
+            ->field('properties.pumukit1id')->exists(false)
+            ->field('properties.origin')->notEqual('youtube')
+            ->field('status')->in($aStatus)
+            ->field('embeddedBroadcast.type')->equals('public')
+            ->field('tags.cod')->all($array_pub_tags);
     }
 
     private function getYoutubeMultimediaObjects()
     {
         return $this->createYoutubeMultimediaObjectsQueryBuilder()
-          ->field('properties.youtube')->exists(true)
-          ->getQuery()
-          ->execute();
+            ->field('properties.youtube')->exists(true)
+            ->getQuery()
+            ->execute()
+        ;
     }
 
     private function getMmMaterialIds(MultimediaObject $multimediaObject)
     {
-        $materialIds = array();
+        $materialIds = [];
         foreach ($multimediaObject->getMaterials() as $material) {
             $materialIds[] = $material->getId();
         }
@@ -132,7 +135,7 @@ EOT
     private function getDeleteCaptionIds(Youtube $youtube, MultimediaObject $multimediaObject)
     {
         $materialIds = $this->getMmMaterialIds($multimediaObject);
-        $deleteCaptionIds = array();
+        $deleteCaptionIds = [];
         foreach ($youtube->getCaptions() as $caption) {
             $material = $multimediaObject->getMaterialById($caption->getMaterialId());
             if (in_array($caption->getMaterialId(), $materialIds) && !$material->isHide()) {

@@ -2,23 +2,23 @@
 
 namespace Pumukit\YoutubeBundle\Command;
 
+use Pumukit\YoutubeBundle\Document\Youtube;
+use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
-use Pumukit\YoutubeBundle\Document\Youtube;
 
 class YoutubeUpdateStatusCommand extends ContainerAwareCommand
 {
-    protected $dm = null;
-    protected $tagRepo = null;
-    protected $mmobjRepo = null;
-    protected $youtubeRepo = null;
+    protected $dm;
+    protected $tagRepo;
+    protected $mmobjRepo;
+    protected $youtubeRepo;
 
     protected $youtubeService;
 
-    protected $okUpdates = array();
-    protected $failedUpdates = array();
-    protected $errors = array();
+    protected $okUpdates = [];
+    protected $failedUpdates = [];
+    protected $errors = [];
 
     protected $logger;
 
@@ -36,12 +36,13 @@ The statuses removed, notified error and duplicated are not updated.
 PERFORMANCE NOTE: This command has a bad performance because use all the multimedia objects uploaded in Youtube Service. (See youtube:update:pendingstatus)
 
 EOT
-            );
+            )
+        ;
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $statusArray = array(Youtube::STATUS_REMOVED, Youtube::STATUS_NOTIFIED_ERROR, Youtube::STATUS_DUPLICATED);
+        $statusArray = [Youtube::STATUS_REMOVED, Youtube::STATUS_NOTIFIED_ERROR, Youtube::STATUS_DUPLICATED];
         $youtubes = $this->youtubeRepo->getWithoutAnyStatus($statusArray);
 
         $this->updateVideoStatusInYoutube($youtubes, $output);
@@ -57,9 +58,9 @@ EOT
 
         $this->youtubeService = $this->getContainer()->get('pumukityoutube.youtube');
 
-        $this->okUpdates = array();
-        $this->failedUpdates = array();
-        $this->errors = array();
+        $this->okUpdates = [];
+        $this->failedUpdates = [];
+        $this->errors = [];
 
         $this->logger = $this->getContainer()->get('monolog.logger.youtube');
     }
@@ -75,8 +76,10 @@ EOT
                     echo $msg;
                     $this->logger->addInfo($msg);
                 }
+
                 continue;
             }
+
             try {
                 $infoLog = __CLASS__.' ['.__FUNCTION__
                   .'] Started updating internal YouTube status video "'.$youtube->getId().'"';
@@ -90,6 +93,7 @@ EOT
                     $this->logger->addError($errorLog);
                     $output->writeln($errorLog);
                     $this->errors[] = $errorLog;
+
                     continue;
                 }
                 if ($multimediaObject) {
@@ -123,7 +127,8 @@ EOT
             ->field('properties.origin')->notEqual('youtube')
             ->field('properties.pumukit1id')->exists($pumukit1Id)
             ->getQuery()
-            ->getSingleResult();
+            ->getSingleResult()
+        ;
     }
 
     protected function findByYoutubeId(Youtube $youtube)
@@ -131,6 +136,7 @@ EOT
         return $this->mmobjRepo->createQueryBuilder()
             ->field('properties.youtube')->equals($youtube->getId())
             ->getQuery()
-            ->getSingleResult();
+            ->getSingleResult()
+        ;
     }
 }

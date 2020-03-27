@@ -2,11 +2,11 @@
 
 namespace Pumukit\YoutubeBundle\DependencyInjection;
 
-use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\Config\FileLocator;
-use Symfony\Component\HttpKernel\DependencyInjection\Extension;
-use Symfony\Component\DependencyInjection\Loader;
+use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\PrependExtensionInterface;
+use Symfony\Component\DependencyInjection\Loader;
+use Symfony\Component\HttpKernel\DependencyInjection\Extension;
 
 /**
  * This is the class that loads and manages your bundle configuration.
@@ -20,17 +20,17 @@ class PumukitYoutubeExtension extends Extension implements PrependExtensionInter
      */
     public function prepend(ContainerBuilder $container)
     {
-        $container->prependExtensionConfig('monolog', array(
-            'channels' => array('youtube'),
-            'handlers' => array(
-                'youtube' => array(
+        $container->prependExtensionConfig('monolog', [
+            'channels' => ['youtube'],
+            'handlers' => [
+                'youtube' => [
                     'type' => 'stream',
                     'path' => '%kernel.logs_dir%/youtube_%kernel.environment%.log',
                     'level' => 'info',
-                    'channels' => array('youtube'),
-                ),
-            ),
-        ));
+                    'channels' => ['youtube'],
+                ],
+            ],
+        ]);
     }
 
     /**

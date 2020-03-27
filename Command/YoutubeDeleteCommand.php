@@ -2,13 +2,13 @@
 
 namespace Pumukit\YoutubeBundle\Command;
 
+use Pumukit\SchemaBundle\Document\MultimediaObject;
+use Pumukit\SchemaBundle\Document\Tag;
+use Pumukit\YoutubeBundle\Document\Youtube;
+use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
-use Pumukit\SchemaBundle\Document\Tag;
-use Pumukit\SchemaBundle\Document\MultimediaObject;
-use Pumukit\YoutubeBundle\Document\Youtube;
 
 class YoutubeDeleteCommand extends ContainerAwareCommand
 {
@@ -16,17 +16,17 @@ class YoutubeDeleteCommand extends ContainerAwareCommand
     const PUB_CHANNEL_YOUTUBE = 'PUCHYOUTUBE';
     const PUB_DECISION_AUTONOMOUS = 'PUDEAUTO';
 
-    private $dm = null;
-    private $tagRepo = null;
-    private $mmobjRepo = null;
-    private $youtubeRepo = null;
+    private $dm;
+    private $tagRepo;
+    private $mmobjRepo;
+    private $youtubeRepo;
     private $tagService;
 
     private $youtubeService;
 
-    private $okRemoved = array();
-    private $failedRemoved = array();
-    private $errors = array();
+    private $okRemoved = [];
+    private $failedRemoved = [];
+    private $errors = [];
 
     private $logger;
 
@@ -45,7 +45,8 @@ class YoutubeDeleteCommand extends ContainerAwareCommand
 Command to delete controlled videos from Youtube.
                 
 EOT
-            );
+            )
+        ;
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
@@ -55,9 +56,9 @@ EOT
         $youtubeMongoIds = $this->youtubeRepo->getDistinctFieldWithStatusAndForce('_id', Youtube::STATUS_PUBLISHED, false);
         $publishedYoutubeIds = $this->getStringIds($youtubeMongoIds);
         if ($this->syncStatus) {
-            $status = array(MultimediaObject::STATUS_PUBLISHED, MultimediaObject::STATUS_BLOCKED, MultimediaObject::STATUS_HIDDEN);
+            $status = [MultimediaObject::STATUS_PUBLISHED, MultimediaObject::STATUS_BLOCKED, MultimediaObject::STATUS_HIDDEN];
         } else {
-            $status = array(MultimediaObject::STATUS_PUBLISHED);
+            $status = [MultimediaObject::STATUS_PUBLISHED];
         }
         $notPublishedMms = $this->getMultimediaObjectsInYoutubeWithoutStatus($publishedYoutubeIds, $status);
         if (0 != count($notPublishedMms) && !$this->dryRun) {
@@ -94,7 +95,7 @@ EOT
             $this->showMultimediaObjects($output, $state, $notPublicMms);
         }
 
-        $orphanYoutubes = $this->youtubeRepo->findBy(array('status' => Youtube::STATUS_TO_DELETE));
+        $orphanYoutubes = $this->youtubeRepo->findBy(['status' => Youtube::STATUS_TO_DELETE]);
         if (0 != count($orphanYoutubes) && !$this->dryRun) {
             $output->writeln('Removing '.count($orphanYoutubes).' orphanYoutube(s) ');
             $this->deleteOrphanVideosFromYoutube($orphanYoutubes, $output);
@@ -117,9 +118,9 @@ EOT
         $this->syncStatus = $this->getContainer()->getParameter('pumukit_youtube.sync_status');
         $this->youtubeService = $this->getContainer()->get('pumukityoutube.youtube');
 
-        $this->okRemoved = array();
-        $this->failedRemoved = array();
-        $this->errors = array();
+        $this->okRemoved = [];
+        $this->failedRemoved = [];
+        $this->errors = [];
 
         $this->logger = $this->getContainer()->get('monolog.logger.youtube');
         $this->dryRun = (true === $input->getOption('dry-run'));
@@ -143,6 +144,7 @@ EOT
                     $output->writeln($errorLog);
                     $this->failedRemoved[] = $mm;
                     $this->errors[] = $errorLog;
+
                     continue;
                 }
                 $this->okRemoved[] = $mm;
@@ -176,6 +178,7 @@ EOT
                     $output->writeln($errorLog);
                     $this->failedRemoved[] = $youtube;
                     $this->errors[] = $errorLog;
+
                     continue;
                 }
                 $this->okRemoved[] = $youtube;
@@ -193,7 +196,7 @@ EOT
 
     private function getStringIds($mongoIds)
     {
-        $stringIds = array();
+        $stringIds = [];
         foreach ($mongoIds as $mongoId) {
             $stringIds[] = $mongoId->__toString();
         }
@@ -206,7 +209,8 @@ EOT
         return $this->createYoutubeQueryBuilder($youtubeIds)
             ->field('status')->notIn($status)
             ->getQuery()
-            ->execute();
+            ->execute()
+        ;
     }
 
     private function getMultimediaObjectsInYoutubeWithoutTagCode($youtubeIds, $tagCode)
@@ -214,7 +218,8 @@ EOT
         return $this->createYoutubeQueryBuilder($youtubeIds)
             ->field('tags.cod')->notEqual($tagCode)
             ->getQuery()
-            ->execute();
+            ->execute()
+        ;
     }
 
     private function getMultimediaObjectsInYoutubeWithoutEmbeddedBroadcast($youtubeIds, $broadcastTypeId)
@@ -222,10 +227,11 @@ EOT
         return $this->createYoutubeQueryBuilder($youtubeIds)
             ->field('embeddedBroadcast.type')->notEqual('public')
             ->getQuery()
-            ->execute();
+            ->execute()
+        ;
     }
 
-    private function createYoutubeQueryBuilder($youtubeIds = array())
+    private function createYoutubeQueryBuilder($youtubeIds = [])
     {
         return $this->mmobjRepo->createQueryBuilder()
             ->field('properties.youtube')->in($youtubeIds)
@@ -260,11 +266,11 @@ EOT
     {
         $numberMultimediaObjects = count($multimediaObjects);
         $output->writeln(
-            array(
+            [
                 "\n",
-                "<info>***** $state ***** ($numberMultimediaObjects)</info>",
+                "<info>***** ${state} ***** (${numberMultimediaObjects})</info>",
                 "\n",
-            )
+            ]
         );
 
         if ($numberMultimediaObjects > 0) {
@@ -283,11 +289,11 @@ EOT
     {
         $numberYoutubeDocuments = count($youtubeDocuments);
         $output->writeln(
-            array(
+            [
                 "\n",
-                "<info>***** $state ***** ($numberYoutubeDocuments)</info>",
+                "<info>***** ${state} ***** (${numberYoutubeDocuments})</info>",
                 "\n",
-            )
+            ]
         );
 
         if ($numberYoutubeDocuments > 0) {
