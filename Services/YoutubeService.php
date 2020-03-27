@@ -1098,6 +1098,10 @@ class YoutubeService
     {
         $tags = $multimediaObject->getI18nKeywords();
 
+        if(!isset($tags[$this->ytLocale])) {
+            return '';
+        }
+
         $tagsToUpload = $tags[$this->ytLocale];
 
         /* Filter with Youtube Keyword length limit */
