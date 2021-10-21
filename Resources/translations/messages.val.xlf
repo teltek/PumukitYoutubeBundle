@@ -1,0 +1,390 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xliff xmlns="urn:oasis:names:tc:xliff:document:1.2" version="1.2">
+  <file source-language="en" target-language="val" datatype="plaintext" original="file.ext">
+    <header>
+      <tool tool-id="symfony" tool-name="Symfony"/>
+    </header>
+    <body>
+      <trans-unit id="KxviqPX" resname="Youtube Info For Multimedia Object:">
+        <source>Youtube Info For Multimedia Object:</source>
+        <target>Informació de Youtube per a l'Objecte Multimèdia:</target>
+      </trans-unit>
+      <trans-unit id="q5SQUfY" resname="This Multimedia Object does not have YouTube data yet.">
+        <source>This Multimedia Object does not have YouTube data yet.</source>
+        <target>Aquest objecte multimèdia encara no disposa d'informació de publicació en YouTube.</target>
+      </trans-unit>
+      <trans-unit id="PhFxJEL" resname="Youtube Status">
+        <source>Youtube Status</source>
+        <target>Estat de publicació en Youtube</target>
+      </trans-unit>
+      <trans-unit id="BIx.Lvm" resname="Last Updated">
+        <source>Last Updated</source>
+        <target>Última actualització</target>
+      </trans-unit>
+      <trans-unit id="p.7q5uX" resname="Youtube Id">
+        <source>Youtube Id</source>
+        <target>Id de Youtube</target>
+      </trans-unit>
+      <trans-unit id="mTz6Fl1" resname="Youtube Playlists">
+        <source>Youtube Playlists</source>
+        <target>Llista de reproducció de Youtube</target>
+      </trans-unit>
+      <trans-unit id="6EgtOIB" resname="Youtube Link">
+        <source>Youtube Link</source>
+        <target>Enllaç a Youtube</target>
+      </trans-unit>
+      <trans-unit id="fGudka2" resname="Youtube Embed">
+        <source>Youtube Embed</source>
+        <target>Códi "Embebido" Youtube</target>
+      </trans-unit>
+      <trans-unit id="ZgzwMI_" resname="Video available at:">
+        <source>Video available at:</source>
+        <target>Vídeo disponible en:</target>
+      </trans-unit>
+      <trans-unit id="HJGa8e4" resname="Youtube">
+        <source>Youtube</source>
+        <target>Youtube</target>
+      </trans-unit>
+      <trans-unit id="ouIKM1c" resname="Delete account">
+        <source>Delete account</source>
+        <target>Borrar compte</target>
+      </trans-unit>
+      <trans-unit id="q2oWS_D" resname="Edit account">
+        <source>Edit account</source>
+        <target>Editar compte</target>
+      </trans-unit>
+      <trans-unit id="nVfzSeg" resname="Add new playlist">
+        <source>Add new playlist</source>
+        <target>Afegir nova llista de reproducció</target>
+      </trans-unit>
+      <trans-unit id="uHc9dSW" resname="New account">
+        <source>New account</source>
+        <target>Nou compte</target>
+      </trans-unit>
+      <trans-unit id="glZw1T5" resname="There was an error on deleting Youtube account.">
+        <source>There was an error on deleting Youtube account.</source>
+        <target>Va haver-hi un error esborrant el compte de Youtube.</target>
+      </trans-unit>
+      <trans-unit id="AQlBubG" resname="Youtube account was successfully deleted.">
+        <source>Youtube account was successfully deleted.</source>
+        <target>El compte de Youtube ha sigut esborrat satisfactòriament.</target>
+      </trans-unit>
+      <trans-unit id="l3jIP4_" resname="Youtube accounts">
+        <source>Youtube accounts</source>
+        <target>Comptes de Youtube</target>
+      </trans-unit>
+      <trans-unit id="24Ob_E5" resname="YouTubeEDU">
+        <source>YouTubeEDU</source>
+        <target>YouTubeEDU</target>
+      </trans-unit>
+      <trans-unit id="pBIBzMW" resname="Participating">
+        <source>Participating</source>
+        <target>Participan</target>
+      </trans-unit>
+      <trans-unit id="e_GlHXX" resname="Add new Youtube account">
+        <source>Add new Youtube account</source>
+        <target>Afegir compte de Youtube</target>
+      </trans-unit>
+      <trans-unit id="Q.CBvTg" resname="Add new Youtube account playlist">
+        <source>Add new Youtube account playlist</source>
+        <target>Afegir nova playlist de Youtube</target>
+      </trans-unit>
+      <trans-unit id="MjsROLX" resname="Update playlist error">
+        <source>Update playlist error</source>
+        <target>Error en actualitzar la playlist</target>
+      </trans-unit>
+      <trans-unit id="NUgLYUv" resname="Update playlist successfully">
+        <source>Update playlist successfully</source>
+        <target>Playlist actualitzada correctamente</target>
+      </trans-unit>
+      <trans-unit id="Ygfmi46" resname="Manual playlist update">
+        <source>Manual playlist update</source>
+        <target>Actualitzar manualmente la playlist</target>
+      </trans-unit>
+      <trans-unit id="GXZu1sy" resname="Cancel">
+        <source>Cancel</source>
+        <target>Cancel·lar</target>
+      </trans-unit>
+      <trans-unit id="fZ63rLE" resname="Close">
+        <source>Close</source>
+        <target>Tancar</target>
+      </trans-unit>
+      <trans-unit id="3Qrnpcv" resname="Save changes">
+        <source>Save changes</source>
+        <target>Guardar</target>
+      </trans-unit>
+      <trans-unit id="QDnfrcf" resname="There was an error on creating Youtube account.">
+        <source>There was an error on creating Youtube account.</source>
+        <target>Va haver-hi un error en crear el compte de Youtube.</target>
+      </trans-unit>
+      <trans-unit id="5W8dzTY" resname="Youtube account was successfully created.">
+        <source>Youtube account was successfully created.</source>
+        <target>Compte de Youtube cret correctamente.</target>
+      </trans-unit>
+      <trans-unit id="IO7pdcv" resname="Edit Youtube account">
+        <source>Edit Youtube account</source>
+        <target>Editar el compte de Youtube</target>
+      </trans-unit>
+      <trans-unit id="jIHtsWR" resname="There was an error on editing Youtube account.">
+        <source>There was an error on editing Youtube account.</source>
+        <target>Va haver-hi un error en crear el compte de Youtube.</target>
+      </trans-unit>
+      <trans-unit id="DqDOGKr" resname="Youtube account was successfully edited.">
+        <source>Youtube account was successfully edited.</source>
+        <target>El compte de Youtube s'ha editat correctament.</target>
+      </trans-unit>
+      <trans-unit id="EhVukhv" resname="Id">
+        <source>Id</source>
+        <target>Id</target>
+      </trans-unit>
+      <trans-unit id="stYgHYz" resname="Login name">
+        <source>Login name</source>
+        <target>Nombre de acceso</target>
+      </trans-unit>
+      <trans-unit id="ibP.tGF" resname="MM. Obj.">
+        <source>MM. Obj.</source>
+        <target>MM. Obj.</target>
+      </trans-unit>
+      <trans-unit id="PH1gAS4" resname="PLAYLIST -">
+        <source>PLAYLIST -</source>
+        <target>LLISTA DE REPRODUCCIÓ -</target>
+      </trans-unit>
+      <trans-unit id="6HNafgb" resname="There was an error on creating Youtube account playlist.">
+        <source>There was an error on creating Youtube account playlist.</source>
+        <target>Va haver-hi un error en crear la llista de reproducció de Youtube.</target>
+      </trans-unit>
+      <trans-unit id="WDu9tpA" resname="Youtube account playlist was successfully created.">
+        <source>Youtube account playlist was successfully created.</source>
+        <target>Llista de reproducció creada correctament.</target>
+      </trans-unit>
+      <trans-unit id="zSF5QKO" resname="Edit Youtube playlist">
+        <source>Edit Youtube playlist</source>
+        <target>Editar llista de reproducció</target>
+      </trans-unit>
+      <trans-unit id="Bwbhqft" resname="There was an error on editing Youtube playlist.">
+        <source>There was an error on editing Youtube playlist.</source>
+        <target>Va haver-hi un error en crear la llista de reproducció de Youtube.</target>
+      </trans-unit>
+      <trans-unit id="dKeQylq" resname="Youtube playlist was successfully edited.">
+        <source>Youtube playlist was successfully edited.</source>
+        <target>Llista de reproducció modificada correctament.</target>
+      </trans-unit>
+      <trans-unit id="H4gidaQ" resname="Please, create a new youtube account">
+        <source>Please, create a new youtube account</source>
+        <target>Per favor, crea un compte de Youtube</target>
+      </trans-unit>
+      <trans-unit id="evNsUIU" resname="Playlist">
+        <source>Playlist</source>
+        <target>Llista de reproducció</target>
+      </trans-unit>
+      <trans-unit id="uTzzvzb" resname="Create new playlist">
+        <source>Create new playlist</source>
+        <target>Crear nova llista de reproducció</target>
+      </trans-unit>
+      <trans-unit id="FkoQICu" resname="Refresh playlists">
+        <source>Refresh playlists</source>
+        <target>Actualitzar llista de reproducció</target>
+      </trans-unit>
+      <trans-unit id="nVcJD87" resname="Without playlist">
+        <source>Without playlist</source>
+        <target>Sense llista de reproducció</target>
+      </trans-unit>
+      <trans-unit id="fozSBW2" resname="Title">
+        <source>Title</source>
+        <target>Títol</target>
+      </trans-unit>
+      <trans-unit id="ccZMO9V" resname="Youtube account">
+        <source>Youtube account</source>
+        <target>Compte de Youtube</target>
+      </trans-unit>
+      <trans-unit id="9hj.WBl" resname="Go to playlist">
+        <source>Go to playlist</source>
+        <target>Anar a la playlist</target>
+      </trans-unit>
+      <trans-unit id="UILf2cl" resname="Show video on Youtube">
+        <source>Show video on Youtube</source>
+        <target>Vore vídeo en Youtube</target>
+      </trans-unit>
+      <trans-unit id="v0Z2Y3Q" resname="Copy iframe">
+        <source>Copy iframe</source>
+        <target>Copiar códi iframe</target>
+      </trans-unit>
+      <trans-unit id="dJ_g_W7" resname="Update playlist">
+        <source>Update playlist</source>
+        <target>Actualitzar playlist</target>
+      </trans-unit>
+      <trans-unit id="FT4MKSm" resname="Force upload video">
+        <source>Force upload video</source>
+        <target>Forzar pujada del vídeo</target>
+      </trans-unit>
+      <trans-unit id="RoliJDG" resname="Do you want force upload this video? This action will delete old video causing lose all views on Youtube">
+        <source>Do you want force upload this video? This action will delete old video causing lose all views on Youtube</source>
+        <target>Vols forçar la pujada del vídeo? Aquesta acció esborrarà l'antic vídeo causant perduda de dades com el número de visionats.</target>
+      </trans-unit>
+      <trans-unit id="L8V51n." resname="Update video successfully">
+        <source>Update video successfully</source>
+        <target>Video actualitzat correctamente</target>
+      </trans-unit>
+      <trans-unit id="E7sxpCZ" resname="Copy Youtube link">
+        <source>Copy Youtube link</source>
+        <target>Copiar link de Youtube</target>
+      </trans-unit>
+      <trans-unit id="8ze7Pzt" resname="Multimedia Object title">
+        <source>Multimedia Object title</source>
+        <target>Títol de l'objete multimèdia</target>
+      </trans-unit>
+      <trans-unit id="huegnov" resname="File uploaded">
+        <source>File uploaded</source>
+        <target>Arxiu pujat</target>
+      </trans-unit>
+      <trans-unit id="Y1NpQHq" resname="File not saved on database">
+        <source>File not saved on database</source>
+        <target>Archiu no enregistrat a la BBDD</target>
+      </trans-unit>
+      <trans-unit id="SCqj4QU" resname="The maximum size allowed for the playlist title is 150 characters.">
+        <source>The maximum size allowed for the playlist title is 150 characters.</source>
+        <target>La grandària màxima permesa per al títol de la playlist és de 150 caràcters</target>
+      </trans-unit>
+      <trans-unit id=".mWxFSS" resname="Youtube Status Stats">
+        <source>Youtube Status Stats</source>
+        <target>Estadístiques dels estats de Youtube</target>
+      </trans-unit>
+    <trans-unit id="3E1teZw" resname="{0} videos|{1} video|]1,Inf] videos">
+      <source>{0} videos|{1} video|]1,Inf] videos</source>
+      <target>{0} videos|{1} video|]1,Inf] videos</target>
+    </trans-unit>
+    <trans-unit id="OEOXHc." resname="ID">
+      <source>ID</source>
+      <target>ID</target>
+    </trans-unit>
+    <trans-unit id="pqMtvFY" resname="Link">
+      <source>Link</source>
+      <target>Link</target>
+    </trans-unit>
+    <trans-unit id="MaEcCRG" resname="Multimedia Object">
+      <source>Multimedia Object</source>
+      <target>Objete multimèdia</target>
+    </trans-unit>
+    <trans-unit id="rArhFm_" resname="Upload date">
+      <source>Upload date</source>
+      <target>Data de pujada</target>
+    </trans-unit>
+    <trans-unit id="UACc4dp" resname="File">
+      <source>File</source>
+      <target>Arxiu</target>
+    </trans-unit>
+    <trans-unit id="7VO065x" resname="{0} playlist|{1} playlist|]1,Inf] playlists">
+      <source>{0} playlist|{1} playlist|]1,Inf] playlists</source>
+      <target>{0} llistes de reproducció|{1} llistes de reproducció|]1,Inf] llistes de reproducció</target>
+    </trans-unit>
+    <trans-unit id="i5JOb1E" resname="YouTube Global Stats">
+      <source>YouTube Global Stats</source>
+      <target>Estadístiques globals de Youtube</target>
+    </trans-unit>
+    <trans-unit id="03w8RGd" resname="Youtube Global Configuration">
+      <source>Youtube Global Configuration</source>
+      <target>Configuració global de YouTube</target>
+    </trans-unit>
+    <trans-unit id="Upc53CP" resname="Number of accounts">
+      <source>Number of accounts</source>
+      <target>Nº de comptes</target>
+    </trans-unit>
+    <trans-unit id="2uQd0m9" resname="Number of playlist">
+      <source>Number of playlist</source>
+      <target>Nº de llistes de reproducció</target>
+    </trans-unit>
+    <trans-unit id="acugIH3" resname="Number of videos">
+      <source>Número de videos</source>
+      <target>Núm de vídeos</target>
+    </trans-unit>
+    <trans-unit id="Ywdy.Ps" resname="YouTube List">
+      <source>YouTube List</source>
+      <target>Llistat de YouTube</target>
+    </trans-unit>
+    <trans-unit id="T6vDojo" resname="Without results">
+      <source>Without results</source>
+      <target>Sense resultats</target>
+    </trans-unit>
+    <trans-unit id="MKOwLL7" resname="No title">
+      <source>No title</source>
+      <target>Sense títol</target>
+    </trans-unit>
+    <trans-unit id="PWlKoNH" resname="Edit multimedia object">
+      <source>Edit multimedia object</source>
+      <target>Editar objecte multimèdia</target>
+    </trans-unit>
+    <trans-unit id="8_skAaA" resname="Youtube Configuration">
+      <source>Youtube Configuration</source>
+      <target>Configuració de Youtube</target>
+    </trans-unit>
+      <trans-unit id="oPHuMVe" resname="Youtube - Statistics">
+        <source>Youtube - Statistics</source>
+        <target>Youtube - Estadístiques</target>
+      </trans-unit>
+      <trans-unit id="PWjs23M" resname="Youtube - Accounts">
+        <source>Youtube - Accounts</source>
+        <target>Youtube - Comptes</target>
+      </trans-unit>
+      <trans-unit id="zJ8cb4J" resname="YouTube Accounts">
+        <source>YouTube Accounts</source>
+        <target>Comptes de YouTube</target>
+      </trans-unit>
+      <trans-unit id="OeFeLJ1" resname="uploading">
+        <source>uploading</source>
+        <target>Pujant</target>
+      </trans-unit>
+      <trans-unit id="CmPdmqC" resname="processing">
+        <source>processing</source>
+        <target>Procesant</target>
+      </trans-unit>
+      <trans-unit id="sE5eogG" resname="published">
+        <source>published</source>
+        <target>Publicats</target>
+      </trans-unit>
+      <trans-unit id="9IKVsfk" resname="http error">
+        <source>http error</source>
+        <target>Error HTTP</target>
+      </trans-unit>
+      <trans-unit id="G7BckOr" resname="general error">
+        <source>general error</source>
+        <target>Error genèric</target>
+      </trans-unit>
+      <trans-unit id="55FYYJo" resname="duplicated">
+        <source>duplicated</source>
+        <target>Duplicat</target>
+      </trans-unit>
+      <trans-unit id="4feXWMx" resname="removed">
+        <source>removed</source>
+        <target>Eliminat</target>
+      </trans-unit>
+      <trans-unit id="ibTsWcs" resname="notified error">
+        <source>notified error</source>
+        <target>Error de notificació</target>
+      </trans-unit>
+      <trans-unit id="1xMwIJ0" resname="to delete">
+        <source>to delete</source>
+        <target>A borrar</target>
+      </trans-unit>
+      <trans-unit id="HfD7rzX" resname="update_error">
+        <source>update_error</source>
+        <target>Error d'actualizació</target>
+      </trans-unit>
+      <trans-unit id="Ocu8Bnx" resname="Show documents by status ">
+        <source>Show documents by status </source>
+        <target>Vore document de l'estat </target>
+      </trans-unit>
+      <trans-unit id="aFd2PNJ" resname="Edit multimedia object ">
+        <source>Edit multimedia object </source>
+        <target>Editar objete multimèdia </target>
+      </trans-unit>
+      <trans-unit id="1A5peHy" resname="YouTube Playlist">
+        <source>YouTube Playlist</source>
+        <target>Llista de reproducció de YouTube</target>
+      </trans-unit>
+      <trans-unit id="2VfyJCQ" resname="File of PuMuKIT">
+        <source>File of PuMuKIT</source>
+        <target>Arxiu de PuMuKIT</target>
+      </trans-unit>
+    </body>
+  </file>
+</xliff>
