@@ -60,9 +60,6 @@ EOT
     }
 
     /**
-     * @param InputInterface  $input
-     * @param OutputInterface $output
-     *
      * @throws \Doctrine\ODM\MongoDB\MongoDBException
      *
      * @return int|void|null
@@ -74,10 +71,6 @@ EOT
         $this->checkResultsAndSendEmail();
     }
 
-    /**
-     * @param InputInterface  $input
-     * @param OutputInterface $output
-     */
     protected function initialize(InputInterface $input, OutputInterface $output)
     {
         $this->dm = $this->getContainer()->get('doctrine_mongodb.odm.document_manager');
@@ -146,8 +139,6 @@ EOT
     }
 
     /**
-     * @param MultimediaObject $multimediaObject
-     *
      * @return array
      */
     private function getMmMaterialIds(MultimediaObject $multimediaObject)
@@ -161,9 +152,6 @@ EOT
     }
 
     /**
-     * @param Youtube          $youtube
-     * @param MultimediaObject $multimediaObject
-     *
      * @return array
      */
     private function getDeleteCaptionIds(Youtube $youtube, MultimediaObject $multimediaObject)

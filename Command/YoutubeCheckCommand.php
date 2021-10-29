@@ -73,9 +73,6 @@ EOT
     }
 
     /**
-     * @param InputInterface  $input
-     * @param OutputInterface $output
-     *
      * @throws \Exception
      *
      * @return int|void|null
@@ -98,9 +95,6 @@ EOT
     }
 
     /**
-     * @param InputInterface  $input
-     * @param OutputInterface $output
-     *
      * @throws \Exception
      */
     protected function initialize(InputInterface $input, OutputInterface $output)
@@ -191,8 +185,7 @@ EOT
     }
 
     /**
-     * @param Youtube $youtube
-     * @param bool    $pumukit1Id
+     * @param bool $pumukit1Id
      *
      * @return array|object|null
      */
@@ -219,8 +212,6 @@ EOT
     }
 
     /**
-     * @param Youtube $youtube
-     *
      * @return array|object|null
      */
     private function findByYoutubeId(Youtube $youtube)

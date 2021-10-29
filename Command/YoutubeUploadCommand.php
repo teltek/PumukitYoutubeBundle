@@ -19,7 +19,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 class YoutubeUploadCommand extends ContainerAwareCommand
 {
-    const PUB_DECISION_AUTONOMOUS = 'PUDEAUTO';
+    public const PUB_DECISION_AUTONOMOUS = 'PUDEAUTO';
     /**
      * @var DocumentManager
      */
@@ -73,9 +73,6 @@ EOT
     }
 
     /**
-     * @param InputInterface  $input
-     * @param OutputInterface $output
-     *
      * @throws \Doctrine\ODM\MongoDB\MongoDBException
      *
      * @return int|void|null
@@ -100,10 +97,6 @@ EOT
         $this->checkResultsAndSendEmail();
     }
 
-    /**
-     * @param InputInterface  $input
-     * @param OutputInterface $output
-     */
     protected function initialize(InputInterface $input, OutputInterface $output)
     {
         $this->dm = $this->getContainer()->get('doctrine_mongodb.odm.document_manager');
@@ -126,8 +119,7 @@ EOT
     }
 
     /**
-     * @param mixed           $mms
-     * @param OutputInterface $output
+     * @param mixed $mms
      */
     private function uploadVideosToYoutube($mms, OutputInterface $output)
     {
@@ -280,8 +272,6 @@ EOT
     }
 
     /**
-     * @param MultimediaObject $mm
-     *
      * @return bool
      */
     private function checkIfMultimediaObjectHaveAccount(MultimediaObject $mm)

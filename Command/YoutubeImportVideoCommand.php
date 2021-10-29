@@ -138,9 +138,6 @@ EOT
     }
 
     /**
-     * @param InputInterface  $input
-     * @param OutputInterface $output
-     *
      * @throws \Exception
      *
      * @return bool|int|null
@@ -150,6 +147,7 @@ EOT
         $login = $input->getArgument('login');
         $yid = $input->getArgument('yid');
         $step = $input->getOption('step');
+
         switch ($step) {
             case 1:
                 //Check if exists
@@ -173,6 +171,7 @@ EOT
                 }
 
                 break;
+
             case 2:
                 if ('all' == $yid) {
                     $mmobjs = $this->mmobjRepo->findBy(['properties.origin' => 'youtube']);
@@ -195,6 +194,7 @@ EOT
                 }
 
                 break;
+
             case 3:
                 $mmobj = $this->getMmObjFromYid($yid);
                 if (!$mmobj) {
@@ -204,6 +204,7 @@ EOT
                 $this->moveTracks($mmobj, $input->getArgument('series'));
 
                 break;
+
             case 4:
                 $mmobj = $this->getMmObjFromYid($yid);
                 if (!$mmobj) {
@@ -213,6 +214,7 @@ EOT
                 $this->tagMultimediaObject($mmobj, $input->getOption('tags'));
 
                 break;
+
             case 5:
                 $dispatcher = $this->getContainer()->get('pumukitschema.multimediaobject_dispatcher');
                 if ('all' == $yid) {
@@ -240,6 +242,7 @@ EOT
                 }
 
                 break;
+
             default:
                 $output->writeln('<error>Select a valid step</error>');
         }
@@ -261,8 +264,7 @@ EOT
     }
 
     /**
-     * @param MultimediaObject $mmobj
-     * @param string           $trackPath
+     * @param string $trackPath
      *
      * @throws \Exception
      */
@@ -299,9 +301,8 @@ EOT
     }
 
     /**
-     * @param MultimediaObject $mmobj
-     * @param null             $quality
-     * @param bool             $force
+     * @param null $quality
+     * @param bool $force
      *
      * @throws \Exception
      */
@@ -357,9 +358,6 @@ EOT
     }
 
     /**
-     * @param MultimediaObject $mmobj
-     * @param array            $tagIds
-     *
      * @throws \Exception
      */
     private function tagMultimediaObject(MultimediaObject $mmobj, array $tagIds)
@@ -386,11 +384,9 @@ EOT
     }
 
     /**
-     * @param Series          $series
-     * @param string          $yid
-     * @param int             $status
-     * @param string          $login
-     * @param OutputInterface $output
+     * @param string $yid
+     * @param int    $status
+     * @param string $login
      *
      * @throws \Exception
      *
@@ -531,10 +527,12 @@ EOT
             case 'published':
             case 'pub':
                 return MultimediaObject::STATUS_PUBLISHED;
+
             case 'bloq':
             case 'block':
             case 'blocked':
                 return MultimediaObject::STATUS_BLOCKED;
+
             case 'hide':
             case 'hidden':
                 return MultimediaObject::STATUS_HIDDEN;

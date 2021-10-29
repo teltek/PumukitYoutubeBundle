@@ -84,8 +84,7 @@ class YoutubePlaylistService
     /**
      * Move to list.
      *
-     * @param MultimediaObject $multimediaObject
-     * @param string           $playlistTagId
+     * @param string $playlistTagId
      *
      * @throws \Exception
      *
@@ -135,8 +134,6 @@ class YoutubePlaylistService
 
     /**
      * Update playlists.
-     *
-     * @param MultimediaObject $multimediaObject
      *
      * @throws \Exception
      *
@@ -365,8 +362,6 @@ class YoutubePlaylistService
     /**
      * Creates a new playlist in Youtube using the 'tag' metadata.
      *
-     * @param Tag $tag
-     *
      * @throws \Exception
      */
     protected function createYoutubePlaylist(Tag $tag)
@@ -437,7 +432,6 @@ class YoutubePlaylistService
      * string $youtubePlaylist['id'] = id of the playlist on youtube.
      * string $youtubePlaylist['title'] = title of the playlist on youtube.
      *
-     * @param array  $youtubePlaylist
      * @param string $login
      *
      * @throws \Exception
@@ -459,8 +453,6 @@ class YoutubePlaylistService
 
     /**
      * Deletes an existing playlist on PuMuKIT. Takes care of deleting all relations left by this tag.
-     *
-     * @param Tag $tag
      *
      * @throws \Exception
      */
@@ -499,8 +491,6 @@ class YoutubePlaylistService
      * Add the MultimediaObject to the default playlist tag if criteria are met
      * Current Criteria: - USE_DEFAULT_PLAYLIST == true
      *                   - Multimedia Object doesn't have any playlists tag.
-     *
-     * @param MultimediaObject $multimediaObject
      *
      * @throws \Exception
      *

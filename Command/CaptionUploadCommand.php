@@ -60,9 +60,6 @@ EOT
     }
 
     /**
-     * @param InputInterface  $input
-     * @param OutputInterface $output
-     *
      * @throws \Doctrine\ODM\MongoDB\MongoDBException
      *
      * @return int|void|null
@@ -74,10 +71,6 @@ EOT
         $this->checkResultsAndSendEmail();
     }
 
-    /**
-     * @param InputInterface  $input
-     * @param OutputInterface $output
-     */
     protected function initialize(InputInterface $input, OutputInterface $output)
     {
         $container = $this->getContainer();
@@ -148,8 +141,6 @@ EOT
     }
 
     /**
-     * @param Youtube $youtube
-     *
      * @return array
      */
     private function getCaptionsMaterialIds(Youtube $youtube)
@@ -164,17 +155,14 @@ EOT
     }
 
     /**
-     * @param MultimediaObject $multimediaObject
-     * @param array            $captionMaterialIds
-     *
      * @return array
      */
     private function getNewMaterialIds(MultimediaObject $multimediaObject, array $captionMaterialIds = [])
     {
         $newMaterialIds = [];
         foreach ($multimediaObject->getMaterials() as $material) {
-            if ((in_array($material->getId(), $captionMaterialIds)) ||
-            (!in_array($material->getMimeType(), $this->allowedCaptionMimeTypes)) || $material->isHide()) {
+            if ((in_array($material->getId(), $captionMaterialIds))
+            || (!in_array($material->getMimeType(), $this->allowedCaptionMimeTypes)) || $material->isHide()) {
                 continue;
             }
             $newMaterialIds[] = $material->getId();
