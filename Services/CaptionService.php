@@ -9,8 +9,6 @@ use Pumukit\YoutubeBundle\Document\Caption;
 class CaptionService extends YoutubeService
 {
     /**
-     * @param MultimediaObject $multimediaObject
-     *
      * @throws \Exception
      *
      * @return mixed
@@ -32,9 +30,6 @@ class CaptionService extends YoutubeService
     }
 
     /**
-     * @param MultimediaObject $multimediaObject
-     * @param array            $materialIds
-     *
      * @throws \Exception
      *
      * @return array
@@ -70,9 +65,6 @@ class CaptionService extends YoutubeService
     }
 
     /**
-     * @param MultimediaObject $multimediaObject
-     * @param array            $captionIds
-     *
      * @throws \Exception
      *
      * @return int
@@ -103,8 +95,6 @@ class CaptionService extends YoutubeService
     }
 
     /**
-     * @param array $pubChannelTags
-     *
      * @return \Doctrine\ODM\MongoDB\Query\Builder
      */
     public function createYoutubeMultimediaObjectsQueryBuilder(array $pubChannelTags)
@@ -124,9 +114,6 @@ class CaptionService extends YoutubeService
     }
 
     /**
-     * @param Material $material
-     * @param array    $output
-     *
      * @throws \Exception
      *
      * @return Caption

@@ -5,7 +5,6 @@ namespace Pumukit\YoutubeBundle\Services;
 use Doctrine\ODM\MongoDB\DocumentManager;
 use Psr\Log\LoggerInterface;
 use Pumukit\YoutubeBundle\Document\Youtube;
-use Symfony\Bundle\FrameworkBundle\Routing\Router;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Process\ProcessBuilder;
 use Symfony\Component\Routing\RouterInterface;
@@ -32,10 +31,7 @@ class YoutubeProcessService
     /**
      * YoutubeProcessService constructor.
      *
-     * @param DocumentManager $documentManager
-     * @param RouterInterface $router
-     * @param LoggerInterface $logger
-     * @param float|null      $process_timeout
+     * @param float|null $process_timeout
      */
     public function __construct(DocumentManager $documentManager, RouterInterface $router, LoggerInterface $logger, $process_timeout)
     {
@@ -99,8 +95,7 @@ class YoutubeProcessService
     }
 
     /**
-     * @param Youtube $youtube
-     * @param string  $login
+     * @param string $login
      *
      * @return array|mixed
      */
@@ -155,10 +150,9 @@ class YoutubeProcessService
     }
 
     /**
-     * @param Youtube $youtube
-     * @param string  $youtubePlaylistId
-     * @param string  $login
-     * @param string  $rank
+     * @param string $youtubePlaylistId
+     * @param string $login
+     * @param string $rank
      *
      * @return mixed
      */
@@ -205,10 +199,12 @@ class YoutubeProcessService
                 $sFile = 'getVideoStatus.py';
 
                 break;
+
             case 'meta':
                 $sFile = 'getVideoMeta.py';
 
                 break;
+
             default:
                 $sFile = false;
         }
@@ -239,8 +235,7 @@ class YoutubeProcessService
     }
 
     /**
-     * @param Youtube $youtube
-     * @param string  $login
+     * @param string $login
      *
      * @return mixed
      */
@@ -255,11 +250,10 @@ class YoutubeProcessService
     }
 
     /**
-     * @param Youtube $youtube
-     * @param string  $name
-     * @param string  $language
-     * @param string  $file
-     * @param string  $login
+     * @param string $name
+     * @param string $language
+     * @param string $file
+     * @param string $login
      *
      * @return mixed
      */
@@ -294,7 +288,6 @@ class YoutubeProcessService
 
     /**
      * @param string $sFile
-     * @param array  $aCommandArguments
      *
      * @return mixed
      */
@@ -325,7 +318,6 @@ class YoutubeProcessService
     }
 
     /**
-     * @param array  $aCommandArguments
      * @param string $sOption
      * @param string $sValue
      *

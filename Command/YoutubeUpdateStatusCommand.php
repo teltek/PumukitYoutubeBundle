@@ -69,9 +69,6 @@ EOT
     }
 
     /**
-     * @param InputInterface  $input
-     * @param OutputInterface $output
-     *
      * @throws \Doctrine\ODM\MongoDB\MongoDBException
      * @throws \MongoException
      *
@@ -86,10 +83,6 @@ EOT
         $this->checkResultsAndSendEmail();
     }
 
-    /**
-     * @param InputInterface  $input
-     * @param OutputInterface $output
-     */
     protected function initialize(InputInterface $input, OutputInterface $output)
     {
         $this->dm = $this->getContainer()->get('doctrine_mongodb.odm.document_manager');
@@ -109,8 +102,7 @@ EOT
     }
 
     /**
-     * @param mixed           $youtubes
-     * @param OutputInterface $output
+     * @param mixed $youtubes
      *
      * @throws \MongoException
      */
@@ -171,8 +163,7 @@ EOT
     }
 
     /**
-     * @param Youtube $youtube
-     * @param bool    $pumukit1Id
+     * @param bool $pumukit1Id
      *
      * @throws \MongoException
      *
@@ -200,8 +191,6 @@ EOT
     }
 
     /**
-     * @param Youtube $youtube
-     *
      * @throws \MongoException
      *
      * @return array|object|null

@@ -22,8 +22,8 @@ use Symfony\Component\Console\Output\OutputInterface;
  */
 class YoutubeDeleteCommand extends ContainerAwareCommand
 {
-    const PUB_CHANNEL_WEBTV = 'PUCHWEBTV';
-    const PUB_DECISION_AUTONOMOUS = 'PUDEAUTO';
+    public const PUB_CHANNEL_WEBTV = 'PUCHWEBTV';
+    public const PUB_DECISION_AUTONOMOUS = 'PUDEAUTO';
     /**
      * @var DocumentManager
      */
@@ -125,10 +125,6 @@ EOT
         }
     }
 
-    /**
-     * @param InputInterface  $input
-     * @param OutputInterface $output
-     */
     protected function initialize(InputInterface $input, OutputInterface $output)
     {
         $this->dm = $this->getContainer()->get('doctrine_mongodb.odm.document_manager');
@@ -300,9 +296,8 @@ EOT
     }
 
     /**
-     * @param OutputInterface $output
-     * @param string          $state
-     * @param mixed           $multimediaObjects
+     * @param string $state
+     * @param mixed  $multimediaObjects
      */
     private function showMultimediaObjects(OutputInterface $output, $state, $multimediaObjects)
     {
@@ -322,9 +317,8 @@ EOT
     }
 
     /**
-     * @param OutputInterface $output
-     * @param string          $state
-     * @param array           $youtubeDocuments
+     * @param string $state
+     * @param array  $youtubeDocuments
      */
     private function showYoutubeMultimediaObjects(OutputInterface $output, $state, iterable $youtubeDocuments)
     {

@@ -164,7 +164,6 @@ EOT
      */
     private function migratePubChannelYoutube(OutputInterface $output): void
     {
-
         $puchYoutube = $this->dm->getRepository(Tag::class)->findOneBy(['cod' => Youtube::YOUTUBE_PUBLICATION_CHANNEL_CODE]);
 
         if (!$puchYoutube) {

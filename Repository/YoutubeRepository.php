@@ -49,8 +49,6 @@ class YoutubeRepository extends DocumentRepository
 
     /**
      * Get with status and force query builder.
-     *
-     * @return \Doctrine\ODM\MongoDB\Query\Builder
      */
     public function getWithStatusAndForceQueryBuilder(int $status, bool $force = false): \Doctrine\ODM\MongoDB\Query\Builder
     {
@@ -61,8 +59,6 @@ class YoutubeRepository extends DocumentRepository
 
     /**
      * Get with status and force query.
-     *
-     * @return \Doctrine\ODM\MongoDB\Query\Query
      */
     public function getWithStatusAndForceQuery(int $status, bool $force = false): \Doctrine\ODM\MongoDB\Query\Query
     {
@@ -109,8 +105,6 @@ class YoutubeRepository extends DocumentRepository
 
     /**
      * Get without any status query builder.
-     *
-     * @return \Doctrine\ODM\MongoDB\Query\Builder
      */
     public function getWithoutAnyStatusQueryBuilder(array $statusArray = []): \Doctrine\ODM\MongoDB\Query\Builder
     {
@@ -120,8 +114,6 @@ class YoutubeRepository extends DocumentRepository
 
     /**
      * Get without any status query.
-     *
-     * @return \Doctrine\ODM\MongoDB\Query\Query
      */
     public function getWithoutAnyStatusQuery(array $statusArray = []): \Doctrine\ODM\MongoDB\Query\Query
     {
@@ -154,8 +146,6 @@ class YoutubeRepository extends DocumentRepository
 
     /**
      * Get with status and updatePlaylist query builder.
-     *
-     * @return \Doctrine\ODM\MongoDB\Query\Builder
      */
     public function getWithStatusAndUpdatePlaylistQueryBuilder(int $status, bool $updatePlaylist = false): \Doctrine\ODM\MongoDB\Query\Builder
     {
@@ -166,8 +156,6 @@ class YoutubeRepository extends DocumentRepository
 
     /**
      * Get with status and updatePlaylist query.
-     *
-     * @return \Doctrine\ODM\MongoDB\Query\Query
      */
     public function getWithStatusAndUpdatePlaylistQuery(int $status, bool $updatePlaylist = false): \Doctrine\ODM\MongoDB\Query\Query
     {

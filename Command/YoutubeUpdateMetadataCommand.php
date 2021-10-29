@@ -67,9 +67,6 @@ EOT
     }
 
     /**
-     * @param InputInterface  $input
-     * @param OutputInterface $output
-     *
      * @throws \Doctrine\ODM\MongoDB\MongoDBException
      *
      * @return int|void|null
@@ -81,10 +78,6 @@ EOT
         $this->checkResultsAndSendEmail();
     }
 
-    /**
-     * @param InputInterface  $input
-     * @param OutputInterface $output
-     */
     protected function initialize(InputInterface $input, OutputInterface $output)
     {
         $this->dm = $this->getContainer()->get('doctrine_mongodb.odm.document_manager');
@@ -103,10 +96,6 @@ EOT
         $this->usePumukit1 = $input->getOption('use-pmk1');
     }
 
-    /**
-     * @param array           $mms
-     * @param OutputInterface $output
-     */
     private function updateVideosInYoutube(array $mms, OutputInterface $output)
     {
         foreach ($mms as $mm) {

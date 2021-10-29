@@ -20,7 +20,7 @@ use Symfony\Component\Translation\TranslatorInterface;
 
 class YoutubeService
 {
-    const YOUTUBE_PLAYLIST_URL = 'https://www.youtube.com/playlist?list=';
+    public const YOUTUBE_PLAYLIST_URL = 'https://www.youtube.com/playlist?list=';
 
     public static $status = [
         0 => 'public',
@@ -128,8 +128,6 @@ class YoutubeService
     /**
      * Check pending encoder jobs for a multimedia object.
      *
-     * @param MultimediaObject $multimediaObject
-     *
      * @return bool
      */
     public function hasPendingJobs(MultimediaObject $multimediaObject)
@@ -142,8 +140,6 @@ class YoutubeService
 
     /**
      * Get a video track to upload into YouTube.
-     *
-     * @param MultimediaObject $multimediaObject
      *
      * @return int|Track|null
      */
@@ -174,10 +170,9 @@ class YoutubeService
      * Given a multimedia object,
      * upload one track to Youtube.
      *
-     * @param MultimediaObject $multimediaObject
-     * @param int              $category
-     * @param string           $privacy
-     * @param bool             $force
+     * @param int    $category
+     * @param string $privacy
+     * @param bool   $force
      *
      * @throws \Exception
      *
@@ -290,8 +285,6 @@ class YoutubeService
     /**
      * Delete.
      *
-     * @param MultimediaObject $multimediaObject
-     *
      * @throws \Exception
      *
      * @return int
@@ -327,8 +320,6 @@ class YoutubeService
     /**
      * Delete orphan.
      *
-     * @param Youtube $youtube
-     *
      * @throws \Exception
      *
      * @return int
@@ -343,8 +334,6 @@ class YoutubeService
 
     /**
      * Update Metadata.
-     *
-     * @param MultimediaObject $multimediaObject
      *
      * @throws \Exception
      *
@@ -381,8 +370,6 @@ class YoutubeService
 
     /**
      * Update Status.
-     *
-     * @param Youtube $youtube
      *
      * @throws \Exception
      *
@@ -577,8 +564,6 @@ class YoutubeService
      * If it doesn't exists, it tries to recreate it and logs an error on the output.
      * If it can't, throws an exception with the error.
      *
-     * @param MultimediaObject $multimediaObject
-     *
      * @throws \MongoException
      *
      * @return object|Youtube|null
@@ -628,8 +613,6 @@ class YoutubeService
     }
 
     /**
-     * @param MultimediaObject $multimediaObject
-     *
      * @throws \MongoException
      *
      * @return object|Tag|null
@@ -645,9 +628,6 @@ class YoutubeService
     }
 
     /**
-     * @param MultimediaObject $multimediaObject
-     * @param Tag              $youtubeTagAccount
-     *
      * @throws \MongoException
      *
      * @return array
@@ -781,8 +761,7 @@ class YoutubeService
     /**
      * Get title for youtube.
      *
-     * @param MultimediaObject $multimediaObject
-     * @param int              $limit
+     * @param int $limit
      *
      * @return bool|string
      */
@@ -812,8 +791,6 @@ class YoutubeService
 
     /**
      * Get description for youtube.
-     *
-     * @param MultimediaObject $multimediaObject
      *
      * @return string
      */
@@ -877,8 +854,6 @@ class YoutubeService
     /**
      * Get tags for youtube.
      *
-     * @param MultimediaObject $multimediaObject
-     *
      * @return string
      */
     protected function getTagsForYoutube(MultimediaObject $multimediaObject)
@@ -905,8 +880,6 @@ class YoutubeService
      * FixRemovedYoutubeDocument
      * returns a Youtube Document generated based on 'youtubeurl' property from multimediaObject
      * if it can't, throws an exception.
-     *
-     * @param MultimediaObject $multimediaObject
      *
      * @throws \Exception
      *

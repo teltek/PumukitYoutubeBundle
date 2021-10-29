@@ -113,8 +113,6 @@ class Configuration implements ConfigurationInterface
 
     /**
      * Adds `profiles` section.
-     *
-     * @param ArrayNodeDefinition $node
      */
     public function addProfilesSection(ArrayNodeDefinition $node)
     {
