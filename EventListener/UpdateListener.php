@@ -78,7 +78,9 @@ class UpdateListener
             }
 
             foreach ($prototype->getTags() as $tag) {
-                $this->updateTagsFromPrototype($tag, $multimediaObject);
+                if ($tag->isDescendantOf($youtubeTag)) {
+                    $this->updateTagsFromPrototype($tag, $multimediaObject);
+                }
             }
 
             $this->documentManager->flush();

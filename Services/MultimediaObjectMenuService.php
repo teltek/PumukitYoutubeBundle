@@ -6,22 +6,22 @@ use Pumukit\NewAdminBundle\Menu\ItemInterface;
 
 class MultimediaObjectMenuService implements ItemInterface
 {
-    public function getName()
+    public function getName(): string
     {
         return 'Youtube Info';
     }
 
-    public function getUri()
+    public function getUri(): string
     {
         return 'pumukityoutube_modal_index';
     }
 
-    public function getAccessRole()
+    public function getAccessRole(): string
     {
         return 'ROLE_ACCESS_YOUTUBE';
     }
 
-    public function getIcon()
+    public function getIcon(): string
     {
         return 'mdi-action-info';
     }
