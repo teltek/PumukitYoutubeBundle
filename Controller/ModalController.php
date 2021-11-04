@@ -20,7 +20,6 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 class ModalController extends AbstractController
 {
     private $documentManager;
-    private $translator;
     private $youtubePlaylistService;
     private $youtubeService;
     private $tagService;
@@ -28,14 +27,12 @@ class ModalController extends AbstractController
 
     public function __construct(
         DocumentManager $documentManager,
-        TranslatorInterface $translator,
         YoutubePlaylistService $youtubePlaylistService,
         YoutubeService $youtubeService,
         TagService $tagService,
         YoutubeConfigurationService $configurationService
     ) {
         $this->documentManager = $documentManager;
-        $this->translator = $translator;
         $this->youtubePlaylistService = $youtubePlaylistService;
         $this->youtubeService = $youtubeService;
         $this->tagService = $tagService;
