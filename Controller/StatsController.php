@@ -68,7 +68,7 @@ class StatsController extends AbstractController
 
         return $this->render('@PumukitYoutube/Stats/template_list.html.twig', [
             'youtubeDocuments' => $youtubeDocuments,
-            'title' => $this->youtubeStatsService->getTextByStatus($status),
+            'title' => $this->youtubeStatsService->getTextByStatus((int) $status),
         ]);
     }
 
