@@ -18,6 +18,7 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -41,7 +42,7 @@ class AdminController extends AbstractController
      * @Security("is_granted('ROLE_ACCESS_YOUTUBE')")
      * @Route ("/", name="pumukit_youtube_admin_index")
      */
-    public function indexAction(): array
+    public function indexAction(): Response
     {
         return $this->render('@PumukitYoutube/Admin/index.html.twig', []);
     }
@@ -50,7 +51,7 @@ class AdminController extends AbstractController
      * @Security("is_granted('ROLE_ACCESS_YOUTUBE')")
      * @Route ("/list", name="pumukit_youtube_admin_list")
      */
-    public function listAction(): array
+    public function listAction(): Response
     {
         $youtubeAccounts = $this->documentManager->getRepository(Tag::class)->findOneBy(['cod' => Youtube::YOUTUBE_TAG_CODE]);
         if (!$youtubeAccounts) {
@@ -167,7 +168,7 @@ class AdminController extends AbstractController
      * @route("/children/{id}", name="pumukit_youtube_children_tag")
      * @ParamConverter("tag", class="PumukitSchemaBundle:Tag")
      */
-    public function childrenAction(Tag $tag): array
+    public function childrenAction(Tag $tag): Response
     {
         return $this->render('@PumukitYoutube/Admin/children.html.twig', [
             'tag' => $tag,
@@ -251,7 +252,7 @@ class AdminController extends AbstractController
      * @Route ("/update/config/{id}", name="pumukityoutube_advance_configuration_index")
      * @ParamConverter("multimediaObject", class="PumukitSchemaBundle:MultimediaObject", options={"id" = "id"})
      */
-    public function updateYTAction(MultimediaObject $multimediaObject): array
+    public function updateYTAction(MultimediaObject $multimediaObject): Response
     {
         $youtubeAccounts = $this->documentManager->getRepository(Tag::class)->findOneBy([
             'cod' => Youtube::YOUTUBE_TAG_CODE,
