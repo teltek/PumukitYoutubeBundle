@@ -1,22 +1,24 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pumukit\YoutubeBundle\Command;
 
 use Doctrine\ODM\MongoDB\DocumentManager;
+use MongoDB\BSON\ObjectId;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\YoutubeBundle\Document\Youtube;
-use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
+use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Finder\Finder;
 
-class MigrationCommand extends ContainerAwareCommand
+class MigrationCommand extends Command
 {
-    /** @var DocumentManager */
-    private $dm;
+    private $documentManager;
     private $pubChannelProperties = [
         'modal_path' => 'pumukityoutube_modal_index',
         'advanced_configuration' => 'pumukityoutube_advance_configuration_index',
@@ -29,11 +31,19 @@ class MigrationCommand extends ContainerAwareCommand
     ];
 
     private $force;
+    private $pumukitLocales;
+
+    public function __construct(DocumentManager $documentManager, array $pumukitLocales)
+    {
+        $this->documentManager = $documentManager;
+        $this->pumukitLocales = $pumukitLocales;
+        parent::__construct();
+    }
 
     protected function configure(): void
     {
         $this
-            ->setName('youtube:migration:schema')
+            ->setName('pumukit:youtube:migration:schema')
             ->setDescription('Migrate schema from PumukitYoutubeBundle single account to PumukitYoutubeBundle multiple account')
             ->addOption('single_account_name', null, InputOption::VALUE_REQUIRED, 'Name of .json from YoutubeBundle single account')
             ->addOption('force', null, InputOption::VALUE_NONE, 'Set this parameter to execute this action')
@@ -70,16 +80,10 @@ EOT
 
     protected function initialize(InputInterface $input, OutputInterface $output): void
     {
-        $this->dm = $this->getContainer()->get('doctrine.odm.mongodb.document_manager');
-        $this->locales = $this->getContainer()->getParameter('pumukit2.locales');
-
         $this->accountName = $input->getOption('single_account_name');
         $this->force = (true === $input->getOption('force'));
     }
 
-    /**
-     * @throws \Exception
-     */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         if (!$this->force) {
@@ -159,12 +163,9 @@ EOT
         return true;
     }
 
-    /**
-     * @throws \Exception
-     */
     private function migratePubChannelYoutube(OutputInterface $output): void
     {
-        $puchYoutube = $this->dm->getRepository(Tag::class)->findOneBy(['cod' => Youtube::YOUTUBE_PUBLICATION_CHANNEL_CODE]);
+        $puchYoutube = $this->documentManager->getRepository(Tag::class)->findOneBy(['cod' => Youtube::YOUTUBE_PUBLICATION_CHANNEL_CODE]);
 
         if (!$puchYoutube) {
             throw new \Exception(' ERROR - '.Youtube::YOUTUBE_PUBLICATION_CHANNEL_CODE." doesn't exists");
@@ -174,14 +175,11 @@ EOT
             $puchYoutube->setProperty($key, $value);
         }
 
-        $this->dm->flush();
+        $this->documentManager->flush();
 
         $output->writeln('Youtube - SKIP - Added properties to '.Youtube::YOUTUBE_PUBLICATION_CHANNEL_CODE);
     }
 
-    /**
-     * @throws \Exception
-     */
     private function migrateYoutubeAccount(OutputInterface $output): void
     {
         $existsFile = $this->findJsonAccount();
@@ -189,7 +187,7 @@ EOT
             throw new \Exception($this->accountName.' file doesnt exists');
         }
 
-        $youtubeTag = $this->dm->getRepository(Tag::class)->findOneBy([
+        $youtubeTag = $this->documentManager->getRepository(Tag::class)->findOneBy([
             'cod' => Youtube::YOUTUBE_TAG_CODE,
         ]);
 
@@ -204,7 +202,7 @@ EOT
 
     private function createYoutubeTagAccount(OutputInterface $output, Tag $youtubeTag): void
     {
-        $tagAccount = $this->dm->getRepository(Tag::class)->findOneBy(['properties.login' => $this->accountName]);
+        $tagAccount = $this->documentManager->getRepository(Tag::class)->findOneBy(['properties.login' => $this->accountName]);
 
         if ($tagAccount) {
             $output->writeln('Tag account with login '.$this->accountName.' exists on BBDD');
@@ -220,35 +218,32 @@ EOT
 
         $tagYoutubeAccount->setParent($youtubeTag);
 
-        $this->dm->persist($tagYoutubeAccount);
-        $this->dm->flush();
+        $this->documentManager->persist($tagYoutubeAccount);
+        $this->documentManager->flush();
 
         $tagYoutubeAccount->setCod($tagYoutubeAccount->getId());
 
-        $this->dm->flush();
+        $this->documentManager->flush();
     }
 
     private function migrateYoutubeTag(OutputInterface $output): void
     {
-        $youtubeTag = $this->dm->getRepository(Tag::class)->findOneBy(['cod' => Youtube::YOUTUBE_TAG_CODE]);
+        $youtubeTag = $this->documentManager->getRepository(Tag::class)->findOneBy(['cod' => Youtube::YOUTUBE_TAG_CODE]);
 
         foreach ($this->youtubeTagProperties as $key => $value) {
             $youtubeTag->setProperty($key, $value);
         }
 
-        $this->dm->flush();
+        $this->documentManager->flush();
 
         $output->writeln('Youtube - SKIP - Added properties to '.Youtube::YOUTUBE_TAG_CODE);
 
-        $this->dm->clear();
+        $this->documentManager->clear();
     }
 
-    /**
-     * @throws \Exception
-     */
     private function migrateYoutubeDocuments(OutputInterface $output): bool
     {
-        $youtubeDocuments = $this->dm->getRepository(Youtube::class)->findBy(['youtubeAccount' => ['$exists' => false]]);
+        $youtubeDocuments = $this->documentManager->getRepository(Youtube::class)->findBy(['youtubeAccount' => ['$exists' => false]]);
 
         if (!$youtubeDocuments) {
             $output->writeln('Youtube - SKIP - No documents to update');
@@ -261,7 +256,7 @@ EOT
 
         $progress->start();
 
-        $tagAccount = $this->dm->getRepository(Tag::class)->findOneBy(['properties.login' => $this->accountName]);
+        $tagAccount = $this->documentManager->getRepository(Tag::class)->findOneBy(['properties.login' => $this->accountName]);
         if (!$tagAccount) {
             throw new \Exception('Youtube - ERROR - '.$this->accountName." tag doesn't exists");
         }
@@ -272,11 +267,11 @@ EOT
             $progress->advance();
             $this->addYoutubeAccount($youtubeDocument, $tagAccount);
             if (0 === $i % 50) {
-                $this->dm->flush();
+                $this->documentManager->flush();
             }
         }
 
-        $this->dm->flush();
+        $this->documentManager->flush();
         $progress->finish();
 
         return true;
@@ -287,19 +282,16 @@ EOT
         $youtube->setYoutubeAccount($tagAccount->getProperty('login'));
     }
 
-    /**
-     * @throws \Exception
-     */
     private function moveAllPlaylistTags(OutputInterface $output): void
     {
-        $youtubeTag = $this->dm->getRepository(Tag::class)->findOneBy(
+        $youtubeTag = $this->documentManager->getRepository(Tag::class)->findOneBy(
             ['cod' => Youtube::YOUTUBE_TAG_CODE]
         );
 
-        $playlistTags = $this->dm->getRepository(Tag::class)->findBy(
+        $playlistTags = $this->documentManager->getRepository(Tag::class)->findBy(
             [
                 'properties.login' => ['$exists' => false],
-                'parent.$id' => new \MongoId($youtubeTag->getId()),
+                'parent.$id' => new ObjectId($youtubeTag->getId()),
             ]
         );
 
@@ -312,7 +304,7 @@ EOT
 
         $progress->start();
 
-        $tagAccount = $this->dm->getRepository(Tag::class)->findOneBy(['properties.login' => $this->accountName]);
+        $tagAccount = $this->documentManager->getRepository(Tag::class)->findOneBy(['properties.login' => $this->accountName]);
 
         if (!$tagAccount) {
             throw new \Exception('Youtube - ERROR - '.$this->accountName." tag doesn't exists");
@@ -323,7 +315,7 @@ EOT
             $this->refactorPlaylistTag($playlistTag, $tagAccount);
         }
 
-        $this->dm->flush();
+        $this->documentManager->flush();
         $progress->finish();
     }
 
@@ -354,7 +346,7 @@ EOT
 
     private function updateMultimediaObjectsWithAccountTag(OutputInterface $output): bool
     {
-        $multimediaObjects = $this->dm->getRepository(MultimediaObject::class)->findBy(
+        $multimediaObjects = $this->documentManager->getRepository(MultimediaObject::class)->findBy(
             [
                 'tags.cod' => [
                     '$all' => [
@@ -371,7 +363,7 @@ EOT
             return false;
         }
 
-        $tagAccount = $this->dm->getRepository(Tag::class)->findOneBy(['properties.login' => $this->accountName]);
+        $tagAccount = $this->documentManager->getRepository(Tag::class)->findOneBy(['properties.login' => $this->accountName]);
 
         $progress = new ProgressBar($output, count($multimediaObjects));
         $progress->setFormat('verbose');
@@ -384,11 +376,11 @@ EOT
             $progress->advance();
             $this->addTagAccountOnMultimediaObject($multimediaObject, $tagAccount);
             if (0 === $i % 50) {
-                $this->dm->flush();
+                $this->documentManager->flush();
             }
         }
 
-        $this->dm->flush();
+        $this->documentManager->flush();
         $progress->finish();
 
         return true;
@@ -401,7 +393,7 @@ EOT
 
     private function checkAccountExists(OutputInterface $output): void
     {
-        $tagAccount = $this->dm->getRepository(Tag::class)->findBy(
+        $tagAccount = $this->documentManager->getRepository(Tag::class)->findBy(
             [
                 'properties.login' => $this->accountName,
             ]

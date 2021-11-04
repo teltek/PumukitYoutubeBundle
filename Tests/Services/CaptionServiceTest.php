@@ -2,6 +2,7 @@
 
 namespace Pumukit\YoutubeBundle\Tests\Services;
 
+use Pumukit\CoreBundle\Tests\PumukitTestCase;
 use Pumukit\SchemaBundle\Document\Material;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Series;
@@ -10,15 +11,14 @@ use Pumukit\SchemaBundle\Document\Track;
 use Pumukit\SchemaBundle\Services\TagService;
 use Pumukit\YoutubeBundle\Document\Youtube;
 use Pumukit\YoutubeBundle\Services\CaptionService;
-use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\HttpKernel\Log\Logger;
 
 /**
  * @internal
  * @coversNothing
  */
-class CaptionServiceTest extends WebTestCase
+class CaptionServiceTest extends PumukitTestCase
 {
-    private $dm;
     private $youtubeRepo;
     private $mmobjRepo;
     private $tagRepo;
@@ -34,7 +34,7 @@ class CaptionServiceTest extends WebTestCase
     private $captionService;
     private $router;
 
-    public function setUp()
+    public function setUp(): void
     {
         $options = ['environment' => 'test'];
         $kernel = static::createKernel($options);
@@ -54,9 +54,12 @@ class CaptionServiceTest extends WebTestCase
         $this->router = $kernel->getContainer()
             ->get('router')
         ;
-        $this->logger = $kernel->getContainer()
-            ->get('logger')
+
+        $this->logger = $this->getMockBuilder(Logger::class)
+            ->disableOriginalConstructor()
+            ->getMock()
         ;
+
         $this->factoryService = $kernel->getContainer()
             ->get('pumukitschema.factory')
         ;
@@ -67,10 +70,10 @@ class CaptionServiceTest extends WebTestCase
         $this->playlistPrivacyStatus = $kernel->getContainer()
             ->getParameter('pumukit_youtube.playlist_privacy_status')
         ;
-        $this->dm->getDocumentCollection(MultimediaObject::class)->remove([]);
-        $this->dm->getDocumentCollection(Series::class)->remove([]);
-        $this->dm->getDocumentCollection(Tag::class)->remove([]);
-        $this->dm->getDocumentCollection(Youtube::class)->remove([]);
+        $this->dm->getDocumentCollection(MultimediaObject::class)->deleteMany([]);
+        $this->dm->getDocumentCollection(Series::class)->deleteMany([]);
+        $this->dm->getDocumentCollection(Tag::class)->deleteMany([]);
+        $this->dm->getDocumentCollection(Youtube::class)->deleteMany([]);
         $this->dm->flush();
         $this->multimediaobject_dispatcher = $kernel->getContainer()
             ->get('pumukitschema.multimediaobject_dispatcher')
@@ -96,17 +99,34 @@ class CaptionServiceTest extends WebTestCase
             ->disableOriginalConstructor()
             ->getMock()
         ;
+        $configurationService = $this->getMockBuilder('Pumukit\YoutubeBundle\Services\YoutubeConfigurationService')
+            ->disableOriginalConstructor()
+            ->getMock()
+        ;
         $jobService->expects($this->any())
             ->method('addJob')
             ->will($this->returnValue(0))
         ;
         $opencastService = null;
-        $this->captionService = new CaptionService($this->dm, $this->router, $this->tagService, $this->logger, $this->notificationSender, $this->translator, $this->youtubeProcessService, $this->playlistPrivacyStatus, $locale, $useDefaultPlaylist, $defaultPlaylistCod, $defaultPlaylistTitle, $metatagPlaylistCod, $playlistMaster, $deletePlaylists, $pumukitLocales, $youtubeSyncStatus, $defaultTrackUpload, $generateSbs, $sbsProfileName, $jobService, $opencastService);
+        $this->captionService = new CaptionService(
+            $this->dm,
+            $this->router,
+            $this->tagService,
+            $this->logger,
+            $this->notificationSender,
+            $this->translator,
+            $this->youtubeProcessService,
+            $jobService,
+            $opencastService,
+            $configurationService,
+            $pumukitLocales
+        );
         $this->resourcesDir = realpath(__DIR__.'/../Resources').'/';
     }
 
-    public function tearDown()
+    public function tearDown(): void
     {
+        parent::tearDown();
         $this->dm->close();
         $this->dm = null;
         $this->youtubeRepo = null;
@@ -124,7 +144,6 @@ class CaptionServiceTest extends WebTestCase
         $this->captionService = null;
         $this->resourcesDir = null;
         gc_collect_cycles();
-        parent::tearDown();
     }
 
     public function testListAllCaptions()

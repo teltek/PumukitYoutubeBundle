@@ -1,58 +1,50 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pumukit\YoutubeBundle\Command;
 
 use Doctrine\ODM\MongoDB\DocumentManager;
+use MongoDB\BSON\ObjectId;
 use Psr\Log\LoggerInterface;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Tag;
-use Pumukit\SchemaBundle\Repository\MultimediaObjectRepository;
-use Pumukit\SchemaBundle\Repository\TagRepository;
 use Pumukit\YoutubeBundle\Document\Youtube;
-use Pumukit\YoutubeBundle\Repository\YoutubeRepository;
 use Pumukit\YoutubeBundle\Services\YoutubeService;
-use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
+use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class YoutubeUpdateStatusCommand extends ContainerAwareCommand
+class YoutubeUpdateStatusCommand extends Command
 {
-    /**
-     * @var DocumentManager
-     */
-    protected $dm;
-    /**
-     * @var TagRepository
-     */
+    protected $documentManager;
     protected $tagRepo;
-    /**
-     * @var MultimediaObjectRepository
-     */
     protected $mmobjRepo;
-    /**
-     * @var YoutubeRepository
-     */
     protected $youtubeRepo;
-    /**
-     * @var YoutubeService
-     */
     protected $youtubeService;
-
     protected $okUpdates = [];
     protected $failedUpdates = [];
     protected $errors = [];
-
     protected $usePumukit1 = false;
-    /**
-     * @var LoggerInterface
-     */
     protected $logger;
+
+    public function __construct(
+        DocumentManager $documentManager,
+        YoutubeService $youtubeService,
+        LoggerInterface $logger
+    ) {
+        $this->documentManager = $documentManager;
+        $this->youtubeService = $youtubeService;
+        $this->logger = $logger;
+
+        parent::__construct();
+    }
 
     protected function configure()
     {
         $this
-            ->setName('youtube:update:status')
+            ->setName('pumukit:youtube:update:status')
             ->addOption('use-pmk1', null, InputOption::VALUE_NONE, 'Use multimedia objects from PuMuKIT1')
             ->setDescription('Update local YouTube status of the video')
             ->setHelp(
@@ -68,44 +60,28 @@ EOT
         ;
     }
 
-    /**
-     * @throws \Doctrine\ODM\MongoDB\MongoDBException
-     * @throws \MongoException
-     *
-     * @return int|void|null
-     */
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $statusArray = [Youtube::STATUS_REMOVED, Youtube::STATUS_DUPLICATED];
         $youtubes = $this->youtubeRepo->getWithoutAnyStatus($statusArray);
 
         $this->updateVideoStatusInYoutube($youtubes, $output);
         $this->checkResultsAndSendEmail();
+
+        return 0;
     }
 
     protected function initialize(InputInterface $input, OutputInterface $output)
     {
-        $this->dm = $this->getContainer()->get('doctrine_mongodb.odm.document_manager');
-        $this->tagRepo = $this->dm->getRepository(Tag::class);
-        $this->mmobjRepo = $this->dm->getRepository(MultimediaObject::class);
-        $this->youtubeRepo = $this->dm->getRepository(Youtube::class);
-
-        $this->youtubeService = $this->getContainer()->get('pumukityoutube.youtube');
-
+        $this->tagRepo = $this->documentManager->getRepository(Tag::class);
+        $this->mmobjRepo = $this->documentManager->getRepository(MultimediaObject::class);
+        $this->youtubeRepo = $this->documentManager->getRepository(Youtube::class);
         $this->okUpdates = [];
         $this->failedUpdates = [];
         $this->errors = [];
-
-        $this->logger = $this->getContainer()->get('monolog.logger.youtube');
-
         $this->usePumukit1 = $input->getOption('use-pmk1');
     }
 
-    /**
-     * @param mixed $youtubes
-     *
-     * @throws \MongoException
-     */
     protected function updateVideoStatusInYoutube($youtubes, OutputInterface $output)
     {
         foreach ($youtubes as $youtube) {
@@ -173,7 +149,7 @@ EOT
     {
         $qb = $this->mmobjRepo
             ->createQueryBuilder()
-            ->field('_id')->equals(new \MongoId($youtube->getMultimediaObjectId()))
+            ->field('_id')->equals(new ObjectId($youtube->getMultimediaObjectId()))
             ->field('properties.origin')
             ->notEqual('youtube')
         ;
@@ -198,7 +174,7 @@ EOT
     protected function findByYoutubeId(Youtube $youtube)
     {
         return $this->mmobjRepo->createQueryBuilder()
-            ->field('_id')->equals(new \MongoId($youtube->getMultimediaObjectId()))
+            ->field('_id')->equals(new ObjectId($youtube->getMultimediaObjectId()))
             ->getQuery()
             ->getSingleResult()
         ;

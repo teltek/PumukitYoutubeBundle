@@ -1,8 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pumukit\YoutubeBundle\Twig;
 
 use Doctrine\ODM\MongoDB\DocumentManager;
+use MongoDB\BSON\ObjectId;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\YoutubeBundle\Services\YoutubeStatsService;
@@ -49,7 +52,7 @@ class YoutubeExtension extends AbstractExtension
 
     public function getMultimediaObjectTitle(string $id): ?string
     {
-        $object = $this->documentManager->getRepository(MultimediaObject::class)->findOneBy(['_id' => new \MongoId($id)]);
+        $object = $this->documentManager->getRepository(MultimediaObject::class)->findOneBy(['_id' => new ObjectId($id)]);
         if (!$object) {
             return null;
         }

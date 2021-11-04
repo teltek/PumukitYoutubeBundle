@@ -1,4 +1,4 @@
-{% extends 'PumukitNewAdminBundle::layout.html.twig' %}
+{% extends '@PumukitNewAdminBundle/layout.html.twig' %}
 
 {% block body %}
     <style>
@@ -73,9 +73,9 @@
         }
     </style>
 
-    {% include "PumukitYoutubeBundle:Stats:template_global_stats.html.twig" %}
-    {% include "PumukitYoutubeBundle:Stats:template_accounts.html.twig" %}
-    {% include "PumukitYoutubeBundle:Stats:template_status_stats.html.twig" %}
+    {% include "@PumukitYoutubeBundle/Stats/template_global_stats.html.twig" %}
+    {% include "@PumukitYoutubeBundle/Stats/template_accounts.html.twig" %}
+    {% include "@PumukitYoutubeBundle/Stats/template_status_stats.html.twig" %}
 
 
 {% endblock %}

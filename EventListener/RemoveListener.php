@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pumukit\YoutubeBundle\EventListener;
 
 use Doctrine\ODM\MongoDB\DocumentManager;
@@ -9,14 +11,7 @@ use Pumukit\YoutubeBundle\Document\Youtube;
 
 class RemoveListener
 {
-    /**
-     * @var DocumentManager
-     */
     private $documentManager;
-
-    /**
-     * @var \Pumukit\YoutubeBundle\Repository\YoutubeRepository
-     */
     private $youtubeRepo;
 
     public function __construct(DocumentManager $documentManager)
@@ -25,10 +20,6 @@ class RemoveListener
         $this->youtubeRepo = $this->documentManager->getRepository(Youtube::class);
     }
 
-    /**
-     * @throws \Doctrine\ODM\MongoDB\LockException
-     * @throws \Doctrine\ODM\MongoDB\Mapping\MappingException
-     */
     public function preRemove(LifecycleEventArgs $args): void
     {
         $document = $args->getDocument();

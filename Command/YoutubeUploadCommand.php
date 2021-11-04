@@ -1,66 +1,58 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pumukit\YoutubeBundle\Command;
 
 use Doctrine\ODM\MongoDB\DocumentManager;
 use Psr\Log\LoggerInterface;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Tag;
-use Pumukit\SchemaBundle\Repository\MultimediaObjectRepository;
-use Pumukit\SchemaBundle\Repository\TagRepository;
-use Pumukit\SchemaBundle\Services\TagService;
 use Pumukit\YoutubeBundle\Document\Youtube;
-use Pumukit\YoutubeBundle\Repository\YoutubeRepository;
+use Pumukit\YoutubeBundle\Services\YoutubeConfigurationService;
 use Pumukit\YoutubeBundle\Services\YoutubeService;
-use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
+use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class YoutubeUploadCommand extends ContainerAwareCommand
+class YoutubeUploadCommand extends Command
 {
     public const PUB_DECISION_AUTONOMOUS = 'PUDEAUTO';
-    /**
-     * @var DocumentManager
-     */
-    private $dm;
-    /**
-     * @var TagRepository
-     */
-    private $tagRepo;
-    /**
-     * @var MultimediaObjectRepository
-     */
-    private $mmobjRepo;
-    /**
-     * @var YoutubeRepository
-     */
-    private $youtubeRepo;
-    /**
-     * @var TagService
-     */
-    private $tagService;
-    private $syncStatus;
 
+    private $documentManager;
+    private $tagRepo;
+    private $mmobjRepo;
+    private $youtubeRepo;
+    private $tagService;
+    private $youtubeConfigurationService;
+    private $syncStatus;
     private $uploadRemovedVideos;
     private $usePumukit1 = false;
-    /**
-     * @var LoggerInterface
-     */
     private $logger;
-    /**
-     * @var YoutubeService
-     */
     private $youtubeService;
-
     private $okUploads = [];
     private $failedUploads = [];
     private $errors = [];
 
+    public function __construct(
+        DocumentManager $documentManager,
+        YoutubeService $youtubeService,
+        YoutubeConfigurationService $youtubeConfigurationService,
+        LoggerInterface $logger
+    ) {
+        $this->documentManager = $documentManager;
+        $this->youtubeService = $youtubeService;
+        $this->youtubeConfigurationService = $youtubeConfigurationService;
+        $this->logger = $logger;
+
+        parent::__construct();
+    }
+
     protected function configure()
     {
         $this
-            ->setName('youtube:upload')
+            ->setName('pumukit:youtube:upload')
             ->addOption('use-pmk1', null, InputOption::VALUE_NONE, 'Use multimedia objects from PuMuKIT1')
             ->setDescription('Upload videos from Multimedia Objects to Youtube')
             ->setHelp(
@@ -72,12 +64,7 @@ EOT
         ;
     }
 
-    /**
-     * @throws \Doctrine\ODM\MongoDB\MongoDBException
-     *
-     * @return int|void|null
-     */
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $newMultimediaObjects = $this->getNewMultimediaObjectsToUpload();
         $this->uploadVideosToYoutube($newMultimediaObjects, $output);
@@ -95,32 +82,25 @@ EOT
         }
 
         $this->checkResultsAndSendEmail();
+
+        return 0;
     }
 
     protected function initialize(InputInterface $input, OutputInterface $output)
     {
-        $this->dm = $this->getContainer()->get('doctrine_mongodb.odm.document_manager');
-        $this->tagRepo = $this->dm->getRepository(Tag::class);
-        $this->mmobjRepo = $this->dm->getRepository(MultimediaObject::class);
-        $this->youtubeRepo = $this->dm->getRepository(Youtube::class);
+        $this->tagRepo = $this->documentManager->getRepository(Tag::class);
+        $this->mmobjRepo = $this->documentManager->getRepository(MultimediaObject::class);
+        $this->youtubeRepo = $this->documentManager->getRepository(Youtube::class);
 
-        $container = $this->getContainer();
-        $this->youtubeService = $container->get('pumukityoutube.youtube');
-        $this->logger = $container->get('monolog.logger.youtube');
-
-        $this->syncStatus = $container->getParameter('pumukit_youtube.sync_status');
-        $this->uploadRemovedVideos = $container->getParameter('pumukit_youtube.upload_removed_videos');
+        $this->syncStatus = $this->youtubeConfigurationService->syncStatus();
+        $this->uploadRemovedVideos = $this->youtubeConfigurationService->uploadRemovedVideos();
 
         $this->okUploads = [];
         $this->failedUploads = [];
         $this->errors = [];
-
         $this->usePumukit1 = $input->getOption('use-pmk1');
     }
 
-    /**
-     * @param mixed $mms
-     */
     private function uploadVideosToYoutube($mms, OutputInterface $output)
     {
         foreach ($mms as $mm) {
@@ -188,15 +168,11 @@ EOT
         }
     }
 
-    /**
-     * @return mixed
-     */
     private function createMultimediaObjectsToUploadQueryBuilder()
     {
-        $array_pub_tags = $this->getContainer()->getParameter('pumukit_youtube.pub_channels_tags');
+        $array_pub_tags = $this->youtubeConfigurationService->publicationChannelsTags();
 
-        $syncStatus = $this->getContainer()->getParameter('pumukit_youtube.sync_status');
-        if ($syncStatus) {
+        if ($this->syncStatus) {
             $aStatus = [
                 MultimediaObject::STATUS_PUBLISHED,
                 MultimediaObject::STATUS_BLOCKED,
@@ -223,9 +199,6 @@ EOT
         ;
     }
 
-    /**
-     * @return mixed
-     */
     private function getNewMultimediaObjectsToUpload()
     {
         return $this->createMultimediaObjectsToUploadQueryBuilder()
@@ -236,14 +209,7 @@ EOT
         ;
     }
 
-    /**
-     * @param array $statusArray
-     *
-     * @throws \Doctrine\ODM\MongoDB\MongoDBException
-     *
-     * @return mixed
-     */
-    private function getUploadsByStatus($statusArray = [])
+    private function getUploadsByStatus(array $statusArray = [])
     {
         $mmIds = $this->youtubeRepo->getDistinctMultimediaObjectIdsWithAnyStatus($statusArray);
 
@@ -255,7 +221,7 @@ EOT
         ;
     }
 
-    private function checkResultsAndSendEmail()
+    private function checkResultsAndSendEmail(): void
     {
         $youtubeTag = $this->tagRepo->findOneBy(['cod' => Youtube::YOUTUBE_PUBLICATION_CHANNEL_CODE]);
         if (null != $youtubeTag) {
@@ -264,19 +230,16 @@ EOT
                     $addedTags = $this->tagService->addTagToMultimediaObject($mm, $youtubeTag->getId(), false);
                 }
             }
-            $this->dm->flush();
+            $this->documentManager->flush();
         }
         if (!empty($this->okUploads) || !empty($this->failedUploads)) {
             $this->youtubeService->sendEmail('upload', $this->okUploads, $this->failedUploads, $this->errors);
         }
     }
 
-    /**
-     * @return bool
-     */
-    private function checkIfMultimediaObjectHaveAccount(MultimediaObject $mm)
+    private function checkIfMultimediaObjectHaveAccount(MultimediaObject $mm): bool
     {
-        $youtubeTag = $this->dm->getRepository(Tag::class)->findOneBy(['cod' => Youtube::YOUTUBE_TAG_CODE]);
+        $youtubeTag = $this->documentManager->getRepository(Tag::class)->findOneBy(['cod' => Youtube::YOUTUBE_TAG_CODE]);
         $haveAccount = false;
         foreach ($mm->getTags() as $tag) {
             if ($tag->isChildOf($youtubeTag)) {

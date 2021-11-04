@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pumukit\YoutubeBundle\DependencyInjection;
 
 use Pumukit\EncoderBundle\Services\ProfileService;
@@ -7,11 +9,6 @@ use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 
-/**
- * This is the class that validates and merges configuration from your app/config files.
- *
- * To learn more see {@link http://symfony.com/doc/current/cookbook/bundles/extension.html#cookbook-bundles-extension-config-class}
- */
 class Configuration implements ConfigurationInterface
 {
     private $locale = 'en';
@@ -21,13 +18,10 @@ class Configuration implements ConfigurationInterface
         $this->locale = $locale;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function getConfigTreeBuilder()
+    public function getConfigTreeBuilder(): TreeBuilder
     {
-        $treeBuilder = new TreeBuilder();
-        $rootNode = $treeBuilder->root('pumukit_youtube');
+        $treeBuilder = new TreeBuilder('pumukit_youtube');
+        $rootNode = $treeBuilder->getRootNode();
 
         $rootNode
             ->children()
@@ -59,7 +53,9 @@ class Configuration implements ConfigurationInterface
             ->end()
             ->booleanNode('delete_playlists')
             ->defaultValue(false)
-            ->info('Variable that configures whether playlists that are not on the master(pumukit) are deleted on the slave(youtube) or not.  - default:false')
+            ->info(
+                'Variable that configures whether playlists that are not on the master(pumukit) are deleted on the slave(youtube) or not.  - default:false'
+            )
             ->end()
             ->scalarNode('locale')
             ->defaultValue($this->locale)
@@ -111,9 +107,6 @@ class Configuration implements ConfigurationInterface
         return $treeBuilder;
     }
 
-    /**
-     * Adds `profiles` section.
-     */
     public function addProfilesSection(ArrayNodeDefinition $node)
     {
         $node
@@ -131,18 +124,18 @@ class Configuration implements ConfigurationInterface
             ->info('Shown in wizard')->end()
             ->booleanNode('master')->defaultValue(true)
             ->info('The track is master copy')->end()
-                            //Used in JobGeneratorListener
+            //Used in JobGeneratorListener
             ->scalarNode('target')->defaultValue('')
-            ->info('Profile is used to generate a new track when a multimedia object is tagged with a publication channel tag name with this value. List of names')->end()
+            ->info(
+                'Profile is used to generate a new track when a multimedia object is tagged with a publication channel tag name with this value. List of names'
+            )->end()
             ->scalarNode('tags')->defaultValue('')->info('Tags used in tracks created with this profiles')->end()
             ->scalarNode('format')->info('Format of the track')->end()
             ->scalarNode('codec')->info('Codec of the track')->end()
             ->scalarNode('mime_type')->info('Mime Type of the track')->end()
             ->scalarNode('extension')->info('Extension of the track. If empty the input file extension is used.')->end()
-                            //Used in JobGeneratorListener
             ->integerNode('resolution_hor')->min(0)->defaultValue(0)
             ->info('Horizontal resolution of the track, 0 if it depends from original video')->end()
-                            //Used in JobGeneratorListener
             ->integerNode('resolution_ver')->min(0)->defaultValue(0)
             ->info('Vertical resolution of the track, 0 if it depends from original video')->end()
             ->scalarNode('bitrate')->info('Bit rate of the track')->end()
@@ -150,11 +143,12 @@ class Configuration implements ConfigurationInterface
             ->info('Framerate of the track')->end()
             ->integerNode('channels')->min(0)->defaultValue(1)
             ->info('Available Channels')->end()
-                            //Used in JobGeneratorListener
             ->booleanNode('audio')->defaultValue(false)
             ->info('The track is only audio')->end()
             ->scalarNode('bat')->isRequired()->cannotBeEmpty()
-            ->info('Command line to execute transcodification of track. Available variables: {{ input }}, {{ output }}, {{ tmpfile1 }}, {{ tmpfile2 }}, ... {{ tmpfile9 }}.')->end()
+            ->info(
+                'Command line to execute transcodification of track. Available variables: {{ input }}, {{ output }}, {{ tmpfile1 }}, {{ tmpfile2 }}, ... {{ tmpfile9 }}.'
+            )->end()
             ->scalarNode('file_cfg')->info('Configuration file')->end()
             ->arrayNode('streamserver')
             ->isRequired()
@@ -162,8 +156,13 @@ class Configuration implements ConfigurationInterface
             ->scalarNode('name')->isRequired()->cannotBeEmpty()
             ->info('Name of the streamserver')->end()
             ->enumNode('type')
-            ->values([ProfileService::STREAMSERVER_STORE, ProfileService::STREAMSERVER_DOWNLOAD,
-                ProfileService::STREAMSERVER_WMV, ProfileService::STREAMSERVER_FMS, ProfileService::STREAMSERVER_RED5, ])
+            ->values([
+                ProfileService::STREAMSERVER_STORE,
+                ProfileService::STREAMSERVER_DOWNLOAD,
+                ProfileService::STREAMSERVER_WMV,
+                ProfileService::STREAMSERVER_FMS,
+                ProfileService::STREAMSERVER_RED5,
+            ])
             ->isRequired()
             ->info('Streamserver type')->end()
             ->scalarNode('host')->isRequired()->cannotBeEmpty()

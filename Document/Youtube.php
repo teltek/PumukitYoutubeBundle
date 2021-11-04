@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pumukit\YoutubeBundle\Document;
 
 use Doctrine\Common\Collections\ArrayCollection;
@@ -75,12 +77,12 @@ class Youtube
     private $playlists = [];
 
     /**
-     * @MongoDB\Field(type="boolean")
+     * @MongoDB\Field(type="bool")
      */
     private $force = false;
 
     /**
-     * @MongoDB\Field(type="boolean")
+     * @MongoDB\Field(type="bool")
      */
     private $updatePlaylist = false;
 

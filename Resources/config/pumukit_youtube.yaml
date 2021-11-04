@@ -1,0 +1,92 @@
+services:
+  _defaults:
+    autowire:      true
+    autoconfigure: true
+    public:        true
+    bind:
+      $pumukitLocales: "%pumukit.locales%"
+
+  Pumukit\YoutubeBundle\Controller\:
+    resource: '../../Controller'
+    tags: ['controller.service_arguments']
+
+  Pumukit\YoutubeBundle\Command\:
+    resource: '../../Command/'
+    tags: ['console.command']
+
+  Pumukit\YoutubeBundle\Services\YoutubeService:
+    class: Pumukit\YoutubeBundle\Services\YoutubeService
+
+  Pumukit\YoutubeBundle\Services\YoutubeProcessService:
+    class: Pumukit\YoutubeBundle\Services\YoutubeProcessService
+
+  Pumukit\YoutubeBundle\EventListener\UpdateListener:
+    class: Pumukit\YoutubeBundle\EventListener\UpdateListener
+    tags:
+      - { name: "kernel.event_listener", event: "multimediaobject.update", method: "onMultimediaObjectUpdate" }
+
+  Pumukit\YoutubeBundle\EventListener\RemoveListener:
+    class: Pumukit\YoutubeBundle\EventListener\RemoveListener
+    tags:
+      - { name: "doctrine_mongodb.odm.event_listener", event: "preRemove.update" }
+
+  Pumukit\YoutubeBundle\EventListener\BackofficeListener:
+    class: Pumukit\YoutubeBundle\EventListener\BackofficeListener
+    tags:
+      - { name: "kernel.event_listener", event: "publication.submit", method: "onPublicationSubmit" }
+
+  Pumukit\YoutubeBundle\Services\MenuService:
+    class: Pumukit\YoutubeBundle\Services\MenuService
+    tags:
+      - { name: "pumukitnewadmin.menuitem" }
+
+  Pumukit\YoutubeBundle\Services\MenuStatService:
+    class: Pumukit\YoutubeBundle\Services\MenuStatService
+    tags:
+      - { name: "pumukitnewadmin.menuitem" }
+
+  Pumukit\YoutubeBundle\Services\MultimediaObjectMenuService:
+    class: Pumukit\YoutubeBundle\Services\MultimediaObjectMenuService
+    tags:
+      - { name: "pumukitnewadmin.mmobjmenuitem" }
+
+  Pumukit\YoutubeBundle\Services\CaptionService:
+    class: Pumukit\YoutubeBundle\Services\CaptionService
+    tags:
+      - { name: "monolog.logger", channel: "youtube" }
+
+  Pumukit\YoutubeBundle\Services\YoutubePlaylistService:
+    class: Pumukit\YoutubeBundle\Services\YoutubePlaylistService
+    arguments:
+      $kernelRootDir: "%kernel.root_dir%"
+    tags:
+      - { name: "monolog.logger", channel: "youtube" }
+
+  Pumukit\YoutubeBundle\Services\YoutubeStatsService:
+    class: Pumukit\YoutubeBundle\Services\YoutubeStatsService
+
+  Pumukit\YoutubeBundle\Services\YoutubeConfigurationService:
+    class: Pumukit\YoutubeBundle\Services\YoutubeConfigurationService
+    arguments:
+      $playlistPrivateStatus: "%pumukit_youtube.playlist_privacy_status%"
+      $useDefaultPlaylist: "%pumukit_youtube.use_default_playlist%"
+      $defaultPlaylistCod: "%pumukit_youtube.default_playlist_cod%"
+      $defaultPlaylistTitle: "%pumukit_youtube.default_playlist_title%"
+      $metaTagPlaylistCod: "%pumukit_youtube.metatag_playlist_cod%"
+      $playlistMaster: "%pumukit_youtube.playlists_master%"
+      $deletePlaylist: "%pumukit_youtube.delete_playlists%"
+      $locale: "%pumukit_youtube.locale%"
+      $publicationChannelsTags: "%pumukit_youtube.pub_channels_tags%"
+      $processTimeOut: "%pumukit_youtube.process_timeout%"
+      $syncStatus: "%pumukit_youtube.sync_status%"
+      $defaultTrackUpload: "%pumukit_youtube.default_track_upload%"
+      $defaultImageForAudio: "%pumukit_youtube.default_image_for_audio%"
+      $allowedCaptionMimeTypes: "%pumukit_youtube.allowed_caption_mimetypes%"
+      $generateSbs: "%pumukit_youtube.generate_sbs%"
+      $uploadRemovedVideos: "%pumukit_youtube.upload_removed_videos%"
+      $sbsProfileName: "%pumukit_youtube.sbs_profile_name%"
+
+  Pumukit\YoutubeBundle\Twig\YoutubeExtension:
+    class: Pumukit\YoutubeBundle\Twig\YoutubeExtension
+    tags:
+      - { name: "twig.extension" }

@@ -1,70 +1,73 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pumukit\YoutubeBundle\Command;
 
 use Doctrine\ODM\MongoDB\DocumentManager;
 use Psr\Log\LoggerInterface;
+use Pumukit\EncoderBundle\Services\JobService;
+use Pumukit\EncoderBundle\Services\ProfileService;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Pic;
 use Pumukit\SchemaBundle\Document\Series;
 use Pumukit\SchemaBundle\Document\Tag;
-use Pumukit\SchemaBundle\Repository\MultimediaObjectRepository;
-use Pumukit\SchemaBundle\Repository\SeriesRepository;
-use Pumukit\SchemaBundle\Repository\TagRepository;
 use Pumukit\SchemaBundle\Services\FactoryService;
+use Pumukit\SchemaBundle\Services\MultimediaObjectEventDispatcherService;
+use Pumukit\SchemaBundle\Services\MultimediaObjectPicService;
 use Pumukit\SchemaBundle\Services\TagService;
 use Pumukit\YoutubeBundle\Document\Youtube;
-use Pumukit\YoutubeBundle\Repository\YoutubeRepository;
 use Pumukit\YoutubeBundle\Services\YoutubeService;
-use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
+use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
 
-class YoutubeImportVideoCommand extends ContainerAwareCommand
+class YoutubeImportVideoCommand extends Command
 {
-    /**
-     * @var DocumentManager
-     */
-    private $dm;
-    /**
-     * @var TagRepository
-     */
+    private $documentManager;
     private $tagRepo;
-    /**
-     * @var MultimediaObjectRepository
-     */
     private $mmobjRepo;
-    /**
-     * @var SeriesRepository
-     */
     private $seriesRepo;
-    /**
-     * @var YoutubeRepository
-     */
     private $youtubeRepo;
-    /**
-     * @var TagService
-     */
     private $tagService;
-    /**
-     * @var YoutubeService
-     */
     private $youtubeService;
-    /**
-     * @var FactoryService
-     */
     private $factoryService;
-    /**
-     * @var LoggerInterface
-     */
+    private $jobService;
+    private $profileService;
+    private $multimediaObjectPicService;
+    private $multimediaObjectEventDispatcherService;
     private $logger;
+
+    public function __construct(
+        DocumentManager $documentManager,
+        YoutubeService $youtubeService,
+        TagService $tagService,
+        FactoryService $factoryService,
+        JobService $jobService,
+        ProfileService $profileService,
+        MultimediaObjectPicService $multimediaObjectPicService,
+        MultimediaObjectEventDispatcherService $multimediaObjectEventDispatcherService,
+        LoggerInterface $logger
+    ) {
+        $this->documentManager = $documentManager;
+        $this->youtubeService = $youtubeService;
+        $this->tagService = $tagService;
+        $this->factoryService = $factoryService;
+        $this->jobService = $jobService;
+        $this->profileService = $profileService;
+        $this->multimediaObjectPicService = $multimediaObjectPicService;
+        $this->multimediaObjectEventDispatcherService = $multimediaObjectEventDispatcherService;
+        $this->logger = $logger;
+
+        parent::__construct();
+    }
 
     protected function configure()
     {
-        $this->setName('youtube:import:video')->setDescription('Create a multimedia object from Youtube')->addArgument(
+        $this->setName('pumukit:youtube:import:video')->setDescription('Create a multimedia object from Youtube')->addArgument(
             'login',
             InputArgument::REQUIRED,
             'YouTube Login'
@@ -101,48 +104,43 @@ Command to create a multimedia object from Youtube.
 
 Steps:
  * 1.- Create the Multimedia Object (add tagging). Examples:
-       <info>php bin/console youtube:import:video --env=prod --step=1 6aeJ7kOVfH8  58066eadd4c38ebf300041aa</info>
-       <info>php bin/console youtube:import:video --env=prod --step=1 6aeJ7kOVfH8  PLW9tHnDKi2SZ9ea_QK-Trz_hc9-255Fc3 \
+       <info>php bin/console pumukit:youtube:import:video --env=prod --step=1 6aeJ7kOVfH8  58066eadd4c38ebf300041aa</info>
+       <info>php bin/console pumukit:youtube:import:video --env=prod --step=1 6aeJ7kOVfH8  PLW9tHnDKi2SZ9ea_QK-Trz_hc9-255Fc3 \
                --tags=PLW9tHnDKi2SZ9ea_QK-Trz_hc9-255Fc3 --tags=PLW9tHnDKi2SZcLbuDgLYhHodMw8UH2fHN --status=blocked</info>
 
        For YouTube identifies starting with slash (-):
-       <info>php bin/console youtube:import:video --env=prod --step=1 \
+       <info>php bin/console pumukit:youtube:import:video --env=prod --step=1 \
                --tags=PLW9tHnDKi2SZ9ea_QK-Trz_hc9-255Fc3 --tags=PLW9tHnDKi2SZcLbuDgLYhHodMw8UH2fHN --status=blocked \
                -- -aeJ7kOVfH8  PLW9tHnDKi2SZ9ea_QK-Trz_hc9-255Fc3 </info>
 
 
  * 2.- Download the images. Examples:
-       <info>php bin/console youtube:import:video --env=prod --step=2 6aeJ7kOVfH8</info>
+       <info>php bin/console pumukit:youtube:import:video --env=prod --step=2 6aeJ7kOVfH8</info>
 
        Use <comment>all</comment> to iterate over all multimedia objects imported from Youtube:
-       <info>php bin/console youtube:import:video --env=prod --step=2 all</info>
+       <info>php bin/console pumukit:youtube:import:video --env=prod --step=2 all</info>
 
        Use the second argument to force a thumbnails quality (default|high|medium|maxres|standard):
-       <info>php bin/console youtube:import:video --env=prod --step=2 all standard</info>
+       <info>php bin/console pumukit:youtube:import:video --env=prod --step=2 all standard</info>
 
  * 3.- Download/move the tracks. Examples:
-       <info>php bin/console youtube:import:video --env=prod --step=3 6aeJ7kOVfH8 /mnt/videos/stevejobs-memorial-us-20121005_416x234h.mp4</info>
+       <info>php bin/console pumukit:youtube:import:video --env=prod --step=3 6aeJ7kOVfH8 /mnt/videos/stevejobs-memorial-us-20121005_416x234h.mp4</info>
 
  * 4.- [OPTIONAL] Tag objects. With the 1st step you can tag objects too. Examples:
-       <info>php bin/console youtube:import:video --env=prod --step=4 6aeJ7kOVfH8  --tags=PLW9tHnDKi2SZ9ea_QK-Trz_hc9-255Fc3 --tags=PLW9tHnDKi2SZcLbuDgLYhHodMw8UH2fHN</info>
+       <info>php bin/console pumukit:youtube:import:video --env=prod --step=4 6aeJ7kOVfH8  --tags=PLW9tHnDKi2SZ9ea_QK-Trz_hc9-255Fc3 --tags=PLW9tHnDKi2SZcLbuDgLYhHodMw8UH2fHN</info>
 
  * 5.- Publish objects. Examples:
-       <info>php bin/console youtube:import:video --env=prod --step=5 6aeJ7kOVfH8</info>
+       <info>php bin/console pumukit:youtube:import:video --env=prod --step=5 6aeJ7kOVfH8</info>
 
        Use <comment>all</comment> to iterate over all multimedia objects imported from Youtube:
-       <info>php bin/console youtube:import:video --env=prod --step=5 all</info>
+       <info>php bin/console pumukit:youtube:import:video --env=prod --step=5 all</info>
 
 
 EOT
         );
     }
 
-    /**
-     * @throws \Exception
-     *
-     * @return bool|int|null
-     */
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $login = $input->getArgument('login');
         $yid = $input->getArgument('yid');
@@ -216,7 +214,6 @@ EOT
                 break;
 
             case 5:
-                $dispatcher = $this->getContainer()->get('pumukitschema.multimediaobject_dispatcher');
                 if ('all' == $yid) {
                     $mmobjs = $this->mmobjRepo->findBy(['properties.origin' => 'youtube']);
                     foreach ($mmobjs as $mmobj) {
@@ -229,7 +226,7 @@ EOT
                         }
                     }
                     foreach ($mmobjs as $mmobj) {
-                        $dispatcher->dispatchUpdate($mmobj);
+                        $this->multimediaObjectEventDispatcherService->dispatchUpdate($mmobj);
                     }
                 } else {
                     $mmobj = $this->getMmObjFromYid($yid);
@@ -238,7 +235,7 @@ EOT
                     }
                     $output->writeln(' * Publishing multimedia object '.$mmobj->getId());
                     $this->tagService->addTagByCodToMultimediaObject($mmobj, 'PUCHWEBTV');
-                    $dispatcher->dispatchUpdate($mmobj);
+                    $this->multimediaObjectEventDispatcherService->dispatchUpdate($mmobj);
                 }
 
                 break;
@@ -246,44 +243,31 @@ EOT
             default:
                 $output->writeln('<error>Select a valid step</error>');
         }
+
+        return 0;
     }
 
     protected function initialize(InputInterface $input, OutputInterface $output)
     {
-        $this->dm = $this->getContainer()->get('doctrine_mongodb.odm.document_manager');
-        $this->tagRepo = $this->dm->getRepository(Tag::class);
-        $this->mmobjRepo = $this->dm->getRepository(MultimediaObject::class);
-        $this->seriesRepo = $this->dm->getRepository(Series::class);
-        $this->youtubeRepo = $this->dm->getRepository(Youtube::class);
-
-        $this->youtubeService = $this->getContainer()->get('pumukityoutube.youtube');
-        $this->factoryService = $this->getContainer()->get('pumukitschema.factory');
-        $this->tagService = $this->getContainer()->get('pumukitschema.tag');
-
-        $this->logger = $this->getContainer()->get('monolog.logger.youtube');
+        $this->tagRepo = $this->documentManager->getRepository(Tag::class);
+        $this->mmobjRepo = $this->documentManager->getRepository(MultimediaObject::class);
+        $this->seriesRepo = $this->documentManager->getRepository(Series::class);
+        $this->youtubeRepo = $this->documentManager->getRepository(Youtube::class);
     }
 
-    /**
-     * @param string $trackPath
-     *
-     * @throws \Exception
-     */
     private function moveTracks(MultimediaObject $mmobj, $trackPath)
     {
-        $profileService = $this->getContainer()->get('pumukitencoder.profile');
-        $jobService = $this->getContainer()->get('pumukitencoder.job');
-
-        if ($profileService->getProfile('master_copy')) {
+        if ($this->profileService->getProfile('master_copy')) {
             $masterProfile = 'master_copy';
-        } elseif ($profileService->getProfile('master-copy')) {
+        } elseif ($this->profileService->getProfile('master-copy')) {
             $masterProfile = 'master-copy';
         } else {
             throw new \Exception('Error: No master_copy|master-copy profile');
         }
 
-        if ($profileService->getProfile('video_h264')) {
+        if ($this->profileService->getProfile('video_h264')) {
             $videoH264Profile = 'video_h264';
-        } elseif ($profileService->getProfile('broadcast-mp4')) {
+        } elseif ($this->profileService->getProfile('broadcast-mp4')) {
             $videoH264Profile = 'broadcast-mp4';
         } else {
             throw new \Exception('Error: No video_h264|broadcast-mp4 profile');
@@ -294,22 +278,14 @@ EOT
         }
 
         try {
-            $jobService->createTrackWithFile($trackPath, $masterProfile, $mmobj);
+            $this->jobService->createTrackWithFile($trackPath, $masterProfile, $mmobj);
         } catch (\Exception $e) {
             throw new \Exception('Error coping master file "'.$trackPath.'"');
         }
     }
 
-    /**
-     * @param null $quality
-     * @param bool $force
-     *
-     * @throws \Exception
-     */
     private function downloadPic(MultimediaObject $mmobj, $quality = null, $force = false)
     {
-        $picService = $this->getContainer()->get('pumukitschema.mmspic');
-
         $meta = $mmobj->getProperty('youtubemeta');
 
         if (!$quality) {
@@ -330,7 +306,7 @@ EOT
                 $mmobj->getPics()->toArray()
             );
             foreach ($picIds as $picId) {
-                $picService->removePicFromMultimediaObject($mmobj, $picId);
+                $this->multimediaObjectPicService->removePicFromMultimediaObject($mmobj, $picId);
             }
         } else {
             if (0 != count($mmobj->getPics())) {
@@ -342,19 +318,19 @@ EOT
             throw new \Exception('No pic for object with id '.$mmobj->getId());
         }
 
-        $filePath = $picService->getTargetPath($mmobj);
+        $filePath = $this->multimediaObjectPicService->getTargetPath($mmobj);
         $fileName = basename(parse_url($picUrl, PHP_URL_PATH));
 
         $this->download($picUrl, $filePath, $fileName);
 
         $path = $filePath.'/'.$fileName;
         $pic = new Pic();
-        $pic->setUrl(str_replace($filePath, $picService->getTargetUrl($mmobj), $path));
+        $pic->setUrl(str_replace($filePath, $this->multimediaObjectPicService->getTargetUrl($mmobj), $path));
         $pic->setPath($path);
         $mmobj->addPic($pic);
 
-        $this->dm->persist($mmobj);
-        $this->dm->flush();
+        $this->documentManager->persist($mmobj);
+        $this->documentManager->flush();
     }
 
     /**
@@ -415,8 +391,8 @@ EOT
         $mmobj->setProperty('origin', 'youtube');
         $mmobj->setProperty('youtubemeta', $meta['out']);
 
-        $this->dm->persist($mmobj);
-        $this->dm->flush();
+        $this->documentManager->persist($mmobj);
+        $this->documentManager->flush();
 
         return $mmobj;
     }
@@ -491,8 +467,8 @@ EOT
             $series->setProperty('origin', 'youtube');
             $series->setProperty('fromyoutubetag', $seriesId);
 
-            $this->dm->persist($series);
-            $this->dm->flush();
+            $this->documentManager->persist($series);
+            $this->documentManager->flush();
 
             return $series;
         }

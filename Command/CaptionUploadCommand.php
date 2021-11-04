@@ -1,54 +1,52 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pumukit\YoutubeBundle\Command;
 
 use Doctrine\ODM\MongoDB\DocumentManager;
 use Psr\Log\LoggerInterface;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
-use Pumukit\SchemaBundle\Repository\MultimediaObjectRepository;
 use Pumukit\YoutubeBundle\Document\Youtube;
 use Pumukit\YoutubeBundle\Services\CaptionService;
-use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
+use Pumukit\YoutubeBundle\Services\YoutubeConfigurationService;
+use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class CaptionUploadCommand extends ContainerAwareCommand
+class CaptionUploadCommand extends Command
 {
-    /**
-     * @var DocumentManager
-     */
-    private $dm;
-    /**
-     * @var MultimediaObjectRepository
-     */
     private $mmobjRepo;
-    /**
-     * @var LoggerInterface
-     */
-    private $logger;
-    /**
-     * @var CaptionService
-     */
-    private $captionService;
     private $allowedCaptionMimeTypes;
     private $syncStatus;
-
     private $okUploads = [];
     private $failedUploads = [];
     private $errors = [];
-    /**
-     * @var InputInterface
-     */
     private $input;
-    /**
-     * @var OutputInterface
-     */
     private $output;
+
+    private $documentManager;
+    private $configurationService;
+    private $captionService;
+    private $logger;
+
+    public function __construct(
+        DocumentManager $documentManager,
+        YoutubeConfigurationService $configurationService,
+        CaptionService $captionService,
+        LoggerInterface $logger
+    ) {
+        $this->documentManager = $documentManager;
+        $this->configurationService = $configurationService;
+        $this->captionService = $captionService;
+        $this->logger = $logger;
+        parent::__construct();
+    }
 
     protected function configure()
     {
         $this
-            ->setName('youtube:caption:upload')
+            ->setName('pumukit:youtube:caption:upload')
             ->setDescription('Upload captions from Multimedia Objects Materials to Youtube')
             ->setHelp(
                 <<<'EOT'
@@ -59,27 +57,20 @@ EOT
         ;
     }
 
-    /**
-     * @throws \Doctrine\ODM\MongoDB\MongoDBException
-     *
-     * @return int|void|null
-     */
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $youtubeMultimediaObjects = $this->getYoutubeMultimediaObjects();
         $this->uploadCaptionsToYoutube($youtubeMultimediaObjects);
         $this->checkResultsAndSendEmail();
+
+        return 0;
     }
 
     protected function initialize(InputInterface $input, OutputInterface $output)
     {
-        $container = $this->getContainer();
-        $this->dm = $container->get('doctrine_mongodb.odm.document_manager');
-        $this->mmobjRepo = $this->dm->getRepository(MultimediaObject::class);
-        $this->captionService = $container->get('pumukityoutube.caption');
-        $this->logger = $container->get('monolog.logger.youtube');
-        $this->syncStatus = $container->getParameter('pumukit_youtube.sync_status');
-        $this->allowedCaptionMimeTypes = $container->getParameter('pumukit_youtube.allowed_caption_mimetypes');
+        $this->mmobjRepo = $this->documentManager->getRepository(MultimediaObject::class);
+        $this->syncStatus = $this->configurationService->syncStatus();
+        $this->allowedCaptionMimeTypes = $this->configurationService->allowedCaptionMimeTypes();
         $this->okUploads = [];
         $this->failedUploads = [];
         $this->errors = [];
@@ -87,10 +78,7 @@ EOT
         $this->output = $output;
     }
 
-    /**
-     * @param mixed $mms
-     */
-    private function uploadCaptionsToYoutube($mms)
+    private function uploadCaptionsToYoutube(array $mms)
     {
         foreach ($mms as $multimediaObject) {
             try {
@@ -123,14 +111,9 @@ EOT
         }
     }
 
-    /**
-     * @throws \Doctrine\ODM\MongoDB\MongoDBException
-     *
-     * @return mixed
-     */
     private function getYoutubeMultimediaObjects()
     {
-        $pubChannelTags = $this->getContainer()->getParameter('pumukit_youtube.pub_channels_tags');
+        $pubChannelTags = $this->configurationService->publicationChannelsTags();
         $queryBuilder = $this->captionService->createYoutubeMultimediaObjectsQueryBuilder($pubChannelTags);
 
         return $queryBuilder
@@ -140,10 +123,7 @@ EOT
         ;
     }
 
-    /**
-     * @return array
-     */
-    private function getCaptionsMaterialIds(Youtube $youtube)
+    private function getCaptionsMaterialIds(Youtube $youtube): array
     {
         $captions = $youtube->getCaptions();
         $captionsMaterialIds = [];
@@ -154,10 +134,7 @@ EOT
         return $captionsMaterialIds;
     }
 
-    /**
-     * @return array
-     */
-    private function getNewMaterialIds(MultimediaObject $multimediaObject, array $captionMaterialIds = [])
+    private function getNewMaterialIds(MultimediaObject $multimediaObject, array $captionMaterialIds = []): array
     {
         $newMaterialIds = [];
         foreach ($multimediaObject->getMaterials() as $material) {
@@ -174,7 +151,7 @@ EOT
         return $newMaterialIds;
     }
 
-    private function checkResultsAndSendEmail()
+    private function checkResultsAndSendEmail(): void
     {
         if (!empty($this->failedUploads)) {
             $this->captionService->sendEmail('caption upload', $this->okUploads, $this->failedUploads, $this->errors);

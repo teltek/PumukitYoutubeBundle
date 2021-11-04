@@ -2,6 +2,7 @@
 
 namespace Pumukit\YoutubeBundle\Tests\Services;
 
+use Pumukit\CoreBundle\Tests\PumukitTestCase;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Series;
 use Pumukit\SchemaBundle\Document\Tag;
@@ -10,15 +11,14 @@ use Pumukit\SchemaBundle\Services\TagService;
 use Pumukit\YoutubeBundle\Document\Youtube;
 use Pumukit\YoutubeBundle\Services\YoutubePlaylistService;
 use Pumukit\YoutubeBundle\Services\YoutubeService;
-use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\HttpKernel\Log\Logger;
 
 /**
  * @internal
  * @coversNothing
  */
-class YoutubeServiceTest extends WebTestCase
+class YoutubeServiceTest extends PumukitTestCase
 {
-    private $dm;
     private $youtubeRepo;
     private $mmobjRepo;
     private $tagRepo;
@@ -35,7 +35,7 @@ class YoutubeServiceTest extends WebTestCase
     private $youtubePlaylistService;
     private $youtubeProcessService;
 
-    public function setUp()
+    public function setUp(): void
     {
         $options = ['environment' => 'test'];
         $kernel = static::createKernel($options);
@@ -53,9 +53,11 @@ class YoutubeServiceTest extends WebTestCase
         $this->router = $kernel->getContainer()
             ->get('router')
         ;
-        $this->logger = $kernel->getContainer()
-            ->get('logger')
+        $this->logger = $this->getMockBuilder(Logger::class)
+            ->disableOriginalConstructor()
+            ->getMock()
         ;
+
         $this->factoryService = $kernel->getContainer()
             ->get('pumukitschema.factory')
         ;
@@ -67,17 +69,19 @@ class YoutubeServiceTest extends WebTestCase
             ->getParameter('pumukit_youtube.playlist_privacy_status')
         ;
 
-        $this->dm->getDocumentCollection(MultimediaObject::class)->remove([]);
-        $this->dm->getDocumentCollection(Series::class)->remove([]);
-        $this->dm->getDocumentCollection(Tag::class)->remove([]);
-        $this->dm->getDocumentCollection(Youtube::class)->remove([]);
+        $this->dm->getDocumentCollection(MultimediaObject::class)->deleteMany([]);
+        $this->dm->getDocumentCollection(Series::class)->deleteMany([]);
+        $this->dm->getDocumentCollection(Tag::class)->deleteMany([]);
+        $this->dm->getDocumentCollection(Youtube::class)->deleteMany([]);
         $this->dm->flush();
         $this->multimediaobject_dispatcher = $kernel->getContainer()
             ->get('pumukitschema.multimediaobject_dispatcher')
         ;
         $this->tagService = new TagService($this->dm, $this->multimediaobject_dispatcher);
-        $this->youtubeProcessService = $kernel->getContainer()
-            ->get('pumukityoutube.youtubeprocess')
+
+        $this->youtubeProcessService = $this->getMockBuilder('Pumukit\YoutubeBundle\Services\YoutubeProcessService')
+            ->disableOriginalConstructor()
+            ->getMock()
         ;
 
         $kernelRootDir = $kernel->getContainer()->getParameter('kernel.root_dir');
@@ -97,18 +101,46 @@ class YoutubeServiceTest extends WebTestCase
             ->disableOriginalConstructor()
             ->getMock()
         ;
+
+        $configurationService = $this->getMockBuilder('Pumukit\YoutubeBundle\Services\YoutubeConfigurationService')
+            ->disableOriginalConstructor()
+            ->getMock()
+        ;
         $jobService->expects($this->any())
             ->method('addJob')
             ->will($this->returnValue(0))
         ;
         $opencastService = null;
-        $this->youtubeService = new YoutubeService($this->dm, $this->router, $this->tagService, $this->logger, $this->notificationSender, $this->translator, $this->youtubeProcessService, $this->playlistPrivacyStatus, $locale, $useDefaultPlaylist, $defaultPlaylistCod, $defaultPlaylistTitle, $metatagPlaylistCod, $playlistMaster, $deletePlaylists, $pumukitLocales, $youtubeSyncStatus, $defaultTrackUpload, $generateSbs, $sbsProfileName, $jobService, $opencastService);
-        $this->youtubePlaylistService = new YoutubePlaylistService($this->dm, $this->youtubeService, $this->tagService, $this->logger, $this->translator, $this->youtubeProcessService, $this->playlistPrivacyStatus, $locale, $useDefaultPlaylist, $defaultPlaylistCod, $defaultPlaylistTitle, $metatagPlaylistCod, $playlistMaster, $deletePlaylists, $pumukitLocales, $defaultTrackUpload, $kernelRootDir);
+        $this->youtubeService = new YoutubeService(
+            $this->dm,
+            $this->router,
+            $this->tagService,
+            $this->logger,
+            $this->notificationSender,
+            $this->translator,
+            $this->youtubeProcessService,
+            $jobService,
+            $opencastService,
+            $configurationService,
+            $pumukitLocales
+        );
+        $this->youtubePlaylistService = new YoutubePlaylistService(
+            $this->dm,
+            $this->youtubeService,
+            $this->tagService,
+            $this->logger,
+            $this->translator,
+            $this->youtubeProcessService,
+            $configurationService,
+            $pumukitLocales,
+            $kernelRootDir
+        );
         $this->resourcesDir = realpath(__DIR__.'/../Resources').'/';
     }
 
-    public function tearDown()
+    public function tearDown(): void
     {
+        parent::tearDown();
         $this->dm->close();
         $this->dm = null;
         $this->youtubeRepo = null;
@@ -126,7 +158,6 @@ class YoutubeServiceTest extends WebTestCase
         $this->youtubeService = null;
         $this->resourcesDir = null;
         gc_collect_cycles();
-        parent::tearDown();
     }
 
     public function testYoutubeServiceFunctions()

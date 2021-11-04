@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pumukit\YoutubeBundle\Services;
 
 use Pumukit\SchemaBundle\Document\Material;
@@ -8,11 +10,6 @@ use Pumukit\YoutubeBundle\Document\Caption;
 
 class CaptionService extends YoutubeService
 {
-    /**
-     * @throws \Exception
-     *
-     * @return mixed
-     */
     public function listAllCaptions(MultimediaObject $multimediaObject)
     {
         $youtube = $this->getYoutubeDocument($multimediaObject);
@@ -29,11 +26,6 @@ class CaptionService extends YoutubeService
         return $result['out'];
     }
 
-    /**
-     * @throws \Exception
-     *
-     * @return array
-     */
     public function uploadCaption(MultimediaObject $multimediaObject, array $materialIds = [])
     {
         $youtube = $this->getYoutubeDocument($multimediaObject);
@@ -58,17 +50,12 @@ class CaptionService extends YoutubeService
             $youtube->addCaption($caption);
             $uploaded[] = $result['out'];
         }
-        $this->dm->persist($youtube);
-        $this->dm->flush();
+        $this->documentManager->persist($youtube);
+        $this->documentManager->flush();
 
         return $uploaded;
     }
 
-    /**
-     * @throws \Exception
-     *
-     * @return int
-     */
     public function deleteCaption(MultimediaObject $multimediaObject, array $captionIds = [])
     {
         $youtube = $this->getYoutubeDocument($multimediaObject);
@@ -88,24 +75,21 @@ class CaptionService extends YoutubeService
             }
             $youtube->removeCaptionByCaptionId($captionId);
         }
-        $this->dm->persist($youtube);
-        $this->dm->flush();
+        $this->documentManager->persist($youtube);
+        $this->documentManager->flush();
 
         return 0;
     }
 
-    /**
-     * @return \Doctrine\ODM\MongoDB\Query\Builder
-     */
     public function createYoutubeMultimediaObjectsQueryBuilder(array $pubChannelTags)
     {
-        if ($this->syncStatus) {
+        if ($this->configurationService->syncStatus()) {
             $aStatus = [MultimediaObject::STATUS_PUBLISHED, MultimediaObject::STATUS_BLOCKED, MultimediaObject::STATUS_HIDDEN];
         } else {
             $aStatus = [MultimediaObject::STATUS_PUBLISHED];
         }
 
-        return $this->mmobjRepo->createQueryBuilder()
+        return $this->documentManager->getRepository(MultimediaObject::class)->createQueryBuilder()
             ->field('properties.pumukit1id')->exists(false)
             ->field('properties.origin')->notEqual('youtube')
             ->field('status')->in($aStatus)
@@ -113,11 +97,6 @@ class CaptionService extends YoutubeService
             ->field('tags.cod')->all($pubChannelTags);
     }
 
-    /**
-     * @throws \Exception
-     *
-     * @return Caption
-     */
     protected function createCaption(Material $material, array $output)
     {
         $caption = new Caption();
