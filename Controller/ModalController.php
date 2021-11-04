@@ -12,10 +12,9 @@ use Pumukit\YoutubeBundle\Document\Youtube;
 use Pumukit\YoutubeBundle\Services\YoutubeConfigurationService;
 use Pumukit\YoutubeBundle\Services\YoutubePlaylistService;
 use Pumukit\YoutubeBundle\Services\YoutubeService;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Contracts\Translation\TranslatorInterface;
+use Symfony\Component\Routing\Annotation\Route;
 
 class ModalController extends AbstractController
 {
