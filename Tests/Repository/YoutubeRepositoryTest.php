@@ -2,21 +2,20 @@
 
 namespace Pumukit\YoutubeBundle\Tests\Repository;
 
+use Pumukit\CoreBundle\Tests\PumukitTestCase;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\YoutubeBundle\Document\Caption;
 use Pumukit\YoutubeBundle\Document\Youtube;
-use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 /**
  * @internal
  * @coversNothing
  */
-class YoutubeRepositoryTest extends WebTestCase
+class YoutubeRepositoryTest extends PumukitTestCase
 {
-    private $dm;
     private $repo;
 
-    public function setUp()
+    public function setUp(): void
     {
         $options = ['environment' => 'test'];
         $kernel = static::createKernel($options);
@@ -26,12 +25,8 @@ class YoutubeRepositoryTest extends WebTestCase
             ->getRepository(Youtube::class)
         ;
 
-        $this->dm->getDocumentCollection(Youtube::class)
-            ->remove([])
-        ;
-        $this->dm->getDocumentCollection(MultimediaObject::class)
-            ->remove([])
-        ;
+        $this->dm->getDocumentCollection(Youtube::class)->deleteMany([]);
+        $this->dm->getDocumentCollection(MultimediaObject::class)->deleteMany([]);
         $this->dm->flush();
     }
 
@@ -77,18 +72,18 @@ class YoutubeRepositoryTest extends WebTestCase
 
         $youtubes = [$youtube1, $youtube3];
         $statusArray = [Youtube::STATUS_ERROR, Youtube::STATUS_UPLOADING];
-        $results = $this->repo->getWithAnyStatus($statusArray)->toArray();
-        $this->assertEquals($youtubes, array_values($results));
+        $results = $this->repo->getWithAnyStatus($statusArray);
+        $this->assertEquals($youtubes, array_values(iterator_to_array($results)));
 
         $youtubes = [$youtube2, $youtube3];
         $statusArray = [Youtube::STATUS_DEFAULT, Youtube::STATUS_UPLOADING];
-        $results = $this->repo->getWithAnyStatus($statusArray)->toArray();
-        $this->assertEquals($youtubes, array_values($results));
+        $results = $this->repo->getWithAnyStatus($statusArray);
+        $this->assertEquals($youtubes, array_values(iterator_to_array($results)));
 
         $youtubes = [$youtube1, $youtube4];
         $statusArray = [Youtube::STATUS_ERROR, Youtube::STATUS_DUPLICATED];
-        $results = $this->repo->getWithAnyStatus($statusArray)->toArray();
-        $this->assertEquals($youtubes, array_values($results));
+        $results = $this->repo->getWithAnyStatus($statusArray);
+        $this->assertEquals($youtubes, array_values(iterator_to_array($results)));
     }
 
     public function testGetDistinctMultimediaObjectIdsWithAnyStatus()
@@ -128,17 +123,17 @@ class YoutubeRepositoryTest extends WebTestCase
 
         $mmIds = [$youtube1->getMultimediaObjectId(), $youtube3->getMultimediaObjectId()];
         $statusArray = [Youtube::STATUS_ERROR, Youtube::STATUS_UPLOADING];
-        $results = $this->repo->getDistinctMultimediaObjectIdsWithAnyStatus($statusArray)->toArray();
+        $results = $this->repo->getDistinctMultimediaObjectIdsWithAnyStatus($statusArray);
         $this->assertEquals($mmIds, $results);
 
         $mmIds = [$youtube2->getMultimediaObjectId(), $youtube3->getMultimediaObjectId()];
         $statusArray = [Youtube::STATUS_DEFAULT, Youtube::STATUS_UPLOADING];
-        $results = $this->repo->getDistinctMultimediaObjectIdsWithAnyStatus($statusArray)->toArray();
+        $results = $this->repo->getDistinctMultimediaObjectIdsWithAnyStatus($statusArray);
         $this->assertEquals($mmIds, $results);
 
         $mmIds = [$youtube1->getMultimediaObjectId(), $youtube4->getMultimediaObjectId()];
         $statusArray = [Youtube::STATUS_ERROR, Youtube::STATUS_DUPLICATED];
-        $results = $this->repo->getDistinctMultimediaObjectIdsWithAnyStatus($statusArray)->toArray();
+        $results = $this->repo->getDistinctMultimediaObjectIdsWithAnyStatus($statusArray);
         $this->assertEquals($mmIds, $results);
     }
 
@@ -173,23 +168,23 @@ class YoutubeRepositoryTest extends WebTestCase
 
         $youtubes = [$youtube1];
         $status = Youtube::STATUS_ERROR;
-        $results = $this->repo->getWithStatusAndForce($status, true)->toArray();
-        $this->assertEquals($youtubes, array_values($results));
+        $results = $this->repo->getWithStatusAndForce($status, true);
+        $this->assertEquals($youtubes, array_values(iterator_to_array($results)));
 
         $youtubes = [$youtube4];
         $status = Youtube::STATUS_DEFAULT;
-        $results = $this->repo->getWithStatusAndForce($status, true)->toArray();
-        $this->assertEquals($youtubes, array_values($results));
+        $results = $this->repo->getWithStatusAndForce($status, true);
+        $this->assertEquals($youtubes, array_values(iterator_to_array($results)));
 
         $youtubes = [$youtube2];
         $status = Youtube::STATUS_DEFAULT;
-        $results = $this->repo->getWithStatusAndForce($status, false)->toArray();
-        $this->assertEquals($youtubes, array_values($results));
+        $results = $this->repo->getWithStatusAndForce($status, false);
+        $this->assertEquals($youtubes, array_values(iterator_to_array($results)));
 
         $youtubes = [$youtube3, $youtube5];
         $status = Youtube::STATUS_ERROR;
-        $results = $this->repo->getWithStatusAndForce($status, false)->toArray();
-        $this->assertEquals($youtubes, array_values($results));
+        $results = $this->repo->getWithStatusAndForce($status, false);
+        $this->assertEquals($youtubes, array_values(iterator_to_array($results)));
     }
 
     public function testGetDistinctMultimediaObjectIdsWithStatusAndForce()
@@ -239,29 +234,29 @@ class YoutubeRepositoryTest extends WebTestCase
 
         $mmIds = [$mm1->getId()];
         $status = Youtube::STATUS_ERROR;
-        $results = $this->repo->getDistinctMultimediaObjectIdsWithStatusAndForce($status, true)->toArray();
+        $results = $this->repo->getDistinctMultimediaObjectIdsWithStatusAndForce($status, true);
         $this->assertEquals($mmIds, $results);
 
         $mmIds = [$mm2->getId()];
         $status = Youtube::STATUS_DEFAULT;
-        $results = $this->repo->getDistinctMultimediaObjectIdsWithStatusAndForce($status, false)->toArray();
+        $results = $this->repo->getDistinctMultimediaObjectIdsWithStatusAndForce($status, false);
         $this->assertEquals($mmIds, $results);
 
         $mmIds = [$mm4->getId()];
         $status = Youtube::STATUS_DEFAULT;
-        $results = $this->repo->getDistinctMultimediaObjectIdsWithStatusAndForce($status, true)->toArray();
+        $results = $this->repo->getDistinctMultimediaObjectIdsWithStatusAndForce($status, true);
         $this->assertEquals($mmIds, $results);
 
         $mmIds = [$mm3->getId()];
         $status = Youtube::STATUS_ERROR;
-        $results = $this->repo->getDistinctMultimediaObjectIdsWithStatusAndForce($status, false)->toArray();
+        $results = $this->repo->getDistinctMultimediaObjectIdsWithStatusAndForce($status, false);
         $this->assertEquals($mmIds, $results);
     }
 
     public function testGetDistinctFieldWithStatusAndForce()
     {
-        $link1 = 'https://www.youtube.com/watch?v=my6bfA14vMQ';
-        $link2 = 'https://www.youtube.com/watch?v=v6yiPnzHCEA';
+        $link1 = 'https://www.youtube.com/watch?v=v6yiPnzHCEA';
+        $link2 = 'https://www.youtube.com/watch?v=my6bfA14vMQ';
 
         $youtube1 = new Youtube();
         $youtube1->setStatus(Youtube::STATUS_ERROR);
@@ -297,22 +292,22 @@ class YoutubeRepositoryTest extends WebTestCase
 
         $links = [$link1];
         $status = Youtube::STATUS_ERROR;
-        $results = $this->repo->getDistinctFieldWithStatusAndForce('link', $status, true)->toArray();
+        $results = $this->repo->getDistinctFieldWithStatusAndForce('link', $status, true);
         $this->assertEquals($links, $results);
 
         $links = [$link1];
         $status = Youtube::STATUS_DEFAULT;
-        $results = $this->repo->getDistinctFieldWithStatusAndForce('link', $status, false)->toArray();
+        $results = $this->repo->getDistinctFieldWithStatusAndForce('link', $status, false);
         $this->assertEquals($links, $results);
 
         $links = [$link2];
         $status = Youtube::STATUS_DEFAULT;
-        $results = $this->repo->getDistinctFieldWithStatusAndForce('link', $status, true)->toArray();
+        $results = $this->repo->getDistinctFieldWithStatusAndForce('link', $status, true);
         $this->assertEquals($links, $results);
 
         $links = [$link2, $link1];
         $status = Youtube::STATUS_ERROR;
-        $results = $this->repo->getDistinctFieldWithStatusAndForce('link', $status, false)->toArray();
+        $results = $this->repo->getDistinctFieldWithStatusAndForce('link', $status, false);
         $this->assertEquals($links, $results);
     }
 
@@ -343,7 +338,7 @@ class YoutubeRepositoryTest extends WebTestCase
         $this->dm->flush();
 
         $youtubes = $this->repo->getNotMetadataUpdated();
-        $youtubesArray = $youtubes->toArray();
+        $youtubesArray = iterator_to_array($youtubes);
         $this->assertTrue(in_array($youtube1, $youtubesArray));
         $this->assertFalse(in_array($youtube2, $youtubesArray));
         $this->assertTrue(in_array($youtube3, $youtubesArray));
@@ -376,7 +371,7 @@ class YoutubeRepositoryTest extends WebTestCase
         $this->dm->flush();
 
         $youtubeIds = $this->repo->getDistinctIdsNotMetadataUpdated();
-        $youtubeIdsArray = $youtubeIds->toArray();
+        $youtubeIdsArray = $youtubeIds;
         $this->assertTrue(in_array($youtube1->getId(), $youtubeIdsArray));
         $this->assertFalse(in_array($youtube2->getId(), $youtubeIdsArray));
         $this->assertTrue(in_array($youtube3->getId(), $youtubeIdsArray));

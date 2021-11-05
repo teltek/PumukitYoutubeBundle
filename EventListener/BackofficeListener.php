@@ -1,8 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pumukit\YoutubeBundle\EventListener;
 
 use Doctrine\ODM\MongoDB\DocumentManager;
+use MongoDB\BSON\ObjectId;
 use Pumukit\NewAdminBundle\Event\PublicationSubmitEvent;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Tag;
@@ -11,30 +14,20 @@ use Pumukit\YoutubeBundle\Document\Youtube;
 
 class BackofficeListener
 {
-    /**
-     * @var DocumentManager
-     */
-    private $dm;
-
-    /**
-     * @var TagService
-     */
+    private $documentManager;
     private $tagService;
 
     public function __construct(DocumentManager $documentManager, TagService $tagService)
     {
-        $this->dm = $documentManager;
+        $this->documentManager = $documentManager;
         $this->tagService = $tagService;
     }
 
-    /**
-     * @throws \Exception
-     */
     public function onPublicationSubmit(PublicationSubmitEvent $event): bool
     {
         $request = $event->getRequest();
         $multimediaObject = $event->getMultimediaObject();
-        $youtubeTag = $this->dm->getRepository(Tag::class)->findOneBy(['cod' => Youtube::YOUTUBE_TAG_CODE]);
+        $youtubeTag = $this->documentManager->getRepository(Tag::class)->findOneBy(['cod' => Youtube::YOUTUBE_TAG_CODE]);
         if (!$youtubeTag) {
             return false;
         }
@@ -58,36 +51,30 @@ class BackofficeListener
             return false;
         }
 
-        // Add Youtube parent tag
         $this->tagService->addTagToMultimediaObject($multimediaObject, $youtubeTag->getId());
-        // Add Youtube account
-        $this->tagService->addTagToMultimediaObject($multimediaObject, new \MongoId($request->request->get('youtube_label')));
-        // Add Youtube playlist
+        $this->tagService->addTagToMultimediaObject($multimediaObject, new ObjectId($request->request->get('youtube_label')));
         $this->addPlaylistToMultimediaObject($multimediaObject, $request->request->get('youtube_playlist_label'));
 
-        $youtubeDocument = $this->dm->getRepository(Youtube::class)->findOneBy(['multimediaObjectId' => $multimediaObject->getId()]);
+        $youtubeDocument = $this->documentManager->getRepository(Youtube::class)->findOneBy(['multimediaObjectId' => $multimediaObject->getId()]);
         if ($youtubeDocument) {
-            $accountLabel = $this->dm->getRepository(Tag::class)->findOneBy(['_id' => new \MongoId($request->request->get('youtube_label'))]);
+            $accountLabel = $this->documentManager->getRepository(Tag::class)->findOneBy(['_id' => new ObjectId($request->request->get('youtube_label'))]);
             $differentAccount = $accountLabel && $youtubeDocument->getYoutubeAccount() !== $accountLabel->getProperty('login');
             if ($differentAccount) {
                 $youtubeDocument->setStatus(Youtube::STATUS_TO_DELETE);
-                $this->dm->flush();
+                $this->documentManager->flush();
             }
         }
 
         return true;
     }
 
-    /**
-     * @throws \Exception
-     */
     private function addPlaylistToMultimediaObject(MultimediaObject $multimediaObject, array $multiplePlaylist): void
     {
         foreach ($multiplePlaylist as $playlist) {
             if ('any' !== $playlist) {
                 $this->tagService->addTagToMultimediaObject(
                     $multimediaObject,
-                    new \MongoId($playlist)
+                    new ObjectId($playlist)
                 );
             }
         }

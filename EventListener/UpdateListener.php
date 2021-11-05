@@ -1,8 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pumukit\YoutubeBundle\EventListener;
 
 use Doctrine\ODM\MongoDB\DocumentManager;
+use MongoDB\BSON\ObjectId;
 use Pumukit\SchemaBundle\Document\EmbeddedTag;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Tag;
@@ -11,9 +14,6 @@ use Pumukit\YoutubeBundle\Document\Youtube;
 
 class UpdateListener
 {
-    /**
-     * @var DocumentManager
-     */
     private $documentManager;
 
     public function __construct(DocumentManager $documentManager)
@@ -21,21 +21,14 @@ class UpdateListener
         $this->documentManager = $documentManager;
     }
 
-    /**
-     * @throws \Exception
-     */
     public function onMultimediaObjectUpdate(MultimediaObjectEvent $event): void
     {
         $multimediaObject = $event->getMultimediaObject();
 
         $this->updateYoutubeDocument($multimediaObject);
-
         $this->setYoutubeAccount($multimediaObject);
     }
 
-    /**
-     * @throws \Exception
-     */
     private function updateYoutubeDocument(MultimediaObject $multimediaObject): void
     {
         $youtubeRepo = $this->documentManager->getRepository(Youtube::class);
@@ -54,8 +47,6 @@ class UpdateListener
 
     /**
      * Set YouTube account ( from template ) on multimedia object that was cut (TTK-22155).
-     *
-     * @throws \Exception
      */
     private function setYoutubeAccount(MultimediaObject $multimediaObject): void
     {
@@ -69,7 +60,7 @@ class UpdateListener
 
         if (!$multimediaObject->isPrototype() && !$multimediaObject->containsTag($youtubeTag)) {
             $prototype = $this->documentManager->getRepository(MultimediaObject::class)->findOneBy([
-                'series' => new \MongoId($multimediaObject->getSeries()->getId()),
+                'series' => new ObjectId($multimediaObject->getSeries()->getId()),
                 'status' => MultimediaObject::STATUS_PROTOTYPE,
             ]);
 

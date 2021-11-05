@@ -1,30 +1,33 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pumukit\YoutubeBundle\Command;
 
 use Doctrine\ODM\MongoDB\DocumentManager;
 use Pumukit\SchemaBundle\Document\Tag;
-use Pumukit\SchemaBundle\Repository\TagRepository;
 use Pumukit\YoutubeBundle\Document\Youtube;
-use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
+use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class YoutubeInitTagsCommand extends ContainerAwareCommand
+class YoutubeInitTagsCommand extends Command
 {
-    /**
-     * @var DocumentManager
-     */
-    private $dm;
-    /**
-     * @var TagRepository
-     */
+    private $documentManager;
     private $tagRepo;
 
-    protected function configure()
+    public function __construct(DocumentManager $documentManager)
     {
-        $this->setName('youtube:init:tags')->setDescription(
+        $this->documentManager = $documentManager;
+        $this->tagRepo = $this->documentManager->getRepository(Tag::class);
+
+        parent::__construct();
+    }
+
+    protected function configure(): void
+    {
+        $this->setName('pumukit:youtube:init:pubchannel')->setDescription(
             'Load Youtube tag data fixture to your database'
         )->addOption('force', null, InputOption::VALUE_NONE, 'Set this parameter to execute this action')->setHelp(
             <<<'EOT'
@@ -36,15 +39,9 @@ EOT
         );
     }
 
-    /**
-     * @throws \Exception
-     *
-     * @return int|null
-     */
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $this->dm = $this->getContainer()->get('doctrine_mongodb.odm.document_manager');
-        $this->tagRepo = $this->dm->getRepository(Tag::class);
+        $this->tagRepo = $this->documentManager->getRepository(Tag::class);
         if ($input->getOption('force')) {
             $youtubePublicationChannelTag = $this->createTagWithCode(Youtube::YOUTUBE_PUBLICATION_CHANNEL_CODE, 'YouTubeEDU', 'PUBCHANNELS', false);
             $youtubePublicationChannelTag->setProperty('modal_path', 'pumukityoutube_modal_index');
@@ -52,8 +49,8 @@ EOT
                 'advanced_configuration',
                 'pumukityoutube_advance_configuration_index'
             );
-            $this->dm->persist($youtubePublicationChannelTag);
-            $this->dm->flush();
+            $this->documentManager->persist($youtubePublicationChannelTag);
+            $this->documentManager->flush();
             $output->writeln(
                 'Tag persisted - new id: '.$youtubePublicationChannelTag->getId().
                 ' cod: '.$youtubePublicationChannelTag->getCod()
@@ -63,7 +60,7 @@ EOT
                 'hide_in_tag_group',
                 true
             );
-            $this->dm->flush();
+            $this->documentManager->flush();
             $output->writeln(
                 'Tag persisted - new id: '.$youtubePlaylistTag->getId().' cod: '.$youtubePlaylistTag->getCod()
             );
@@ -80,17 +77,7 @@ EOT
         return 0;
     }
 
-    /**
-     * @param string $code
-     * @param string $title
-     * @param null   $tagParentCode
-     * @param bool   $metatag
-     *
-     * @throws \Exception
-     *
-     * @return Tag
-     */
-    private function createTagWithCode($code, $title, $tagParentCode = null, $metatag = false)
+    private function createTagWithCode(string $code, string $title, ?string $tagParentCode = null, bool $metatag = false): Tag
     {
         if ($tag = $this->tagRepo->findOneBy(['cod' => $code])) {
             throw new \Exception('Nothing done - Tag retrieved from DB id: '.$tag->getId().' cod: '.$tag->getCod());
@@ -111,8 +98,8 @@ EOT
                 );
             }
         }
-        $this->dm->persist($tag);
-        $this->dm->flush();
+        $this->documentManager->persist($tag);
+        $this->documentManager->flush();
 
         return $tag;
     }

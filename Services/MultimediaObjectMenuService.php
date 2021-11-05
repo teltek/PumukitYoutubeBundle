@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pumukit\YoutubeBundle\Services;
 
 use Pumukit\NewAdminBundle\Menu\ItemInterface;
@@ -24,5 +26,10 @@ class MultimediaObjectMenuService implements ItemInterface
     public function getIcon(): string
     {
         return 'mdi-action-info';
+    }
+
+    public function getServiceTag(): string
+    {
+        return 'mmobjmenu';
     }
 }

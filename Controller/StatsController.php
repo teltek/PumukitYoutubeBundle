@@ -1,102 +1,101 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pumukit\YoutubeBundle\Controller;
 
-use Pagerfanta\Adapter\ArrayAdapter;
-use Pagerfanta\Pagerfanta;
+use Pumukit\CoreBundle\Services\PaginationService;
 use Pumukit\YoutubeBundle\Document\Youtube;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
+use Pumukit\YoutubeBundle\Services\YoutubeStatsService;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\Template;
-use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Routing\Annotation\Route;
 
 /**
  * @Security("is_granted('ROLE_ACCESS_YOUTUBE')")
  * @Route("/stats")
  */
-class StatsController extends Controller
+class StatsController extends AbstractController
 {
+    private $youtubeStatsService;
+    private $paginationService;
+
+    public function __construct(
+        YoutubeStatsService $youtubeStatsService,
+        PaginationService $paginationService
+    ) {
+        $this->youtubeStatsService = $youtubeStatsService;
+        $this->paginationService = $paginationService;
+    }
+
     /**
      * @Route("/", name="pumukit_youtube_stat_index")
-     * @Template("PumukitYoutubeBundle:Stats:template.html.twig")
      */
     public function indexAction(): array
     {
-        $youtubeService = $this->container->get('pumukityoutube.youtube_stats');
-        if (!$youtubeService) {
-            throw new ServiceNotFoundException('YoutubeService not found');
+        if (!$this->youtubeStatsService) {
+            throw new ServiceNotFoundException('YoutubeStatsService not found');
         }
 
-        $youtubeStatusDocuments = $youtubeService->getYoutubeDocumentsByCriteria();
+        $youtubeStatusDocuments = $this->youtubeStatsService->getYoutubeDocumentsByCriteria();
         $statsYoutubeDocuments = $this->processYoutubeDocuments($youtubeStatusDocuments);
 
-        $youtubeStatus = Youtube::$statusTexts;
-
-        return [
-            'youtubeAccounts' => $youtubeService->getYoutubeAccounts(),
-            'accountsStats' => $youtubeService->getAccountsStats(),
+        return $this->render('@PumukitYoutube/Stats/template.html.twig', [
+            'youtubeAccounts' => $this->youtubeStatsService->getYoutubeAccounts(),
+            'accountsStats' => $this->youtubeStatsService->getAccountsStats(),
             'youtubeStatusDocuments' => $statsYoutubeDocuments,
-            'youtubeStatus' => $youtubeStatus,
-        ];
+            'youtubeStatus' => Youtube::$statusTexts,
+        ]);
     }
 
     /**
      * @Route("/status/list/{status}", name="pumukit_youtube_stat_list")
-     * @Template("PumukitYoutubeBundle:Stats:template_list.html.twig")
      */
     public function listByStatusAction(Request $request, string $status): array
     {
-        $youtubeService = $this->container->get('pumukityoutube.youtube_stats');
-        if (!$youtubeService) {
+        if (!$this->youtubeStatsService) {
             throw new ServiceNotFoundException('YoutubeService not found');
         }
 
-        $criteria = [
+        $youtubeDocuments = $this->youtubeStatsService->getYoutubeDocumentsByCriteria([
             'status' => (int) $status,
-        ];
-
-        $youtubeDocuments = $youtubeService->getYoutubeDocumentsByCriteria($criteria);
+        ]);
 
         $page = (int) $request->get('page', 1);
-        $youtubeDocuments = $this->createPager($youtubeDocuments, $page, 20);
+        $youtubeDocuments = $this->paginationService->createArrayAdapter($youtubeDocuments, $page, 20);
 
-        return [
+        return $this->render('@PumukitYoutube/Stats/template_list.html.twig', [
             'youtubeDocuments' => $youtubeDocuments,
-            'title' => $youtubeService->getTextByStatus($status),
-        ];
+            'title' => $this->youtubeStatsService->getTextByStatus((int) $status),
+        ]);
     }
 
     /**
      * @Route("/account/list/{account}", name="pumukit_youtube_stat_account_list")
-     * @Template("PumukitYoutubeBundle:Stats:template_list.html.twig")
      */
     public function listByAccountAction(Request $request, string $account): array
     {
-        $youtubeService = $this->container->get('pumukityoutube.youtube_stats');
-        if (!$youtubeService) {
+        if (!$this->youtubeStatsService) {
             throw new ServiceNotFoundException('YoutubeService not found');
         }
 
-        $criteria = [
+        $youtubeDocuments = $this->youtubeStatsService->getYoutubeDocumentsByCriteria([
             'youtubeAccount' => $account,
-        ];
-
-        $youtubeDocuments = $youtubeService->getYoutubeDocumentsByCriteria($criteria);
+        ]);
 
         $page = (int) $request->get('page', 1);
-        $youtubeDocuments = $this->createPager($youtubeDocuments, $page, 20);
+        $youtubeDocuments = $this->paginationService->createArrayAdapter($youtubeDocuments, $page, 20);
 
-        return [
+        return $this->render('@PumukitYoutube/Stats/template_list.html.twig', [
             'youtubeDocuments' => $youtubeDocuments,
             'title' => $account,
-        ];
+        ]);
     }
 
     /**
      * @Route("/configuration/", name="pumukit_youtube_configuration")
-     * @Template("PumukitYoutubeBundle:Stats:modal_configuration.html.twig")
      */
     public function modalConfigurationAction(): array
     {
@@ -105,9 +104,9 @@ class StatsController extends Controller
             throw new ServiceNotFoundException('YoutubeConfigurationService not found');
         }
 
-        return [
+        return $this->render('@PumukitYoutube/Stats/modal_configuration.html.twig', [
             'youtubeConfiguration' => $youtubeConfigurationService->getBundleConfiguration(),
-        ];
+        ]);
     }
 
     private function processYoutubeDocuments(array $youtubeStatusDocuments): array
@@ -118,14 +117,5 @@ class StatsController extends Controller
         }
 
         return $stats;
-    }
-
-    private function createPager($objects, $page, $limit = 10): Pagerfanta
-    {
-        $adapter = new ArrayAdapter($objects);
-        $pager = new Pagerfanta($adapter);
-        $pager->setMaxPerPage($limit)->setNormalizeOutOfRangePages(true)->setCurrentPage($page);
-
-        return $pager;
     }
 }

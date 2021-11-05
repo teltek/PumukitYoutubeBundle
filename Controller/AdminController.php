@@ -1,70 +1,80 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pumukit\YoutubeBundle\Controller;
 
+use Doctrine\ODM\MongoDB\DocumentManager;
+use MongoDB\BSON\ObjectId;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Tag;
+use Pumukit\SchemaBundle\Services\TagService;
 use Pumukit\YoutubeBundle\Document\Youtube;
 use Pumukit\YoutubeBundle\Form\Type\AccountType;
 use Pumukit\YoutubeBundle\Form\Type\YoutubePlaylistType;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\Template;
-use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
-/**
- * Class AdminController.
- */
-class AdminController extends Controller
+class AdminController extends AbstractController
 {
+    private $documentManager;
+    private $translator;
+    private $tagService;
+
+    public function __construct(
+        DocumentManager $documentManager,
+        TranslatorInterface $translator,
+        TagService $tagService
+    ) {
+        $this->documentManager = $documentManager;
+        $this->translator = $translator;
+        $this->tagService = $tagService;
+    }
+
     /**
      * @Security("is_granted('ROLE_ACCESS_YOUTUBE')")
      * @Route ("/", name="pumukit_youtube_admin_index")
-     * @Template()
      */
-    public function indexAction(): array
+    public function indexAction(): Response
     {
-        return [];
+        return $this->render('@PumukitYoutube/Admin/index.html.twig', []);
     }
 
     /**
      * @Security("is_granted('ROLE_ACCESS_YOUTUBE')")
      * @Route ("/list", name="pumukit_youtube_admin_list")
-     * @Template()
      */
-    public function listAction(): array
+    public function listAction(): Response
     {
-        $dm = $this->get('doctrine_mongodb.odm.document_manager');
-        $translator = $this->get('translator');
-        $youtubeAccounts = $dm->getRepository(Tag::class)->findOneBy(['cod' => Youtube::YOUTUBE_TAG_CODE]);
+        $youtubeAccounts = $this->documentManager->getRepository(Tag::class)->findOneBy(['cod' => Youtube::YOUTUBE_TAG_CODE]);
         if (!$youtubeAccounts) {
-            throw new NotFoundHttpException($translator->trans('Youtube tag not defined'));
+            throw new NotFoundHttpException($this->translator->trans('Youtube tag not defined'));
         }
 
-        return ['youtubeAccounts' => $youtubeAccounts->getChildren()];
+        return $this->render('@PumukitYoutube/Admin/list.html.twig', ['youtubeAccounts' => $youtubeAccounts->getChildren()]);
     }
 
     /**
      * @Security("is_granted('ROLE_ACCESS_YOUTUBE')")
      * @Route ("/create", name="pumukit_youtube_create_account")
-     * @Template()
      */
     public function createAction(Request $request)
     {
-        $dm = $this->get('doctrine_mongodb.odm.document_manager');
-        $translator = $this->get('translator');
         $locale = $request->getLocale();
-        $form = $this->createForm(AccountType::class, null, ['translator' => $translator, 'locale' => $locale]);
+        $form = $this->createForm(AccountType::class, null, ['translator' => $this->translator, 'locale' => $locale]);
         $form->handleRequest($request);
         if ('POST' === $request->getMethod() && $form->isValid()) {
             try {
-                $youtubeTag = $dm->getRepository(Tag::class)->findOneBy(
-                    ['cod' => Youtube::YOUTUBE_TAG_CODE]
-                );
+                $youtubeTag = $this->documentManager->getRepository(Tag::class)->findOneBy([
+                    'cod' => Youtube::YOUTUBE_TAG_CODE,
+                ]);
                 $data = $form->getData();
                 $tag = new Tag();
                 $tag->setMetatag(false);
@@ -72,9 +82,9 @@ class AdminController extends Controller
                 $tag->setDisplay(false);
                 $tag->seti18nTitle($data['i18n_title']);
                 $tag->setParent($youtubeTag);
-                $dm->persist($tag);
+                $this->documentManager->persist($tag);
                 $tag->setCod($tag->getId());
-                $dm->flush();
+                $this->documentManager->flush();
 
                 return new JsonResponse(['success']);
             } catch (\Exception $exception) {
@@ -87,26 +97,21 @@ class AdminController extends Controller
             }
         }
 
-        return ['form' => $form->createView()];
+        return $this->render('@PumukitYoutube/Admin/create.html.twig', ['form' => $form->createView()]);
     }
 
     /**
      * @Security("is_granted('ROLE_ACCESS_YOUTUBE')")
      * @Route ("/edit/{id}", name="pumukit_youtube_edit_account")
-     * @Template()
-     *
-     * @throws \MongoException
      */
     public function editAction(Request $request, string $id)
     {
-        $dm = $this->get('doctrine_mongodb.odm.document_manager');
-        $youtubeAccount = $dm->getRepository(Tag::class)->findOneBy(['_id' => new \MongoId($id)]);
+        $youtubeAccount = $this->documentManager->getRepository(Tag::class)->findOneBy(['_id' => new ObjectId($id)]);
         if (!$youtubeAccount) {
             throw new \Exception('Youtube account not found');
         }
-        $translator = $this->get('translator');
         $locale = $request->getLocale();
-        $form = $this->createForm(AccountType::class, null, ['translator' => $translator, 'locale' => $locale]);
+        $form = $this->createForm(AccountType::class, null, ['translator' => $this->translator, 'locale' => $locale]);
         $form->get('i18n_title')->setData($youtubeAccount->getI18nTitle());
         $form->get('login')->setData($youtubeAccount->getProperty('login'));
         $form->handleRequest($request);
@@ -116,7 +121,7 @@ class AdminController extends Controller
                 $youtubeAccount->setCod($youtubeAccount->getId());
                 $youtubeAccount->setI18nTitle($data['i18n_title']);
                 $youtubeAccount->setProperty('login', $data['login']);
-                $dm->flush();
+                $this->documentManager->flush();
 
                 return new JsonResponse(['success']);
             } catch (\Exception $exception) {
@@ -129,10 +134,10 @@ class AdminController extends Controller
             }
         }
 
-        return [
+        return $this->render('@PumukitYoutube/Admin/edit.html.twig', [
             'form' => $form->createView(),
             'account' => $youtubeAccount,
-        ];
+        ]);
     }
 
     /**
@@ -141,14 +146,11 @@ class AdminController extends Controller
      */
     public function deleteAction(string $id): ?JsonResponse
     {
-        $tagService = $this->container->get('pumukitschema.tag');
-
         try {
-            $dm = $this->get('doctrine_mongodb.odm.document_manager');
-            $youtubeAccount = $dm->getRepository(Tag::class)->findOneBy(
-                ['_id' => new \MongoId($id)]
+            $youtubeAccount = $this->documentManager->getRepository(Tag::class)->findOneBy(
+                ['_id' => new ObjectId($id)]
             );
-            $tagService->deleteTag($youtubeAccount);
+            $this->tagService->deleteTag($youtubeAccount);
 
             return new JsonResponse(['success']);
         } catch (\Exception $exception) {
@@ -165,28 +167,24 @@ class AdminController extends Controller
      * @Security("is_granted('ROLE_ACCESS_YOUTUBE')")
      * @route("/children/{id}", name="pumukit_youtube_children_tag")
      * @ParamConverter("tag", class="PumukitSchemaBundle:Tag")
-     * @Template()
      */
-    public function childrenAction(Tag $tag): array
+    public function childrenAction(Tag $tag): Response
     {
-        return [
+        return $this->render('@PumukitYoutube/Admin/children.html.twig', [
             'tag' => $tag,
             'youtubeAccounts' => $tag->getChildren(),
             'isPlaylist' => true,
-        ];
+        ]);
     }
 
     /**
      * @Security("is_granted('ROLE_ACCESS_YOUTUBE')")
      * @Route ("/create/playlist/{id}", name="pumukit_youtube_create_playlist")
-     * @Template()
      */
     public function createPlaylistAction(Request $request, string $id)
     {
-        $dm = $this->get('doctrine_mongodb.odm.document_manager');
-        $translator = $this->get('translator');
         $locale = $request->getLocale();
-        $form = $this->createForm(YoutubePlaylistType::class, null, ['translator' => $translator, 'locale' => $locale]);
+        $form = $this->createForm(YoutubePlaylistType::class, null, ['translator' => $this->translator, 'locale' => $locale]);
         $form->handleRequest($request);
         if ('POST' === $request->getMethod() && $form->isValid()) {
             try {
@@ -194,11 +192,11 @@ class AdminController extends Controller
                 $playlist = new Tag();
                 $playlist->setI18nTitle($data['i18n_title']);
                 $playlist->setProperty('youtube_playlist', true);
-                $dm->persist($playlist);
+                $this->documentManager->persist($playlist);
                 $playlist->setCod($playlist->getId());
-                $account = $dm->getRepository(Tag::class)->findOneBy(['_id' => new \MongoId($id)]);
+                $account = $this->documentManager->getRepository(Tag::class)->findOneBy(['_id' => new ObjectId($id)]);
                 $playlist->setParent($account);
-                $dm->flush();
+                $this->documentManager->flush();
 
                 return new JsonResponse(['success']);
             } catch (\Exception $exception) {
@@ -211,32 +209,27 @@ class AdminController extends Controller
             }
         }
 
-        return [
+        return $this->render('@PumukitYoutube/Admin/createPlaylist.html.twig', [
             'form' => $form->createView(),
             'account' => $id,
-        ];
+        ]);
     }
 
     /**
      * @Security("is_granted('ROLE_ACCESS_YOUTUBE')")
      * @Route ("/edit/playlist/{id}", name="pumukit_youtube_edit_playlist")
-     * @Template()
-     *
-     * @throws \MongoException
      */
     public function editPlaylistAction(Request $request, string $id)
     {
-        $dm = $this->get('doctrine_mongodb.odm.document_manager');
-        $translator = $this->get('translator');
         $locale = $request->getLocale();
-        $playlist = $dm->getRepository(Tag::class)->findOneBy(['_id' => new \MongoId($id)]);
-        $form = $this->createForm(YoutubePlaylistType::class, $playlist, ['translator' => $translator, 'locale' => $locale]);
+        $playlist = $this->documentManager->getRepository(Tag::class)->findOneBy(['_id' => new ObjectId($id)]);
+        $form = $this->createForm(YoutubePlaylistType::class, $playlist, ['translator' => $this->translator, 'locale' => $locale]);
         $form->handleRequest($request);
         if ('POST' === $request->getMethod() && $form->isValid()) {
             try {
                 $data = $form->getData();
                 $playlist->setI18nTitle($data->getI18nTitle());
-                $dm->flush();
+                $this->documentManager->flush();
 
                 return new JsonResponse(['success']);
             } catch (\Exception $exception) {
@@ -249,21 +242,21 @@ class AdminController extends Controller
             }
         }
 
-        return [
+        return $this->render('@PumukitYoutube/Admin/editPlaylist.html.twig', [
             'form' => $form->createView(),
             'playlist' => $playlist,
-        ];
+        ]);
     }
 
     /**
      * @Route ("/update/config/{id}", name="pumukityoutube_advance_configuration_index")
      * @ParamConverter("multimediaObject", class="PumukitSchemaBundle:MultimediaObject", options={"id" = "id"})
-     * @Template()
      */
-    public function updateYTAction(MultimediaObject $multimediaObject): array
+    public function updateYTAction(MultimediaObject $multimediaObject): Response
     {
-        $dm = $this->get('doctrine_mongodb.odm.document_manager');
-        $youtubeAccounts = $dm->getRepository(Tag::class)->findOneBy(['cod' => Youtube::YOUTUBE_TAG_CODE]);
+        $youtubeAccounts = $this->documentManager->getRepository(Tag::class)->findOneBy([
+            'cod' => Youtube::YOUTUBE_TAG_CODE,
+        ]);
         $accountSelectedTag = '';
         $playlistSelectedTag = [];
         foreach ($multimediaObject->getTags() as $tag) {
@@ -276,12 +269,12 @@ class AdminController extends Controller
             }
         }
 
-        return [
+        return $this->render('@PumukitYoutube/Admin/updateYT.html.twig', [
             'youtubeAccounts' => $youtubeAccounts->getChildren(),
             'multimediaObject' => $multimediaObject,
             'accountId' => $accountSelectedTag,
             'playlistId' => $playlistSelectedTag,
-        ];
+        ]);
     }
 
     /**
@@ -292,8 +285,7 @@ class AdminController extends Controller
         if (!$id) {
             return new JsonResponse([]);
         }
-        $dm = $this->get('doctrine_mongodb.odm.document_manager');
-        $youtubeAccount = $dm->getRepository(Tag::class)->findOneBy(['_id' => $id]);
+        $youtubeAccount = $this->documentManager->getRepository(Tag::class)->findOneBy(['_id' => $id]);
         if (!$youtubeAccount) {
             return new JsonResponse([]);
         }
@@ -306,7 +298,7 @@ class AdminController extends Controller
         }
         $defaultOption = [
             'id' => 'any',
-            'text' => $this->get('translator')->trans('Without playlist'),
+            'text' => $this->translator->trans('Without playlist'),
         ];
         array_unshift($children, $defaultOption);
 

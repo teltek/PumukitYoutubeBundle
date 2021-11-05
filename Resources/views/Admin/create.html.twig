@@ -6,7 +6,7 @@
 </div>
 
 <div class="modal-body">
-    {% form_theme form 'PumukitNewAdminBundle:Themes:fields.html.twig' %}
+    {% form_theme form '@PumukitNewAdmin/Themes/fields.html.twig' %}
     <form autocomplete="off" id="pumukit_youtube_create_account" action="{{ path('pumukit_youtube_create_account') }}" method="POST">
         {{ form_start(form) }}
         {{ form_row(form.i18n_title) }}

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pumukit\YoutubeBundle\Services;
 
 class YoutubeConfigurationService
@@ -81,5 +83,90 @@ class YoutubeConfigurationService
             'sbsProfileName' => $this->sbsProfileName,
             'uploadRemovedVideos' => $this->uploadRemovedVideos,
         ];
+    }
+
+    public function playlistPrivateStatus()
+    {
+        return $this->playlistPrivateStatus;
+    }
+
+    public function useDefaultPlaylist()
+    {
+        return $this->useDefaultPlaylist;
+    }
+
+    public function defaultPlaylistCod()
+    {
+        return $this->defaultPlaylistCod;
+    }
+
+    public function defaultPlaylistTitle()
+    {
+        return $this->defaultPlaylistTitle;
+    }
+
+    public function metaTagPlaylistCod()
+    {
+        return $this->metaTagPlaylistCod;
+    }
+
+    public function playlistMaster()
+    {
+        return $this->playlistMaster;
+    }
+
+    public function deletePlaylist()
+    {
+        return $this->deletePlaylist;
+    }
+
+    public function locale()
+    {
+        return $this->locale;
+    }
+
+    public function publicationChannelsTags()
+    {
+        return $this->publicationChannelsTags;
+    }
+
+    public function processTimeOut()
+    {
+        return $this->processTimeOut;
+    }
+
+    public function syncStatus()
+    {
+        return $this->syncStatus;
+    }
+
+    public function defaultTrackUpload()
+    {
+        return $this->defaultTrackUpload;
+    }
+
+    public function defaultImageForAudio()
+    {
+        return $this->defaultImageForAudio;
+    }
+
+    public function allowedCaptionMimeTypes()
+    {
+        return $this->allowedCaptionMimeTypes;
+    }
+
+    public function generateSbs()
+    {
+        return $this->generateSbs;
+    }
+
+    public function sbsProfileName()
+    {
+        return $this->sbsProfileName;
+    }
+
+    public function uploadRemovedVideos()
+    {
+        return $this->uploadRemovedVideos;
     }
 }
