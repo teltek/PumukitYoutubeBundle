@@ -38,7 +38,7 @@
 
         </td>
         <td headers="th-date">
-            {{ youtubeDocument.uploadDate|localizeddate('medium','medium') }}
+            {{ youtubeDocument.uploadDate| format_datetime("medium", "none",locale=app.request.getLocale()) }}
         </td>
         <td headers="th-file">
             {{ youtubeDocument.fileUploaded|default(icon_close)|raw }}
