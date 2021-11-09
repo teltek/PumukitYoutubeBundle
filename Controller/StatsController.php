@@ -15,7 +15,7 @@ use Symfony\Component\Routing\Annotation\Route;
 
 /**
  * @Security("is_granted('ROLE_ACCESS_YOUTUBE')")
- * @Route("/stats")
+ * @Route("/admin/youtube/stats")
  */
 class StatsController extends AbstractController
 {
