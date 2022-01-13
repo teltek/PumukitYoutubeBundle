@@ -14,9 +14,11 @@ SCOPE_YOUTUBE = "https://www.googleapis.com/auth/youtube"
 SCOPE_YOUTUBE_MANAGE = "https://www.googleapis.com/auth/youtubepartner"
 SCOPE = [SCOPE_YOUTUBE, SCOPE_YOUTUBE_MANAGE]
 
-flow = flow_from_clientsecrets(CLIENT_SECRETS_FILE,
-                        scope=SCOPE,
-                        message="Missing client_secrets.json")
+try:
+    flow = flow_from_clientsecrets(CLIENT_SECRETS_FILE, scope=SCOPE)
+except InvalidClientSecretsError as e:
+    print("Error when reading file {0}: {1}".format(CLIENT_SECRETS_FILE, e))
+    sys.exit()
 
 storage = Storage(OAUTH_TOKEN_FILE)
 credentials = storage.get()
