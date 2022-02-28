@@ -21,6 +21,26 @@ mimetypes.add_type('application/octet-stream', '.srt')
 mimetypes.add_type('application/octet-stream', '.dfxp')
 mimetypes.add_type('application/octet-stream', '.ttml')
 
+def can_upload_caption(youtube, video_id, language, name):
+    captions = get_caption_list(youtube, video_id)
+    if captions['items'] is None:
+       return True
+    else:
+        for caption in captions['items']:
+            # Youtube doesn't allow 2 subtitles with the same language
+            # The name of the file doesn't matter even though it indicates it in the error
+            if caption['snippet']['language'] == language:
+                return False
+
+    return True
+
+def get_caption_list(youtube, video_id):
+   captions = youtube.captions().list(
+       part="snippet",
+       videoId=video_id
+   ).execute()
+
+   return captions
 
 def upload_caption(youtube, video_id, language, name, file):
     """
@@ -69,7 +89,7 @@ if __name__ == "__main__":
   parser.add_option("--name", help="Caption track name", default="YouTube for Developers")
   parser.add_option("--file", help="Captions track file to upload")
   parser.add_option("--language", help="Caption track language", default="en")
-  
+
   (options, args) = parser.parse_args()
 
   if options.account is None:
@@ -86,7 +106,13 @@ if __name__ == "__main__":
   out = {'error': False, 'out': None}
   try:
     youtube = get_authenticated_service(options.account)
-    out = upload_caption(youtube, options.videoid, options.language, options.name, options.file)
+
+    can_upload = can_upload_caption(youtube, options.videoid, options.language, options.name)
+    if can_upload is True:
+        out = upload_caption(youtube, options.videoid,options.name, options.name, options.file)
+    else:
+        out['error'] = True
+        out['error_out'] = "VideoID %s have the same caption name (%s) and language (%s)." % (options.videoid, options.name, options.language)
   except HttpError as e:
       out['error'] = True
       out['error_out'] = "Http Error: %s" % e._get_reason()
