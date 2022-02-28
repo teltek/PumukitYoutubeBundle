@@ -24,7 +24,7 @@ mimetypes.add_type('application/octet-stream', '.ttml')
 def can_upload_caption(youtube, video_id, language, name):
     captions = get_caption_list(youtube, video_id)
     if captions['items'] is None:
-       return True
+        return True
     else:
         for caption in captions['items']:
             # Youtube doesn't allow 2 subtitles with the same language
@@ -35,12 +35,12 @@ def can_upload_caption(youtube, video_id, language, name):
     return True
 
 def get_caption_list(youtube, video_id):
-   captions = youtube.captions().list(
-       part="snippet",
-       videoId=video_id
-   ).execute()
+    captions = youtube.captions().list(
+        part="snippet",
+        videoId=video_id
+    ).execute()
 
-   return captions
+    return captions
 
 def upload_caption(youtube, video_id, language, name, file):
     """
@@ -83,42 +83,41 @@ def upload_caption(youtube, video_id, language, name, file):
 
 
 if __name__ == "__main__":
-  parser = OptionParser()
-  parser.add_option("--account", dest="account", help="Youtube account login.")
-  parser.add_option("--videoid", dest="videoid", help="ID of video to update.")
-  parser.add_option("--name", help="Caption track name", default="YouTube for Developers")
-  parser.add_option("--file", help="Captions track file to upload")
-  parser.add_option("--language", help="Caption track language", default="en")
+    parser = OptionParser()
+    parser.add_option("--account", dest="account", help="Youtube account login.")
+    parser.add_option("--videoid", dest="videoid", help="ID of video to update.")
+    parser.add_option("--name", help="Caption track name", default="YouTube for Developers")
+    parser.add_option("--file", help="Captions track file to upload")
+    parser.add_option("--language", help="Caption track language", default="en")
 
-  (options, args) = parser.parse_args()
+    (options, args) = parser.parse_args()
 
-  if options.account is None:
-    exit("Please specify a valid account using the --account= parameter.")
-  if options.videoid is None:
-    exit("Please specify a valid video using --videoid= parameter")
-  if options.name is None:
-    exit("Please specify a valid name using --name= parameter")
-  if options.file is None:
-    exit("Please specify a valid file using --file= parameter")
-  if options.language is None:
-    exit("Please specify a valid language using --language= parameter")
+    if options.account is None:
+        exit("Please specify a valid account using the --account= parameter.")
+    if options.videoid is None:
+        exit("Please specify a valid video using --videoid= parameter")
+    if options.name is None:
+        exit("Please specify a valid name using --name= parameter")
+    if options.file is None:
+        exit("Please specify a valid file using --file= parameter")
+    if options.language is None:
+        exit("Please specify a valid language using --language= parameter")
 
-  out = {'error': False, 'out': None}
-  try:
-    youtube = get_authenticated_service(options.account)
-
-    can_upload = can_upload_caption(youtube, options.videoid, options.language, options.name)
-    if can_upload is True:
-        out = upload_caption(youtube, options.videoid,options.name, options.name, options.file)
-    else:
+    out = {'error': False, 'out': None}
+    try:
+        youtube = get_authenticated_service(options.account)
+        can_upload = can_upload_caption(youtube, options.videoid, options.language, options.name)
+        if can_upload is True:
+            out = upload_caption(youtube, options.videoid,options.name, options.name, options.file)
+        else:
+            out['error'] = True
+            out['error_out'] = "VideoID %s have the same caption name (%s) and language (%s)." % (options.videoid, options.name, options.language)
+    except HttpError as e:
         out['error'] = True
-        out['error_out'] = "VideoID %s have the same caption name (%s) and language (%s)." % (options.videoid, options.name, options.language)
-  except HttpError as e:
-      out['error'] = True
-      out['error_out'] = "Http Error: %s" % e._get_reason()
-  except:
-      sys_exc_info = sys.exc_info()
-      out['error'] = True
-      out['error_out'] = "Unexpected error: (%s) %s" % (sys_exc_info[0], sys_exc_info[1])
+        out['error_out'] = "Http Error: %s" % e._get_reason()
+    except:
+        sys_exc_info = sys.exc_info()
+        out['error'] = True
+        out['error_out'] = "Unexpected error: (%s) %s" % (sys_exc_info[0], sys_exc_info[1])
 
-  print json.dumps(out)
+    print json.dumps(out)
