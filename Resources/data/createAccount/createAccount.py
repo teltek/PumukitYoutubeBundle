@@ -7,6 +7,7 @@ from oauth2client.file import Storage
 from oauth2client.client import flow_from_clientsecrets
 from oauth2client.tools import run_flow
 from oauth2client.tools import argparser
+from oauth2client.clientsecrets import InvalidClientSecretsError
 
 CLIENT_SECRETS_FILE = "client_secrets.json"
 OAUTH_TOKEN_FILE = "oauth2.json"

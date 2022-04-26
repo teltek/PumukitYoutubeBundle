@@ -57,7 +57,7 @@ class CaptionService extends YoutubeService
                   .$materialId."': ".$result['error_out'];
                 $this->logger->error($errorLog);
 
-                throw new \Exception($errorLog);
+                continue;
             }
             $caption = $this->createCaption($material, $result['out']);
             $youtube->addCaption($caption);
