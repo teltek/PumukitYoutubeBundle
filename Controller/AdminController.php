@@ -253,7 +253,7 @@ class AdminController extends AbstractController
 
     /**
      * @Route ("/update/config/{id}", name="pumukityoutube_advance_configuration_index")
-     * @ParamConverter("multimediaObject", class="PumukitSchemaBundle:MultimediaObject", options={"id" = "id"})
+     * @ParamConverter("multimediaObject", options={"id" = "id"})
      */
     public function updateYTAction(MultimediaObject $multimediaObject): Response
     {
