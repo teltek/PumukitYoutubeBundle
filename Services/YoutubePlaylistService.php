@@ -244,7 +244,7 @@ class YoutubePlaylistService
                         echo $msg, "\n";
                         $this->logger->info($msg);
                         if (!$dryRun) {
-                            $this->createPumukitPlaylist($ytPlaylist);
+                            $this->createPumukitPlaylist($ytPlaylist, $account);
                         }
                     } elseif ($this->configurationService->deletePlaylist()) {
                         if ('Favorites' == $ytPlaylist['title']) {
@@ -323,7 +323,18 @@ class YoutubePlaylistService
         }
     }
 
-    protected function createPumukitPlaylist($youtubePlaylist)
+    /**
+     * Creates a new playlist in PuMuKIT using the 'youtubePlaylist' data. Returns the tag created if successful.
+     *
+     * @param array $youtubePlaylist
+     *                               string $youtubePlaylist['id'] = id of the playlist on youtube.
+     *                               string $youtubePlaylist['title'] = title of the playlist on youtube
+     *
+     * @throws \Exception
+     *
+     * @return Tag
+     */
+    protected function createPumukitPlaylist($youtubePlaylist, $account)
     {
         echo 'create On Pumukit: '.$youtubePlaylist['title']."\n";
         $metatag = $this->getPlaylistMetaTag();
@@ -335,7 +346,7 @@ class YoutubePlaylistService
         $tag->setProperty('youtube', $youtubePlaylist['id']);
         $tag->setProperty('customfield', 'youtube:text');
         $tag->setProperty('origin', 'youtube');
-        $tag->setParent($metatag);
+        $tag->setParent($account);
         $this->documentManager->persist($tag);
         $this->documentManager->flush();
 
