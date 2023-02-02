@@ -4,30 +4,17 @@ declare(strict_types=1);
 
 namespace Pumukit\YoutubeBundle\Services;
 
-use Doctrine\ODM\MongoDB\DocumentManager;
-use Psr\Log\LoggerInterface;
 use Pumukit\YoutubeBundle\Document\Youtube;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Process\Process;
-use Symfony\Component\Routing\RouterInterface;
 
 class YoutubeProcessService
 {
-    private $documentManager;
-    private $router;
-    private $logger;
     private $process_timeout;
     private $pythonDirectory;
 
-    public function __construct(
-        DocumentManager $documentManager,
-        RouterInterface $router,
-        LoggerInterface $logger,
-        YoutubeConfigurationService $configurationService
-    ) {
-        $this->documentManager = $documentManager;
-        $this->router = $router;
-        $this->logger = $logger;
+    public function __construct(YoutubeConfigurationService $configurationService)
+    {
         $this->pythonDirectory = __DIR__.'/../Resources/data/lib/';
         $this->process_timeout = $configurationService->processTimeOut();
     }
@@ -215,11 +202,11 @@ class YoutubeProcessService
         }
     }
 
-    private function createCommandArguments(array $aCommandArguments, string $sOption, string $sValue)
+    private function createCommandArguments(array $aCommandArguments, string $sOption, string $sValue): array
     {
         if (!empty($sValue)) {
-            array_push($aCommandArguments, $sOption);
-            array_push($aCommandArguments, $sValue);
+            $aCommandArguments[] = $sOption;
+            $aCommandArguments[] = $sValue;
         }
 
         return $aCommandArguments;

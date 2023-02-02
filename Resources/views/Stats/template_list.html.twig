@@ -1,4 +1,4 @@
-{% extends '@PumukitNewAdminBundle/layout.html.twig' %}
+{% extends '@PumukitNewAdmin/layout.html.twig' %}
 
 {% block body %}
 
@@ -15,10 +15,10 @@
         {% if youtubeDocuments|length > 0 %}
             <table class="table table-striped">
                 <thead>
-                    {% include "@PumukitYoutubeBundle/Stats/template_list_head.html.twig" %}
+                    {% include "@PumukitYoutube/Stats/template_list_head.html.twig" %}
                 </thead>
                 <tbody>
-                    {% include '@PumukitYoutubeBundle/Stats/template_list_body.html.twig' %}
+                    {% include '@PumukitYoutube/Stats/template_list_body.html.twig' %}
                 </tbody>
             </table>
 

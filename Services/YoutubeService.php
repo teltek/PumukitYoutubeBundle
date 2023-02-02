@@ -173,7 +173,7 @@ class YoutubeService
         $description = $this->getDescriptionForYoutube($multimediaObject);
         $tags = $this->getTagsForYoutube($multimediaObject);
 
-        $aResult = $this->youtubeProcessService->upload($trackPath, $title, $description, $category, $tags, $privacy, $login);
+        $aResult = $this->youtubeProcessService->upload($trackPath, $title, $description, (string) $category, $tags, $privacy, $login);
         if ($aResult['error']) {
             $youtube->setStatus(Youtube::STATUS_ERROR);
             $this->documentManager->persist($youtube);

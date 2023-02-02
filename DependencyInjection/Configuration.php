@@ -11,7 +11,7 @@ use Symfony\Component\Config\Definition\ConfigurationInterface;
 
 class Configuration implements ConfigurationInterface
 {
-    private $locale = 'en';
+    private $locale;
 
     public function __construct($locale = 'en')
     {
