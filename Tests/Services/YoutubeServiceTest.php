@@ -15,6 +15,7 @@ use Symfony\Component\HttpKernel\Log\Logger;
 
 /**
  * @internal
+ *
  * @coversNothing
  */
 class YoutubeServiceTest extends PumukitTestCase
@@ -84,7 +85,7 @@ class YoutubeServiceTest extends PumukitTestCase
             ->getMock()
         ;
 
-        $kernelRootDir = $kernel->getContainer()->getParameter('kernel.root_dir');
+        $kernelRootDir = $kernel->getContainer()->getParameter('kernel.project_dir');
         $locale = 'en';
         $useDefaultPlaylist = false;
         $defaultPlaylistCod = 'YOUTUBECONFERENCES';
@@ -185,7 +186,7 @@ class YoutubeServiceTest extends PumukitTestCase
         $series = $this->factoryService->createSeries();
         $multimediaObject = $this->factoryService->createMultimediaObject($series);
 
-        //$multimediaObject = $this->mmobjRepo->find($multimediaObject->getId());
+        // $multimediaObject = $this->mmobjRepo->find($multimediaObject->getId());
         $addedTags = $this->tagService->addTagToMultimediaObject($multimediaObject, $youtubeEduTag->getId());
         $this->assertTrue($multimediaObject->containsTag($youtubeEduTag));
 

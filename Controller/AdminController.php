@@ -43,7 +43,8 @@ class AdminController extends AbstractController
 
     /**
      * @Security("is_granted('ROLE_ACCESS_YOUTUBE')")
-     * @Route ("/", name="pumukit_youtube_admin_index")
+     *
+     * @Route("/", name="pumukit_youtube_admin_index")
      */
     public function indexAction(): Response
     {
@@ -52,7 +53,8 @@ class AdminController extends AbstractController
 
     /**
      * @Security("is_granted('ROLE_ACCESS_YOUTUBE')")
-     * @Route ("/list", name="pumukit_youtube_admin_list")
+     *
+     * @Route("/list", name="pumukit_youtube_admin_list")
      */
     public function listAction(): Response
     {
@@ -66,6 +68,7 @@ class AdminController extends AbstractController
 
     /**
      * @Security("is_granted('ROLE_ACCESS_YOUTUBE')")
+     *
      * @Route ("/create", name="pumukit_youtube_create_account")
      */
     public function createAction(Request $request)
@@ -105,6 +108,7 @@ class AdminController extends AbstractController
 
     /**
      * @Security("is_granted('ROLE_ACCESS_YOUTUBE')")
+     *
      * @Route ("/edit/{id}", name="pumukit_youtube_edit_account")
      */
     public function editAction(Request $request, string $id)
@@ -145,6 +149,7 @@ class AdminController extends AbstractController
 
     /**
      * @Security("is_granted('ROLE_ACCESS_YOUTUBE')")
+     *
      * @Route ("/delete/{id}", name="pumukit_youtube_delete_tag")
      */
     public function deleteAction(string $id): ?JsonResponse
@@ -168,7 +173,9 @@ class AdminController extends AbstractController
 
     /**
      * @Security("is_granted('ROLE_ACCESS_YOUTUBE')")
+     *
      * @route("/children/{id}", name="pumukit_youtube_children_tag")
+     *
      * @ParamConverter("tag", class="PumukitSchemaBundle:Tag")
      */
     public function childrenAction(Tag $tag): Response
@@ -182,6 +189,7 @@ class AdminController extends AbstractController
 
     /**
      * @Security("is_granted('ROLE_ACCESS_YOUTUBE')")
+     *
      * @Route ("/create/playlist/{id}", name="pumukit_youtube_create_playlist")
      */
     public function createPlaylistAction(Request $request, string $id)
@@ -220,6 +228,7 @@ class AdminController extends AbstractController
 
     /**
      * @Security("is_granted('ROLE_ACCESS_YOUTUBE')")
+     *
      * @Route ("/edit/playlist/{id}", name="pumukit_youtube_edit_playlist")
      */
     public function editPlaylistAction(Request $request, string $id)
@@ -253,6 +262,7 @@ class AdminController extends AbstractController
 
     /**
      * @Route ("/update/config/{id}", name="pumukityoutube_advance_configuration_index")
+     *
      * @ParamConverter("multimediaObject", options={"id" = "id"})
      */
     public function updateYTAction(MultimediaObject $multimediaObject): Response

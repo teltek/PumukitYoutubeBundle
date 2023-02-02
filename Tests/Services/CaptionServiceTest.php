@@ -15,6 +15,7 @@ use Symfony\Component\HttpKernel\Log\Logger;
 
 /**
  * @internal
+ *
  * @coversNothing
  */
 class CaptionServiceTest extends PumukitTestCase
@@ -383,6 +384,7 @@ class CaptionServiceTest extends PumukitTestCase
 
     /**
      * @expectedException \Exception
+     *
      * @expectedExceptionMessage Error in retrieve captions list
      */
     public function testListAllException()
@@ -405,6 +407,7 @@ class CaptionServiceTest extends PumukitTestCase
 
     /**
      * @expectedException \Exception
+     *
      * @expectedExceptionMessage Error in uploading Caption for Youtube video with id
      */
     public function testUploadCaptionException()
@@ -437,6 +440,7 @@ class CaptionServiceTest extends PumukitTestCase
 
     /**
      * @expectedException \Exception
+     *
      * @expectedExceptionMessage Error in deleting Caption for Youtube video with id
      */
     public function testDeleteCaptionException()

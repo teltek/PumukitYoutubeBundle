@@ -58,7 +58,7 @@ services:
   Pumukit\YoutubeBundle\Services\YoutubePlaylistService:
     class: Pumukit\YoutubeBundle\Services\YoutubePlaylistService
     arguments:
-      $kernelRootDir: "%kernel.root_dir%"
+      $kernelRootDir: "%kernel.project_dir%"
     tags:
       - { name: "monolog.logger", channel: "youtube" }
 

@@ -148,7 +148,7 @@ EOT
 
         switch ($step) {
             case 1:
-                //Check if exists
+                // Check if exists
                 $status = $this->getStatus($input->getOption('status'));
 
                 if ($this->getMmObjFromYid($yid)) {
@@ -364,9 +364,9 @@ EOT
      * @param int    $status
      * @param string $login
      *
-     * @throws \Exception
-     *
      * @return MultimediaObject
+     *
+     * @throws \Exception
      */
     private function createMultimediaObject(Series $series, $yid, $status, $login, OutputInterface $output)
     {
@@ -400,10 +400,10 @@ EOT
     /**
      * @param string $yid
      *
+     * @return object|null
+     *
      * @throws \Doctrine\ODM\MongoDB\LockException
      * @throws \Doctrine\ODM\MongoDB\Mapping\MappingException
-     *
-     * @return object|null
      */
     private function getMmObjFromYid($yid)
     {
@@ -423,10 +423,10 @@ EOT
     /**
      * @param string $seriesId
      *
+     * @return object|Series|null
+     *
      * @throws \Doctrine\ODM\MongoDB\LockException
      * @throws \Doctrine\ODM\MongoDB\Mapping\MappingException
-     *
-     * @return object|Series|null
      */
     private function getSeries($seriesId)
     {
@@ -453,7 +453,7 @@ EOT
             return $series;
         }
 
-        //tag with youtube
+        // tag with youtube
         $tag = $this->tagRepo->findOneBy(
             [
                 'properties.origin' => 'youtube',
@@ -479,9 +479,9 @@ EOT
     /**
      * @param string $status
      *
-     * @throws \Exception
-     *
      * @return int
+     *
+     * @throws \Exception
      */
     private function getStatus($status)
     {
@@ -537,11 +537,11 @@ EOT
             throw new FileException(sprintf('Unable to download  "%s"', $url));
         }
 
-        //$output = file_put_contents($directory.'/'.$filename, fopen(str_replace(' ', '%20', $url), 'r'));
+        // $output = file_put_contents($directory.'/'.$filename, fopen(str_replace(' ', '%20', $url), 'r'));
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        //curl_setopt($ch, CURLOPT_SSLVERSION,3);
+        // curl_setopt($ch, CURLOPT_SSLVERSION,3);
         $data = curl_exec($ch);
         $error = curl_error($ch);
         curl_close($ch);

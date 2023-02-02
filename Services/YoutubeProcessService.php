@@ -10,7 +10,6 @@ use Pumukit\YoutubeBundle\Document\Youtube;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Process\Process;
 use Symfony\Component\Routing\RouterInterface;
-use UnexpectedValueException;
 
 class YoutubeProcessService
 {
@@ -207,7 +206,7 @@ class YoutubeProcessService
             }
             $aResult = json_decode($pyProcess->getOutput(), true);
             if (JSON_ERROR_NONE !== json_last_error()) {
-                throw new UnexpectedValueException(json_last_error_msg());
+                throw new \UnexpectedValueException(json_last_error_msg());
             }
 
             return $aResult;

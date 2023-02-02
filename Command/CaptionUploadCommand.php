@@ -138,7 +138,7 @@ EOT
     {
         $newMaterialIds = [];
         foreach ($multimediaObject->getMaterials() as $material) {
-            if ((in_array($material->getId(), $captionMaterialIds))
+            if (in_array($material->getId(), $captionMaterialIds)
             || (!in_array($material->getMimeType(), $this->allowedCaptionMimeTypes)) || $material->isHide()) {
                 continue;
             }

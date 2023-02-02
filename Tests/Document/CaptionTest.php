@@ -7,6 +7,7 @@ use Pumukit\YoutubeBundle\Document\Caption;
 
 /**
  * @internal
+ *
  * @coversNothing
  */
 class CaptionTest extends TestCase

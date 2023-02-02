@@ -141,9 +141,9 @@ EOT
     /**
      * @param bool $pumukit1Id
      *
-     * @throws \MongoException
-     *
      * @return array|object|null
+     *
+     * @throws \MongoException
      */
     protected function findByYoutubeIdAndPumukit1Id(Youtube $youtube, $pumukit1Id = false)
     {
@@ -167,9 +167,9 @@ EOT
     }
 
     /**
-     * @throws \MongoException
-     *
      * @return array|object|null
+     *
+     * @throws \MongoException
      */
     protected function findByYoutubeId(Youtube $youtube)
     {
