@@ -388,14 +388,6 @@ EOT
         return $mmobj;
     }
 
-    /**
-     * @param string $yid
-     *
-     * @return object|null
-     *
-     * @throws \Doctrine\ODM\MongoDB\LockException
-     * @throws \Doctrine\ODM\MongoDB\Mapping\MappingException
-     */
     private function getMmObjFromYid($yid)
     {
         $mmobj = $this->mmobjRepo->findOneBy(['properties.youtubemeta.id' => $yid]);
@@ -459,13 +451,6 @@ EOT
         throw new \Exception('No series, or YouTube tag with id '.$seriesId);
     }
 
-    /**
-     * @param string $status
-     *
-     * @return int
-     *
-     * @throws \Exception
-     */
     private function getStatus($status)
     {
         $status = strtolower($status);
