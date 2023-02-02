@@ -10,7 +10,7 @@ use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\SchemaBundle\Services\TagService;
 use Pumukit\YoutubeBundle\Document\Youtube;
-use Symfony\Component\Translation\TranslatorInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 class YoutubePlaylistService
 {
@@ -102,7 +102,7 @@ class YoutubePlaylistService
 
         foreach ($multimediaObject->getTags() as $embedTag) {
             if (!$embedTag->isDescendantOfByCod($this->configurationService->metaTagPlaylistCod())) {
-                //This is not the tag you are looking for
+                // This is not the tag you are looking for
                 continue;
             }
             $playlistTag = $this->documentManager->getRepository(Tag::class)->findOneBy(['cod' => $embedTag->getCod()]);
@@ -113,13 +113,13 @@ class YoutubePlaylistService
             $playlistId = $playlistTag->getProperty('youtube');
 
             if (!isset($playlistId) || !array_key_exists($playlistId, $youtube->getPlaylists())) {
-                //If the tag doesn't exist on youtube playlists
+                // If the tag doesn't exist on youtube playlists
                 $this->moveToList($multimediaObject, $playlistTag->getId());
             }
         }
         foreach ($youtube->getPlaylists() as $playlistId => $playlistRel) {
             $playlistTag = $this->getTagByYoutubeProperty($playlistId);
-            //If the tag doesn't exist in PuMuKIT
+            // If the tag doesn't exist in PuMuKIT
             if (null === $playlistTag) {
                 $errorLog = sprintf('%s [%s] Error! The tag with id %s => %s for Youtube Playlist does not exist', __CLASS__, __FUNCTION__, $playlistId, $playlistRel);
                 $this->logger->warning($errorLog);
@@ -127,7 +127,7 @@ class YoutubePlaylistService
                 continue;
             }
             if (!$multimediaObject->containsTagWithCod($playlistTag->getCod())) {
-                //If the mmobj doesn't have this tag
+                // If the mmobj doesn't have this tag
                 $playlistItem = $youtube->getPlaylist($playlistId);
                 if (null === $playlistItem) {
                     $errorLog = sprintf('%s [%s] Error! The Youtube document with id %s does not have a playlist item for Playlist %s', __CLASS__, __FUNCTION__, $youtube->getId(), $playlistId);
@@ -167,8 +167,8 @@ class YoutubePlaylistService
 
             $allYoutubePlaylists = $this->getAllYoutubePlaylists(
                 $login
-            ); //Returns array with all neccessary, list(['id','title'])
-            //REFACTOR THIS ARRAY_MAP >>
+            ); // Returns array with all neccessary, list(['id','title'])
+            // REFACTOR THIS ARRAY_MAP >>
             $allYoutubePlaylistsIds = array_map(
                 function ($n) {
                     return $n['id'];
@@ -183,7 +183,7 @@ class YoutubePlaylistService
                 $allTagsYtId[] = $ytPlaylistId;
 
                 if (null === $ytPlaylistId || !in_array($ytPlaylistId, $allYoutubePlaylistsIds)) {
-                    //If a playlist on PuMuKIT doesn't exist on Youtube, create it.
+                    // If a playlist on PuMuKIT doesn't exist on Youtube, create it.
                     if ('pumukit' == $master) {
                         $msg = sprintf(
                             'Creating YouTube playlist from tag "%s" (%s) because it doesn\'t exist locally',
@@ -244,7 +244,7 @@ class YoutubePlaylistService
                         echo $msg, "\n";
                         $this->logger->info($msg);
                         if (!$dryRun) {
-                            $this->createPumukitPlaylist($ytPlaylist);
+                            $this->createPumukitPlaylist($ytPlaylist, $account);
                         }
                     } elseif ($this->configurationService->deletePlaylist()) {
                         if ('Favorites' == $ytPlaylist['title']) {
@@ -323,7 +323,7 @@ class YoutubePlaylistService
         }
     }
 
-    protected function createPumukitPlaylist($youtubePlaylist)
+    protected function createPumukitPlaylist($youtubePlaylist, $account)
     {
         echo 'create On Pumukit: '.$youtubePlaylist['title']."\n";
         $metatag = $this->getPlaylistMetaTag();
@@ -335,7 +335,7 @@ class YoutubePlaylistService
         $tag->setProperty('youtube', $youtubePlaylist['id']);
         $tag->setProperty('customfield', 'youtube:text');
         $tag->setProperty('origin', 'youtube');
-        $tag->setParent($metatag);
+        $tag->setParent($account);
         $this->documentManager->persist($tag);
         $this->documentManager->flush();
 
@@ -377,7 +377,7 @@ class YoutubePlaylistService
         $this->documentManager->flush();
     }
 
-    //TODO Update Scripts:
+    // TODO Update Scripts:
     protected function updateYoutubePlaylist(Tag $tag)
     {
         echo 'update from Pumukit: '.$tag->getTitle($this->ytLocale)."\n";
@@ -394,7 +394,7 @@ class YoutubePlaylistService
             return 0;
         }
         $has_playlist = false;
-        //This logic is duplicated here from getPlaylistsToUpdate in order to make this function more generic, and the criteria easier to change
+        // This logic is duplicated here from getPlaylistsToUpdate in order to make this function more generic, and the criteria easier to change
         foreach ($multimediaObject->getTags() as $embedTag) {
             if ($embedTag->isDescendantOfByCod($this->configurationService->metaTagPlaylistCod())) {
                 $has_playlist = true;
@@ -406,7 +406,7 @@ class YoutubePlaylistService
             return 0;
         }
         $playlistTag = $this->getOrCreateDefaultTag();
-        //Adds the tag using the service.
+        // Adds the tag using the service.
         try {
             $this->tagService->addTagToMultimediaObject($multimediaObject, $playlistTag->getId());
         } catch (\Exception $e) {

@@ -46,7 +46,7 @@
             {{ tag.getCod() }}
         </td>
         <td headers="th-code-name" class="{{ has_children?'collapsed noload':'element' }}">
-        <span style="padding-left:{{ 10 * tag.level }}px" onclick="javascript:toggle_youtube_tag('{{ tag.id }}', this, {{ tag.level }}, '{{ tag.cod }}')">
+        <span style="padding-left:{{ 10 * tag.level }}px" onclick="toggle_youtube_tag('{{ tag.id }}', this, {{ tag.level }}, '{{ tag.cod }}')">
           <i class="mdi- tag_icon"></i>
         </span>
             {% if playlist == true %}
@@ -59,7 +59,7 @@
              {% if playlist == true %}
                  {{ tag.getProperty('youtube')| default('Pending') }}
              {% endif %}
-        </td>        
+        </td>
         <td headers="th-num">
             {{ tag.getNumberMultimediaObjects() }}
         </td>

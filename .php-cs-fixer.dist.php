@@ -1,7 +1,7 @@
 <?php
+
 $finder = PhpCsFixer\Finder::create()
     ->in(__DIR__)
-    ->exclude('var')
 ;
 
 $config =  new PhpCsFixer\Config();
@@ -19,6 +19,6 @@ return $config->setRules([
         'sort_algorithm' => 'none',
     ],
 ])
-->setFinder($finder)
-->setRiskyAllowed(true)
-;
+    ->setFinder($finder)
+    ->setRiskyAllowed(true)
+    ;

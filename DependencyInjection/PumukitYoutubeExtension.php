@@ -80,7 +80,7 @@ class PumukitYoutubeExtension extends Extension implements PrependExtensionInter
         $container->setParameter('pumukitschema.external_permissions', $newPermissions);
     }
 
-    public function getConfiguration(array $config, ContainerBuilder $container)
+    public function getConfiguration(array $config, ContainerBuilder $container): Configuration
     {
         return new Configuration($container->getParameter('locale'));
     }

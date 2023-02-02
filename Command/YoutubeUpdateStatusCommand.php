@@ -138,13 +138,6 @@ EOT
         }
     }
 
-    /**
-     * @param bool $pumukit1Id
-     *
-     * @throws \MongoException
-     *
-     * @return array|object|null
-     */
     protected function findByYoutubeIdAndPumukit1Id(Youtube $youtube, $pumukit1Id = false)
     {
         $qb = $this->mmobjRepo
@@ -166,11 +159,6 @@ EOT
         ;
     }
 
-    /**
-     * @throws \MongoException
-     *
-     * @return array|object|null
-     */
     protected function findByYoutubeId(Youtube $youtube)
     {
         return $this->mmobjRepo->createQueryBuilder()

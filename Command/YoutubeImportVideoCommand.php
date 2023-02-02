@@ -148,13 +148,13 @@ EOT
 
         switch ($step) {
             case 1:
-                //Check if exists
+                // Check if exists
                 $status = $this->getStatus($input->getOption('status'));
 
                 if ($this->getMmObjFromYid($yid)) {
                     $output->writeln('<error>Already exists a mmobj from Youtube video with id '.$yid.'</error>');
 
-                    return false;
+                    return -1;
                 }
 
                 $series = $this->getSeries($input->getArgument('series'));
@@ -359,15 +359,6 @@ EOT
         }
     }
 
-    /**
-     * @param string $yid
-     * @param int    $status
-     * @param string $login
-     *
-     * @throws \Exception
-     *
-     * @return MultimediaObject
-     */
     private function createMultimediaObject(Series $series, $yid, $status, $login, OutputInterface $output)
     {
         try {
@@ -397,14 +388,6 @@ EOT
         return $mmobj;
     }
 
-    /**
-     * @param string $yid
-     *
-     * @throws \Doctrine\ODM\MongoDB\LockException
-     * @throws \Doctrine\ODM\MongoDB\Mapping\MappingException
-     *
-     * @return object|null
-     */
     private function getMmObjFromYid($yid)
     {
         $mmobj = $this->mmobjRepo->findOneBy(['properties.youtubemeta.id' => $yid]);
@@ -420,14 +403,6 @@ EOT
         return $this->mmobjRepo->find($yt->getMultimediaObjectId());
     }
 
-    /**
-     * @param string $seriesId
-     *
-     * @throws \Doctrine\ODM\MongoDB\LockException
-     * @throws \Doctrine\ODM\MongoDB\Mapping\MappingException
-     *
-     * @return object|Series|null
-     */
     private function getSeries($seriesId)
     {
         if (!$seriesId) {
@@ -453,7 +428,7 @@ EOT
             return $series;
         }
 
-        //tag with youtube
+        // tag with youtube
         $tag = $this->tagRepo->findOneBy(
             [
                 'properties.origin' => 'youtube',
@@ -476,13 +451,6 @@ EOT
         throw new \Exception('No series, or YouTube tag with id '.$seriesId);
     }
 
-    /**
-     * @param string $status
-     *
-     * @throws \Exception
-     *
-     * @return int
-     */
     private function getStatus($status)
     {
         $status = strtolower($status);
@@ -537,11 +505,11 @@ EOT
             throw new FileException(sprintf('Unable to download  "%s"', $url));
         }
 
-        //$output = file_put_contents($directory.'/'.$filename, fopen(str_replace(' ', '%20', $url), 'r'));
+        // $output = file_put_contents($directory.'/'.$filename, fopen(str_replace(' ', '%20', $url), 'r'));
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        //curl_setopt($ch, CURLOPT_SSLVERSION,3);
+        // curl_setopt($ch, CURLOPT_SSLVERSION,3);
         $data = curl_exec($ch);
         $error = curl_error($ch);
         curl_close($ch);

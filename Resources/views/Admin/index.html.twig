@@ -76,7 +76,7 @@
                     var t = tr.closest('tbody');
                     var ss = t.children();
                     tr.after(response);
-                    if ($('.d_' + cod).length != 0) {
+                    if ($('.d_' + cod).length !== 0) {
                         $('#row_tag_' + id + ' .collapsed').addClass("expanded").removeClass("collapsed");
                     }
                 }

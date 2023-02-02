@@ -8,6 +8,7 @@ use Pumukit\YoutubeBundle\Document\Youtube;
 
 /**
  * @internal
+ *
  * @coversNothing
  */
 class YoutubeTest extends TestCase

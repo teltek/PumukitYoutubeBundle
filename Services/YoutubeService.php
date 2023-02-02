@@ -18,7 +18,7 @@ use Pumukit\SchemaBundle\Services\TagService;
 use Pumukit\YoutubeBundle\Document\Youtube;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Routing\RouterInterface;
-use Symfony\Component\Translation\TranslatorInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 class YoutubeService
 {
@@ -173,7 +173,7 @@ class YoutubeService
         $description = $this->getDescriptionForYoutube($multimediaObject);
         $tags = $this->getTagsForYoutube($multimediaObject);
 
-        $aResult = $this->youtubeProcessService->upload($trackPath, $title, $description, $category, $tags, $privacy, $login);
+        $aResult = $this->youtubeProcessService->upload($trackPath, $title, $description, (string) $category, $tags, $privacy, $login);
         if ($aResult['error']) {
             $youtube->setStatus(Youtube::STATUS_ERROR);
             $this->documentManager->persist($youtube);
@@ -524,7 +524,7 @@ class YoutubeService
             if (in_array($cause, $statusUpdate)) {
                 $body = $this->buildStatusUpdateBody($cause, $succeed);
             } else {
-                $body = $body.'<br/>The following videos were '.$cause.('e' === substr($cause, -1)) ? '' : 'e'.'d to Youtube:<br/>';
+                $body = $body.'<br/>The following videos were '.$cause.('e' === substr($cause, -1)) ? '' : 'ed to Youtube:<br/>';
                 foreach ($succeed as $mm) {
                     if ($mm instanceof MultimediaObject) {
                         $body = $body.'<br/> -'.$mm->getId().': '.$mm->getTitle($this->ytLocale).' '.$this->router->generate('pumukitnewadmin_mms_shortener', ['id' => $mm->getId()], UrlGeneratorInterface::ABSOLUTE_URL);
@@ -554,7 +554,7 @@ class YoutubeService
     protected function buildStatusUpdateBody($cause = '', $succeed = [])
     {
         $body = '';
-        if ((array_key_exists('multimediaObject', $succeed)) && (array_key_exists('youtube', $succeed))) {
+        if (array_key_exists('multimediaObject', $succeed) && array_key_exists('youtube', $succeed)) {
             $multimediaObject = $succeed['multimediaObject'];
             $youtube = $succeed['youtube'];
             if ('finished publication' === $cause) {
@@ -660,7 +660,7 @@ class YoutubeService
                 $this->translator->trans('i18n.one.Series', [], null, $this->ytLocale).': '.$series->getTitle($this->ytLocale)."\n".
                 $recDateI18N.': '.$recDate."\n".
                 str_replace($break, "\n", $multimediaObject->getDescription($this->ytLocale))."\n"
-                ;
+            ;
         }
 
         if ($bPeople) {
@@ -697,7 +697,7 @@ class YoutubeService
 
     protected function fixRemovedYoutubeDocument(MultimediaObject $multimediaObject)
     {
-        //Tries to find the 'youtubeurl' property to recreate the Youtube Document
+        // Tries to find the 'youtubeurl' property to recreate the Youtube Document
         $youtubeUrl = $multimediaObject->getProperty('youtubeurl');
         if (null === $youtubeUrl) {
             $errorLog = "PROPERTY 'youtubeurl' for the MultimediaObject id=".$multimediaObject->getId().' DOES NOT EXIST. ¿Is this multimediaObject supposed to be on Youtube?';
@@ -706,7 +706,7 @@ class YoutubeService
 
             throw new \Exception($errorLog);
         }
-        //Tries to get the youtubeId from the youtubeUrl
+        // Tries to get the youtubeId from the youtubeUrl
         $arr = [];
         parse_str(parse_url($youtubeUrl, PHP_URL_QUERY), $arr);
         $youtubeId = $arr['v'] ?? null;
@@ -719,7 +719,7 @@ class YoutubeService
             throw new \Exception($errorLog);
         }
 
-        //Recreating Youtube Document for the mmobj
+        // Recreating Youtube Document for the mmobj
         $youtube = new Youtube();
         $youtube->setMultimediaObjectId($multimediaObject->getId());
         $youtube->setLink($youtubeUrl);

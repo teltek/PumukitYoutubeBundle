@@ -11,7 +11,7 @@ use Symfony\Component\Config\Definition\ConfigurationInterface;
 
 class Configuration implements ConfigurationInterface
 {
-    private $locale = 'en';
+    private $locale;
 
     public function __construct($locale = 'en')
     {
@@ -124,7 +124,7 @@ class Configuration implements ConfigurationInterface
             ->info('Shown in wizard')->end()
             ->booleanNode('master')->defaultValue(true)
             ->info('The track is master copy')->end()
-            //Used in JobGeneratorListener
+            // Used in JobGeneratorListener
             ->scalarNode('target')->defaultValue('')
             ->info(
                 'Profile is used to generate a new track when a multimedia object is tagged with a publication channel tag name with this value. List of names'
