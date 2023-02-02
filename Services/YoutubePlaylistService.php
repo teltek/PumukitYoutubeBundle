@@ -323,18 +323,6 @@ class YoutubePlaylistService
         }
     }
 
-    /**
-     * Creates a new playlist in PuMuKIT using the 'youtubePlaylist' data. Returns the tag created if successful.
-     *
-     * @param array $youtubePlaylist
-     *                               string $youtubePlaylist['id'] = id of the playlist on youtube.
-     *                               string $youtubePlaylist['title'] = title of the playlist on youtube
-     * @param mixed $account
-     *
-     * @return Tag
-     *
-     * @throws \Exception
-     */
     protected function createPumukitPlaylist($youtubePlaylist, $account)
     {
         echo 'create On Pumukit: '.$youtubePlaylist['title']."\n";

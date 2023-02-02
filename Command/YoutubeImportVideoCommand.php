@@ -154,7 +154,7 @@ EOT
                 if ($this->getMmObjFromYid($yid)) {
                     $output->writeln('<error>Already exists a mmobj from Youtube video with id '.$yid.'</error>');
 
-                    return false;
+                    return -1;
                 }
 
                 $series = $this->getSeries($input->getArgument('series'));
@@ -359,15 +359,6 @@ EOT
         }
     }
 
-    /**
-     * @param string $yid
-     * @param int    $status
-     * @param string $login
-     *
-     * @return MultimediaObject
-     *
-     * @throws \Exception
-     */
     private function createMultimediaObject(Series $series, $yid, $status, $login, OutputInterface $output)
     {
         try {
@@ -420,14 +411,6 @@ EOT
         return $this->mmobjRepo->find($yt->getMultimediaObjectId());
     }
 
-    /**
-     * @param string $seriesId
-     *
-     * @return object|Series|null
-     *
-     * @throws \Doctrine\ODM\MongoDB\LockException
-     * @throws \Doctrine\ODM\MongoDB\Mapping\MappingException
-     */
     private function getSeries($seriesId)
     {
         if (!$seriesId) {
