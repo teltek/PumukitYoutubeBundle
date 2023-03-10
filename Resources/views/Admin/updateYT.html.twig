@@ -12,7 +12,7 @@
             <label for="youtube_label">{{ "Youtube accounts"|trans }}</label>
             <select id="youtube_label" name="youtube_label" class="form-control" required {% if is_granted('ROLE_TAG_DISABLE_PUCHYOUTUBE') %}disabled{% endif %}>
                 {% for account in youtubeAccounts %}
-                    <option class="account_option" value="{{ account.getId() }}" {% if accountId == account.getId() %}selected{% endif %} data-href="{{ path('pumukityoutube_playlist_select', {'id' : account.getId() }) }}">{{ account.getTitle() }}</option>
+                        <option class="account_option" value="{{ account.getId() }}" {% if accountId == account.getId() %}selected{% endif %} data-href="{{ path('pumukityoutube_playlist_select', {'id' : account.getId() }) }}">{{ account.getTitle() }}</option>
                     {% if accountId == account.getId() %}
                         {% set selectedAccount = account %}
                     {% endif %}
@@ -68,7 +68,14 @@
             $('#youtube_advanced_configuration').hide();
         }
 
-        var href = $("#youtube_label option:first-child").data('href');
+        var firstHref = $("#youtube_label option:first-child").data('href');
+        var selectedHref = $("#youtube_label option:selected").data('href');
+        var href = '';
+        if(selectedHref) {
+            href = selectedHref;
+        } else {
+            href = firstHref;
+        }
         if (href) {
             $.ajax({
                 url: href,
