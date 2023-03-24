@@ -116,6 +116,11 @@ class Youtube
      */
     private $fileUploaded;
 
+    /**
+     * @MongoDB\Field(type="string")
+     */
+    private $youtubeError;
+
     public function __construct()
     {
         $initializeSyncDate = new \DateTime('1980-01-01 10:00');
@@ -403,5 +408,15 @@ class Youtube
     public function setFileUploaded(string $fileUploaded): void
     {
         $this->fileUploaded = $fileUploaded;
+    }
+
+    public function getYoutubeError(): ?string
+    {
+        return $this->youtubeError;
+    }
+
+    public function setYoutubeError(?string $error): void
+    {
+        $this->youtubeError = $error;
     }
 }

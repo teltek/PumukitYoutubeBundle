@@ -87,10 +87,18 @@ EOT
         return 0;
     }
 
-    private function uploadVideosToYoutube(array $multimediaObjects, OutputInterface $output)
+    private function uploadVideosToYoutube($multimediaObjects, OutputInterface $output)
     {
         foreach ($multimediaObjects as $multimediaObject) {
             try {
+                $infoLog = sprintf(
+                    '%s [%s] Started validate and uploading to Youtube of MultimediaObject with id %s',
+                    __CLASS__,
+                    __FUNCTION__,
+                    $multimediaObject->getId()
+                );
+                $output->writeln($infoLog);
+
                 $result = $this->videoService->uploadVideoToYoutube($multimediaObject);
                 if (!$result) {
                     $this->failedUploads[] = $multimediaObject;
@@ -162,7 +170,7 @@ EOT
 
         return $this->createMultimediaObjectsToUploadQueryBuilder()
             ->field('_id')
-            ->in($mmIds->toArray())
+            ->in($mmIds)
             ->getQuery()
             ->execute()
         ;

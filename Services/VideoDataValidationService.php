@@ -17,7 +17,7 @@ use Pumukit\SchemaBundle\Document\Track;
 use Pumukit\YoutubeBundle\Document\Youtube;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Routing\RouterInterface;
-use Symfony\Component\Translation\TranslatorInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 class VideoDataValidationService
 {

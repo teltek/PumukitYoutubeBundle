@@ -72,17 +72,18 @@ class VideoService
 
         $youtubeDocument = $this->generateYoutubeDocument($multimediaObject, $account);
 
-        $video = $this->insertVideoService->insert($account, $video, $track);
-        if (null !== $video->getStatus()->getFailureReason() || null !== $video->getStatus()->getRejectionReason()) {
-            $this->updateVideoAndYoutubeDocumentByResult(
+        try {
+            $video = $this->insertVideoService->insert($account, $video, $track);
+        } catch (\Exception $exception) {
+            $this->updateVideoAndYoutubeDocumentByErrorResult(
                 $youtubeDocument,
-                $multimediaObject,
-                $track,
-                $video,
+                $exception,
                 Youtube::STATUS_ERROR
             );
-            $errorLog = __CLASS__.' ['.__FUNCTION__.'] Error in the upload: '.$video->getStatus()->getFailureReason() ?? $video->getStatus()->getRejectionReason();
+            $errorLog = __CLASS__.' ['.__FUNCTION__.'] Error in the upload: '.$exception->getMessage();
             $this->logger->error($errorLog);
+
+            return false;
         }
 
         $this->updateVideoAndYoutubeDocumentByResult(
@@ -125,11 +126,9 @@ class VideoService
         Video $video,
         int $status
     ): void {
-        if (Youtube::STATUS_ERROR === $status) {
-            $youtube->setStatus($status);
-        }
-
         if (Youtube::STATUS_PROCESSING === $status) {
+            $youtube->setYoutubeFailure(null);
+            $youtube->setYoutubeError(null);
             $youtube->setYoutubeId($video->getId());
             $youtube->setLink('https://www.youtube.com/watch?v='.$video->getId());
             $youtube->setFileUploaded(basename($track->getPath()));
@@ -143,6 +142,18 @@ class VideoService
             $youtube->setSyncMetadataDate($now);
             $youtube->setUploadDate($now);
         }
+
+        $this->documentManager->persist($youtube);
+        $this->documentManager->flush();
+    }
+
+    private function updateVideoAndYoutubeDocumentByErrorResult(
+        Youtube $youtube,
+        \Exception $exception,
+        int $status
+    ): void {
+        $youtube->setStatus($status);
+        $youtube->setYoutubeError($exception->getMessage());
 
         $this->documentManager->persist($youtube);
         $this->documentManager->flush();

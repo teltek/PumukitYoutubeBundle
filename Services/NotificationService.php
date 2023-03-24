@@ -181,4 +181,14 @@ class NotificationService
 
         return $body;
     }
+
+    protected function getError(array $errors = []): bool
+    {
+        if (!empty($errors)) {
+            return true;
+        }
+
+        return false;
+    }
+
 }

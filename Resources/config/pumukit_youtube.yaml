@@ -101,3 +101,9 @@ services:
 
   Pumukit\YoutubeBundle\Services\InsertVideoService:
     class: Pumukit\YoutubeBundle\Services\InsertVideoService
+
+  Pumukit\YoutubeBundle\Services\VideoDataValidationService:
+    class: Pumukit\YoutubeBundle\Services\VideoDataValidationService
+
+  Pumukit\YoutubeBundle\Services\NotificationService:
+    class: Pumukit\YoutubeBundle\Services\NotificationService
