@@ -99,6 +99,10 @@ class Configuration implements ConfigurationInterface
             ->defaultValue('sbs')
             ->info('SBS profile name to generate track with.')
             ->end()
+            ->scalarNode('account_storage')
+            ->defaultValue('/srv/pumukit/config/youtube_accounts/')
+            ->info('Account storage dir. Absolute path its necessary.')
+            ->end()
             ->end()
         ;
 

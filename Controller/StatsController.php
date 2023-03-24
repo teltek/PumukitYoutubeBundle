@@ -11,6 +11,7 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
 /**
@@ -34,7 +35,7 @@ class StatsController extends AbstractController
     /**
      * @Route("/", name="pumukit_youtube_stat_index")
      */
-    public function indexAction(): array
+    public function indexAction(): Response
     {
         if (!$this->youtubeStatsService) {
             throw new ServiceNotFoundException('YoutubeStatsService not found');
@@ -54,7 +55,7 @@ class StatsController extends AbstractController
     /**
      * @Route("/status/list/{status}", name="pumukit_youtube_stat_list")
      */
-    public function listByStatusAction(Request $request, string $status): array
+    public function listByStatusAction(Request $request, string $status): Response
     {
         if (!$this->youtubeStatsService) {
             throw new ServiceNotFoundException('YoutubeService not found');
@@ -76,7 +77,7 @@ class StatsController extends AbstractController
     /**
      * @Route("/account/list/{account}", name="pumukit_youtube_stat_account_list")
      */
-    public function listByAccountAction(Request $request, string $account): array
+    public function listByAccountAction(Request $request, string $account): Response
     {
         if (!$this->youtubeStatsService) {
             throw new ServiceNotFoundException('YoutubeService not found');
@@ -98,7 +99,7 @@ class StatsController extends AbstractController
     /**
      * @Route("/configuration/", name="pumukit_youtube_configuration")
      */
-    public function modalConfigurationAction(): array
+    public function modalConfigurationAction(): Response
     {
         $youtubeConfigurationService = $this->container->get('pumukityoutube.youtube_configuration');
         if (!$youtubeConfigurationService) {

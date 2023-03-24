@@ -50,6 +50,7 @@ class PumukitYoutubeExtension extends Extension implements PrependExtensionInter
         $container->setParameter('pumukit_youtube.generate_sbs', $config['generate_sbs']);
         $container->setParameter('pumukit_youtube.sbs_profile_name', $config['sbs_profile_name']);
         $container->setParameter('pumukit_youtube.upload_removed_videos', $config['upload_removed_videos']);
+        $container->setParameter('pumukit_youtube.account_storage', $config['account_storage']);
 
         $bundleConfiguration = Yaml::parse(file_get_contents(__DIR__.'/../Resources/config/encoders.yml'));
         if (!$config['profiles'] && $bundleConfiguration['pumukit_youtube']['profiles']) {

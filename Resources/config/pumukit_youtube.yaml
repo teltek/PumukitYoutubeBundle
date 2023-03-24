@@ -85,8 +85,19 @@ services:
       $generateSbs: "%pumukit_youtube.generate_sbs%"
       $uploadRemovedVideos: "%pumukit_youtube.upload_removed_videos%"
       $sbsProfileName: "%pumukit_youtube.sbs_profile_name%"
+      $accountStorage: "%pumukit_youtube.account_storage%"
+
+  Pumukit\YoutubeBundle\Services\GoogleAccountService:
+    class: Pumukit\YoutubeBundle\Services\GoogleAccountService
 
   Pumukit\YoutubeBundle\Twig\YoutubeExtension:
     class: Pumukit\YoutubeBundle\Twig\YoutubeExtension
     tags:
       - { name: "twig.extension" }
+
+
+  Pumukit\YoutubeBundle\Services\VideoService:
+    class: Pumukit\YoutubeBundle\Services\VideoService
+
+  Pumukit\YoutubeBundle\Services\InsertVideoService:
+    class: Pumukit\YoutubeBundle\Services\InsertVideoService

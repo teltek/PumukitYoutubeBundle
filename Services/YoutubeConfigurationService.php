@@ -23,6 +23,7 @@ class YoutubeConfigurationService
     private $generateSbs;
     private $sbsProfileName;
     private $uploadRemovedVideos;
+    private $accountStorage;
 
     public function __construct(
         string $playlistPrivateStatus,
@@ -41,7 +42,8 @@ class YoutubeConfigurationService
         array $allowedCaptionMimeTypes,
         bool $generateSbs,
         bool $uploadRemovedVideos,
-        string $sbsProfileName
+        string $sbsProfileName,
+        string $accountStorage
     ) {
         $this->useDefaultPlaylist = $useDefaultPlaylist;
         $this->playlistPrivateStatus = $playlistPrivateStatus;
@@ -60,6 +62,7 @@ class YoutubeConfigurationService
         $this->generateSbs = $generateSbs;
         $this->sbsProfileName = $sbsProfileName;
         $this->uploadRemovedVideos = $uploadRemovedVideos;
+        $this->accountStorage = $accountStorage;
     }
 
     public function getBundleConfiguration(): array
@@ -82,91 +85,97 @@ class YoutubeConfigurationService
             'generateSbs' => $this->generateSbs,
             'sbsProfileName' => $this->sbsProfileName,
             'uploadRemovedVideos' => $this->uploadRemovedVideos,
+            'accountStorage' => $this->accountStorage,
         ];
     }
 
-    public function playlistPrivateStatus()
+    public function playlistPrivateStatus(): string
     {
         return $this->playlistPrivateStatus;
     }
 
-    public function useDefaultPlaylist()
+    public function useDefaultPlaylist(): bool
     {
         return $this->useDefaultPlaylist;
     }
 
-    public function defaultPlaylistCod()
+    public function defaultPlaylistCod(): string
     {
         return $this->defaultPlaylistCod;
     }
 
-    public function defaultPlaylistTitle()
+    public function defaultPlaylistTitle(): string
     {
         return $this->defaultPlaylistTitle;
     }
 
-    public function metaTagPlaylistCod()
+    public function metaTagPlaylistCod(): string
     {
         return $this->metaTagPlaylistCod;
     }
 
-    public function playlistMaster()
+    public function playlistMaster(): string
     {
         return $this->playlistMaster;
     }
 
-    public function deletePlaylist()
+    public function deletePlaylist(): bool
     {
         return $this->deletePlaylist;
     }
 
-    public function locale()
+    public function locale(): string
     {
         return $this->locale;
     }
 
-    public function publicationChannelsTags()
+    public function publicationChannelsTags(): array
     {
         return $this->publicationChannelsTags;
     }
 
-    public function processTimeOut()
+    public function processTimeOut(): int
     {
         return $this->processTimeOut;
     }
 
-    public function syncStatus()
+    public function syncStatus(): bool
     {
         return $this->syncStatus;
     }
 
-    public function defaultTrackUpload()
+    public function defaultTrackUpload(): string
     {
         return $this->defaultTrackUpload;
     }
 
-    public function defaultImageForAudio()
+    public function defaultImageForAudio(): string
     {
         return $this->defaultImageForAudio;
     }
 
-    public function allowedCaptionMimeTypes()
+    public function allowedCaptionMimeTypes(): array
     {
         return $this->allowedCaptionMimeTypes;
     }
 
-    public function generateSbs()
+    public function generateSbs(): bool
     {
         return $this->generateSbs;
     }
 
-    public function sbsProfileName()
+    public function sbsProfileName(): string
     {
         return $this->sbsProfileName;
     }
 
-    public function uploadRemovedVideos()
+    public function uploadRemovedVideos(): bool
     {
         return $this->uploadRemovedVideos;
+    }
+
+    public function accountStorage(): string
+    {
+        return $this->accountStorage;
     }
 }

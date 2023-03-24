@@ -86,6 +86,9 @@ EOT
                 if (null == $youtube) {
                     continue;
                 }
+                if (Youtube::STATUS_PUBLISHED !== $youtube->getStatus()) {
+                    continue;
+                }
                 $captionMaterialIds = $this->getCaptionsMaterialIds($youtube);
                 $newMaterialIds = $this->getNewMaterialIds($multimediaObject, $captionMaterialIds);
                 if ($newMaterialIds) {
