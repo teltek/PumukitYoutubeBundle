@@ -63,6 +63,8 @@ EOT
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
+        $this->usePumukit1 = $input->getOption('use-pmk1');
+
         $multimediaObjects = $this->getMultimediaObjectsInYoutubeToUpdate();
         $this->updateVideosInYoutube($multimediaObjects, $output);
 
@@ -73,14 +75,6 @@ EOT
         );
 
         return 0;
-    }
-
-    protected function initialize(InputInterface $input, OutputInterface $output)
-    {
-        $this->okUpdates = [];
-        $this->failedUpdates = [];
-        $this->errors = [];
-        $this->usePumukit1 = $input->getOption('use-pmk1');
     }
 
     private function updateVideosInYoutube($multimediaObjects, OutputInterface $output)
