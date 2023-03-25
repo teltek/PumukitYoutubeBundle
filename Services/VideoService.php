@@ -19,7 +19,8 @@ class VideoService
     private $logger;
     private $youtubeConfigurationService;
     private $videoDataValidationService;
-    private $insertVideoService;
+    private $videoInsertService;
+    private $videoUpdateService;
     private $tagService;
 
     public function __construct(
@@ -27,14 +28,16 @@ class VideoService
         LoggerInterface $logger,
         YoutubeConfigurationService $youtubeConfigurationService,
         VideoDataValidationService $videoDataValidationService,
-        InsertVideoService $insertVideoService,
+        VideoInsertService $videoInsertService,
+        VideoUpdateService $videoUpdateService,
         TagService $tagService
     ) {
         $this->documentManager = $documentManager;
         $this->logger = $logger;
         $this->youtubeConfigurationService = $youtubeConfigurationService;
         $this->videoDataValidationService = $videoDataValidationService;
-        $this->insertVideoService = $insertVideoService;
+        $this->videoInsertService = $videoInsertService;
+        $this->videoUpdateService = $videoUpdateService;
         $this->tagService = $tagService;
     }
 
@@ -66,14 +69,14 @@ class VideoService
             $status = YoutubeService::$status[$multimediaObject->getStatus()];
         }
 
-        $videoSnippet = $this->insertVideoService->createVideoSnippet($title, $description, $tags);
-        $videoStatus = $this->insertVideoService->createVideoStatus($status);
-        $video = $this->insertVideoService->createVideo($videoSnippet, $videoStatus);
+        $videoSnippet = $this->videoInsertService->createVideoSnippet($title, $description, $tags);
+        $videoStatus = $this->videoInsertService->createVideoStatus($status);
+        $video = $this->videoInsertService->createVideo($videoSnippet, $videoStatus);
 
         $youtubeDocument = $this->generateYoutubeDocument($multimediaObject, $account);
 
         try {
-            $video = $this->insertVideoService->insert($account, $video, $track);
+            $video = $this->videoInsertService->insert($account, $video, $track);
         } catch (\Exception $exception) {
             $this->updateVideoAndYoutubeDocumentByErrorResult(
                 $youtubeDocument,
@@ -95,6 +98,55 @@ class VideoService
         );
 
         $this->checkMultimediaObjectYoutubeTag($multimediaObject);
+
+        return true;
+    }
+
+    public function updateVideoOnYoutube(MultimediaObject $multimediaObject): bool
+    {
+        $infoLog = sprintf(
+            '%s [%s] Started validate and update MultimediaObject with id %s on Youtube',
+            __CLASS__,
+            __FUNCTION__,
+            $multimediaObject->getId()
+        );
+        $this->logger->info($infoLog);
+
+        $account = $this->videoDataValidationService->validateMultimediaObjectAccount($multimediaObject);
+
+        $youtubeDocument = $this->generateYoutubeDocument($multimediaObject, $account);
+
+        if (Youtube::STATUS_PUBLISHED !== $youtubeDocument->getStatus()) {
+            return false;
+        }
+
+        $title = $this->videoDataValidationService->getTitleForYoutube($multimediaObject);
+        $description = $this->videoDataValidationService->getDescriptionForYoutube($multimediaObject);
+        $tags = $this->videoDataValidationService->getTagsForYoutube($multimediaObject);
+
+        $status = null;
+        if ($this->youtubeConfigurationService->syncStatus()) {
+            $status = YoutubeService::$status[$multimediaObject->getStatus()];
+        }
+
+        $videoSnippet = $this->videoInsertService->createVideoSnippet($title, $description, $tags);
+        $videoStatus = $this->videoInsertService->createVideoStatus($status);
+        $video = $this->videoUpdateService->createVideo($videoSnippet, $videoStatus, $youtubeDocument->getYoutubeId());
+
+        try {
+            $this->videoUpdateService->update($account, $video);
+        } catch (\Exception $exception) {
+            $youtubeDocument->setYoutubeError($exception->getMessage());
+            $this->documentManager->flush();
+
+            $errorLog = __CLASS__.' ['.__FUNCTION__.'] Error updating MultimediaObject '.$multimediaObject->getId().': '.$exception->getMessage();
+            $this->logger->error($errorLog);
+
+            return false;
+        }
+
+        $youtubeDocument->setSyncMetadataDate(new \DateTime('now'));
+        $this->documentManager->flush();
 
         return true;
     }
@@ -127,7 +179,6 @@ class VideoService
         int $status
     ): void {
         if (Youtube::STATUS_PROCESSING === $status) {
-            $youtube->setYoutubeFailure(null);
             $youtube->setYoutubeError(null);
             $youtube->setYoutubeId($video->getId());
             $youtube->setLink('https://www.youtube.com/watch?v='.$video->getId());

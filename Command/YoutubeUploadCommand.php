@@ -27,9 +27,9 @@ class YoutubeUploadCommand extends Command
     private $notificationService;
     private $logger;
     private $usePumukit1 = false;
-    private $okUploads = [];
-    private $failedUploads = [];
-    private $errors = [];
+    private $okUploads;
+    private $failedUploads;
+    private $errors;
 
     public function __construct(
         DocumentManager $documentManager,
@@ -82,7 +82,11 @@ EOT
             $this->uploadVideosToYoutube($removedYoutubeMultimediaObjects, $output);
         }
 
-        $this->notificationService->notificationOfUploadedVideoResults($this->okUploads, $this->failedUploads, $this->errors);
+        $this->notificationService->notificationOfUploadedVideoResults(
+            $this->okUploads,
+            $this->failedUploads,
+            $this->errors
+        );
 
         return 0;
     }

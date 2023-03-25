@@ -7,9 +7,9 @@ namespace Pumukit\YoutubeBundle\Command;
 use Doctrine\ODM\MongoDB\DocumentManager;
 use Psr\Log\LoggerInterface;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
-use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\YoutubeBundle\Document\Youtube;
-use Pumukit\YoutubeBundle\Services\YoutubeService;
+use Pumukit\YoutubeBundle\Services\NotificationService;
+use Pumukit\YoutubeBundle\Services\VideoService;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -18,24 +18,29 @@ use Symfony\Component\Console\Output\OutputInterface;
 class YoutubeUpdateMetadataCommand extends Command
 {
     private $documentManager;
-    private $tagRepo;
-    private $mmobjRepo;
-    private $youtubeRepo;
-    private $youtubeService;
-    private $okUpdates = [];
-    private $failedUpdates = [];
-    private $errors = [];
-    private $usePumukit1 = false;
+    private $videoService;
+    private $notificationService;
     private $logger;
+    private $usePumukit1 = false;
+    private $okUpdates;
+    private $failedUpdates;
+    private $errors;
 
     public function __construct(
         DocumentManager $documentManager,
-        YoutubeService $youtubeService,
-        LoggerInterface $logger
+        VideoService $videoService,
+        NotificationService $notificationService,
+        LoggerInterface $logger,
     ) {
         $this->documentManager = $documentManager;
-        $this->youtubeService = $youtubeService;
+        $this->videoService = $videoService;
+        $this->notificationService = $notificationService;
         $this->logger = $logger;
+
+        $this->okUpdates = [];
+        $this->failedUpdates = [];
+        $this->errors = [];
+
         parent::__construct();
     }
 
@@ -58,57 +63,63 @@ EOT
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $mms = $this->getMultimediaObjectsInYoutubeToUpdate();
-        $this->updateVideosInYoutube($mms, $output);
-        $this->checkResultsAndSendEmail();
+        $multimediaObjects = $this->getMultimediaObjectsInYoutubeToUpdate();
+        $this->updateVideosInYoutube($multimediaObjects, $output);
+
+        $this->notificationService->notificationOfUploadedVideoResults(
+            $this->okUpdates,
+            $this->failedUpdates,
+            $this->errors
+        );
 
         return 0;
     }
 
     protected function initialize(InputInterface $input, OutputInterface $output)
     {
-        $this->tagRepo = $this->documentManager->getRepository(Tag::class);
-        $this->mmobjRepo = $this->documentManager->getRepository(MultimediaObject::class);
-        $this->youtubeRepo = $this->documentManager->getRepository(Youtube::class);
         $this->okUpdates = [];
         $this->failedUpdates = [];
         $this->errors = [];
         $this->usePumukit1 = $input->getOption('use-pmk1');
     }
 
-    private function updateVideosInYoutube(array $mms, OutputInterface $output)
+    private function updateVideosInYoutube($multimediaObjects, OutputInterface $output)
     {
-        foreach ($mms as $mm) {
+        foreach ($multimediaObjects as $multimediaObject) {
             try {
-                $infoLog = __CLASS__.' ['.__FUNCTION__.'] Started updating Youtube video of MultimediaObject with id "'.$mm->getId().'"';
-                $this->logger->info($infoLog);
+                $infoLog = sprintf(
+                    '%s [%s] Started validate and updating MultimediaObject on YouTube with id %s',
+                    __CLASS__,
+                    __FUNCTION__,
+                    $multimediaObject->getId()
+                );
                 $output->writeln($infoLog);
-                $outUpdate = $this->youtubeService->updateMetadata($mm);
-                if (0 !== $outUpdate) {
-                    $errorLog = __CLASS__.
-                        ' ['.__FUNCTION__.'] Uknown output on the update in Youtube video of MultimediaObject with id "'.
-                        $mm->getId().'": '.$outUpdate;
-                    $this->logger->error($errorLog);
-                    $output->writeln($errorLog);
-                    $this->failedUpdates[] = $mm;
-                    $this->errors[] = $errorLog;
+
+                $result = $this->videoService->updateVideoOnYoutube($multimediaObject);
+                if (!$result) {
+                    $this->failedUpdates[] = $multimediaObject;
+                } else {
+                    $this->okUpdates[] = $multimediaObject;
                 }
-                $this->okUpdates[] = $mm;
             } catch (\Exception $e) {
-                $errorLog = __CLASS__.
-                    ' ['.__FUNCTION__.'] The update of the video from the Multimedia Object with id "'.
-                    $mm->getId().'" failed: '.$e->getMessage();
+                $errorLog = sprintf(
+                    '%s [%s] Update metadata video from the Multimedia Object with id %s failed: %s',
+                    __CLASS__,
+                    __FUNCTION__,
+                    $multimediaObject->getId(),
+                    $e->getMessage()
+                );
                 $this->logger->error($errorLog);
                 $output->writeln($errorLog);
-                $this->failedUpdates[] = $mm;
+                $this->failedUpdates[] = $multimediaObject;
                 $this->errors[] = $e->getMessage();
             }
         }
     }
 
-    private function getMultimediaObjectsInYoutubeToUpdate()
+    private function getMultimediaObjectsInYoutubeToUpdate(): array
     {
-        $mongoObjectIds = $this->youtubeRepo->getDistinctIdsNotMetadataUpdated();
+        $mongoObjectIds = $this->documentManager->getRepository(Youtube::class)->getDistinctIdsNotMetadataUpdated();
         $youtubeIds = [];
         foreach ($mongoObjectIds as $mongoObjectId) {
             $youtubeIds[] = $mongoObjectId->__toString();
@@ -123,13 +134,6 @@ EOT
             $criteria['properties.pumukit1id'] = ['$exists' => false];
         }
 
-        return $this->mmobjRepo->findBy($criteria);
-    }
-
-    private function checkResultsAndSendEmail(): void
-    {
-        if (!empty($this->errors)) {
-            $this->youtubeService->sendEmail('metadata update', $this->okUpdates, $this->failedUpdates, $this->errors);
-        }
+        return $this->documentManager->getRepository(MultimediaObject::class)->findBy($criteria);
     }
 }

@@ -7,7 +7,7 @@ namespace Pumukit\YoutubeBundle\Services;
 use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\SchemaBundle\Document\Track;
 
-class InsertVideoService
+class VideoInsertService extends GoogleVideoService
 {
     private $googleAccountService;
 
@@ -43,39 +43,5 @@ class InsertVideoService
         $video->setStatus($status);
 
         return $video;
-    }
-
-    public function createVideoSnippet(string $title, string $description, string $tags, string $category = '27'): \Google_Service_YouTube_VideoSnippet
-    {
-        $videoSnippet = $this->createGoogleServiceYoutubeVideoSnippet();
-        $videoSnippet->setCategoryId($category);
-        $videoSnippet->setDescription($description);
-        $videoSnippet->setTitle($title);
-        $videoSnippet->setTags($tags);
-
-        return $videoSnippet;
-    }
-
-    public function createVideoStatus(string $status): \Google_Service_YouTube_VideoStatus
-    {
-        $videoStatus = $this->createGoogleServiceYoutubeVideoStatus();
-        $videoStatus->setPrivacyStatus($status);
-
-        return $videoStatus;
-    }
-
-    private function createGoogleServiceYoutubeVideo(): \Google_Service_YouTube_Video
-    {
-        return new \Google_Service_YouTube_Video();
-    }
-
-    private function createGoogleServiceYoutubeVideoSnippet(): \Google_Service_YouTube_VideoSnippet
-    {
-        return new \Google_Service_YouTube_VideoSnippet();
-    }
-
-    private function createGoogleServiceYoutubeVideoStatus(): \Google_Service_YouTube_VideoStatus
-    {
-        return new \Google_Service_YouTube_VideoStatus();
     }
 }

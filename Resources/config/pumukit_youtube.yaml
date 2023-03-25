@@ -95,12 +95,17 @@ services:
     tags:
       - { name: "twig.extension" }
 
+  Pumukit\YoutubeBundle\Services\GoogleVideoService:
+    class: Pumukit\YoutubeBundle\Services\GoogleVideoService
 
   Pumukit\YoutubeBundle\Services\VideoService:
     class: Pumukit\YoutubeBundle\Services\VideoService
 
-  Pumukit\YoutubeBundle\Services\InsertVideoService:
-    class: Pumukit\YoutubeBundle\Services\InsertVideoService
+  Pumukit\YoutubeBundle\Services\VideoInsertService:
+    class: Pumukit\YoutubeBundle\Services\VideoInsertService
+
+  Pumukit\YoutubeBundle\Services\VideoUpdateService:
+    class: Pumukit\YoutubeBundle\Services\VideoUpdateService
 
   Pumukit\YoutubeBundle\Services\VideoDataValidationService:
     class: Pumukit\YoutubeBundle\Services\VideoDataValidationService
