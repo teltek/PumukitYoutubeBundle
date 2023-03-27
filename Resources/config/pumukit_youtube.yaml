@@ -107,6 +107,9 @@ services:
   Pumukit\YoutubeBundle\Services\VideoUpdateService:
     class: Pumukit\YoutubeBundle\Services\VideoUpdateService
 
+  Pumukit\YoutubeBundle\Services\VideoListService:
+    class: Pumukit\YoutubeBundle\Services\VideoListService
+
   Pumukit\YoutubeBundle\Services\VideoDeleteService:
     class: Pumukit\YoutubeBundle\Services\VideoDeleteService
 

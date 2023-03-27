@@ -121,6 +121,11 @@ class Youtube
      */
     private $youtubeError;
 
+    /**
+     * @MongoDB\Field(type="date")
+     */
+    private $youtubeErrorDate;
+
     public function __construct()
     {
         $initializeSyncDate = new \DateTime('1980-01-01 10:00');
@@ -151,7 +156,7 @@ class Youtube
         $this->youtubeId = $youtubeId;
     }
 
-    public function getYoutubeId(): string
+    public function getYoutubeId(): ?string
     {
         return $this->youtubeId;
     }
@@ -418,5 +423,15 @@ class Youtube
     public function setYoutubeError(?string $error): void
     {
         $this->youtubeError = $error;
+    }
+
+    public function setYoutubeErrorDate(?\DateTime $date): void
+    {
+        $this->youtubeErrorDate = $date;
+    }
+
+    public function getYoutubeErrorDate(): ?\DateTime
+    {
+        return $this->youtubeErrorDate;
     }
 }

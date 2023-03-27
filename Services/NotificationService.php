@@ -74,6 +74,13 @@ class NotificationService
         }
     }
 
+    public function notificationOfUpdatedStatusVideoResults(array $okUpdates, array $failedUpdates, array $errors): void
+    {
+        if (!empty($errors)) {
+            $this->sendEmail('status update', $okUpdates, $failedUpdates, $errors);
+        }
+    }
+
     public function sendEmail(string $cause = '', array $succeed = [], array $failed = [], array $errors = [])
     {
         if ($this->senderService && $this->senderService->isEnabled()) {

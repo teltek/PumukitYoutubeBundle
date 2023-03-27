@@ -68,7 +68,7 @@ EOT
         $multimediaObjects = $this->getMultimediaObjectsInYoutubeToUpdate();
         $this->updateVideosInYoutube($multimediaObjects, $output);
 
-        $this->notificationService->notificationOfUploadedVideoResults(
+        $this->notificationService->notificationOfUpdatedVideoResults(
             $this->okUpdates,
             $this->failedUpdates,
             $this->errors

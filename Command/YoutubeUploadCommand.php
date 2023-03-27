@@ -19,8 +19,6 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 class YoutubeUploadCommand extends Command
 {
-    public const PUB_DECISION_AUTONOMOUS = 'PUDEAUTO';
-
     private $documentManager;
     private $youtubeConfigurationService;
     private $videoService;

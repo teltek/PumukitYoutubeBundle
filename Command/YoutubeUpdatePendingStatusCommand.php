@@ -4,13 +4,29 @@ declare(strict_types=1);
 
 namespace Pumukit\YoutubeBundle\Command;
 
+use Doctrine\ODM\MongoDB\DocumentManager;
 use Pumukit\YoutubeBundle\Document\Youtube;
+use Pumukit\YoutubeBundle\Services\NotificationService;
+use Pumukit\YoutubeBundle\Services\VideoService;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class YoutubeUpdatePendingStatusCommand extends YoutubeUpdateStatusCommand
 {
+    protected $okUpdates = [];
+    protected $failedUpdates = [];
+    protected $errors = [];
+    protected $usePumukit1 = false;
+
+    public function __construct(
+        DocumentManager $documentManager,
+        VideoService $videoService,
+        NotificationService $notificationService
+    ) {
+        parent::__construct($documentManager, $videoService, $notificationService);
+    }
+
     protected function configure()
     {
         $this
@@ -31,10 +47,15 @@ EOT
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $statusArray = [Youtube::STATUS_UPLOADING, Youtube::STATUS_PROCESSING];
-        $youtubeDocuments = $this->youtubeRepo->getWithAnyStatus($statusArray);
+        $youtubeDocuments = $this->documentManager->getRepository(Youtube::class)->getWithAnyStatus($statusArray);
 
         $this->updateVideoStatusInYoutube($youtubeDocuments, $output);
-        $this->checkResultsAndSendEmail();
+
+        $this->notificationService->notificationOfUpdatedStatusVideoResults(
+            $this->okUpdates,
+            $this->failedUpdates,
+            $this->errors
+        );
 
         return 0;
     }
