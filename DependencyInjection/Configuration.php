@@ -72,7 +72,7 @@ class Configuration implements ConfigurationInterface
             ->end()
             ->scalarNode('sync_status')
             ->defaultValue(false)
-            ->info('Sync video status and upload video public, hidden or bloq')
+            ->info('Sync video status and upload video public, hidden or blocked')
             ->end()
             ->scalarNode('default_track_upload')
             ->defaultValue('youtube')

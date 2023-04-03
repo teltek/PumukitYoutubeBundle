@@ -7,6 +7,7 @@ use Psr\Log\LoggerInterface;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\YoutubeBundle\Document\Youtube;
+use Pumukit\YoutubeBundle\Services\PlaylistInsertService;
 use Pumukit\YoutubeBundle\Services\YoutubePlaylistService;
 use Pumukit\YoutubeBundle\Services\YoutubeService;
 use Symfony\Component\Console\Command\Command;
@@ -21,7 +22,7 @@ class YoutubeUpdatePlaylistCommand extends Command
     private $mmobjRepo;
     private $youtubeRepo;
     private $youtubeService;
-    private $youtubePlaylistService;
+    private $playlistInsertService;
     private $okUpdates = [];
     private $failedUpdates = [];
     private $errors = [];
@@ -31,12 +32,12 @@ class YoutubeUpdatePlaylistCommand extends Command
     public function __construct(
         DocumentManager $documentManager,
         YoutubeService $youtubeService,
-        YoutubePlaylistService $youtubePlaylistService,
+        PlaylistInsertService $playlistInsertService,
         LoggerInterface $logger
     ) {
         $this->documentManager = $documentManager;
         $this->youtubeService = $youtubeService;
-        $this->youtubePlaylistService = $youtubePlaylistService;
+        $this->playlistInsertService = $playlistInsertService;
         $this->logger = $logger;
 
         parent::__construct();
@@ -60,6 +61,23 @@ EOT
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
+        $youtubeAccounts = $this->getAllYouTubeAccounts();
+        foreach($youtubeAccounts as $account) {
+            $this->playlistInsertService->syncAll($account);
+        }
+
+
+        die;
+        // Sync all playlist with Youtube
+        //$this->youtubePlaylistService->syncPlaylistsRelations($dryRun);
+        foreach ($this->getAllYouTubeAccounts() as $account) {
+            $this->playlistInsertService->syncAll($account);
+        }
+
+
+
+
+
         $dryRun = (true === $input->getOption('dry-run'));
 
         $multimediaObjects = $this->createYoutubeQueryBuilder()
@@ -102,6 +120,21 @@ EOT
 
         return 0;
     }
+
+    private function isPuMuKITMaster(): bool
+    {
+        //'playlists_master'
+
+        return true;
+    }
+
+    private function getAllYouTubeAccounts(): array
+    {
+        return $this->documentManager->getRepository(Tag::class)->findBy([
+            'properties.login' => ['$exists' => true]
+        ]);
+    }
+
 
     protected function initialize(InputInterface $input, OutputInterface $output)
     {

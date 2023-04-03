@@ -14,7 +14,9 @@ use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Person;
 use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\SchemaBundle\Document\Track;
+use Pumukit\SchemaBundle\Services\TagService;
 use Pumukit\YoutubeBundle\Document\Youtube;
+use Pumukit\YoutubeBundle\PumukitYoutubeBundle;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Routing\RouterInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -24,6 +26,7 @@ class VideoDataValidationService
     private $documentManager;
     private $youtubeConfigurationService;
     private $jobService;
+    private $tagService;
     private $opencastService;
     private $router;
     private $translator;
@@ -34,6 +37,7 @@ class VideoDataValidationService
         DocumentManager $documentManager,
         YoutubeConfigurationService $youtubeConfigurationService,
         JobService $jobService,
+        TagService $tagService,
         OpencastService $opencastService = null,
         RouterInterface $router,
         TranslatorInterface $translator,
@@ -43,6 +47,7 @@ class VideoDataValidationService
         $this->documentManager = $documentManager;
         $this->youtubeConfigurationService = $youtubeConfigurationService;
         $this->jobService = $jobService;
+        $this->tagService = $tagService;
         $this->opencastService = $opencastService;
         $this->router = $router;
         $this->translator = $translator;
@@ -87,7 +92,7 @@ class VideoDataValidationService
 
     public function validateMultimediaObjectAccount(MultimediaObject $multimediaObject): ?Tag
     {
-        $youtubeTag = $this->documentManager->getRepository(Tag::class)->findOneBy(['cod' => Youtube::YOUTUBE_TAG_CODE]);
+        $youtubeTag = $this->documentManager->getRepository(Tag::class)->findOneBy(['cod' => PumukitYoutubeBundle::YOUTUBE_TAG_CODE]);
         $account = null;
         foreach ($multimediaObject->getTags() as $tag) {
             if ($tag->isChildOf($youtubeTag)) {
@@ -98,6 +103,27 @@ class VideoDataValidationService
         }
 
         return $account;
+    }
+
+    public function validateMultimediaObjectYouTubeTag(MultimediaObject $multimediaObject): bool
+    {
+        return $multimediaObject->containsTagWithCod(PumukitYoutubeBundle::YOUTUBE_PUBLICATION_CHANNEL_CODE);
+    }
+
+    public function addMultimediaObjectYouTubeTag(MultimediaObject $multimediaObject): void
+    {
+        $youtubeTag = $this->documentManager->getRepository(Tag::class)->findOneBy(['cod' => PumukitYoutubeBundle::YOUTUBE_PUBLICATION_CHANNEL_CODE]);
+        if (!$this->validateMultimediaObjectYouTubeTag($multimediaObject)) {
+            $this->tagService->addTagToMultimediaObject($multimediaObject, $youtubeTag->getId());
+        }
+    }
+
+    public function removeMultimediaObjectYouTubeTag(MultimediaObject $multimediaObject): void
+    {
+        $youtubeTag = $this->documentManager->getRepository(Tag::class)->findOneBy(['cod' => PumukitYoutubeBundle::YOUTUBE_PUBLICATION_CHANNEL_CODE]);
+        if ($this->validateMultimediaObjectYouTubeTag($multimediaObject)) {
+            $this->tagService->removeTagFromMultimediaObject($multimediaObject, $youtubeTag->getId());
+        }
     }
 
     public function getTitleForYoutube(MultimediaObject $multimediaObject, int $limit = 100): string

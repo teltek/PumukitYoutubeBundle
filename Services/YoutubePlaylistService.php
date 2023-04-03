@@ -10,6 +10,7 @@ use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\SchemaBundle\Services\TagService;
 use Pumukit\YoutubeBundle\Document\Youtube;
+use Pumukit\YoutubeBundle\PumukitYoutubeBundle;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 class YoutubePlaylistService
@@ -150,7 +151,7 @@ class YoutubePlaylistService
         if ($this->configurationService->useDefaultPlaylist()) {
             $this->getOrCreateDefaultTag();
         }
-        $youtubeAccount = $this->documentManager->getRepository(Tag::class)->findOneBy(['cod' => Youtube::YOUTUBE_TAG_CODE]);
+        $youtubeAccount = $this->documentManager->getRepository(Tag::class)->findOneBy(['cod' => PumukitYoutubeBundle::YOUTUBE_TAG_CODE]);
         foreach ($youtubeAccount->getChildren() as $account) {
             $allPlaylistTags = $account->getChildren();
             $login = $account->getProperty('login');

@@ -8,6 +8,7 @@ use Doctrine\ODM\MongoDB\DocumentManager;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\YoutubeBundle\Document\Youtube;
+use Pumukit\YoutubeBundle\PumukitYoutubeBundle;
 
 class YoutubeStatsService
 {
@@ -30,7 +31,7 @@ class YoutubeStatsService
     public function getAllYoutubeVideos(): array
     {
         return $this->documentManager->getRepository(MultimediaObject::class)->findBy([
-            'tags.cod' => Youtube::YOUTUBE_PUBLICATION_CHANNEL_CODE,
+            'tags.cod' => PumukitYoutubeBundle::YOUTUBE_PUBLICATION_CHANNEL_CODE,
         ]);
     }
 

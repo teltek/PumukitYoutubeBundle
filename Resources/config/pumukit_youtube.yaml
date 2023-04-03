@@ -95,11 +95,23 @@ services:
     tags:
       - { name: "twig.extension" }
 
+  Pumukit\YoutubeBundle\Services\GooglePlaylistService:
+    class: Pumukit\YoutubeBundle\Services\GooglePlaylistService
+
+  Pumukit\YoutubeBundle\Services\PlaylistDataValidationService:
+    class: Pumukit\YoutubeBundle\Services\PlaylistDataValidationService
+
+  Pumukit\YoutubeBundle\Services\PlaylistInsertService:
+    class: Pumukit\YoutubeBundle\Services\PlaylistInsertService
+
+  Pumukit\YoutubeBundle\Services\PlaylistListService:
+    class: Pumukit\YoutubeBundle\Services\PlaylistListService
+
+  Pumukit\YoutubeBundle\Services\PlaylistDeleteService:
+    class: Pumukit\YoutubeBundle\Services\PlaylistDeleteService
+
   Pumukit\YoutubeBundle\Services\GoogleVideoService:
     class: Pumukit\YoutubeBundle\Services\GoogleVideoService
-
-  Pumukit\YoutubeBundle\Services\VideoService:
-    class: Pumukit\YoutubeBundle\Services\VideoService
 
   Pumukit\YoutubeBundle\Services\VideoInsertService:
     class: Pumukit\YoutubeBundle\Services\VideoInsertService

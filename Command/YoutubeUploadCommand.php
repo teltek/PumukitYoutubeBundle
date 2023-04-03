@@ -10,7 +10,7 @@ use Psr\Log\LoggerInterface;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\YoutubeBundle\Document\Youtube;
 use Pumukit\YoutubeBundle\Services\NotificationService;
-use Pumukit\YoutubeBundle\Services\VideoService;
+use Pumukit\YoutubeBundle\Services\VideoInsertService;
 use Pumukit\YoutubeBundle\Services\YoutubeConfigurationService;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -21,7 +21,7 @@ class YoutubeUploadCommand extends Command
 {
     private $documentManager;
     private $youtubeConfigurationService;
-    private $videoService;
+    private $videoInsertService;
     private $notificationService;
     private $logger;
     private $usePumukit1 = false;
@@ -32,13 +32,13 @@ class YoutubeUploadCommand extends Command
     public function __construct(
         DocumentManager $documentManager,
         YoutubeConfigurationService $youtubeConfigurationService,
-        VideoService $videoService,
+        VideoInsertService $videoInsertService,
         NotificationService $notificationService,
         LoggerInterface $logger,
     ) {
         $this->documentManager = $documentManager;
         $this->youtubeConfigurationService = $youtubeConfigurationService;
-        $this->videoService = $videoService;
+        $this->videoInsertService = $videoInsertService;
         $this->notificationService = $notificationService;
         $this->logger = $logger;
 
@@ -101,7 +101,7 @@ EOT
                 );
                 $output->writeln($infoLog);
 
-                $result = $this->videoService->uploadVideoToYoutube($multimediaObject);
+                $result = $this->videoInsertService->uploadVideoToYoutube($multimediaObject);
                 if (!$result) {
                     $this->failedUploads[] = $multimediaObject;
                 } else {

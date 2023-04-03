@@ -7,7 +7,7 @@ namespace Pumukit\YoutubeBundle\Command;
 use Doctrine\ODM\MongoDB\DocumentManager;
 use Pumukit\YoutubeBundle\Document\Youtube;
 use Pumukit\YoutubeBundle\Services\NotificationService;
-use Pumukit\YoutubeBundle\Services\VideoService;
+use Pumukit\YoutubeBundle\Services\VideoListService;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -21,10 +21,10 @@ class YoutubeUpdatePendingStatusCommand extends YoutubeUpdateStatusCommand
 
     public function __construct(
         DocumentManager $documentManager,
-        VideoService $videoService,
+        VideoListService $videoListService,
         NotificationService $notificationService
     ) {
-        parent::__construct($documentManager, $videoService, $notificationService);
+        parent::__construct($documentManager, $videoListService, $notificationService);
     }
 
     protected function configure()

@@ -11,6 +11,7 @@ use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\SchemaBundle\Services\TagService;
 use Pumukit\YoutubeBundle\Document\Youtube;
+use Pumukit\YoutubeBundle\PumukitYoutubeBundle;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Routing\RouterInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -52,11 +53,11 @@ class NotificationService
     public function notificationOfUploadedVideoResults(array $uploadedVideos, array $failedVideos, array $errors): void
     {
         $youtubeTag = $this->documentManager->getRepository(Tag::class)->findOneBy([
-            'cod' => Youtube::YOUTUBE_PUBLICATION_CHANNEL_CODE,
+            'cod' => PumukitYoutubeBundle::YOUTUBE_PUBLICATION_CHANNEL_CODE,
         ]);
         if (null != $youtubeTag) {
             foreach ($uploadedVideos as $multimediaObject) {
-                if (!$multimediaObject->containsTagWithCod(Youtube::YOUTUBE_PUBLICATION_CHANNEL_CODE)) {
+                if (!$multimediaObject->containsTagWithCod(PumukitYoutubeBundle::YOUTUBE_PUBLICATION_CHANNEL_CODE)) {
                     $this->tagService->addTagToMultimediaObject($multimediaObject, $youtubeTag->getId(), false);
                 }
             }

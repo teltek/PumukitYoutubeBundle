@@ -9,7 +9,7 @@ use Psr\Log\LoggerInterface;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\YoutubeBundle\Document\Youtube;
 use Pumukit\YoutubeBundle\Services\NotificationService;
-use Pumukit\YoutubeBundle\Services\VideoService;
+use Pumukit\YoutubeBundle\Services\VideoUpdateService;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -18,7 +18,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 class YoutubeUpdateMetadataCommand extends Command
 {
     private $documentManager;
-    private $videoService;
+    private $videoUpdateService;
     private $notificationService;
     private $logger;
     private $usePumukit1 = false;
@@ -28,12 +28,12 @@ class YoutubeUpdateMetadataCommand extends Command
 
     public function __construct(
         DocumentManager $documentManager,
-        VideoService $videoService,
+        VideoUpdateService $videoUpdateService,
         NotificationService $notificationService,
         LoggerInterface $logger,
     ) {
         $this->documentManager = $documentManager;
-        $this->videoService = $videoService;
+        $this->videoUpdateService = $videoUpdateService;
         $this->notificationService = $notificationService;
         $this->logger = $logger;
 
@@ -89,7 +89,7 @@ EOT
                 );
                 $output->writeln($infoLog);
 
-                $result = $this->videoService->updateVideoOnYoutube($multimediaObject);
+                $result = $this->videoUpdateService->updateVideoOnYoutube($multimediaObject);
                 if (!$result) {
                     $this->failedUpdates[] = $multimediaObject;
                 } else {

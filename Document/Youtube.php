@@ -12,9 +12,6 @@ use Doctrine\ODM\MongoDB\Mapping\Annotations as MongoDB;
  */
 class Youtube
 {
-    public const YOUTUBE_TAG_CODE = 'YOUTUBE';
-    public const YOUTUBE_PUBLICATION_CHANNEL_CODE = 'PUCHYOUTUBE';
-
     public const STATUS_DEFAULT = 0;
     public const STATUS_UPLOADING = 1;
     public const STATUS_PROCESSING = 2;
@@ -120,6 +117,11 @@ class Youtube
      * @MongoDB\Field(type="string")
      */
     private $youtubeError;
+
+    /**
+     * @MongoDB\Field(type="string")
+     */
+    private $youtubeErrorReason;
 
     /**
      * @MongoDB\Field(type="date")
@@ -423,6 +425,15 @@ class Youtube
     public function setYoutubeError(?string $error): void
     {
         $this->youtubeError = $error;
+    }
+    public function getYoutubeErrorReason(): ?string
+    {
+        return $this->youtubeErrorReason;
+    }
+
+    public function setYoutubeErrorReason(?string $error): void
+    {
+        $this->youtubeErrorReason = $error;
     }
 
     public function setYoutubeErrorDate(?\DateTime $date): void

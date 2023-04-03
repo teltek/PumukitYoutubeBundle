@@ -9,7 +9,7 @@ use MongoDB\BSON\ObjectId;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\YoutubeBundle\Document\Youtube;
 use Pumukit\YoutubeBundle\Services\NotificationService;
-use Pumukit\YoutubeBundle\Services\VideoService;
+use Pumukit\YoutubeBundle\Services\VideoListService;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -18,7 +18,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 class YoutubeUpdateStatusCommand extends Command
 {
     protected $documentManager;
-    protected $videoService;
+    protected $videoListService;
     protected $notificationService;
     protected $okUpdates = [];
     protected $failedUpdates = [];
@@ -27,11 +27,11 @@ class YoutubeUpdateStatusCommand extends Command
 
     public function __construct(
         DocumentManager $documentManager,
-        VideoService $videoService,
+        VideoListService $videoListService,
         NotificationService $notificationService
     ) {
         $this->documentManager = $documentManager;
-        $this->videoService = $videoService;
+        $this->videoListService = $videoListService;
         $this->notificationService = $notificationService;
 
         parent::__construct();
@@ -88,6 +88,7 @@ EOT
                 $errorLog = __CLASS__.' ['.__FUNCTION__.'] The object Youtube with id: '.$youtube->getId().' does not have a Youtube ID variable set.';
                 $youtube->setStatus(Youtube::STATUS_ERROR);
                 $youtube->setYoutubeError($errorLog);
+                $youtube->setYoutubeErrorReason('videoWithoutYoutubeId');
                 $youtube->setYoutubeErrorDate(new \DateTime('now'));
                 $this->documentManager->flush();
 
@@ -98,6 +99,7 @@ EOT
                 $errorLog = sprintf("No multimedia object for YouTube document %s\n", $youtube->getId());
                 $youtube->setStatus(Youtube::STATUS_ERROR);
                 $youtube->setYoutubeError($errorLog);
+                $youtube->setYoutubeErrorReason('videoNotFoundOnPuMuKIT');
                 $youtube->setYoutubeErrorDate(new \DateTime('now'));
                 $this->documentManager->flush();
 
@@ -113,7 +115,7 @@ EOT
                 );
                 $output->writeln($infoLog);
 
-                $result = $this->videoService->updateVideoStatus($youtube, $multimediaObject);
+                $result = $this->videoListService->updateVideoStatus($youtube, $multimediaObject);
                 if (!$result) {
                     $this->failedUpdates[] = $multimediaObject;
                 } else {
