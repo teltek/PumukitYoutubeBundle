@@ -6,5 +6,4 @@ namespace Pumukit\YoutubeBundle\Services;
 
 class PlaylistDataValidationService
 {
-
 }

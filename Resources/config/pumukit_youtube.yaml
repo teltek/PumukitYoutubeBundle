@@ -98,6 +98,19 @@ services:
   Pumukit\YoutubeBundle\Services\GooglePlaylistService:
     class: Pumukit\YoutubeBundle\Services\GooglePlaylistService
 
+
+  Pumukit\YoutubeBundle\Services\GooglePlaylistItemService:
+    class: Pumukit\YoutubeBundle\Services\GooglePlaylistItemService
+
+  Pumukit\YoutubeBundle\Services\PlaylistItemInsertService:
+    class: Pumukit\YoutubeBundle\Services\PlaylistItemInsertService
+
+  Pumukit\YoutubeBundle\Services\PlaylistItemDeleteService:
+    class: Pumukit\YoutubeBundle\Services\PlaylistItemDeleteService
+
+  Pumukit\YoutubeBundle\Services\GoogleResourceService:
+    class: Pumukit\YoutubeBundle\Services\GoogleResourceService
+
   Pumukit\YoutubeBundle\Services\PlaylistDataValidationService:
     class: Pumukit\YoutubeBundle\Services\PlaylistDataValidationService
 

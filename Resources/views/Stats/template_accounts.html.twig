@@ -22,18 +22,14 @@
                                     {% set playlistNumber = account.getChildren()|length %}
                                     {{ playlistNumber }}
                                     <small>
-                                        {% transchoice playlistNumber %}
-                                            {0} playlist|{1} playlist|]1,Inf] playlists
-                                        {% endtranschoice %}
+                                        {{ "{0} playlist|{1} playlist|]1,Inf] playlists"|trans({'%count%': playlistNumber }) }}
                                     </small>
 
                                     <br />
                                     {% set videoNumber = accountsStats[account.getProperty('login')]|length %}
                                     {{ videoNumber }}
                                     <small>
-                                        {% transchoice videoNumber %}
-                                            {0} videos|{1} video|]1,Inf] videos
-                                        {% endtranschoice %}
+                                        {{ "{0} videos|{1} video|]1,Inf] videos"|trans({'%count%': videoNumber }) }}
                                     </small>
                                 </span>
                             </div>

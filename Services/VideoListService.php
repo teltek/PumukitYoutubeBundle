@@ -34,8 +34,7 @@ class VideoListService extends GoogleVideoService
         DocumentManager $documentManager,
         VideoDataValidationService $videoDataValidationService,
         LoggerInterface $logger
-    )
-    {
+    ) {
         $this->googleAccountService = $googleAccountService;
         $this->documentManager = $documentManager;
         $this->videoDataValidationService = $videoDataValidationService;

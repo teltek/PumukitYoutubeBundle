@@ -6,6 +6,7 @@ namespace Pumukit\YoutubeBundle\Controller;
 
 use Pumukit\CoreBundle\Services\PaginationService;
 use Pumukit\YoutubeBundle\Document\Youtube;
+use Pumukit\YoutubeBundle\Services\YoutubeConfigurationService;
 use Pumukit\YoutubeBundle\Services\YoutubeStatsService;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -22,13 +23,16 @@ use Symfony\Component\Routing\Annotation\Route;
 class StatsController extends AbstractController
 {
     private $youtubeStatsService;
+    private $youtubeConfigurationService;
     private $paginationService;
 
     public function __construct(
         YoutubeStatsService $youtubeStatsService,
+        YoutubeConfigurationService $youtubeConfigurationService,
         PaginationService $paginationService
     ) {
         $this->youtubeStatsService = $youtubeStatsService;
+        $this->youtubeConfigurationService = $youtubeConfigurationService;
         $this->paginationService = $paginationService;
     }
 
@@ -101,13 +105,12 @@ class StatsController extends AbstractController
      */
     public function modalConfigurationAction(): Response
     {
-        $youtubeConfigurationService = $this->container->get('pumukityoutube.youtube_configuration');
-        if (!$youtubeConfigurationService) {
+        if (!$this->youtubeConfigurationService) {
             throw new ServiceNotFoundException('YoutubeConfigurationService not found');
         }
 
         return $this->render('@PumukitYoutube/Stats/modal_configuration.html.twig', [
-            'youtubeConfiguration' => $youtubeConfigurationService->getBundleConfiguration(),
+            'youtubeConfiguration' => $this->youtubeConfigurationService->getBundleConfiguration(),
         ]);
     }
 

@@ -101,7 +101,7 @@ EOT
         // Use case:
         // Videos that was removed from PuMuKIT but have YouTube document.
         $orphanVideos = $this->documentManager->getRepository(Youtube::class)->findBy([
-            'status' => Youtube::STATUS_TO_DELETE
+            'status' => Youtube::STATUS_TO_DELETE,
         ]);
         $this->deleteOrphanVideosFromYoutube($orphanVideos, $output);
 
@@ -127,7 +127,6 @@ EOT
                 } else {
                     $this->okRemoved[] = $multimediaObject;
                 }
-
             } catch (\Exception $e) {
                 $errorLog = __CLASS__.' ['.__FUNCTION__
                     .'] Removal of video from MultimediaObject with id "'.$multimediaObject->getId()

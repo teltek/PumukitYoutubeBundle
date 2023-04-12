@@ -7,7 +7,7 @@ use Psr\Log\LoggerInterface;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\YoutubeBundle\Document\Youtube;
-use Pumukit\YoutubeBundle\Services\PlaylistInsertService;
+use Pumukit\YoutubeBundle\Services\PlaylistItemInsertService;
 use Pumukit\YoutubeBundle\Services\YoutubePlaylistService;
 use Pumukit\YoutubeBundle\Services\YoutubeService;
 use Symfony\Component\Console\Command\Command;
@@ -18,11 +18,12 @@ use Symfony\Component\Console\Output\OutputInterface;
 class YoutubeUpdatePlaylistCommand extends Command
 {
     private $documentManager;
+
+    private $playlistItemInsertService;
     private $tagRepo;
     private $mmobjRepo;
     private $youtubeRepo;
     private $youtubeService;
-    private $playlistInsertService;
     private $okUpdates = [];
     private $failedUpdates = [];
     private $errors = [];
@@ -31,13 +32,13 @@ class YoutubeUpdatePlaylistCommand extends Command
 
     public function __construct(
         DocumentManager $documentManager,
+        PlaylistItemInsertService $playlistItemInsertService,
         YoutubeService $youtubeService,
-        PlaylistInsertService $playlistInsertService,
         LoggerInterface $logger
     ) {
         $this->documentManager = $documentManager;
+        $this->playlistItemInsertService = $playlistItemInsertService;
         $this->youtubeService = $youtubeService;
-        $this->playlistInsertService = $playlistInsertService;
         $this->logger = $logger;
 
         parent::__construct();
@@ -61,40 +62,18 @@ EOT
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $youtubeAccounts = $this->getAllYouTubeAccounts();
-        foreach($youtubeAccounts as $account) {
-            $this->playlistInsertService->syncAll($account);
-        }
-
-
-        die;
-        // Sync all playlist with Youtube
-        //$this->youtubePlaylistService->syncPlaylistsRelations($dryRun);
-        foreach ($this->getAllYouTubeAccounts() as $account) {
-            $this->playlistInsertService->syncAll($account);
-        }
-
-
-
-
-
-        $dryRun = (true === $input->getOption('dry-run'));
-
         $multimediaObjects = $this->createYoutubeQueryBuilder()
             ->field('properties.youtube')->exists(true)
             ->getQuery()
             ->execute()
         ;
 
-        $this->youtubePlaylistService->syncPlaylistsRelations($dryRun);
-
-        if ($dryRun) {
-            return 0;
-        }
-
         foreach ($multimediaObjects as $multimediaObject) {
             try {
-                $outUpdatePlaylists = $this->youtubePlaylistService->updatePlaylists($multimediaObject);
+                $response = $this->playlistItemInsertService->updatePlaylist($multimediaObject);
+
+                exit;
+                // $outUpdatePlaylists = $this->youtubePlaylistService->updatePlaylists($multimediaObject);
                 if (0 !== $outUpdatePlaylists) {
                     $errorLog = sprintf('%s [%s] Unknown error in the update of Youtube Playlists of MultimediaObject with id %s: %s', __CLASS__, __FUNCTION__, $multimediaObject->getId(), $outUpdatePlaylists);
                     $this->logger->error($errorLog);
@@ -121,21 +100,6 @@ EOT
         return 0;
     }
 
-    private function isPuMuKITMaster(): bool
-    {
-        //'playlists_master'
-
-        return true;
-    }
-
-    private function getAllYouTubeAccounts(): array
-    {
-        return $this->documentManager->getRepository(Tag::class)->findBy([
-            'properties.login' => ['$exists' => true]
-        ]);
-    }
-
-
     protected function initialize(InputInterface $input, OutputInterface $output)
     {
         $this->tagRepo = $this->documentManager->getRepository(Tag::class);
@@ -145,6 +109,20 @@ EOT
         $this->failedUpdates = [];
         $this->errors = [];
         $this->usePumukit1 = $input->getOption('use-pmk1');
+    }
+
+    private function isPuMuKITMaster(): bool
+    {
+        // 'playlists_master'
+
+        return true;
+    }
+
+    private function getAllYouTubeAccounts(): array
+    {
+        return $this->documentManager->getRepository(Tag::class)->findBy([
+            'properties.login' => ['$exists' => true],
+        ]);
     }
 
     private function createYoutubeQueryBuilder()

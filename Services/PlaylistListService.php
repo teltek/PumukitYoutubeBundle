@@ -23,8 +23,7 @@ class PlaylistListService extends GooglePlaylistService
         DocumentManager $documentManager,
         PlaylistDataValidationService $playlistDataValidationService,
         LoggerInterface $logger
-    )
-    {
+    ) {
         $this->googleAccountService = $googleAccountService;
         $this->documentManager = $documentManager;
         $this->playlistDataValidationService = $playlistDataValidationService;
@@ -36,9 +35,21 @@ class PlaylistListService extends GooglePlaylistService
         return $this->listOne($youtubeAccount, $playlistId);
     }
 
-    public function findAll(Tag $youtubeAccount, ?string $pageToken = null): PlaylistListResponse
+    public function findAll(Tag $youtubeAccount): array
     {
-        return $this->list($youtubeAccount, $pageToken);
+        $playlistResponse = $this->list($youtubeAccount);
+        $playlistItems = $playlistResponse->getItems();
+
+        if (null === $playlistResponse->getNextPageToken()) {
+            return $playlistItems;
+        }
+
+        do {
+            $playlistResponse = $this->list($youtubeAccount, $playlistResponse->getNextPageToken());
+            $playlistItems = array_merge($playlistItems, $playlistResponse->getItems());
+        } while (null !== $playlistResponse->getNextPageToken());
+
+        return $playlistItems;
     }
 
     private function listOne(Tag $youtubeAccount, string $playlistId): PlaylistListResponse
@@ -56,10 +67,10 @@ class PlaylistListService extends GooglePlaylistService
 
         $queryParams = [
             'maxResults' => 50,
-            'mine' => true
+            'mine' => true,
         ];
 
-        if($pageToken) {
+        if ($pageToken) {
             $queryParams['pageToken'] = $pageToken;
         }
 

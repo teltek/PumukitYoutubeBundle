@@ -24,8 +24,7 @@ class VideoDeleteService extends GoogleVideoService
         DocumentManager $documentManager,
         VideoDataValidationService $videoDataValidationService,
         LoggerInterface $logger
-    )
-    {
+    ) {
         $this->googleAccountService = $googleAccountService;
         $this->documentManager = $documentManager;
         $this->videoDataValidationService = $videoDataValidationService;
@@ -38,15 +37,15 @@ class VideoDeleteService extends GoogleVideoService
         $youtube = $this->getYoutubeDocument($multimediaObject);
         if (!$account) {
             $accountLogin = $youtube->getYoutubeAccount();
-            if(!$accountLogin) {
-                $errorLog = __CLASS__ . ' [' . __FUNCTION__ . '] Multimedia object ' . $multimediaObject->getId() . ': doesnt have account';
+            if (!$accountLogin) {
+                $errorLog = __CLASS__.' ['.__FUNCTION__.'] Multimedia object '.$multimediaObject->getId().': doesnt have account';
                 $this->logger->error($errorLog);
 
                 return false;
             }
             $account = $this->documentManager->getRepository(Tag::class)->findOneBy(['properties.login' => $accountLogin]);
-            if(!$account) {
-                $errorLog = __CLASS__ . ' [' . __FUNCTION__ . '] Youtube account ' . $accountLogin . ' doesnt exists';
+            if (!$account) {
+                $errorLog = __CLASS__.' ['.__FUNCTION__.'] Youtube account '.$accountLogin.' doesnt exists';
                 $this->logger->error($errorLog);
 
                 return false;
@@ -60,12 +59,13 @@ class VideoDeleteService extends GoogleVideoService
                 // TODO: Remove from playlist
             }
             $response = $this->delete($account, $video);
-            if($response->getStatusCode() !== 204) {
+            if (204 !== $response->getStatusCode()) {
                 $youtube->setYoutubeError($response);
                 $youtube->setYoutubeErrorReason($response->getReasonPhrase());
                 $youtube->setYoutubeErrorDate(new \DateTime('now'));
 
                 $this->documentManager->flush();
+
                 return false;
             }
         } catch (\Exception $exception) {
@@ -104,7 +104,7 @@ class VideoDeleteService extends GoogleVideoService
     private function getYoutubeDocument(MultimediaObject $multimediaObject)
     {
         return $this->documentManager->getRepository(Youtube::class)->findOneBy([
-            'multimediaObjectId' => $multimediaObject->getId()
+            'multimediaObjectId' => $multimediaObject->getId(),
         ]);
     }
 }

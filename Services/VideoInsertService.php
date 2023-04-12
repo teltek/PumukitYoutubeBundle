@@ -28,8 +28,7 @@ class VideoInsertService extends GoogleVideoService
         YoutubeConfigurationService $youtubeConfigurationService,
         VideoDataValidationService $videoDataValidationService,
         LoggerInterface $logger
-    )
-    {
+    ) {
         $this->googleAccountService = $googleAccountService;
         $this->documentManager = $documentManager;
         $this->youtubeConfigurationService = $youtubeConfigurationService;

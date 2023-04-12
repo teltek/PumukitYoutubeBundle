@@ -7,7 +7,7 @@ namespace Pumukit\YoutubeBundle\Services;
 use Psr\Log\LoggerInterface;
 use Pumukit\SchemaBundle\Document\Tag;
 
-class PlaylistDeleteService extends GooglePlaylistService
+class PlaylistItemDeleteService extends GooglePlaylistService
 {
     private $googleAccountService;
 
@@ -30,6 +30,6 @@ class PlaylistDeleteService extends GooglePlaylistService
     {
         $service = $this->googleAccountService->googleServiceFromAccount($youtubeAccount);
 
-        return $service->playlists->delete($playlistId);
+        return $service->playlistItems->delete($playlistId);
     }
 }

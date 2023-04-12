@@ -10,7 +10,7 @@
 <div class="row">
     <div class="col-md-12">
         <div class="row">
-            {% for status, text in youtubeStatus | filter(status != 0) %}
+            {% for status, text in youtubeStatus %}
                 <div class="col-md-4 col-sm-6 col-xs-12">
                     <a class="youtube_status_link_list" href="{{ path('pumukit_youtube_stat_list', {'status': status }) }}">
                         <div class="info-box"   data-toggle="tooltip" data-placement="bottom" title="{{ ("Show documents by status "|trans) ~ text|trans }}">
@@ -27,9 +27,7 @@
                                     {% endif %}
                                     {{ number }}
                                     <small>
-                                        {% transchoice number %}
-                                            {0} videos|{1} video|]1,Inf] videos
-                                        {% endtranschoice %}
+                                        {{ "{0} videos|{1} video|]1,Inf] videos"|trans({'%count%': number }) }}
                                     </small>
                                 </span>
                             </div>
