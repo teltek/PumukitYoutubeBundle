@@ -104,7 +104,7 @@ class Youtube
     private $uploadDate;
 
     /**
-     * @MongoDB\EmbedMany(targetDocument="Caption")
+     * @MongoDB\EmbedMany(targetDocument=Caption::class)
      */
     private $captions;
 
@@ -346,7 +346,7 @@ class Youtube
         return $this->captions->contains($caption);
     }
 
-    public function getCaptions(): ?ArrayCollection
+    public function getCaptions()
     {
         return $this->captions;
     }

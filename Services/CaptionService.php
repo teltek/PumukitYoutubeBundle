@@ -10,7 +10,7 @@ use Pumukit\YoutubeBundle\Document\Caption;
 
 class CaptionService extends YoutubeService
 {
-    public function listAllCaptions(MultimediaObject $multimediaObject)
+    /*public function listAllCaptions(MultimediaObject $multimediaObject)
     {
         $youtube = $this->getYoutubeDocument($multimediaObject);
         $login = $youtube->getYoutubeAccount();
@@ -108,5 +108,5 @@ class CaptionService extends YoutubeService
         $caption->setIsDraft($output['is_draft']);
 
         return $caption;
-    }
+    }*/
 }

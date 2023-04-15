@@ -89,7 +89,7 @@ EOT
         return 0;
     }
 
-    private function uploadVideosToYoutube($multimediaObjects, OutputInterface $output)
+    private function uploadVideosToYoutube($multimediaObjects, OutputInterface $output): void
     {
         foreach ($multimediaObjects as $multimediaObject) {
             try {
@@ -107,18 +107,18 @@ EOT
                 } else {
                     $this->okUploads[] = $multimediaObject;
                 }
-            } catch (\Exception $e) {
+            } catch (\Exception $exception) {
                 $errorLog = sprintf(
                     '%s [%s] The upload of the video from the Multimedia Object with id %s failed: %s',
                     __CLASS__,
                     __FUNCTION__,
                     $multimediaObject->getId(),
-                    $e->getMessage()
+                    $exception->getMessage()
                 );
                 $this->logger->error($errorLog);
                 $output->writeln($errorLog);
                 $this->failedUploads[] = $multimediaObject;
-                $this->errors[] = $e->getMessage();
+                $this->errors[] = $exception->getMessage();
             }
         }
     }

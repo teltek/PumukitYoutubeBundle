@@ -9,6 +9,7 @@ use Psr\Log\LoggerInterface;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\YoutubeBundle\Document\Youtube;
 use Pumukit\YoutubeBundle\Services\CaptionService;
+use Pumukit\YoutubeBundle\Services\CaptionsInsertService;
 use Pumukit\YoutubeBundle\Services\YoutubeConfigurationService;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -27,6 +28,8 @@ class CaptionUploadCommand extends Command
 
     private $documentManager;
     private $configurationService;
+
+    private $captionsInsertService;
     private $captionService;
     private $logger;
 
@@ -34,16 +37,18 @@ class CaptionUploadCommand extends Command
         DocumentManager $documentManager,
         YoutubeConfigurationService $configurationService,
         CaptionService $captionService,
+        CaptionsInsertService $captionsInsertService,
         LoggerInterface $logger
     ) {
         $this->documentManager = $documentManager;
         $this->configurationService = $configurationService;
         $this->captionService = $captionService;
+        $this->captionsInsertService = $captionsInsertService;
         $this->logger = $logger;
         parent::__construct();
     }
 
-    protected function configure()
+    protected function configure(): void
     {
         $this
             ->setName('pumukit:youtube:caption:upload')
@@ -60,8 +65,10 @@ EOT
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $youtubeMultimediaObjects = $this->getYoutubeMultimediaObjects();
-        $this->uploadCaptionsToYoutube($youtubeMultimediaObjects);
-        $this->checkResultsAndSendEmail();
+        $this->uploadCaptionsToYoutube($youtubeMultimediaObjects, $output);
+        //$this->checkResultsAndSendEmail();
+
+        // servicio de notificacion.
 
         return 0;
     }
@@ -78,38 +85,70 @@ EOT
         $this->output = $output;
     }
 
-    private function uploadCaptionsToYoutube(array $mms)
+    private function uploadCaptionsToYoutube($multimediaObjects, OutputInterface $output): void
     {
-        foreach ($mms as $multimediaObject) {
+        foreach ($multimediaObjects as $multimediaObject) {
             try {
-                $youtube = $this->captionService->getYoutubeDocument($multimediaObject);
-                if (null == $youtube) {
+                $youtube = $this->getYoutubeDocument($multimediaObject);
+                if (!$youtube instanceof Youtube || Youtube::STATUS_PUBLISHED !== $youtube->getStatus()) {
                     continue;
                 }
-                if (Youtube::STATUS_PUBLISHED !== $youtube->getStatus()) {
+
+
+                $infoLog = sprintf(
+                    '%s [%s] Started uploading captions to Youtube of MultimediaObject with id %s',
+                    __CLASS__,
+                    __FUNCTION__,
+                    $multimediaObject->getId()
+                );
+                $output->writeln($infoLog);
+
+                /*if (Youtube::STATUS_PUBLISHED !== $youtube->getStatus()) {
                     continue;
-                }
+                }*/
+
                 $captionMaterialIds = $this->getCaptionsMaterialIds($youtube);
                 $newMaterialIds = $this->getNewMaterialIds($multimediaObject, $captionMaterialIds);
-                if ($newMaterialIds) {
-                    $outUpload = $this->captionService->uploadCaption($multimediaObject, $newMaterialIds);
-                    if (!is_array($outUpload)) {
-                        $errorLog = sprintf('%s [%s] Unknown error in the upload caption to Youtube of MultimediaObject with id %s: %s', __CLASS__, __FUNCTION__, $multimediaObject->getId(), $outUpload);
-                        $this->logger->error($errorLog);
-                        $this->output->writeln($errorLog);
-                        $this->failedUploads[] = $multimediaObject;
-                        $this->errors[] = $errorLog;
 
-                        continue;
-                    }
+                if (!$newMaterialIds) {
+                    continue;
+                }
+
+                $result = $this->captionsInsertService->uploadCaption($youtube, $multimediaObject, $newMaterialIds);
+                if (!$result) {
+                    $this->failedUploads[] = $multimediaObject;
+                } else {
                     $this->okUploads[] = $multimediaObject;
                 }
-            } catch (\Exception $e) {
-                $errorLog = sprintf('%s [%s] The upload of the caption from the Multimedia Object with id %s failed: %s', __CLASS__, __FUNCTION__, $multimediaObject->getId(), $e->getMessage());
+
+                /*if (!is_array($outUpload)) {
+                    $errorLog = sprintf('%s [%s] Unknown error in the upload caption to Youtube of MultimediaObject with id %s: %s', __CLASS__, __FUNCTION__, $multimediaObject->getId(), $outUpload);
+                    $this->logger->error($errorLog);
+                    $this->output->writeln($errorLog);
+                    $this->failedUploads[] = $multimediaObject;
+                    $this->errors[] = $errorLog;
+
+                    continue;
+                }
+                $this->okUploads[] = $multimediaObject;*/
+            } catch (\Exception $exception) {
+                $errorLog = sprintf(
+                    '%s [%s] Caption of the video from the Multimedia Object with id %s failed: %s',
+                    __CLASS__,
+                    __FUNCTION__,
+                    $multimediaObject->getId(),
+                    $exception->getMessage()
+                );
+                $this->logger->error($errorLog);
+                $output->writeln($errorLog);
+                $this->failedUploads[] = $multimediaObject;
+                $this->errors[] = $exception->getMessage();
+
+                /*$errorLog = sprintf('%s [%s] The upload of the caption from the Multimedia Object with id %s failed: %s', __CLASS__, __FUNCTION__, $multimediaObject->getId(), $e->getMessage());
                 $this->logger->error($errorLog);
                 $this->output->writeln($errorLog);
                 $this->failedUploads[] = $multimediaObject;
-                $this->errors[] = $e->getMessage();
+                $this->errors[] = $e->getMessage();*/
             }
         }
     }
@@ -117,7 +156,7 @@ EOT
     private function getYoutubeMultimediaObjects()
     {
         $pubChannelTags = $this->configurationService->publicationChannelsTags();
-        $queryBuilder = $this->captionService->createYoutubeMultimediaObjectsQueryBuilder($pubChannelTags);
+        $queryBuilder = $this->createYoutubeMultimediaObjectsQueryBuilder($pubChannelTags);
 
         return $queryBuilder
             ->field('properties.youtube')->exists(true)
@@ -156,8 +195,31 @@ EOT
 
     private function checkResultsAndSendEmail(): void
     {
-        if (!empty($this->failedUploads)) {
+       /* if (!empty($this->failedUploads)) {
             $this->captionService->sendEmail('caption upload', $this->okUploads, $this->failedUploads, $this->errors);
+        }*/
+    }
+
+    private function getYoutubeDocument(MultimediaObject $multimediaObject)
+    {
+        return $this->documentManager->getRepository(Youtube::class)->findOneBy([
+            'multimediaObjectId' => $multimediaObject->getId(),
+        ]);
+    }
+
+    private function createYoutubeMultimediaObjectsQueryBuilder(array $pubChannelTags)
+    {
+        if ($this->configurationService->syncStatus()) {
+            $aStatus = [MultimediaObject::STATUS_PUBLISHED, MultimediaObject::STATUS_BLOCKED, MultimediaObject::STATUS_HIDDEN];
+        } else {
+            $aStatus = [MultimediaObject::STATUS_PUBLISHED];
         }
+
+        return $this->documentManager->getRepository(MultimediaObject::class)->createQueryBuilder()
+            ->field('properties.pumukit1id')->exists(false)
+            ->field('properties.origin')->notEqual('youtube')
+            ->field('status')->in($aStatus)
+            ->field('embeddedBroadcast.type')->equals('public')
+            ->field('tags.cod')->all($pubChannelTags);
     }
 }

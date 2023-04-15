@@ -143,3 +143,12 @@ services:
 
   Pumukit\YoutubeBundle\Services\NotificationService:
     class: Pumukit\YoutubeBundle\Services\NotificationService
+
+  Pumukit\YoutubeBundle\Services\CaptionsInsertService:
+    class: Pumukit\YoutubeBundle\Services\CaptionsInsertService
+
+  Pumukit\YoutubeBundle\Services\CaptionsDeleteService:
+    class: Pumukit\YoutubeBundle\Services\CaptionsDeleteService
+
+  Pumukit\YoutubeBundle\Services\CaptionsListService:
+    class: Pumukit\YoutubeBundle\Services\CaptionsListService
