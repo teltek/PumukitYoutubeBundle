@@ -66,7 +66,7 @@ EOT
     {
         $youtubeMultimediaObjects = $this->getYoutubeMultimediaObjects();
         $this->uploadCaptionsToYoutube($youtubeMultimediaObjects, $output);
-        //$this->checkResultsAndSendEmail();
+        // $this->checkResultsAndSendEmail();
 
         // servicio de notificacion.
 
@@ -93,7 +93,6 @@ EOT
                 if (!$youtube instanceof Youtube || Youtube::STATUS_PUBLISHED !== $youtube->getStatus()) {
                     continue;
                 }
-
 
                 $infoLog = sprintf(
                     '%s [%s] Started uploading captions to Youtube of MultimediaObject with id %s',
@@ -195,9 +194,9 @@ EOT
 
     private function checkResultsAndSendEmail(): void
     {
-       /* if (!empty($this->failedUploads)) {
-            $this->captionService->sendEmail('caption upload', $this->okUploads, $this->failedUploads, $this->errors);
-        }*/
+        /* if (!empty($this->failedUploads)) {
+             $this->captionService->sendEmail('caption upload', $this->okUploads, $this->failedUploads, $this->errors);
+         }*/
     }
 
     private function getYoutubeDocument(MultimediaObject $multimediaObject)

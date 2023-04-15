@@ -6,7 +6,6 @@ namespace Pumukit\YoutubeBundle\Services;
 
 use Doctrine\ODM\MongoDB\DocumentManager;
 use Psr\Log\LoggerInterface;
-use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\YoutubeBundle\Document\Youtube;
 
@@ -21,8 +20,7 @@ class CaptionsDeleteService extends GoogleCaptionService
         DocumentManager $documentManager,
         GoogleAccountService $googleAccountService,
         LoggerInterface $logger
-    )
-    {
+    ) {
         $this->documentManager = $documentManager;
         $this->googleAccountService = $googleAccountService;
         $this->logger = $logger;
@@ -52,9 +50,8 @@ class CaptionsDeleteService extends GoogleCaptionService
 
     private function delete(Tag $account, string $captionId)
     {
-        $service =$this->googleAccountService->googleServiceFromAccount($account);
+        $service = $this->googleAccountService->googleServiceFromAccount($account);
 
         return $service->captions->delete($captionId);
     }
-
 }

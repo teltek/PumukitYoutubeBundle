@@ -51,6 +51,21 @@ class CaptionDeleteCommand extends Command
         parent::__construct();
     }
 
+    public function validateMultimediaObjectAccount(MultimediaObject $multimediaObject): ?Tag
+    {
+        $youtubeTag = $this->documentManager->getRepository(Tag::class)->findOneBy(['cod' => PumukitYoutubeBundle::YOUTUBE_TAG_CODE]);
+        $account = null;
+        foreach ($multimediaObject->getTags() as $tag) {
+            if ($tag->isChildOf($youtubeTag)) {
+                $account = $this->documentManager->getRepository(Tag::class)->findOneBy(['cod' => $tag->getCod()]);
+
+                break;
+            }
+        }
+
+        return $account;
+    }
+
     protected function configure(): void
     {
         $this
@@ -69,7 +84,7 @@ EOT
     {
         $youtubeMultimediaObjects = $this->getYoutubeMultimediaObjects();
         $this->deleteCaptionsFromYoutube($youtubeMultimediaObjects);
-        //$this->checkResultsAndSendEmail();
+        // $this->checkResultsAndSendEmail();
 
         return 0;
     }
@@ -88,7 +103,6 @@ EOT
     private function deleteCaptionsFromYoutube($multimediaObjects)
     {
         foreach ($multimediaObjects as $multimediaObject) {
-
             try {
                 $youtube = $this->getYoutubeDocument($multimediaObject);
                 if (!$youtube instanceof Youtube) {
@@ -107,8 +121,8 @@ EOT
 
                         continue;
                     }*/
-                    if(!$result) {
-                        //$errorLog = sprintf('%s [%s] Unknown error in deleting caption from Youtube of MultimediaObject with id %s: %s', __CLASS__, __FUNCTION__, $multimediaObject->getId(), $outDelete);
+                    if (!$result) {
+                        // $errorLog = sprintf('%s [%s] Unknown error in deleting caption from Youtube of MultimediaObject with id %s: %s', __CLASS__, __FUNCTION__, $multimediaObject->getId(), $outDelete);
                         $errorLog = 'error';
                         $this->logger->error($errorLog);
                         $this->output->writeln($errorLog);
@@ -157,7 +171,7 @@ EOT
         $deleteCaptionIds = [];
         $youtubeCaptions = $youtube->getCaptions();
 
-        foreach($youtubeCaptions as $caption) {
+        foreach ($youtubeCaptions as $caption) {
             $material = $multimediaObject->getMaterialById($caption->getMaterialId());
             if (in_array($caption->getMaterialId(), $materialIds) && !$material->isHide()) {
                 continue;
@@ -167,7 +181,6 @@ EOT
             $this->logger->info($infoLog);
             $this->output->writeln($infoLog);
         }
-
 
         return $deleteCaptionIds;
     }
@@ -184,6 +197,7 @@ EOT
             'multimediaObjectId' => $multimediaObject->getId(),
         ]);
     }
+
     private function createYoutubeMultimediaObjectsQueryBuilder(array $pubChannelTags)
     {
         if ($this->configurationService->syncStatus()) {
@@ -198,20 +212,5 @@ EOT
             ->field('status')->in($aStatus)
             ->field('embeddedBroadcast.type')->equals('public')
             ->field('tags.cod')->all($pubChannelTags);
-    }
-
-    public function validateMultimediaObjectAccount(MultimediaObject $multimediaObject): ?Tag
-    {
-        $youtubeTag = $this->documentManager->getRepository(Tag::class)->findOneBy(['cod' => PumukitYoutubeBundle::YOUTUBE_TAG_CODE]);
-        $account = null;
-        foreach ($multimediaObject->getTags() as $tag) {
-            if ($tag->isChildOf($youtubeTag)) {
-                $account = $this->documentManager->getRepository(Tag::class)->findOneBy(['cod' => $tag->getCod()]);
-
-                break;
-            }
-        }
-
-        return $account;
     }
 }

@@ -21,7 +21,7 @@ class GoogleCaptionService
     public function createCaptionSnippet(Material $material, string $videoId): \Google_Service_YouTube_CaptionSnippet
     {
         $captionSnippet = $this->createGoogleServiceYoutubeCaptionSnippet();
-        //$captionSnippet->setIsDraft(false);
+        // $captionSnippet->setIsDraft(false);
         $captionSnippet->setLanguage($material->getLanguage());
         $captionSnippet->setName($material->getName());
         $captionSnippet->setVideoId($videoId);

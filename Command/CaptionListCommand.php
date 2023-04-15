@@ -5,14 +5,9 @@ declare(strict_types=1);
 namespace Pumukit\YoutubeBundle\Command;
 
 use Doctrine\ODM\MongoDB\DocumentManager;
-use Psr\Log\LoggerInterface;
-use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\YoutubeBundle\Document\Youtube;
-use Pumukit\YoutubeBundle\Services\CaptionService;
-use Pumukit\YoutubeBundle\Services\CaptionsInsertService;
 use Pumukit\YoutubeBundle\Services\CaptionsListService;
-use Pumukit\YoutubeBundle\Services\YoutubeConfigurationService;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -55,16 +50,18 @@ EOT
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $element = $this->documentManager->getRepository(Youtube::class)->findOneBy([
-            'youtubeId' => $input->getOption('videoId')
+            'youtubeId' => $input->getOption('videoId'),
         ]);
 
         $account = $this->documentManager->getRepository(Tag::class)->findOneBy([
-            'properties.login' => $element->getYoutubeAccount()
+            'properties.login' => $element->getYoutubeAccount(),
         ]);
 
         $response = $this->captionListService->findAll($account, $element->getYoutubeId());
 
-        var_dump($response);die;
+        var_dump($response);
+
+        exit;
 
         return 0;
     }

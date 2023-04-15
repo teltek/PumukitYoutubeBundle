@@ -12,11 +12,11 @@ class CaptionsListService extends GoogleAccountService
     {
         return $this->list($account, $videoId);
     }
+
     private function list(Tag $account, string $videoId): \Google\Service\YouTube\CaptionListResponse
     {
         $service = $this->googleServiceFromAccount($account);
 
         return $service->captions->listCaptions('snippet', $videoId);
     }
-
 }

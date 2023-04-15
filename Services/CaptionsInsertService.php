@@ -23,8 +23,7 @@ class CaptionsInsertService extends GoogleCaptionService
         DocumentManager $documentManager,
         GoogleAccountService $googleAccountService,
         LoggerInterface $logger
-    )
-    {
+    ) {
         $this->documentManager = $documentManager;
         $this->googleAccountService = $googleAccountService;
         $this->logger = $logger;
@@ -32,7 +31,7 @@ class CaptionsInsertService extends GoogleCaptionService
 
     public function uploadCaption(Youtube $youtube, MultimediaObject $multimediaObject, array $materialIds = []): bool
     {
-        //$login = $youtube->getYoutubeAccount();
+        // $login = $youtube->getYoutubeAccount();
         foreach ($materialIds as $materialId) {
             $material = $multimediaObject->getMaterialById($materialId);
             if (!$material) {
@@ -40,15 +39,16 @@ class CaptionsInsertService extends GoogleCaptionService
             }
 
             try {
-                //$result = $this->youtubeProcessService->insertCaption($youtube, $material->getName(), $material->getLanguage(), $material->getPath(), $login);
+                // $result = $this->youtubeProcessService->insertCaption($youtube, $material->getName(), $material->getLanguage(), $material->getPath(), $login);
                 $videoId = $multimediaObject->getProperty('youtube');
-                if(!$videoId) {
-                    $this->logger->error('Multimedia Object with ID '. $multimediaObject->getId() .' doesnt have youtube property');
+                if (!$videoId) {
+                    $this->logger->error('Multimedia Object with ID '.$multimediaObject->getId().' doesnt have youtube property');
+
                     continue;
                 }
 
                 $account = $this->documentManager->getRepository(Tag::class)->findOneBy([
-                   'properties.login' => $youtube->getYoutubeAccount()
+                    'properties.login' => $youtube->getYoutubeAccount(),
                 ]);
 
                 // TODO: Si existe un caption con el mismo nombre en YT para el mismo idioma da error.
@@ -57,12 +57,12 @@ class CaptionsInsertService extends GoogleCaptionService
                 $caption = $this->createCaptionDocument($material, $result);
                 $youtube->addCaption($caption);
 
-                //$uploaded[] = $result;
+                // $uploaded[] = $result;
             } catch (\Exception $exception) {
                 $errorLog = __CLASS__.' ['.__FUNCTION__
                     ."] Error in uploading Caption for Youtube video with id '"
                     .$youtube->getId()."' and material Id '"
-                    .$materialId."': ".  $exception->getMessage();
+                    .$materialId."': ".$exception->getMessage();
                 $this->logger->error($errorLog);
             }
 
@@ -81,7 +81,7 @@ class CaptionsInsertService extends GoogleCaptionService
             $uploaded[] = $result['out'];*/
         }
 
-        //$this->documentManager->persist($youtube);
+        // $this->documentManager->persist($youtube);
         $this->documentManager->flush();
 
         return true;
@@ -99,7 +99,7 @@ class CaptionsInsertService extends GoogleCaptionService
                 'sync' => false,
                 'data' => file_get_contents($material->getPath()),
                 'mimeType' => '*/*',
-                'uploadType' => 'multipart'
+                'uploadType' => 'multipart',
             ]
         );
     }
@@ -128,5 +128,4 @@ class CaptionsInsertService extends GoogleCaptionService
 
         return $caption;
     }
-
 }

@@ -17,17 +17,21 @@ class VideoDeleteService extends GoogleVideoService
     private $documentManager;
     private $videoDataValidationService;
 
+    private $playlistItemDeleteService;
+
     private $logger;
 
     public function __construct(
         GoogleAccountService $googleAccountService,
         DocumentManager $documentManager,
         VideoDataValidationService $videoDataValidationService,
+        PlaylistItemDeleteService $playlistItemDeleteService,
         LoggerInterface $logger
     ) {
         $this->googleAccountService = $googleAccountService;
         $this->documentManager = $documentManager;
         $this->videoDataValidationService = $videoDataValidationService;
+        $this->playlistItemDeleteService = $playlistItemDeleteService;
         $this->logger = $logger;
     }
 
@@ -56,7 +60,10 @@ class VideoDeleteService extends GoogleVideoService
 
         try {
             if ($youtube->getPlaylists()) {
-                // TODO: Remove from playlist
+                foreach ($youtube->getPlaylists() as $playlistId => $playlistRel) {
+                    $this->playlistItemDeleteService->deleteOnePlaylist($account, $playlistRel);
+                    $youtube->removePlaylist($playlistId);
+                }
             }
             $response = $this->delete($account, $video);
             if (204 !== $response->getStatusCode()) {
@@ -81,6 +88,48 @@ class VideoDeleteService extends GoogleVideoService
         $youtube->setStatus(Youtube::STATUS_REMOVED);
         $multimediaObject->removeProperty('youtube');
         $multimediaObject->removeProperty('youtubeurl');
+        $this->documentManager->flush();
+
+        return true;
+    }
+
+    public function deleteVideoFromYouTubeByYouTubeDocument(Youtube $youtube): bool
+    {
+        $account = $this->documentManager->getRepository(Tag::class)->findOneBy(
+            [
+                'properties.login' => $youtube->getYoutubeAccount()]
+        );
+
+        $video = $this->createVideo($youtube->getYoutubeId());
+
+        try {
+            if ($youtube->getPlaylists()) {
+                foreach ($youtube->getPlaylists() as $playlistId => $playlistRel) {
+                    $this->playlistItemDeleteService->deleteOnePlaylist($account, $playlistRel);
+                    $youtube->removePlaylist($playlistId);
+                }
+            }
+            $response = $this->delete($account, $video);
+            if (204 !== $response->getStatusCode()) {
+                $youtube->setYoutubeError($response);
+                $youtube->setYoutubeErrorReason($response->getReasonPhrase());
+                $youtube->setYoutubeErrorDate(new \DateTime('now'));
+
+                $this->documentManager->flush();
+
+                return false;
+            }
+        } catch (\Exception $exception) {
+            $youtube->setYoutubeError($exception->getMessage());
+            $youtube->setYoutubeErrorReason($exception->getMessage());
+            $youtube->setYoutubeErrorDate(new \DateTime('now'));
+            $this->documentManager->flush();
+
+            return false;
+        }
+
+        $youtube->setStatus(Youtube::STATUS_REMOVED);
+
         $this->documentManager->flush();
 
         return true;
