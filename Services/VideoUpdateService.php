@@ -65,7 +65,7 @@ class VideoUpdateService extends GoogleVideoService
 
         $status = 'public';
         if ($this->youtubeConfigurationService->syncStatus()) {
-            $status = YoutubeService::$status[$multimediaObject->getStatus()];
+            $status = $this->youtubeConfigurationService->videoStatusMapping($multimediaObject->getStatus());
         }
 
         $videoSnippet = $this->createVideoSnippet($title, $description, $tags);

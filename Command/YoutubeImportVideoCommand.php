@@ -17,7 +17,7 @@ use Pumukit\SchemaBundle\Services\MultimediaObjectEventDispatcherService;
 use Pumukit\SchemaBundle\Services\MultimediaObjectPicService;
 use Pumukit\SchemaBundle\Services\TagService;
 use Pumukit\YoutubeBundle\Document\Youtube;
-use Pumukit\YoutubeBundle\Services\YoutubeService;
+// use Pumukit\YoutubeBundle\Services\YoutubeService;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -43,7 +43,6 @@ class YoutubeImportVideoCommand extends Command
 
     public function __construct(
         DocumentManager $documentManager,
-        YoutubeService $youtubeService,
         TagService $tagService,
         FactoryService $factoryService,
         JobService $jobService,
@@ -53,7 +52,6 @@ class YoutubeImportVideoCommand extends Command
         LoggerInterface $logger
     ) {
         $this->documentManager = $documentManager;
-        $this->youtubeService = $youtubeService;
         $this->tagService = $tagService;
         $this->factoryService = $factoryService;
         $this->jobService = $jobService;
@@ -142,7 +140,7 @@ EOT
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $login = $input->getArgument('login');
+        /*$login = $input->getArgument('login');
         $yid = $input->getArgument('yid');
         $step = $input->getOption('step');
 
@@ -243,21 +241,21 @@ EOT
             default:
                 $output->writeln('<error>Select a valid step</error>');
         }
-
+*/
         return 0;
     }
 
     protected function initialize(InputInterface $input, OutputInterface $output)
     {
-        $this->tagRepo = $this->documentManager->getRepository(Tag::class);
-        $this->mmobjRepo = $this->documentManager->getRepository(MultimediaObject::class);
-        $this->seriesRepo = $this->documentManager->getRepository(Series::class);
-        $this->youtubeRepo = $this->documentManager->getRepository(Youtube::class);
+        /* $this->tagRepo = $this->documentManager->getRepository(Tag::class);
+         $this->mmobjRepo = $this->documentManager->getRepository(MultimediaObject::class);
+         $this->seriesRepo = $this->documentManager->getRepository(Series::class);
+         $this->youtubeRepo = $this->documentManager->getRepository(Youtube::class);*/
     }
 
     private function moveTracks(MultimediaObject $mmobj, $trackPath)
     {
-        if ($this->profileService->getProfile('master_copy')) {
+        /*if ($this->profileService->getProfile('master_copy')) {
             $masterProfile = 'master_copy';
         } elseif ($this->profileService->getProfile('master-copy')) {
             $masterProfile = 'master-copy';
@@ -281,12 +279,12 @@ EOT
             $this->jobService->createTrackWithFile($trackPath, $masterProfile, $mmobj);
         } catch (\Exception $e) {
             throw new \Exception('Error coping master file "'.$trackPath.'"');
-        }
+        }*/
     }
 
     private function downloadPic(MultimediaObject $mmobj, $quality = null, $force = false)
     {
-        $meta = $mmobj->getProperty('youtubemeta');
+        /*$meta = $mmobj->getProperty('youtubemeta');
 
         if (!$quality) {
             $picUrl = $meta['snippet']['thumbnails']['standard']['url'] ??
@@ -330,7 +328,7 @@ EOT
         $mmobj->addPic($pic);
 
         $this->documentManager->persist($mmobj);
-        $this->documentManager->flush();
+        $this->documentManager->flush();*/
     }
 
     /**
@@ -338,7 +336,7 @@ EOT
      */
     private function tagMultimediaObject(MultimediaObject $mmobj, array $tagIds)
     {
-        $tags = $this->tagRepo->findBy(
+        /*$tags = $this->tagRepo->findBy(
             [
                 'properties.origin' => 'youtube',
                 'properties.youtube' => ['$in' => $tagIds],
@@ -356,41 +354,41 @@ EOT
 
         foreach ($tags as $tag) {
             $this->tagService->addTag($mmobj, $tag);
-        }
+        }*/
     }
 
     private function createMultimediaObject(Series $series, $yid, $status, $login, OutputInterface $output)
     {
-        try {
-            $meta = $this->youtubeService->getVideoMeta($yid, $login);
-        } catch (\Exception $e) {
-            throw new \Exception('No Youtube video with id '.$yid);
-        }
+        /* try {
+             $meta = $this->youtubeService->getVideoMeta($yid, $login);
+         } catch (\Exception $e) {
+             throw new \Exception('No Youtube video with id '.$yid);
+         }
 
-        $mmobj = $this->factoryService->createMultimediaObject($series, false);
-        $mmobj->setStatus($status);
-        $mmobj->setTitle($meta['out']['snippet']['title']);
-        if (isset($meta['out']['snippet']['description'])) {
-            $mmobj->setDescription($meta['out']['snippet']['description']);
-        }
-        if (isset($meta['out']['snippet']['tags'])) {
-            $mmobj->setKeywords($meta['out']['snippet']['tags']);
-        }
-        $dataTime = \DateTime::createFromFormat('Y-m-d\TH:i:s', substr($meta['out']['snippet']['publishedAt'], 0, 19));
-        $mmobj->setRecordDate($dataTime);
-        $mmobj->setPublicDate($dataTime);
-        $mmobj->setProperty('origin', 'youtube');
-        $mmobj->setProperty('youtubemeta', $meta['out']);
+         $mmobj = $this->factoryService->createMultimediaObject($series, false);
+         $mmobj->setStatus($status);
+         $mmobj->setTitle($meta['out']['snippet']['title']);
+         if (isset($meta['out']['snippet']['description'])) {
+             $mmobj->setDescription($meta['out']['snippet']['description']);
+         }
+         if (isset($meta['out']['snippet']['tags'])) {
+             $mmobj->setKeywords($meta['out']['snippet']['tags']);
+         }
+         $dataTime = \DateTime::createFromFormat('Y-m-d\TH:i:s', substr($meta['out']['snippet']['publishedAt'], 0, 19));
+         $mmobj->setRecordDate($dataTime);
+         $mmobj->setPublicDate($dataTime);
+         $mmobj->setProperty('origin', 'youtube');
+         $mmobj->setProperty('youtubemeta', $meta['out']);
 
-        $this->documentManager->persist($mmobj);
-        $this->documentManager->flush();
+         $this->documentManager->persist($mmobj);
+         $this->documentManager->flush();
 
-        return $mmobj;
+         return $mmobj;*/
     }
 
     private function getMmObjFromYid($yid)
     {
-        $mmobj = $this->mmobjRepo->findOneBy(['properties.youtubemeta.id' => $yid]);
+        /*$mmobj = $this->mmobjRepo->findOneBy(['properties.youtubemeta.id' => $yid]);
         if ($mmobj) {
             return $mmobj;
         }
@@ -400,12 +398,12 @@ EOT
             return null;
         }
 
-        return $this->mmobjRepo->find($yt->getMultimediaObjectId());
+        return $this->mmobjRepo->find($yt->getMultimediaObjectId());*/
     }
 
     private function getSeries($seriesId)
     {
-        if (!$seriesId) {
+        /*if (!$seriesId) {
             throw new \Exception('No series id argument');
         }
 
@@ -448,11 +446,11 @@ EOT
             return $series;
         }
 
-        throw new \Exception('No series, or YouTube tag with id '.$seriesId);
+        throw new \Exception('No series, or YouTube tag with id '.$seriesId);*/
     }
 
     private function getStatus($status)
-    {
+    {/*
         $status = strtolower($status);
         $validStatus = [
             'published',
@@ -482,7 +480,7 @@ EOT
                 return MultimediaObject::STATUS_HIDDEN;
         }
 
-        return MultimediaObject::STATUS_PUBLISHED;
+        return MultimediaObject::STATUS_PUBLISHED;*/
     }
 
     /**
@@ -492,7 +490,7 @@ EOT
      */
     private function download($url, $directory, $filename)
     {
-        if (!is_dir($directory)) {
+        /*if (!is_dir($directory)) {
             if (false === @mkdir($directory, 0777, true) && !is_dir($directory)) {
                 throw new FileException(sprintf('Unable to create the "%s" directory', $directory));
             }
@@ -524,6 +522,6 @@ EOT
 
         if (!$output || !$output2) {
             throw new FileException(sprintf('Error downloading  "%s"', $url));
-        }
+        }*/
     }
 }

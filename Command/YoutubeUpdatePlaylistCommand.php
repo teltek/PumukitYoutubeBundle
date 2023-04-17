@@ -8,8 +8,6 @@ use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\YoutubeBundle\Document\Youtube;
 use Pumukit\YoutubeBundle\Services\PlaylistItemInsertService;
-use Pumukit\YoutubeBundle\Services\YoutubePlaylistService;
-use Pumukit\YoutubeBundle\Services\YoutubeService;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -23,7 +21,6 @@ class YoutubeUpdatePlaylistCommand extends Command
     private $tagRepo;
     private $mmobjRepo;
     private $youtubeRepo;
-    private $youtubeService;
     private $okUpdates = [];
     private $failedUpdates = [];
     private $errors = [];
@@ -33,12 +30,10 @@ class YoutubeUpdatePlaylistCommand extends Command
     public function __construct(
         DocumentManager $documentManager,
         PlaylistItemInsertService $playlistItemInsertService,
-        YoutubeService $youtubeService,
         LoggerInterface $logger
     ) {
         $this->documentManager = $documentManager;
         $this->playlistItemInsertService = $playlistItemInsertService;
-        $this->youtubeService = $youtubeService;
         $this->logger = $logger;
 
         parent::__construct();
@@ -137,10 +132,10 @@ EOT
         return $qb;
     }
 
-    private function checkResultsAndSendEmail(): void
+    /*private function checkResultsAndSendEmail(): void
     {
         if (!empty($this->errors)) {
             $this->youtubeService->sendEmail('playlist update', $this->okUpdates, $this->failedUpdates, $this->errors);
         }
-    }
+    }*/
 }

@@ -1,19 +1,33 @@
 PuMuKIT Youtube Bundle
 =======================
 
-Bundle based on [Symfony](http://symfony.com/) to work with the [PuMuKIT Video Platform](https://github.com/pumukit/PuMuKIT/blob/master/README.md).
+This bundle requires PuMuKIT version 4 or higher
 
-This bundle allows uploading and publish videos from PuMuKIT into a YouTube channel.
+```bash
+composer require teltek/pumukit-oai-bundle
+```
 
-This synchronization can be done manually from the command line or configuring the Cron tool to do it automatically according to a time schedule.
-You can find more information on this in the Configuration guide.
+if not, add this to config/bundles.php
 
+```
+Pumukit\YoutubeBundle\PumukitYoutubeBundle::class => ['all' => true]
+```
 
-Documentation
--------------
+Initialize bundle tags
 
-1. [Installation Guide](Resources/doc/InstallationGuide.md)
-2. [Configuration Guide](Resources/doc/ConfigurationGuide.md)
+```bash
+php bin/console youtube:init:tags --force
+```
+
+Then execute the following commands
+
+```bash
+php bin/console cache:clear
+php bin/console cache:clear --env=prod
+php bin/console assets:install
+```
+
+Configure the bundle using documentation [Configuration Guide](Resources/doc/ConfigurationGuide.md).
 
 
 With thanks to

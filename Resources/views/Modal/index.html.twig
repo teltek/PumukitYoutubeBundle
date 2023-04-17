@@ -1,6 +1,6 @@
-{% if youtube_status == 'error' or youtube_status == 'removed' or youtube_status == 'duplicated' %}
+{% if youtube_status|lower == 'error' or youtube_status|lower == 'removed' or youtube_status|lower == 'duplicated' %}
     {% set label_class = "label-danger" %}
-{% elseif youtube_status == 'published' %}
+{% elseif youtube_status|lower == 'published' %}
     {% set label_class = "label-success" %}
 {% else %}
     {% set label_class = "label-warning" %}

@@ -6,16 +6,17 @@ namespace Pumukit\YoutubeBundle\Services;
 
 class YoutubeConfigurationService
 {
-    private $useDefaultPlaylist;
+    private $videoStatus = [
+        0 => 'public',
+        1 => 'private',
+        2 => 'unlisted',
+    ];
+
     private $playlistPrivateStatus;
-    private $defaultPlaylistCod;
-    private $defaultPlaylistTitle;
-    private $metaTagPlaylistCod;
     private $playlistMaster;
     private $deletePlaylist;
     private $locale;
     private $publicationChannelsTags;
-    private $processTimeOut;
     private $syncStatus;
     private $defaultTrackUpload;
     private $defaultImageForAudio;
@@ -27,15 +28,10 @@ class YoutubeConfigurationService
 
     public function __construct(
         string $playlistPrivateStatus,
-        bool $useDefaultPlaylist,
-        string $defaultPlaylistCod,
-        string $defaultPlaylistTitle,
-        string $metaTagPlaylistCod,
         string $playlistMaster,
         bool $deletePlaylist,
         string $locale,
         array $publicationChannelsTags,
-        int $processTimeOut,
         bool $syncStatus,
         string $defaultTrackUpload,
         string $defaultImageForAudio,
@@ -45,16 +41,11 @@ class YoutubeConfigurationService
         string $sbsProfileName,
         string $accountStorage
     ) {
-        $this->useDefaultPlaylist = $useDefaultPlaylist;
         $this->playlistPrivateStatus = $playlistPrivateStatus;
-        $this->defaultPlaylistCod = $defaultPlaylistCod;
-        $this->defaultPlaylistTitle = $defaultPlaylistTitle;
-        $this->metaTagPlaylistCod = $metaTagPlaylistCod;
         $this->playlistMaster = $playlistMaster;
         $this->deletePlaylist = $deletePlaylist;
         $this->locale = $locale;
         $this->publicationChannelsTags = $publicationChannelsTags;
-        $this->processTimeOut = $processTimeOut;
         $this->syncStatus = $syncStatus;
         $this->defaultTrackUpload = $defaultTrackUpload;
         $this->defaultImageForAudio = $defaultImageForAudio;
@@ -69,15 +60,10 @@ class YoutubeConfigurationService
     {
         return [
             'playlistPrivateStatus' => $this->playlistPrivateStatus,
-            'defaultPlaylist' => $this->useDefaultPlaylist,
-            'defaultPlaylistCod' => $this->defaultPlaylistCod,
-            'defaultPlaylistTitle' => $this->defaultPlaylistTitle,
-            'metaTagPlaylistCod' => $this->metaTagPlaylistCod,
             'playlistMaster' => $this->playlistMaster,
             'deletePlaylist' => $this->deletePlaylist,
             'locale' => $this->locale,
             'publicationChannelsTags' => $this->publicationChannelsTags,
-            'processTimeOut' => $this->processTimeOut,
             'syncStatus' => $this->syncStatus,
             'defaultTrackUpload' => $this->defaultTrackUpload,
             'defaultImageForAudio' => $this->defaultImageForAudio,
@@ -89,29 +75,14 @@ class YoutubeConfigurationService
         ];
     }
 
+    public function videoStatusMapping(int $status): string
+    {
+        return $this->videoStatus[$status];
+    }
+
     public function playlistPrivateStatus(): string
     {
         return $this->playlistPrivateStatus;
-    }
-
-    public function useDefaultPlaylist(): bool
-    {
-        return $this->useDefaultPlaylist;
-    }
-
-    public function defaultPlaylistCod(): string
-    {
-        return $this->defaultPlaylistCod;
-    }
-
-    public function defaultPlaylistTitle(): string
-    {
-        return $this->defaultPlaylistTitle;
-    }
-
-    public function metaTagPlaylistCod(): string
-    {
-        return $this->metaTagPlaylistCod;
     }
 
     public function playlistMaster(): string
@@ -132,11 +103,6 @@ class YoutubeConfigurationService
     public function publicationChannelsTags(): array
     {
         return $this->publicationChannelsTags;
-    }
-
-    public function processTimeOut(): int
-    {
-        return $this->processTimeOut;
     }
 
     public function syncStatus(): bool

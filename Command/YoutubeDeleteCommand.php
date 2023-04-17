@@ -15,7 +15,6 @@ use Pumukit\YoutubeBundle\Document\Youtube;
 use Pumukit\YoutubeBundle\PumukitYoutubeBundle;
 use Pumukit\YoutubeBundle\Services\VideoDeleteService;
 use Pumukit\YoutubeBundle\Services\YoutubeConfigurationService;
-use Pumukit\YoutubeBundle\Services\YoutubeService;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -39,13 +38,11 @@ class YoutubeDeleteCommand extends Command
     public function __construct(
         DocumentManager $documentManager,
         YoutubeConfigurationService $youtubeConfigurationService,
-        YoutubeService $youtubeService,
         VideoDeleteService $videoDeleteService,
         TagService $tagService,
         LoggerInterface $logger
     ) {
         $this->documentManager = $documentManager;
-        $this->youtubeService = $youtubeService;
         $this->youtubeConfigurationService = $youtubeConfigurationService;
         $this->videoDeleteService = $videoDeleteService;
         $this->tagService = $tagService;
@@ -282,9 +279,9 @@ EOT
             }
             $this->documentManager->flush();
         }
-        if (!empty($this->okRemoved) || !empty($this->failedRemoved)) {
+        /*if (!empty($this->okRemoved) || !empty($this->failedRemoved)) {
             $this->youtubeService->sendEmail('remove', $this->okRemoved, $this->failedRemoved, $this->errors);
-        }
+        }*/
     }
 /*
     private function showMultimediaObjects(OutputInterface $output, $state, $multimediaObjects)

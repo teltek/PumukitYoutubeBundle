@@ -14,12 +14,6 @@ services:
     resource: '../../Command/'
     tags: ['console.command']
 
-  Pumukit\YoutubeBundle\Services\YoutubeService:
-    class: Pumukit\YoutubeBundle\Services\YoutubeService
-
-  Pumukit\YoutubeBundle\Services\YoutubeProcessService:
-    class: Pumukit\YoutubeBundle\Services\YoutubeProcessService
-
   Pumukit\YoutubeBundle\EventListener\UpdateListener:
     class: Pumukit\YoutubeBundle\EventListener\UpdateListener
     tags:
@@ -50,18 +44,6 @@ services:
     tags:
       - { name: "pumukitnewadmin.mmobjmenuitem" }
 
-  Pumukit\YoutubeBundle\Services\CaptionService:
-    class: Pumukit\YoutubeBundle\Services\CaptionService
-    tags:
-      - { name: "monolog.logger", channel: "youtube" }
-
-  Pumukit\YoutubeBundle\Services\YoutubePlaylistService:
-    class: Pumukit\YoutubeBundle\Services\YoutubePlaylistService
-    arguments:
-      $kernelRootDir: "%kernel.project_dir%"
-    tags:
-      - { name: "monolog.logger", channel: "youtube" }
-
   Pumukit\YoutubeBundle\Services\YoutubeStatsService:
     class: Pumukit\YoutubeBundle\Services\YoutubeStatsService
 
@@ -69,15 +51,10 @@ services:
     class: Pumukit\YoutubeBundle\Services\YoutubeConfigurationService
     arguments:
       $playlistPrivateStatus: "%pumukit_youtube.playlist_privacy_status%"
-      $useDefaultPlaylist: "%pumukit_youtube.use_default_playlist%"
-      $defaultPlaylistCod: "%pumukit_youtube.default_playlist_cod%"
-      $defaultPlaylistTitle: "%pumukit_youtube.default_playlist_title%"
-      $metaTagPlaylistCod: "%pumukit_youtube.metatag_playlist_cod%"
       $playlistMaster: "%pumukit_youtube.playlists_master%"
       $deletePlaylist: "%pumukit_youtube.delete_playlists%"
       $locale: "%pumukit_youtube.locale%"
       $publicationChannelsTags: "%pumukit_youtube.pub_channels_tags%"
-      $processTimeOut: "%pumukit_youtube.process_timeout%"
       $syncStatus: "%pumukit_youtube.sync_status%"
       $defaultTrackUpload: "%pumukit_youtube.default_track_upload%"
       $defaultImageForAudio: "%pumukit_youtube.default_image_for_audio%"

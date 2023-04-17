@@ -6,7 +6,7 @@ namespace Pumukit\YoutubeBundle\Command;
 
 use Doctrine\ODM\MongoDB\DocumentManager;
 use Pumukit\SchemaBundle\Document\Tag;
-use Pumukit\YoutubeBundle\Document\Youtube;
+use Pumukit\YoutubeBundle\PumukitYoutubeBundle;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -43,7 +43,7 @@ EOT
     {
         $this->tagRepo = $this->documentManager->getRepository(Tag::class);
         if ($input->getOption('force')) {
-            $youtubePublicationChannelTag = $this->createTagWithCode(Youtube::YOUTUBE_PUBLICATION_CHANNEL_CODE, 'YouTubeEDU', 'PUBCHANNELS', false);
+            $youtubePublicationChannelTag = $this->createTagWithCode(PumukitYoutubeBundle::YOUTUBE_PUBLICATION_CHANNEL_CODE, 'YouTubeEDU', 'PUBCHANNELS', false);
             $youtubePublicationChannelTag->setProperty('modal_path', 'pumukityoutube_modal_index');
             $youtubePublicationChannelTag->setProperty(
                 'advanced_configuration',
@@ -55,7 +55,7 @@ EOT
                 'Tag persisted - new id: '.$youtubePublicationChannelTag->getId().
                 ' cod: '.$youtubePublicationChannelTag->getCod()
             );
-            $youtubePlaylistTag = $this->createTagWithCode(Youtube::YOUTUBE_TAG_CODE, 'YouTube', 'ROOT', true);
+            $youtubePlaylistTag = $this->createTagWithCode(PumukitYoutubeBundle::YOUTUBE_TAG_CODE, 'YouTube', 'ROOT', true);
             $youtubePlaylistTag->setProperty(
                 'hide_in_tag_group',
                 true

@@ -8,7 +8,6 @@ use Doctrine\ODM\MongoDB\DocumentManager;
 use Psr\Log\LoggerInterface;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\YoutubeBundle\Document\Youtube;
-use Pumukit\YoutubeBundle\Services\CaptionService;
 use Pumukit\YoutubeBundle\Services\CaptionsInsertService;
 use Pumukit\YoutubeBundle\Services\YoutubeConfigurationService;
 use Symfony\Component\Console\Command\Command;
@@ -30,19 +29,16 @@ class CaptionUploadCommand extends Command
     private $configurationService;
 
     private $captionsInsertService;
-    private $captionService;
     private $logger;
 
     public function __construct(
         DocumentManager $documentManager,
         YoutubeConfigurationService $configurationService,
-        CaptionService $captionService,
         CaptionsInsertService $captionsInsertService,
         LoggerInterface $logger
     ) {
         $this->documentManager = $documentManager;
         $this->configurationService = $configurationService;
-        $this->captionService = $captionService;
         $this->captionsInsertService = $captionsInsertService;
         $this->logger = $logger;
         parent::__construct();

@@ -30,21 +30,17 @@ class CaptionDeleteCommand extends Command
 
     private $documentManager;
     private $configurationService;
-    private $captionService;
-
     private $captionsDeleteService;
     private $logger;
 
     public function __construct(
         DocumentManager $documentManager,
         YoutubeConfigurationService $configurationService,
-        CaptionService $captionService,
         CaptionsDeleteService $captionsDeleteService,
         LoggerInterface $logger
     ) {
         $this->documentManager = $documentManager;
         $this->configurationService = $configurationService;
-        $this->captionService = $captionService;
 
         $this->captionsDeleteService = $captionsDeleteService;
         $this->logger = $logger;

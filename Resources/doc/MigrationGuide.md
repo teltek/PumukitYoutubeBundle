@@ -8,13 +8,13 @@ YoutubeBundle 3.2.x
 
 ## Steps
 
-On branch 3.2.x you can execute a new migration command to make more easy the migration.
+On branch 3.2.x you can execute a new migration command to make easier the migration.
 
 Execute the following lines
 
 ```
-php bin/console youtube:migration:schema -h  
-``` 
+php bin/console youtube:migration:schema -h
+```
 
 This command will help you to make the migration converting al YouTube documents saved on PuMuKIT to the new documents.
 

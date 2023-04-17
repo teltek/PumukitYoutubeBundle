@@ -9,6 +9,7 @@ use MongoDB\BSON\ObjectId;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\YoutubeBundle\Document\Youtube;
+use Pumukit\YoutubeBundle\PumukitYoutubeBundle;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Input\InputInterface;
@@ -49,29 +50,29 @@ class MigrationCommand extends Command
             ->addOption('force', null, InputOption::VALUE_NONE, 'Set this parameter to execute this action')
             ->setHelp(
                 <<<'EOT'
-                
+
                 Command to migrate schema from YoutubeBundle with single account to YoutubeBundle with multiple account.
-                
+
                 Steps without force option:
-                
+
                 1. Check if account file ( json ) exists.
                 2. Check if tags with login property exists.
-                
-                Steps with force option: 
-                
+
+                Steps with force option:
+
                 1. Migrate Youtube account
                 2. Migrate Youtube tag publication channel
                 3. Migrate Youtube tag playlist
                 4. Migrate Youtube documents adding account
                 5. Move all playlist tags under Account tag
                 6. Update multimedia objects embedding tags
-                
+
                 Example to check account:
-                
+
                 php app/console youtube:migration:schema --single_account_name=my_name_account
-                
-                Example to execute migration: 
-                
+
+                Example to execute migration:
+
                 php app/console youtube:migration:schema --single_account_name=my_name_account --force
 EOT
             )
@@ -165,10 +166,10 @@ EOT
 
     private function migratePubChannelYoutube(OutputInterface $output): void
     {
-        $puchYoutube = $this->documentManager->getRepository(Tag::class)->findOneBy(['cod' => Youtube::YOUTUBE_PUBLICATION_CHANNEL_CODE]);
+        $puchYoutube = $this->documentManager->getRepository(Tag::class)->findOneBy(['cod' => PumukitYoutubeBundle::YOUTUBE_PUBLICATION_CHANNEL_CODE]);
 
         if (!$puchYoutube) {
-            throw new \Exception(' ERROR - '.Youtube::YOUTUBE_PUBLICATION_CHANNEL_CODE." doesn't exists");
+            throw new \Exception(' ERROR - '.PumukitYoutubeBundle::YOUTUBE_PUBLICATION_CHANNEL_CODE." doesn't exists");
         }
 
         foreach ($this->pubChannelProperties as $key => $value) {
@@ -177,7 +178,7 @@ EOT
 
         $this->documentManager->flush();
 
-        $output->writeln('Youtube - SKIP - Added properties to '.Youtube::YOUTUBE_PUBLICATION_CHANNEL_CODE);
+        $output->writeln('Youtube - SKIP - Added properties to '.PumukitYoutubeBundle::YOUTUBE_PUBLICATION_CHANNEL_CODE);
     }
 
     private function migrateYoutubeAccount(OutputInterface $output): void
@@ -188,11 +189,11 @@ EOT
         }
 
         $youtubeTag = $this->documentManager->getRepository(Tag::class)->findOneBy([
-            'cod' => Youtube::YOUTUBE_TAG_CODE,
+            'cod' => PumukitYoutubeBundle::YOUTUBE_TAG_CODE,
         ]);
 
         if (!$youtubeTag) {
-            throw new \Exception('Youtube - ERROR - '.Youtube::YOUTUBE_TAG_CODE." doesn't exists");
+            throw new \Exception('Youtube - ERROR - '.PumukitYoutubeBundle::YOUTUBE_TAG_CODE." doesn't exists");
         }
 
         $this->createYoutubeTagAccount($output, $youtubeTag);
@@ -228,7 +229,7 @@ EOT
 
     private function migrateYoutubeTag(OutputInterface $output): void
     {
-        $youtubeTag = $this->documentManager->getRepository(Tag::class)->findOneBy(['cod' => Youtube::YOUTUBE_TAG_CODE]);
+        $youtubeTag = $this->documentManager->getRepository(Tag::class)->findOneBy(['cod' => PumukitYoutubeBundle::YOUTUBE_TAG_CODE]);
 
         foreach ($this->youtubeTagProperties as $key => $value) {
             $youtubeTag->setProperty($key, $value);
@@ -236,7 +237,7 @@ EOT
 
         $this->documentManager->flush();
 
-        $output->writeln('Youtube - SKIP - Added properties to '.Youtube::YOUTUBE_TAG_CODE);
+        $output->writeln('Youtube - SKIP - Added properties to '.PumukitYoutubeBundle::YOUTUBE_TAG_CODE);
 
         $this->documentManager->clear();
     }
@@ -285,7 +286,7 @@ EOT
     private function moveAllPlaylistTags(OutputInterface $output): void
     {
         $youtubeTag = $this->documentManager->getRepository(Tag::class)->findOneBy(
-            ['cod' => Youtube::YOUTUBE_TAG_CODE]
+            ['cod' => PumukitYoutubeBundle::YOUTUBE_TAG_CODE]
         );
 
         $playlistTags = $this->documentManager->getRepository(Tag::class)->findBy(
@@ -350,8 +351,8 @@ EOT
             [
                 'tags.cod' => [
                     '$all' => [
-                        Youtube::YOUTUBE_PUBLICATION_CHANNEL_CODE,
-                        Youtube::YOUTUBE_TAG_CODE,
+                        PumukitYoutubeBundle::YOUTUBE_PUBLICATION_CHANNEL_CODE,
+                        PumukitYoutubeBundle::YOUTUBE_TAG_CODE,
                     ],
                 ],
             ]
