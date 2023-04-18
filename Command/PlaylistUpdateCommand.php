@@ -13,7 +13,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class YoutubeUpdatePlaylistCommand extends Command
+class PlaylistUpdateCommand extends Command
 {
     private $documentManager;
 
@@ -39,10 +39,10 @@ class YoutubeUpdatePlaylistCommand extends Command
         parent::__construct();
     }
 
-    protected function configure()
+    protected function configure(): void
     {
         $this
-            ->setName('pumukit:youtube:update:playlist')
+            ->setName('pumukit:youtube:playlist:update')
             ->setDescription('Update Youtube playlists from Multimedia Objects')
             ->addOption('use-pmk1', null, InputOption::VALUE_NONE, 'Use multimedia objects from PuMuKIT1')
             ->addOption('dry-run', null, InputOption::VALUE_NONE, 'List actions')

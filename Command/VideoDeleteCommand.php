@@ -20,7 +20,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class YoutubeDeleteCommand extends Command
+class VideoDeleteCommand extends Command
 {
     private $documentManager;
     private $youtubeRepo;
@@ -53,7 +53,7 @@ class YoutubeDeleteCommand extends Command
     protected function configure()
     {
         $this
-            ->setName('pumukit:youtube:delete')
+            ->setName('pumukit:youtube:video:delete')
             ->addOption('use-pmk1', null, InputOption::VALUE_NONE, 'Use multimedia objects from PuMuKIT1')
             ->addOption('dry-run', null, InputOption::VALUE_NONE, 'List multimedia objects to delete')
             ->setDescription('Command to delete videos from Youtube')

@@ -15,7 +15,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class YoutubeUpdateStatusCommand extends Command
+class VideoUpdateStatusCommand extends Command
 {
     protected $documentManager;
     protected $videoListService;
@@ -37,10 +37,10 @@ class YoutubeUpdateStatusCommand extends Command
         parent::__construct();
     }
 
-    protected function configure()
+    protected function configure(): void
     {
         $this
-            ->setName('pumukit:youtube:update:status')
+            ->setName('pumukit:youtube:video:update:status')
             ->addOption('use-pmk1', null, InputOption::VALUE_NONE, 'Use multimedia objects from PuMuKIT1')
             ->setDescription('Update local YouTube status of the video')
             ->setHelp(

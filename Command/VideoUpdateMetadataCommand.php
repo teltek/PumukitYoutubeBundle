@@ -15,7 +15,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class YoutubeUpdateMetadataCommand extends Command
+class VideoUpdateMetadataCommand extends Command
 {
     private $documentManager;
     private $videoUpdateService;
@@ -44,10 +44,10 @@ class YoutubeUpdateMetadataCommand extends Command
         parent::__construct();
     }
 
-    protected function configure()
+    protected function configure(): void
     {
         $this
-            ->setName('pumukit:youtube:update:metadata')
+            ->setName('pumukit:youtube:video:update:metadata')
             ->addOption('use-pmk1', null, InputOption::VALUE_NONE, 'Use multimedia objects from PuMuKIT1')
             ->setDescription('Update Youtube metadata from Multimedia Objects')
             ->setHelp(

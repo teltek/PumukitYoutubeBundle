@@ -17,7 +17,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class YoutubeUploadCommand extends Command
+class VideoUploadCommand extends Command
 {
     private $documentManager;
     private $youtubeConfigurationService;
@@ -49,10 +49,10 @@ class YoutubeUploadCommand extends Command
         parent::__construct();
     }
 
-    protected function configure()
+    protected function configure(): void
     {
         $this
-            ->setName('pumukit:youtube:upload')
+            ->setName('pumukit:youtube:video:upload')
             ->addOption('use-pmk1', null, InputOption::VALUE_NONE, 'Use multimedia objects from PuMuKIT1')
             ->setDescription('Upload videos from Multimedia Objects to Youtube')
             ->setHelp(

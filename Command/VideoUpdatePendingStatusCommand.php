@@ -12,7 +12,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class YoutubeUpdatePendingStatusCommand extends YoutubeUpdateStatusCommand
+class VideoUpdatePendingStatusCommand extends VideoUpdateStatusCommand
 {
     protected $okUpdates = [];
     protected $failedUpdates = [];
@@ -27,10 +27,10 @@ class YoutubeUpdatePendingStatusCommand extends YoutubeUpdateStatusCommand
         parent::__construct($documentManager, $videoListService, $notificationService);
     }
 
-    protected function configure()
+    protected function configure(): void
     {
         $this
-            ->setName('pumukit:youtube:update:pendingstatus')
+            ->setName('pumukit:youtube:video:update:pendingstatus')
             ->addOption('use-pmk1', null, InputOption::VALUE_NONE, 'Use multimedia objects from PuMuKIT1')
             ->setDescription('Update local YouTube status of the pending videos')
             ->setHelp(
