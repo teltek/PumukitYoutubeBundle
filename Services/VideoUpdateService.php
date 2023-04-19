@@ -8,6 +8,7 @@ use Doctrine\ODM\MongoDB\DocumentManager;
 use Psr\Log\LoggerInterface;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Tag;
+use Pumukit\YoutubeBundle\Document\Error;
 use Pumukit\YoutubeBundle\Document\Youtube;
 
 class VideoUpdateService extends GoogleVideoService
@@ -37,17 +38,9 @@ class VideoUpdateService extends GoogleVideoService
 
     public function updateVideoOnYoutube(MultimediaObject $multimediaObject): bool
     {
-        $infoLog = sprintf(
-            '%s [%s] Started validate and update MultimediaObject with id %s on Youtube',
-            __CLASS__,
-            __FUNCTION__,
-            $multimediaObject->getId()
-        );
-        $this->logger->info($infoLog);
-
         $account = $this->videoDataValidationService->validateMultimediaObjectAccount($multimediaObject);
         if (!$account) {
-            $errorLog = __CLASS__.' ['.__FUNCTION__.'] Multimedia object '.$multimediaObject->getId().': doesnt have account';
+            $errorLog = sprintf("[YouTube] Video %s does not have account set.",$multimediaObject->getId());
             $this->logger->error($errorLog);
 
             return false;
@@ -73,11 +66,16 @@ class VideoUpdateService extends GoogleVideoService
         $video = $this->createVideo($videoSnippet, $videoStatus, $youtubeDocument->getYoutubeId());
 
         try {
-            $this->update($account, $video);
+            $response = $this->update($account, $video);
         } catch (\Exception $exception) {
-            $youtubeDocument->setYoutubeError($exception->getMessage());
-            $youtubeDocument->setYoutubeErrorReason($exception->getMessage());
-            $youtubeDocument->setYoutubeErrorDate(new \DateTime('now'));
+            $error = json_decode($exception->getMessage(), true);
+            $error =  \Pumukit\YoutubeBundle\Document\Error::create(
+                $error['error']['errors'][0]['reason'],
+                $error['error']['errors'][0]['message'],
+                new \DateTime(),
+                $error['error']
+            );
+            $youtubeDocument->setError($error);
             $this->documentManager->flush();
 
             $errorLog = __CLASS__.' ['.__FUNCTION__.'] Error updating MultimediaObject '.$multimediaObject->getId().': '.$exception->getMessage();
@@ -87,9 +85,7 @@ class VideoUpdateService extends GoogleVideoService
         }
 
         $youtubeDocument->setSyncMetadataDate(new \DateTime('now'));
-        $youtubeDocument->setYoutubeError(null);
-        $youtubeDocument->setYoutubeErrorReason(null);
-        $youtubeDocument->setYoutubeErrorDate(null);
+        $youtubeDocument->removeError();
         $this->documentManager->flush();
 
         return true;

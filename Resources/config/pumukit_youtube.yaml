@@ -12,7 +12,9 @@ services:
 
   Pumukit\YoutubeBundle\Command\:
     resource: '../../Command/'
-    tags: ['console.command']
+    tags:
+      - { name: 'console.command' }
+      - { name: 'monolog.logger', channel: 'youtube' }
 
   Pumukit\YoutubeBundle\EventListener\UpdateListener:
     class: Pumukit\YoutubeBundle\EventListener\UpdateListener
@@ -129,3 +131,7 @@ services:
 
   Pumukit\YoutubeBundle\Services\CaptionsListService:
     class: Pumukit\YoutubeBundle\Services\CaptionsListService
+
+  Pumukit\YoutubeBundle\Services\CommonDataValidationService:
+    class: Pumukit\YoutubeBundle\Services\CommonDataValidationService
+

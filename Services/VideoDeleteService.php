@@ -67,18 +67,26 @@ class VideoDeleteService extends GoogleVideoService
             }
             $response = $this->delete($account, $video);
             if (204 !== $response->getStatusCode()) {
-                $youtube->setYoutubeError($response);
-                $youtube->setYoutubeErrorReason($response->getReasonPhrase());
-                $youtube->setYoutubeErrorDate(new \DateTime('now'));
-
+                $error =  \Pumukit\YoutubeBundle\Document\Error::create(
+                    $response->getReasonPhrase(),
+                    $response->getReasonPhrase(),
+                    new \DateTime(),
+                    $response
+                );
+                $youtube->setError($error);
                 $this->documentManager->flush();
 
                 return false;
             }
         } catch (\Exception $exception) {
-            $youtube->setYoutubeError($exception->getMessage());
-            $youtube->setYoutubeErrorReason($exception->getMessage());
-            $youtube->setYoutubeErrorDate(new \DateTime('now'));
+            $error = json_decode($exception->getMessage(), true);
+            $error =  \Pumukit\YoutubeBundle\Document\Error::create(
+                $error['error']['errors'][0]['reason'],
+                $error['error']['errors'][0]['message'],
+                new \DateTime(),
+                $error['error']
+            );
+            $youtube->setError($error);
             $this->documentManager->flush();
 
             return false;
@@ -86,6 +94,7 @@ class VideoDeleteService extends GoogleVideoService
 
         $this->videoDataValidationService->removeMultimediaObjectYouTubeTag($multimediaObject);
         $youtube->setStatus(Youtube::STATUS_REMOVED);
+        $youtube->removeError();
         $multimediaObject->removeProperty('youtube');
         $multimediaObject->removeProperty('youtubeurl');
         $this->documentManager->flush();
@@ -111,24 +120,34 @@ class VideoDeleteService extends GoogleVideoService
             }
             $response = $this->delete($account, $video);
             if (204 !== $response->getStatusCode()) {
-                $youtube->setYoutubeError($response);
-                $youtube->setYoutubeErrorReason($response->getReasonPhrase());
-                $youtube->setYoutubeErrorDate(new \DateTime('now'));
+                $error =  \Pumukit\YoutubeBundle\Document\Error::create(
+                    $response->getReasonPhrase(),
+                    $response->getReasonPhrase(),
+                    new \DateTime(),
+                    $response
+                );
+                $youtube->setError($error);
 
                 $this->documentManager->flush();
 
                 return false;
             }
         } catch (\Exception $exception) {
-            $youtube->setYoutubeError($exception->getMessage());
-            $youtube->setYoutubeErrorReason($exception->getMessage());
-            $youtube->setYoutubeErrorDate(new \DateTime('now'));
+            $error = json_decode($exception->getMessage(), true);
+            $error =  \Pumukit\YoutubeBundle\Document\Error::create(
+                $error['error']['errors'][0]['reason'],
+                $error['error']['errors'][0]['message'],
+                new \DateTime(),
+                $error['error']
+            );
+            $youtube->setError($error);
             $this->documentManager->flush();
 
             return false;
         }
 
         $youtube->setStatus(Youtube::STATUS_REMOVED);
+        $youtube->removeError();
 
         $this->documentManager->flush();
 

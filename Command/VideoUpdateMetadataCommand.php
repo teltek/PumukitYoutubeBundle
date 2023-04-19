@@ -66,6 +66,9 @@ EOT
         $this->usePumukit1 = $input->getOption('use-pmk1');
 
         $multimediaObjects = $this->getMultimediaObjectsInYoutubeToUpdate();
+
+        $infoLog = "[YouTube] Updating metadata for ".count($multimediaObjects). " videos on YouTube";
+        $output->writeln($infoLog);
         $this->updateVideosInYoutube($multimediaObjects, $output);
 
         $this->notificationService->notificationOfUpdatedVideoResults(
@@ -77,18 +80,10 @@ EOT
         return 0;
     }
 
-    private function updateVideosInYoutube($multimediaObjects, OutputInterface $output)
+    private function updateVideosInYoutube($multimediaObjects, OutputInterface $output): void
     {
         foreach ($multimediaObjects as $multimediaObject) {
             try {
-                $infoLog = sprintf(
-                    '%s [%s] Started validate and updating MultimediaObject on YouTube with id %s',
-                    __CLASS__,
-                    __FUNCTION__,
-                    $multimediaObject->getId()
-                );
-                $output->writeln($infoLog);
-
                 $result = $this->videoUpdateService->updateVideoOnYoutube($multimediaObject);
                 if (!$result) {
                     $this->failedUpdates[] = $multimediaObject;
@@ -96,13 +91,7 @@ EOT
                     $this->okUpdates[] = $multimediaObject;
                 }
             } catch (\Exception $e) {
-                $errorLog = sprintf(
-                    '%s [%s] Update metadata video from the Multimedia Object with id %s failed: %s',
-                    __CLASS__,
-                    __FUNCTION__,
-                    $multimediaObject->getId(),
-                    $e->getMessage()
-                );
+                $errorLog = sprintf("[YouTube] Update metadata video for video %s failed: %s", $multimediaObject->getId(), $e->getMessage());
                 $this->logger->error($errorLog);
                 $output->writeln($errorLog);
                 $this->failedUpdates[] = $multimediaObject;

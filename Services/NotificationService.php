@@ -63,7 +63,7 @@ class NotificationService
             }
             $this->documentManager->flush();
         }
-        if (!empty($this->okUploads) || !empty($this->failedUploads)) {
+        if (!empty($uploadedVideos) || !empty($failedVideos)) {
             $this->sendEmail('upload', $uploadedVideos, $failedVideos, $errors);
         }
     }

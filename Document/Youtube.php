@@ -114,19 +114,9 @@ class Youtube
     private $fileUploaded;
 
     /**
-     * @MongoDB\Field(type="string")
+     * @MongoDB\EmbedOne(targetDocument=Error::class)
      */
-    private $youtubeError;
-
-    /**
-     * @MongoDB\Field(type="string")
-     */
-    private $youtubeErrorReason;
-
-    /**
-     * @MongoDB\Field(type="date")
-     */
-    private $youtubeErrorDate;
+    private $error;
 
     public function __construct()
     {
@@ -417,33 +407,18 @@ class Youtube
         $this->fileUploaded = $fileUploaded;
     }
 
-    public function getYoutubeError(): ?string
+    public function setError(Error $error): void
     {
-        return $this->youtubeError;
+        $this->error = $error;
     }
 
-    public function setYoutubeError(?string $error): void
+    public function getError(): ?Error
     {
-        $this->youtubeError = $error;
+        return $this->error;
     }
 
-    public function getYoutubeErrorReason(): ?string
+    public function removeError(): void
     {
-        return $this->youtubeErrorReason;
-    }
-
-    public function setYoutubeErrorReason(?string $error): void
-    {
-        $this->youtubeErrorReason = $error;
-    }
-
-    public function setYoutubeErrorDate(?\DateTime $date): void
-    {
-        $this->youtubeErrorDate = $date;
-    }
-
-    public function getYoutubeErrorDate(): ?\DateTime
-    {
-        return $this->youtubeErrorDate;
+        $this->error = null;
     }
 }

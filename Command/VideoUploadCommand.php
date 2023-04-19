@@ -69,14 +69,20 @@ EOT
         $this->usePumukit1 = $input->getOption('use-pmk1');
 
         $newMultimediaObjects = $this->getNewMultimediaObjectsToUpload();
+        $infoLog = "[YouTube] Uploading ".count($newMultimediaObjects). " new videos to YouTube";
+        $this->logger->info($infoLog);
         $this->uploadVideosToYoutube($newMultimediaObjects, $output);
 
         $failureMultimediaObjects = $this->getUploadsByStatus([Youtube::STATUS_ERROR]);
+        $infoLog = "[YouTube] Uploading ".count($failureMultimediaObjects). " failure videos to YouTube";
+        $this->logger->info($infoLog);
         $this->uploadVideosToYoutube($failureMultimediaObjects, $output);
 
         if ($this->youtubeConfigurationService->uploadRemovedVideos()) {
             $removedStatus = [Youtube::STATUS_REMOVED];
             $removedYoutubeMultimediaObjects = $this->getUploadsByStatus($removedStatus);
+            $infoLog = "[YouTube] Uploading ".count($removedYoutubeMultimediaObjects). " removed videos to YouTube";
+            $this->logger->info($infoLog);
             $this->uploadVideosToYoutube($removedYoutubeMultimediaObjects, $output);
         }
 
@@ -93,14 +99,6 @@ EOT
     {
         foreach ($multimediaObjects as $multimediaObject) {
             try {
-                $infoLog = sprintf(
-                    '%s [%s] Started validate and uploading to Youtube of MultimediaObject with id %s',
-                    __CLASS__,
-                    __FUNCTION__,
-                    $multimediaObject->getId()
-                );
-                $output->writeln($infoLog);
-
                 $result = $this->videoInsertService->uploadVideoToYoutube($multimediaObject);
                 if (!$result) {
                     $this->failedUploads[] = $multimediaObject;
@@ -108,15 +106,8 @@ EOT
                     $this->okUploads[] = $multimediaObject;
                 }
             } catch (\Exception $exception) {
-                $errorLog = sprintf(
-                    '%s [%s] The upload of the video from the Multimedia Object with id %s failed: %s',
-                    __CLASS__,
-                    __FUNCTION__,
-                    $multimediaObject->getId(),
-                    $exception->getMessage()
-                );
+                $errorLog = "[YouTube] Multimedia object with ID (".$multimediaObject->getId().") contains error to upload YouTube. ".$exception->getMessage();
                 $this->logger->error($errorLog);
-                $output->writeln($errorLog);
                 $this->failedUploads[] = $multimediaObject;
                 $this->errors[] = $exception->getMessage();
             }

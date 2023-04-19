@@ -10,6 +10,7 @@ use Google\Service\YouTube\VideoListResponse;
 use Psr\Log\LoggerInterface;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Tag;
+use Pumukit\YoutubeBundle\Document\Error;
 use Pumukit\YoutubeBundle\Document\Youtube;
 
 class VideoListService extends GoogleVideoService
@@ -64,8 +65,15 @@ class VideoListService extends GoogleVideoService
             $response = $this->list($account, $video);
             $status = $this->getStatusFromYouTubeResponse($response, $video);
         } catch (\Exception $exception) {
-            $youtube->setYoutubeError($exception->getMessage());
-            $youtube->setYoutubeErrorDate(new \DateTime('now'));
+            $error = json_decode($exception->getMessage(), true);
+            $error =  \Pumukit\YoutubeBundle\Document\Error::create(
+                $error['error']['errors'][0]['reason'],
+                $error['error']['errors'][0]['message'],
+                new \DateTime(),
+                $error['error']
+            );
+
+            $youtube->setError($error);
             $this->documentManager->flush();
 
             return false;
@@ -74,13 +82,21 @@ class VideoListService extends GoogleVideoService
         $youtube->setStatus($status);
         if (Youtube::STATUS_ERROR === $status || Youtube::STATUS_TO_REVIEW === $status) {
             $reason = $this->getReasonStatusFromYoutubeResponse($response, $video);
-            $youtube->setYoutubeError($reason);
-            $youtube->setYoutubeErrorDate(new \DateTime('now'));
+            $error =  \Pumukit\YoutubeBundle\Document\Error::create(
+                'pumukit.statusError',
+                $reason,
+                new \DateTime(),
+                ''
+            );
+            $youtube->setError($error);
+
+            $this->documentManager->flush();
+
+            return false;
         }
 
         $youtube->setSyncMetadataDate(new \DateTime('now'));
-        $youtube->setYoutubeError(null);
-        $youtube->setYoutubeErrorDate(null);
+        $youtube->removeError();
 
         $this->documentManager->flush();
 

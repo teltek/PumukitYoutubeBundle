@@ -15,13 +15,12 @@ use Pumukit\SchemaBundle\Document\Person;
 use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\SchemaBundle\Document\Track;
 use Pumukit\SchemaBundle\Services\TagService;
-use Pumukit\YoutubeBundle\Document\Youtube;
 use Pumukit\YoutubeBundle\PumukitYoutubeBundle;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Routing\RouterInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
-class VideoDataValidationService
+class VideoDataValidationService extends CommonDataValidationService
 {
     private $documentManager;
     private $youtubeConfigurationService;
@@ -56,6 +55,8 @@ class VideoDataValidationService
         if (!in_array($this->locale, $pumukitLocales)) {
             $this->locale = $this->translator->getLocale();
         }
+
+        parent::__construct($documentManager);
     }
 
     public function validateMultimediaObjectTrack(MultimediaObject $multimediaObject): ?Track
@@ -88,26 +89,6 @@ class VideoDataValidationService
         }
 
         return $track;
-    }
-
-    public function validateMultimediaObjectAccount(MultimediaObject $multimediaObject): ?Tag
-    {
-        $youtubeTag = $this->documentManager->getRepository(Tag::class)->findOneBy(['cod' => PumukitYoutubeBundle::YOUTUBE_TAG_CODE]);
-        $account = null;
-        foreach ($multimediaObject->getTags() as $tag) {
-            if ($tag->isChildOf($youtubeTag)) {
-                $account = $this->documentManager->getRepository(Tag::class)->findOneBy(['cod' => $tag->getCod()]);
-
-                break;
-            }
-        }
-
-        return $account;
-    }
-
-    public function validateMultimediaObjectYouTubeTag(MultimediaObject $multimediaObject): bool
-    {
-        return $multimediaObject->containsTagWithCod(PumukitYoutubeBundle::YOUTUBE_PUBLICATION_CHANNEL_CODE);
     }
 
     public function addMultimediaObjectYouTubeTag(MultimediaObject $multimediaObject): void

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pumukit\YoutubeBundle\Command;
 
 use Doctrine\ODM\MongoDB\DocumentManager;
+use Psr\Log\LoggerInterface;
 use Pumukit\YoutubeBundle\Document\Youtube;
 use Pumukit\YoutubeBundle\Services\NotificationService;
 use Pumukit\YoutubeBundle\Services\VideoListService;
@@ -22,9 +23,10 @@ class VideoUpdatePendingStatusCommand extends VideoUpdateStatusCommand
     public function __construct(
         DocumentManager $documentManager,
         VideoListService $videoListService,
-        NotificationService $notificationService
+        NotificationService $notificationService,
+        LoggerInterface $logger
     ) {
-        parent::__construct($documentManager, $videoListService, $notificationService);
+        parent::__construct($documentManager, $videoListService, $notificationService, $logger);
     }
 
     protected function configure(): void
@@ -37,7 +39,7 @@ class VideoUpdatePendingStatusCommand extends VideoUpdateStatusCommand
                 <<<'EOT'
 Fast version of pumukit:youtube:update:status
 
-PERFORMANCE NOTE: This command has a fash performance because only use YouTube documents with state STATUS_UPLOADING or STATUS_PROCESSING.
+PERFORMANCE NOTE: This command has a fast performance because only use YouTube documents with state STATUS_UPLOADING or STATUS_PROCESSING.
 
 EOT
             )

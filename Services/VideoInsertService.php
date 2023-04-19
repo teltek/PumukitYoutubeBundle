@@ -10,6 +10,7 @@ use Psr\Log\LoggerInterface;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\SchemaBundle\Document\Track;
+use Pumukit\Youtubebundle\Document\Error;
 use Pumukit\YoutubeBundle\Document\Youtube;
 
 class VideoInsertService extends GoogleVideoService
@@ -38,19 +39,11 @@ class VideoInsertService extends GoogleVideoService
 
     public function uploadVideoToYoutube(MultimediaObject $multimediaObject): bool
     {
-        $infoLog = sprintf(
-            '%s [%s] Started validate and uploading to Youtube of MultimediaObject with id %s',
-            __CLASS__,
-            __FUNCTION__,
-            $multimediaObject->getId()
-        );
-        $this->logger->info($infoLog);
-
         $track = $this->videoDataValidationService->validateMultimediaObjectTrack($multimediaObject);
         $account = $this->videoDataValidationService->validateMultimediaObjectAccount($multimediaObject);
 
         if (!$track || !$account) {
-            $this->logger->error('Multimedia object with ID '.$multimediaObject->getId().' cannot upload to YouTube.');
+            $this->logger->error('[YouTube] Multimedia object with ID '.$multimediaObject->getId().' cannot upload to YouTube.');
 
             return false;
         }
@@ -75,9 +68,10 @@ class VideoInsertService extends GoogleVideoService
         } catch (\Exception $exception) {
             $this->updateVideoAndYoutubeDocumentByErrorResult(
                 $youtubeDocument,
-                $exception
+                json_decode($exception->getMessage(), true)
             );
-            $errorLog = __CLASS__.' ['.__FUNCTION__.'] Error in the upload: '.$exception->getMessage();
+
+            $errorLog = "[YouTube] Multimedia object with ID (".$multimediaObject->getId().") failed uploading to YouTube. ".$exception->getMessage();
             $this->logger->error($errorLog);
 
             return false;
@@ -154,9 +148,7 @@ class VideoInsertService extends GoogleVideoService
     ): void {
         if (Youtube::STATUS_PROCESSING === $status) {
             $youtube->setStatus($status);
-            $youtube->setYoutubeError(null);
-            $youtube->setYoutubeErrorReason(null);
-            $youtube->setYoutubeErrorDate(null);
+            $youtube->removeError();
             $youtube->setYoutubeId($video->getId());
             $youtube->setLink('https://www.youtube.com/watch?v='.$video->getId());
             $youtube->setFileUploaded(basename($track->getPath()));
@@ -177,12 +169,17 @@ class VideoInsertService extends GoogleVideoService
 
     private function updateVideoAndYoutubeDocumentByErrorResult(
         Youtube $youtube,
-        \Exception $exception
+        array $exception
     ): void {
+
         $youtube->setStatus(Youtube::STATUS_ERROR);
-        $youtube->setYoutubeError($exception->getMessage());
-        $youtube->setYoutubeErrorReason(null);
-        $youtube->setYoutubeErrorDate(new \DateTime('now'));
+        $error = \Pumukit\YoutubeBundle\Document\Error::create(
+            $exception['error']['errors'][0]['reason'],
+            $exception['error']['message'],
+            new \DateTime(),
+            $exception['error']
+        );
+        $youtube->setError($error);
 
         $this->documentManager->persist($youtube);
         $this->documentManager->flush();
