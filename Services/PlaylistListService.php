@@ -14,19 +14,16 @@ class PlaylistListService extends GooglePlaylistService
     private $googleAccountService;
 
     private $documentManager;
-    private $playlistDataValidationService;
 
     private $logger;
 
     public function __construct(
         GoogleAccountService $googleAccountService,
         DocumentManager $documentManager,
-        PlaylistDataValidationService $playlistDataValidationService,
         LoggerInterface $logger
     ) {
         $this->googleAccountService = $googleAccountService;
         $this->documentManager = $documentManager;
-        $this->playlistDataValidationService = $playlistDataValidationService;
         $this->logger = $logger;
     }
 
@@ -37,19 +34,25 @@ class PlaylistListService extends GooglePlaylistService
 
     public function findAll(Tag $youtubeAccount): array
     {
-        $playlistResponse = $this->list($youtubeAccount);
-        $playlistItems = $playlistResponse->getItems();
+        try {
+            $playlistResponse = $this->list($youtubeAccount);
+            $playlistItems = $playlistResponse->getItems();
 
-        if (null === $playlistResponse->getNextPageToken()) {
+            if (null === $playlistResponse->getNextPageToken()) {
+                return $playlistItems;
+            }
+
+            do {
+                $playlistResponse = $this->list($youtubeAccount, $playlistResponse->getNextPageToken());
+                $playlistItems = array_merge($playlistItems, $playlistResponse->getItems());
+            } while (null !== $playlistResponse->getNextPageToken());
+
             return $playlistItems;
+        } catch (\Exception $exception) {
+            $this->logger->error('[YouTube] Error findAll playlist for account '. $youtubeAccount->getProperty('login'));
         }
 
-        do {
-            $playlistResponse = $this->list($youtubeAccount, $playlistResponse->getNextPageToken());
-            $playlistItems = array_merge($playlistItems, $playlistResponse->getItems());
-        } while (null !== $playlistResponse->getNextPageToken());
-
-        return $playlistItems;
+        return [];
     }
 
     private function listOne(Tag $youtubeAccount, string $playlistId): PlaylistListResponse

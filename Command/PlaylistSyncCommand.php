@@ -47,7 +47,14 @@ EOT
     {
         $youtubeAccounts = $this->getAllYouTubeAccounts();
         foreach ($youtubeAccounts as $account) {
-            $this->playlistInsertService->syncAll($account);
+            try {
+                $this->playlistInsertService->syncAll($account);
+            } catch (\Exception $exception) {
+                $errorLog = sprintf("[YouTube] Playlist sync on account %s failed. Error: %s", $account->getProperty('login'), $exception->getMessage());
+                $this->logger->error($errorLog);
+
+                continue;
+            }
         }
 
         return 0;

@@ -4,21 +4,14 @@ declare(strict_types=1);
 
 namespace Pumukit\YoutubeBundle\Services;
 
-use Psr\Log\LoggerInterface;
 use Pumukit\SchemaBundle\Document\Tag;
 
 class PlaylistDeleteService extends GooglePlaylistService
 {
     private $googleAccountService;
 
-    private $logger;
-
-    public function __construct(
-        GoogleAccountService $googleAccountService,
-        LoggerInterface $logger
-    ) {
+    public function __construct(GoogleAccountService $googleAccountService) {
         $this->googleAccountService = $googleAccountService;
-        $this->logger = $logger;
     }
 
     public function deleteOnePlaylist(Tag $youtubeAccount, string $playlistId)

@@ -31,16 +31,19 @@ class PlaylistItemInsertService extends GooglePlaylistItemService
         $this->logger = $logger;
     }
 
-    public function updatePlaylist(MultimediaObject $multimediaObject)
+    public function updatePlaylist(MultimediaObject $multimediaObject): bool
     {
         $youtube = $this->getYoutubeDocument($multimediaObject);
-        if (Youtube::STATUS_PUBLISHED !== $youtube->getStatus()) {
-            return 0;
+        if(!$youtube instanceof Youtube) {
+            $this->logger->error('[YouTube] Video with ID '.$multimediaObject->getId(). ' doesnt have published Youtube document');
+            return false;
         }
 
         $playlists = $this->getPlaylistFromMultimediaObject($multimediaObject);
 
         $this->fixPlaylistsForMultimediaObject($multimediaObject, $playlists);
+
+        return true;
     }
 
     public function validateMultimediaObjectAccount(MultimediaObject $multimediaObject): ?Tag
@@ -65,6 +68,7 @@ class PlaylistItemInsertService extends GooglePlaylistItemService
     {
         return $this->documentManager->getRepository(Youtube::class)->findOneBy([
             'multimediaObjectId' => $multimediaObject->getId(),
+            'status' => Youtube::STATUS_PUBLISHED
         ]);
     }
 
@@ -87,17 +91,29 @@ class PlaylistItemInsertService extends GooglePlaylistItemService
 
     private function fixPlaylistsForMultimediaObject(MultimediaObject $multimediaObject, array $assignedPlaylists): void
     {
-        $youtubeDocument = $this->documentManager->getRepository(Youtube::class)->findOneBy(
-            [
-                'multimediaObjectId' => $multimediaObject->getId()]
-        );
+        $youtubeDocument = $this->documentManager->getRepository(Youtube::class)->findOneBy([
+                'multimediaObjectId' => $multimediaObject->getId()
+        ]);
 
         $account = $this->documentManager->getRepository(Tag::class)->findOneBy(['properties.login' => $youtubeDocument->getYoutubeAccount()]);
 
         $playlistToDoNothing = [];
         foreach ($youtubeDocument->getPlaylists() as $playlistId => $playlistRel) {
             if (!in_array($playlistId, $assignedPlaylists)) {
-                $response = $this->playlistItemDeleteService->deleteOnePlaylist($account, $playlistRel);
+                try {
+                    $response = $this->playlistItemDeleteService->deleteOnePlaylist($account, $playlistRel);
+                } catch (\Exception $exception) {
+                    $error = json_decode($exception->getMessage(), true);
+                    $error =  \Pumukit\YoutubeBundle\Document\Error::create(
+                        $error['error']['errors'][0]['reason'],
+                        $error['error']['errors'][0]['message'],
+                        new \DateTime(),
+                        $error['error']
+                    );
+                    $youtubeDocument->setError($error);
+                }
+
+                $youtubeDocument->removeError();
                 $youtubeDocument->removePlaylist($playlistId);
             } else {
                 $playlistToDoNothing[] = $playlistId;
@@ -109,8 +125,21 @@ class PlaylistItemInsertService extends GooglePlaylistItemService
                 continue;
             }
 
-            $response = $this->insert($account, $playlist, $youtubeDocument->getYoutubeId());
-            $youtubeDocument->setPlaylist($playlist, $response->getId());
+            try {
+                $response = $this->insert($account, $playlist, $youtubeDocument->getYoutubeId());
+                $youtubeDocument->setPlaylist($playlist, $response->getId());
+                $youtubeDocument->removeError();
+            } catch (\Exception $exception) {
+                $error = json_decode($exception->getMessage(), true);
+                $error =  \Pumukit\YoutubeBundle\Document\Error::create(
+                    $error['error']['errors'][0]['reason'],
+                    $error['error']['errors'][0]['message'],
+                    new \DateTime(),
+                    $error['error']
+                );
+                $youtubeDocument->setError($error);
+            }
+
         }
         $this->documentManager->flush();
     }

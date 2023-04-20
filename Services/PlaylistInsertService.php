@@ -57,13 +57,31 @@ class PlaylistInsertService extends GooglePlaylistService
     public function insertPlaylistsFromPuMuKIT(Tag $account): bool
     {
         foreach ($account->getChildren() as $child) {
-            if (!$child->getProperty('youtube')) {
-                $this->insertOnePlaylist($account, $child);
-            }
+            try {
+                if ($this->playlistDataValidationService->isValidTitle($child->getTitle())) {
+                    $child->setProperty('youtube_error', 'Playlist title have more characters than allowed on YouTube');
 
-            $playlistResponse = $this->playlistListService->findPlaylist($account, $child->getProperty('youtube'));
-            if (empty($playlistResponse->getItems())) {
-                $this->insertOnePlaylist($account, $child);
+                    continue;
+                }
+
+                if (!$child->getProperty('youtube')) {
+                    $this->insertOnePlaylist($account, $child);
+
+                    continue;
+                }
+
+                $playlistResponse = $this->playlistListService->findPlaylist($account, $child->getProperty('youtube'));
+                if (empty($playlistResponse->getItems())) {
+                    $this->insertOnePlaylist($account, $child);
+                }
+            } catch (\Exception $exception) {
+                $errorLog = sprintf(
+                    '[YouTube] Error sync playlist from account %s. Error: %s',
+                    $account->getProperty('youtube'),
+                    $exception->getMessage());
+                $this->logger->error($errorLog);
+
+                continue;
             }
         }
 
@@ -105,8 +123,11 @@ class PlaylistInsertService extends GooglePlaylistService
             $playlistResponse = $this->insert($account, $playlist);
             $playlistTag->setProperty('youtube', $playlistResponse->getId());
             $playlistTag->setProperty('youtube_playlist', true);
+            $playlistTag->removeProperty('youtube_error');
         } catch (\Exception $exception) {
             $playlistTag->setProperty('youtube_error', $exception->getMessage());
+            $errorLog = sprintf('[YouTube] Upload playlist %s failed. Error: %s', $playlistTag->getTitle(), $exception->getMessage());
+            $this->logger->error($errorLog);
         }
     }
 
@@ -134,7 +155,6 @@ class PlaylistInsertService extends GooglePlaylistService
         foreach ($playlistItems as $item) {
             $tag = $this->documentManager->getRepository(Tag::class)->findOneBy(['properties.youtube' => $item->getId()]);
             if (!$tag instanceof Tag) {
-                var_dump($item->getSnippet()->getTitle());
                 $this->playlistDeleteService->deleteOnePlaylist($account, $item);
             }
         }
