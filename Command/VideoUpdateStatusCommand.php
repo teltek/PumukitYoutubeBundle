@@ -8,9 +8,7 @@ use Doctrine\ODM\MongoDB\DocumentManager;
 use MongoDB\BSON\ObjectId;
 use Psr\Log\LoggerInterface;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
-use Pumukit\YoutubeBundle\Document\Error;
 use Pumukit\YoutubeBundle\Document\Youtube;
-use Pumukit\YoutubeBundle\Services\NotificationService;
 use Pumukit\YoutubeBundle\Services\VideoListService;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -21,23 +19,17 @@ class VideoUpdateStatusCommand extends Command
 {
     protected $documentManager;
     protected $videoListService;
-    protected $notificationService;
 
     protected $logger;
-    protected $okUpdates = [];
-    protected $failedUpdates = [];
-    protected $errors = [];
     protected $usePumukit1 = false;
 
     public function __construct(
         DocumentManager $documentManager,
         VideoListService $videoListService,
-        NotificationService $notificationService,
         LoggerInterface $logger
     ) {
         $this->documentManager = $documentManager;
         $this->videoListService = $videoListService;
-        $this->notificationService = $notificationService;
         $this->logger = $logger;
 
         parent::__construct();
@@ -76,15 +68,9 @@ EOT
         ];
         $youtubeDocuments = $this->documentManager->getRepository(Youtube::class)->getWithoutAnyStatus($statusArray);
 
-        $infoLog = "[YouTube] Updating status for ".count($youtubeDocuments). " videos.";
-        $output->writeln($infoLog);
+        $infoLog = '[YouTube] Updating status for '.count($youtubeDocuments).' videos.';
+        $this->logger->info($infoLog);
         $this->updateVideoStatusInYoutube($youtubeDocuments, $output);
-
-        $this->notificationService->notificationOfUpdatedStatusVideoResults(
-            $this->okUpdates,
-            $this->failedUpdates,
-            $this->errors
-        );
 
         return 0;
     }
@@ -93,9 +79,9 @@ EOT
     {
         foreach ($youtubeDocuments as $youtube) {
             if (!$youtube->getYoutubeId()) {
-                $errorLog = sprintf("YouTube document %s does not have a Youtube ID variable set.", $youtube->getId());
+                $errorLog = sprintf('YouTube document %s does not have a Youtube ID variable set.', $youtube->getId());
                 $youtube->setStatus(Youtube::STATUS_ERROR);
-                $error =  \Pumukit\YoutubeBundle\Document\Error::create(
+                $error = \Pumukit\YoutubeBundle\Document\Error::create(
                     'pumukit.youtubeIdNotFound',
                     $errorLog,
                     new \DateTime(),
@@ -112,7 +98,7 @@ EOT
             if (!$multimediaObject instanceof MultimediaObject) {
                 $errorLog = sprintf("No multimedia object for YouTube document %s\n", $youtube->getId());
                 $youtube->setStatus(Youtube::STATUS_ERROR);
-                $error =  \Pumukit\YoutubeBundle\Document\Error::create(
+                $error = \Pumukit\YoutubeBundle\Document\Error::create(
                     'pumukit.videoNotFound',
                     $errorLog,
                     new \DateTime(),
@@ -128,17 +114,10 @@ EOT
 
             try {
                 $result = $this->videoListService->updateVideoStatus($youtube, $multimediaObject);
-                if (!$result) {
-                    $this->failedUpdates[] = $multimediaObject;
-                } else {
-                    $this->okUpdates[] = $multimediaObject;
-                }
             } catch (\Exception $e) {
-                $errorLog = sprintf("[YouTube] Update status of the video %s failed: %s", $multimediaObject->getId(), $e->getMessage());
+                $errorLog = sprintf('[YouTube] Update status of the video %s failed: %s', $multimediaObject->getId(), $e->getMessage());
                 $output->writeln($errorLog);
                 $this->logger->error($errorLog);
-                $this->failedUpdates[] = $multimediaObject;
-                $this->errors[] = $e->getMessage();
             }
         }
     }

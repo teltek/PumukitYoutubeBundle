@@ -67,7 +67,7 @@ class VideoDeleteService extends GoogleVideoService
             }
             $response = $this->delete($account, $video);
             if (204 !== $response->getStatusCode()) {
-                $error =  \Pumukit\YoutubeBundle\Document\Error::create(
+                $error = \Pumukit\YoutubeBundle\Document\Error::create(
                     $response->getReasonPhrase(),
                     $response->getReasonPhrase(),
                     new \DateTime(),
@@ -80,7 +80,7 @@ class VideoDeleteService extends GoogleVideoService
             }
         } catch (\Exception $exception) {
             $error = json_decode($exception->getMessage(), true);
-            $error =  \Pumukit\YoutubeBundle\Document\Error::create(
+            $error = \Pumukit\YoutubeBundle\Document\Error::create(
                 $error['error']['errors'][0]['reason'],
                 $error['error']['errors'][0]['message'],
                 new \DateTime(),
@@ -120,7 +120,7 @@ class VideoDeleteService extends GoogleVideoService
             }
             $response = $this->delete($account, $video);
             if (204 !== $response->getStatusCode()) {
-                $error =  \Pumukit\YoutubeBundle\Document\Error::create(
+                $error = \Pumukit\YoutubeBundle\Document\Error::create(
                     $response->getReasonPhrase(),
                     $response->getReasonPhrase(),
                     new \DateTime(),
@@ -134,7 +134,7 @@ class VideoDeleteService extends GoogleVideoService
             }
         } catch (\Exception $exception) {
             $error = json_decode($exception->getMessage(), true);
-            $error =  \Pumukit\YoutubeBundle\Document\Error::create(
+            $error = \Pumukit\YoutubeBundle\Document\Error::create(
                 $error['error']['errors'][0]['reason'],
                 $error['error']['errors'][0]['message'],
                 new \DateTime(),

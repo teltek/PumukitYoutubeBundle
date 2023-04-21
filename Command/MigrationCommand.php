@@ -394,11 +394,9 @@ EOT
 
     private function checkAccountExists(OutputInterface $output): void
     {
-        $tagAccount = $this->documentManager->getRepository(Tag::class)->findBy(
-            [
-                'properties.login' => $this->accountName,
-            ]
-        );
+        $tagAccount = $this->documentManager->getRepository(Tag::class)->findBy([
+            'properties.login' => $this->accountName,
+        ]);
 
         if ($tagAccount) {
             $output->writeln('<error>There are accounts defined on BBDD'.count($tagAccount).'</error>');

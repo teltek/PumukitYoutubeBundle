@@ -46,12 +46,15 @@ EOT
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $youtubeAccounts = $this->getAllYouTubeAccounts();
+        $infoLog = '[YouTube] Sync playlist for '.count($youtubeAccounts).' accounts.';
+        $this->logger->info($infoLog);
         foreach ($youtubeAccounts as $account) {
             try {
                 $this->playlistInsertService->syncAll($account);
             } catch (\Exception $exception) {
-                $errorLog = sprintf("[YouTube] Playlist sync on account %s failed. Error: %s", $account->getProperty('login'), $exception->getMessage());
+                $errorLog = sprintf('[YouTube] Playlist sync on account %s failed. Error: %s', $account->getProperty('login'), $exception->getMessage());
                 $this->logger->error($errorLog);
+                $output->writeln($errorLog);
 
                 continue;
             }

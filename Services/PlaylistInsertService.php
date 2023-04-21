@@ -78,7 +78,8 @@ class PlaylistInsertService extends GooglePlaylistService
                 $errorLog = sprintf(
                     '[YouTube] Error sync playlist from account %s. Error: %s',
                     $account->getProperty('youtube'),
-                    $exception->getMessage());
+                    $exception->getMessage()
+                );
                 $this->logger->error($errorLog);
 
                 continue;

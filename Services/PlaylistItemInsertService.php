@@ -34,8 +34,9 @@ class PlaylistItemInsertService extends GooglePlaylistItemService
     public function updatePlaylist(MultimediaObject $multimediaObject): bool
     {
         $youtube = $this->getYoutubeDocument($multimediaObject);
-        if(!$youtube instanceof Youtube) {
-            $this->logger->error('[YouTube] Video with ID '.$multimediaObject->getId(). ' doesnt have published Youtube document');
+        if (!$youtube instanceof Youtube) {
+            $this->logger->error('[YouTube] Video with ID '.$multimediaObject->getId().' doesnt have published Youtube document');
+
             return false;
         }
 
@@ -68,7 +69,7 @@ class PlaylistItemInsertService extends GooglePlaylistItemService
     {
         return $this->documentManager->getRepository(Youtube::class)->findOneBy([
             'multimediaObjectId' => $multimediaObject->getId(),
-            'status' => Youtube::STATUS_PUBLISHED
+            'status' => Youtube::STATUS_PUBLISHED,
         ]);
     }
 
@@ -92,7 +93,7 @@ class PlaylistItemInsertService extends GooglePlaylistItemService
     private function fixPlaylistsForMultimediaObject(MultimediaObject $multimediaObject, array $assignedPlaylists): void
     {
         $youtubeDocument = $this->documentManager->getRepository(Youtube::class)->findOneBy([
-                'multimediaObjectId' => $multimediaObject->getId()
+            'multimediaObjectId' => $multimediaObject->getId(),
         ]);
 
         $account = $this->documentManager->getRepository(Tag::class)->findOneBy(['properties.login' => $youtubeDocument->getYoutubeAccount()]);
@@ -104,7 +105,7 @@ class PlaylistItemInsertService extends GooglePlaylistItemService
                     $response = $this->playlistItemDeleteService->deleteOnePlaylist($account, $playlistRel);
                 } catch (\Exception $exception) {
                     $error = json_decode($exception->getMessage(), true);
-                    $error =  \Pumukit\YoutubeBundle\Document\Error::create(
+                    $error = \Pumukit\YoutubeBundle\Document\Error::create(
                         $error['error']['errors'][0]['reason'],
                         $error['error']['errors'][0]['message'],
                         new \DateTime(),
@@ -131,7 +132,7 @@ class PlaylistItemInsertService extends GooglePlaylistItemService
                 $youtubeDocument->removeError();
             } catch (\Exception $exception) {
                 $error = json_decode($exception->getMessage(), true);
-                $error =  \Pumukit\YoutubeBundle\Document\Error::create(
+                $error = \Pumukit\YoutubeBundle\Document\Error::create(
                     $error['error']['errors'][0]['reason'],
                     $error['error']['errors'][0]['message'],
                     new \DateTime(),
@@ -139,7 +140,6 @@ class PlaylistItemInsertService extends GooglePlaylistItemService
                 );
                 $youtubeDocument->setError($error);
             }
-
         }
         $this->documentManager->flush();
     }

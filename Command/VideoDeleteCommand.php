@@ -63,7 +63,7 @@ EOT
         // Videos with YouTube document on PUBLISHED but status on PuMuKIT not allowed to be published
         // Ex: sync_status false and status hidden or blocked.
         $notPublishedMms = $this->notPublishedMultimediaObjects();
-        $infoLog = "[YouTube] Deleting not published videos  ".count($notPublishedMms). " on YouTube";
+        $infoLog = '[YouTube] Deleting not published videos  '.count($notPublishedMms).' on YouTube';
         $this->logger->info($infoLog);
         $this->deleteVideosFromYoutube($notPublishedMms, $output);
 
@@ -78,14 +78,14 @@ EOT
         );
         $publishedYoutubeIds = $this->getStringIds($youtubeMongoIds);
         $notCorrectTagMms = $this->getMultimediaObjectsInYoutubeWithoutTagCodes($publishedYoutubeIds, $arrayPubTags);
-        $infoLog = "[YouTube] Deleting videos published on YouTube but without account/configuration to be on YouTube:  ".count($notCorrectTagMms);
+        $infoLog = '[YouTube] Deleting videos published on YouTube but without account/configuration to be on YouTube:  '.count($notCorrectTagMms);
         $this->logger->info($infoLog);
         $this->deleteVideosFromYoutube($notCorrectTagMms, $output);
 
         // Use case:
         // Videos published on YouTube but with EmbeddedBroadcast distinct of public
         $notPublicMms = $this->getMultimediaObjectsInYoutubeWithoutEmbeddedBroadcast($publishedYoutubeIds, 'public');
-        $infoLog = "[YouTube] Deleting videos with EmbeddedBroadcast not public:  ".count($notPublicMms);
+        $infoLog = '[YouTube] Deleting videos with EmbeddedBroadcast not public:  '.count($notPublicMms);
         $this->logger->info($infoLog);
         $this->deleteVideosFromYoutube($notPublicMms, $output);
 
@@ -94,7 +94,7 @@ EOT
         $orphanVideos = $this->documentManager->getRepository(Youtube::class)->findBy([
             'status' => Youtube::STATUS_TO_DELETE,
         ]);
-        $infoLog = "[YouTube] Deleting orphan videos:  ".count($notPublicMms);
+        $infoLog = '[YouTube] Deleting orphan videos:  '.count($notPublicMms);
         $this->logger->info($infoLog);
         $this->deleteOrphanVideosFromYoutube($orphanVideos, $output);
 
@@ -107,8 +107,9 @@ EOT
             try {
                 $result = $this->videoDeleteService->deleteVideoFromYouTubeByMultimediaObject($multimediaObject);
             } catch (\Exception $e) {
-                $errorLog = sprintf("[YouTube] Remove video %s failed. Error: %s", $multimediaObject->getId(), $e->getMessage());
+                $errorLog = sprintf('[YouTube] Remove video %s failed. Error: %s', $multimediaObject->getId(), $e->getMessage());
                 $this->logger->error($errorLog);
+                $output->writeln($errorLog);
             }
         }
     }
@@ -134,8 +135,9 @@ EOT
                     }
                 }
             } catch (\Exception $e) {
-                $errorLog = sprintf("[YouTube] Remove video assigned on YoutubeDocument %s failed. Error: %s", $youtube->getId(), $e->getMessage());
+                $errorLog = sprintf('[YouTube] Remove video assigned on YoutubeDocument %s failed. Error: %s', $youtube->getId(), $e->getMessage());
                 $this->logger->error($errorLog);
+                $output->writeln($errorLog);
             }
         }
     }

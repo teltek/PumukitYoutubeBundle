@@ -8,7 +8,6 @@ use Doctrine\ODM\MongoDB\DocumentManager;
 use Psr\Log\LoggerInterface;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Tag;
-use Pumukit\YoutubeBundle\Document\Error;
 use Pumukit\YoutubeBundle\Document\Youtube;
 
 class VideoUpdateService extends GoogleVideoService
@@ -40,7 +39,7 @@ class VideoUpdateService extends GoogleVideoService
     {
         $account = $this->videoDataValidationService->validateMultimediaObjectAccount($multimediaObject);
         if (!$account) {
-            $errorLog = sprintf("[YouTube] Video %s does not have account set.",$multimediaObject->getId());
+            $errorLog = sprintf('[YouTube] Video %s does not have account set.', $multimediaObject->getId());
             $this->logger->error($errorLog);
 
             return false;
@@ -69,7 +68,7 @@ class VideoUpdateService extends GoogleVideoService
             $response = $this->update($account, $video);
         } catch (\Exception $exception) {
             $error = json_decode($exception->getMessage(), true);
-            $error =  \Pumukit\YoutubeBundle\Document\Error::create(
+            $error = \Pumukit\YoutubeBundle\Document\Error::create(
                 $error['error']['errors'][0]['reason'],
                 $error['error']['errors'][0]['message'],
                 new \DateTime(),
@@ -78,7 +77,6 @@ class VideoUpdateService extends GoogleVideoService
             $youtubeDocument->setError($error);
             $this->documentManager->flush();
 
-            $errorLog = __CLASS__.' ['.__FUNCTION__.'] Error updating MultimediaObject '.$multimediaObject->getId().': '.$exception->getMessage();
             $this->logger->error($errorLog);
 
             return false;

@@ -49,7 +49,7 @@ class PlaylistListService extends GooglePlaylistService
 
             return $playlistItems;
         } catch (\Exception $exception) {
-            $this->logger->error('[YouTube] Error findAll playlist for account '. $youtubeAccount->getProperty('login'));
+            $this->logger->error('[YouTube] Error findAll playlist for account '.$youtubeAccount->getProperty('login'));
         }
 
         return [];

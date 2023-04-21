@@ -10,7 +10,6 @@ use Psr\Log\LoggerInterface;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\SchemaBundle\Document\Track;
-use Pumukit\Youtubebundle\Document\Error;
 use Pumukit\YoutubeBundle\Document\Youtube;
 
 class VideoInsertService extends GoogleVideoService
@@ -71,7 +70,7 @@ class VideoInsertService extends GoogleVideoService
                 json_decode($exception->getMessage(), true)
             );
 
-            $errorLog = "[YouTube] Multimedia object with ID (".$multimediaObject->getId().") failed uploading to YouTube. ".$exception->getMessage();
+            $errorLog = '[YouTube] Multimedia object with ID ('.$multimediaObject->getId().') failed uploading to YouTube. '.$exception->getMessage();
             $this->logger->error($errorLog);
 
             return false;
@@ -171,7 +170,6 @@ class VideoInsertService extends GoogleVideoService
         Youtube $youtube,
         array $exception
     ): void {
-
         $youtube->setStatus(Youtube::STATUS_ERROR);
         $error = \Pumukit\YoutubeBundle\Document\Error::create(
             $exception['error']['errors'][0]['reason'],

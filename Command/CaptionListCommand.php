@@ -61,8 +61,6 @@ EOT
 
         var_dump($response);
 
-        exit;
-
         return 0;
     }
 }

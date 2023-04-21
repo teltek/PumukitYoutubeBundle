@@ -15,15 +15,14 @@ class CommonDataValidationService
 
     public function __construct(
         DocumentManager $documentManager
-    )
-    {
+    ) {
         $this->documentManager = $documentManager;
     }
 
     public function validateMultimediaObjectAccount(MultimediaObject $multimediaObject): ?Tag
     {
         $youtubeTag = $this->documentManager->getRepository(Tag::class)->findOneBy([
-            'cod' => PumukitYoutubeBundle::YOUTUBE_TAG_CODE
+            'cod' => PumukitYoutubeBundle::YOUTUBE_TAG_CODE,
         ]);
         $account = null;
         foreach ($multimediaObject->getTags() as $tag) {

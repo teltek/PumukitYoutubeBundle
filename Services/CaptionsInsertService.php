@@ -31,7 +31,6 @@ class CaptionsInsertService extends GoogleCaptionService
 
     public function uploadCaption(Youtube $youtube, MultimediaObject $multimediaObject, array $materialIds = []): bool
     {
-        // $login = $youtube->getYoutubeAccount();
         foreach ($materialIds as $materialId) {
             $material = $multimediaObject->getMaterialById($materialId);
             if (!$material) {
@@ -39,10 +38,9 @@ class CaptionsInsertService extends GoogleCaptionService
             }
 
             try {
-                // $result = $this->youtubeProcessService->insertCaption($youtube, $material->getName(), $material->getLanguage(), $material->getPath(), $login);
                 $videoId = $multimediaObject->getProperty('youtube');
                 if (!$videoId) {
-                    $this->logger->error('Multimedia Object with ID '.$multimediaObject->getId().' doesnt have youtube property');
+                    $this->logger->error('[YouTube] Multimedia Object with ID '.$multimediaObject->getId().' doesnt have youtube property');
 
                     continue;
                 }
@@ -51,37 +49,25 @@ class CaptionsInsertService extends GoogleCaptionService
                     'properties.login' => $youtube->getYoutubeAccount(),
                 ]);
 
-                // TODO: Si existe un caption con el mismo nombre en YT para el mismo idioma da error.
                 $result = $this->insert($account, $material, $youtube->getYoutubeId());
 
                 $caption = $this->createCaptionDocument($material, $result);
                 $youtube->addCaption($caption);
-
-                // $uploaded[] = $result;
+                $youtube->removeError();
             } catch (\Exception $exception) {
-                $errorLog = __CLASS__.' ['.__FUNCTION__
-                    ."] Error in uploading Caption for Youtube video with id '"
-                    .$youtube->getId()."' and material Id '"
-                    .$materialId."': ".$exception->getMessage();
+                $error = json_decode($exception->getMessage(), true);
+                $error = \Pumukit\YoutubeBundle\Document\Error::create(
+                    $error['error']['errors'][0]['reason'],
+                    $error['error']['errors'][0]['message'],
+                    new \DateTime(),
+                    $error['error']
+                );
+                $youtube->setError($error);
+                $errorLog = sprintf('[YouTube] Video %s and material %s could\'t upload. Error: %s', $multimediaObject->getId(), $material->getId(), $exception->getMessage());
                 $this->logger->error($errorLog);
             }
-
-/*
-            if ($result['error']) {
-                $errorLog = __CLASS__.' ['.__FUNCTION__
-                    ."] Error in uploading Caption for Youtube video with id '"
-                    .$youtube->getId()."' and material Id '"
-                    .$materialId."': ".$result['error_out'];
-                $this->logger->error($errorLog);
-
-                continue;
-            }*/
-            /*$caption = $this->createCaption($material, $result['out']);
-            $youtube->addCaption($caption);
-            $uploaded[] = $result['out'];*/
         }
 
-        // $this->documentManager->persist($youtube);
         $this->documentManager->flush();
 
         return true;

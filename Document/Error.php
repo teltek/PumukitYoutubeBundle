@@ -39,7 +39,7 @@ class Error
     ) {
         $this->id = $id;
         $this->message = $message;
-        $this->date= $date;
+        $this->date = $date;
         $this->raw = $raw;
     }
 

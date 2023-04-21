@@ -9,7 +9,6 @@ use Doctrine\ODM\MongoDB\Query\Builder;
 use Psr\Log\LoggerInterface;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\YoutubeBundle\Document\Youtube;
-use Pumukit\YoutubeBundle\Services\NotificationService;
 use Pumukit\YoutubeBundle\Services\VideoInsertService;
 use Pumukit\YoutubeBundle\Services\YoutubeConfigurationService;
 use Symfony\Component\Console\Command\Command;
@@ -22,29 +21,19 @@ class VideoUploadCommand extends Command
     private $documentManager;
     private $youtubeConfigurationService;
     private $videoInsertService;
-    private $notificationService;
     private $logger;
     private $usePumukit1 = false;
-    private $okUploads;
-    private $failedUploads;
-    private $errors;
 
     public function __construct(
         DocumentManager $documentManager,
         YoutubeConfigurationService $youtubeConfigurationService,
         VideoInsertService $videoInsertService,
-        NotificationService $notificationService,
         LoggerInterface $logger,
     ) {
         $this->documentManager = $documentManager;
         $this->youtubeConfigurationService = $youtubeConfigurationService;
         $this->videoInsertService = $videoInsertService;
-        $this->notificationService = $notificationService;
         $this->logger = $logger;
-
-        $this->okUploads = [];
-        $this->failedUploads = [];
-        $this->errors = [];
 
         parent::__construct();
     }
@@ -69,28 +58,22 @@ EOT
         $this->usePumukit1 = $input->getOption('use-pmk1');
 
         $newMultimediaObjects = $this->getNewMultimediaObjectsToUpload();
-        $infoLog = "[YouTube] Uploading ".count($newMultimediaObjects). " new videos to YouTube";
+        $infoLog = '[YouTube] Uploading '.count($newMultimediaObjects).' new videos to YouTube';
         $this->logger->info($infoLog);
         $this->uploadVideosToYoutube($newMultimediaObjects, $output);
 
         $failureMultimediaObjects = $this->getUploadsByStatus([Youtube::STATUS_ERROR]);
-        $infoLog = "[YouTube] Uploading ".count($failureMultimediaObjects). " failure videos to YouTube";
+        $infoLog = '[YouTube] Uploading '.count($failureMultimediaObjects).' failure videos to YouTube';
         $this->logger->info($infoLog);
         $this->uploadVideosToYoutube($failureMultimediaObjects, $output);
 
         if ($this->youtubeConfigurationService->uploadRemovedVideos()) {
             $removedStatus = [Youtube::STATUS_REMOVED];
             $removedYoutubeMultimediaObjects = $this->getUploadsByStatus($removedStatus);
-            $infoLog = "[YouTube] Uploading ".count($removedYoutubeMultimediaObjects). " removed videos to YouTube";
+            $infoLog = '[YouTube] Uploading '.count($removedYoutubeMultimediaObjects).' removed videos to YouTube';
             $this->logger->info($infoLog);
             $this->uploadVideosToYoutube($removedYoutubeMultimediaObjects, $output);
         }
-
-        $this->notificationService->notificationOfUploadedVideoResults(
-            $this->okUploads,
-            $this->failedUploads,
-            $this->errors
-        );
 
         return 0;
     }
@@ -100,16 +83,10 @@ EOT
         foreach ($multimediaObjects as $multimediaObject) {
             try {
                 $result = $this->videoInsertService->uploadVideoToYoutube($multimediaObject);
-                if (!$result) {
-                    $this->failedUploads[] = $multimediaObject;
-                } else {
-                    $this->okUploads[] = $multimediaObject;
-                }
             } catch (\Exception $exception) {
-                $errorLog = "[YouTube] Multimedia object with ID (".$multimediaObject->getId().") contains error to upload YouTube. ".$exception->getMessage();
+                $errorLog = '[YouTube] Multimedia object with ID ('.$multimediaObject->getId().') contains error to upload YouTube. '.$exception->getMessage();
                 $this->logger->error($errorLog);
-                $this->failedUploads[] = $multimediaObject;
-                $this->errors[] = $exception->getMessage();
+                $output->writeln($errorLog);
             }
         }
     }

@@ -10,7 +10,8 @@ class PlaylistDeleteService extends GooglePlaylistService
 {
     private $googleAccountService;
 
-    public function __construct(GoogleAccountService $googleAccountService) {
+    public function __construct(GoogleAccountService $googleAccountService)
+    {
         $this->googleAccountService = $googleAccountService;
     }
 

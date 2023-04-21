@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Pumukit\YoutubeBundle\Services;
 
-class PlaylistDataValidationService
+class PlaylistDataValidationService extends CommonDataValidationService
 {
     private const MAX_LENGTH_TITLE = 150;
 

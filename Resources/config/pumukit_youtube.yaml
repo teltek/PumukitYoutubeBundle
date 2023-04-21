@@ -132,6 +132,10 @@ services:
   Pumukit\YoutubeBundle\Services\CaptionsListService:
     class: Pumukit\YoutubeBundle\Services\CaptionsListService
 
+  Pumukit\YoutubeBundle\Services\CaptionsDataValidationService:
+    class: Pumukit\YoutubeBundle\Services\CaptionsDataValidationService
+
+
   Pumukit\YoutubeBundle\Services\CommonDataValidationService:
     class: Pumukit\YoutubeBundle\Services\CommonDataValidationService
 

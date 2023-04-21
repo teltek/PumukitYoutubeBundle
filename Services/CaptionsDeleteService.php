@@ -29,15 +29,21 @@ class CaptionsDeleteService extends GoogleCaptionService
     public function deleteCaption(Tag $account, Youtube $youtube, array $captionsId): bool
     {
         foreach ($captionsId as $captionId) {
-            $result = $this->delete($account, $captionId);
-            if (!$result) {
-                $errorLog = __CLASS__.' ['.__FUNCTION__
-                    ."] Error in deleting Caption for Youtube video with id '"
-                    .$youtube->getId()."' and Caption id '"
-                    .$captionId;
+            try {
+                $result = $this->delete($account, $captionId);
+            } catch (\Exception $exception) {
+                $errorLog = sprintf('[YouTube] Remove caption for Youtube document %s failed. Error: %s', $youtube->getId(), $exception->getMessage());
                 $this->logger->error($errorLog);
+                $error = json_decode($exception->getMessage(), true);
+                $error = \Pumukit\YoutubeBundle\Document\Error::create(
+                    $error['error']['errors'][0]['reason'],
+                    $error['error']['errors'][0]['message'],
+                    new \DateTime(),
+                    $error['error']
+                );
+                $youtube->setError($error);
 
-                return false;
+                continue;
             }
 
             $youtube->removeCaptionByCaptionId($captionId);

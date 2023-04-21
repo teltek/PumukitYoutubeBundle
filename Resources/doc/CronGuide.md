@@ -21,3 +21,10 @@ The recommendation on a production environment is to run commands every day, e.g
 40 23 * * *     /usr/bin/php /var/www/pumukit/bin/console pumukit:youtube:caption:upload --env=prod
 40 23 * * *     /usr/bin/php /var/www/pumukit/bin/console pumukit:youtube:caption:delete --env=prod
 ```
+
+Notification errors cron:
+```bash
+40 23 * * *     /usr/bin/php /var/www/pumukit/bin/console pumukit:youtube:video:error:notification --env=prod
+40 23 * * *     /usr/bin/php /var/www/pumukit/bin/console pumukit:youtube:metadata:error:notification --env=prod
+40 23 * * *     /usr/bin/php /var/www/pumukit/bin/console pumukit:youtube:playlist:error:notification --env=prod
+```

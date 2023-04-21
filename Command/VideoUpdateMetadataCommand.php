@@ -8,7 +8,6 @@ use Doctrine\ODM\MongoDB\DocumentManager;
 use Psr\Log\LoggerInterface;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\YoutubeBundle\Document\Youtube;
-use Pumukit\YoutubeBundle\Services\NotificationService;
 use Pumukit\YoutubeBundle\Services\VideoUpdateService;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -19,27 +18,17 @@ class VideoUpdateMetadataCommand extends Command
 {
     private $documentManager;
     private $videoUpdateService;
-    private $notificationService;
     private $logger;
     private $usePumukit1 = false;
-    private $okUpdates;
-    private $failedUpdates;
-    private $errors;
 
     public function __construct(
         DocumentManager $documentManager,
         VideoUpdateService $videoUpdateService,
-        NotificationService $notificationService,
         LoggerInterface $logger,
     ) {
         $this->documentManager = $documentManager;
         $this->videoUpdateService = $videoUpdateService;
-        $this->notificationService = $notificationService;
         $this->logger = $logger;
-
-        $this->okUpdates = [];
-        $this->failedUpdates = [];
-        $this->errors = [];
 
         parent::__construct();
     }
@@ -67,15 +56,9 @@ EOT
 
         $multimediaObjects = $this->getMultimediaObjectsInYoutubeToUpdate();
 
-        $infoLog = "[YouTube] Updating metadata for ".count($multimediaObjects). " videos on YouTube";
+        $infoLog = '[YouTube] Updating metadata for '.count($multimediaObjects).' videos on YouTube';
         $output->writeln($infoLog);
         $this->updateVideosInYoutube($multimediaObjects, $output);
-
-        $this->notificationService->notificationOfUpdatedVideoResults(
-            $this->okUpdates,
-            $this->failedUpdates,
-            $this->errors
-        );
 
         return 0;
     }
@@ -85,17 +68,10 @@ EOT
         foreach ($multimediaObjects as $multimediaObject) {
             try {
                 $result = $this->videoUpdateService->updateVideoOnYoutube($multimediaObject);
-                if (!$result) {
-                    $this->failedUpdates[] = $multimediaObject;
-                } else {
-                    $this->okUpdates[] = $multimediaObject;
-                }
             } catch (\Exception $e) {
-                $errorLog = sprintf("[YouTube] Update metadata video for video %s failed: %s", $multimediaObject->getId(), $e->getMessage());
+                $errorLog = sprintf('[YouTube] Update metadata video for video %s failed: %s', $multimediaObject->getId(), $e->getMessage());
                 $this->logger->error($errorLog);
                 $output->writeln($errorLog);
-                $this->failedUpdates[] = $multimediaObject;
-                $this->errors[] = $e->getMessage();
             }
         }
     }

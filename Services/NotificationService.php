@@ -50,7 +50,29 @@ class NotificationService
         }
     }
 
-    public function notificationOfUploadedVideoResults(array $uploadedVideos, array $failedVideos, array $errors): void
+    public function notificationVideoErrorResult(array $result): bool
+    {
+        if (!$result) {
+            return false;
+        }
+
+        return $this->sendEmail2('upload', $result);
+    }
+
+    public function notificationMetadataErrorResult(array $result): bool
+    {
+        if (!$result) {
+            return false;
+        }
+
+        return $this->sendEmail2('upload', $result);
+    }
+
+    public function notificationPlaylistsErrorResult(array $result)
+    {
+    }
+
+    /*public function notificationOfUploadedVideoResults(array $uploadedVideos, array $failedVideos, array $errors): void
     {
         $youtubeTag = $this->documentManager->getRepository(Tag::class)->findOneBy([
             'cod' => PumukitYoutubeBundle::YOUTUBE_PUBLICATION_CHANNEL_CODE,
@@ -66,9 +88,9 @@ class NotificationService
         if (!empty($uploadedVideos) || !empty($failedVideos)) {
             $this->sendEmail('upload', $uploadedVideos, $failedVideos, $errors);
         }
-    }
+    }*/
 
-    public function notificationOfUpdatedVideoResults(array $okUpdates, array $failedUpdates, array $errors): void
+    /*public function notificationOfUpdatedVideoResults(array $okUpdates, array $failedUpdates, array $errors): void
     {
         if (!empty($errors)) {
             $this->sendEmail('metadata update', $okUpdates, $failedUpdates, $errors);
@@ -80,6 +102,57 @@ class NotificationService
         if (!empty($errors)) {
             $this->sendEmail('status update', $okUpdates, $failedUpdates, $errors);
         }
+    }*/
+
+    public function sendEmail2(string $cause = '', array $results = []): bool
+    {
+        if (!$this->senderService || !$this->senderService->isEnabled()) {
+            return false;
+        }
+
+        $subject = $this->buildEmailSubject($cause);
+        $body = $this->buildEmailBody2($cause, $results);
+        $emailTo = $this->senderService->getAdminEmail();
+        $template = '@PumukitNotification/Email/notification.html.twig';
+        $parameters = [
+            'subject' => $subject,
+            'body' => $body,
+            'sender_name' => $this->senderService->getSenderName(),
+        ];
+
+        try {
+            $result = $this->senderService->sendNotification($emailTo, $subject, $template, $parameters, true);
+            if (!$result) {
+                $this->logger->error('[YouTube] Notification ('.$subject.') result failed.');
+            }
+        } catch (\Exception $exception) {
+            $this->logger->error('[YouTube] Notification ('.$subject.') failed. Error: '.$exception->getMessage());
+        }
+
+        return true;
+    }
+
+    public function buildEmailBody2(string $cause = '', array $results = []): string
+    {
+        $body = '<br/>The '.$cause.' of the following videos has failed:<br/><br/>';
+
+        foreach ($results as $error => $elements) {
+            $body .= 'Error: '.$error;
+            $body .= '<ul>';
+            foreach ($elements as $element) {
+                $body .= '<li><a href="'.$this->router->generate(
+                    'pumukitnewadmin_mms_shortener',
+                    [
+                        'id' => $element->getMultimediaObjectId(),
+                    ],
+                    UrlGeneratorInterface::ABSOLUTE_URL
+                ).
+                    '">'.$element->getMultimediaObjectId().'</a></li>';
+            }
+            $body .= '</ul>';
+        }
+
+        return $body;
     }
 
     public function sendEmail(string $cause = '', array $succeed = [], array $failed = [], array $errors = [])
