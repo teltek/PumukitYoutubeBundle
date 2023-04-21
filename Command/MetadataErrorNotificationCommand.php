@@ -40,20 +40,45 @@ EOT
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $elements = $this->getAllYouTubeDocumentsWithErrors();
+        $metadataUpdateErrors = $this->getMetadataUpdateError();
+        $playlistsUpdateErrors = $this->getPlaylistUpdateError();
+        $captionsUpdateErrors = $this->getCaptionUpdateError();
+
+        $elements = array_merge($metadataUpdateErrors, $playlistsUpdateErrors, $captionsUpdateErrors);
+
         $result = $this->processAndGroupErrors($elements);
         $this->notificationService->notificationVideoErrorResult($result);
 
         return 0;
     }
 
-    private function getAllYouTubeDocumentsWithErrors(): array
+    private function getMetadataUpdateError(): array
     {
         $status = [Youtube::STATUS_PUBLISHED];
 
         return $this->documentManager->getRepository(Youtube::class)->findBy([
             'status' => ['$in' => $status],
-            'error' => ['$exists' => true],
+            'metadataUpdateError' => ['$exists' => true],
+        ]);
+    }
+
+    private function getPlaylistUpdateError(): array
+    {
+        $status = [Youtube::STATUS_PUBLISHED];
+
+        return $this->documentManager->getRepository(Youtube::class)->findBy([
+            'status' => ['$in' => $status],
+            'playlistUpdateError' => ['$exists' => true],
+        ]);
+    }
+
+    private function getCaptionUpdateError(): array
+    {
+        $status = [Youtube::STATUS_PUBLISHED];
+
+        return $this->documentManager->getRepository(Youtube::class)->findBy([
+            'status' => ['$in' => $status],
+            'captionUpdateError' => ['$exists' => true],
         ]);
     }
 
@@ -61,7 +86,17 @@ EOT
     {
         $groupResult = [];
         foreach ($elements as $element) {
-            $groupResult[$element->getError()->id()][] = $element;
+            if ($element->getMetadataUpdateError()) {
+                $groupResult[$element->getMetadataUpdateError()->id()][] = $element;
+            }
+
+            if ($element->getPlaylistUpdateError()) {
+                $groupResult[$element->getPlaylistUpdateError()->id()][] = $element;
+            }
+
+            if ($element->getCaptionUpdateError()) {
+                $groupResult[$element->getCaptionUpdateError()->id()][] = $element;
+            }
         }
 
         return $groupResult;

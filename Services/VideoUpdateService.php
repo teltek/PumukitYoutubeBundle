@@ -74,16 +74,16 @@ class VideoUpdateService extends GoogleVideoService
                 new \DateTime(),
                 $error['error']
             );
-            $youtubeDocument->setError($error);
+            $youtubeDocument->setMetadataUpdateError($error);
             $this->documentManager->flush();
 
-            $this->logger->error($error);
+            $this->logger->error($exception->getMessage());
 
             return false;
         }
 
         $youtubeDocument->setSyncMetadataDate(new \DateTime('now'));
-        $youtubeDocument->removeError();
+        $youtubeDocument->removeMetadataUpdateError();
         $this->documentManager->flush();
 
         return true;

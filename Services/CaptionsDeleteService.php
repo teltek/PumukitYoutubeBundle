@@ -41,7 +41,7 @@ class CaptionsDeleteService extends GoogleCaptionService
                     new \DateTime(),
                     $error['error']
                 );
-                $youtube->setError($error);
+                $youtube->setCaptionUpdateError($error);
 
                 continue;
             }
@@ -49,6 +49,7 @@ class CaptionsDeleteService extends GoogleCaptionService
             $youtube->removeCaptionByCaptionId($captionId);
         }
 
+        $youtube->removeCaptionUpdateError();
         $this->documentManager->flush();
 
         return true;

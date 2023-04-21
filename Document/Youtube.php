@@ -118,6 +118,21 @@ class Youtube
      */
     private $error;
 
+    /**
+     * @MongoDB\EmbedOne(targetDocument=Error::class)
+     */
+    private $metadataUpdateError;
+
+    /**
+     * @MongoDB\EmbedOne(targetDocument=Error::class)
+     */
+    private $playlistUpdateError;
+
+    /**
+     * @MongoDB\EmbedOne(targetDocument=Error::class)
+     */
+    private $captionUpdateError;
+
     public function __construct()
     {
         $initializeSyncDate = new \DateTime('1980-01-01 10:00');
@@ -420,5 +435,50 @@ class Youtube
     public function removeError(): void
     {
         $this->error = null;
+    }
+
+    public function setMetadataUpdateError(Error $error): void
+    {
+        $this->metadataUpdateError = $error;
+    }
+
+    public function getMetadataUpdateError(): ?Error
+    {
+        return $this->metadataUpdateError;
+    }
+
+    public function removeMetadataUpdateError(): void
+    {
+        $this->metadataUpdateError = null;
+    }
+
+    public function setPlaylistUpdateError(Error $error): void
+    {
+        $this->playlistUpdateError = $error;
+    }
+
+    public function getPlaylistUpdateError(): ?Error
+    {
+        return $this->playlistUpdateError;
+    }
+
+    public function removePlaylistUpdateError(): void
+    {
+        $this->playlistUpdateError = null;
+    }
+
+    public function setCaptionUpdateError(Error $error): void
+    {
+        $this->captionUpdateError = $error;
+    }
+
+    public function getCaptionUpdateError(): ?Error
+    {
+        return $this->captionUpdateError;
+    }
+
+    public function removeCaptionUpdateError(): void
+    {
+        $this->captionUpdateError = null;
     }
 }

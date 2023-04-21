@@ -53,7 +53,7 @@ class CaptionsInsertService extends GoogleCaptionService
 
                 $caption = $this->createCaptionDocument($material, $result);
                 $youtube->addCaption($caption);
-                $youtube->removeError();
+                $youtube->removeCaptionUpdateError();
             } catch (\Exception $exception) {
                 $error = json_decode($exception->getMessage(), true);
                 $error = \Pumukit\YoutubeBundle\Document\Error::create(
@@ -62,7 +62,7 @@ class CaptionsInsertService extends GoogleCaptionService
                     new \DateTime(),
                     $error['error']
                 );
-                $youtube->setError($error);
+                $youtube->setCaptionUpdateError($error);
                 $errorLog = sprintf('[YouTube] Video %s and material %s could\'t upload. Error: %s', $multimediaObject->getId(), $material->getId(), $exception->getMessage());
                 $this->logger->error($errorLog);
             }

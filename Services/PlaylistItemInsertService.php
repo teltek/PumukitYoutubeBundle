@@ -111,10 +111,10 @@ class PlaylistItemInsertService extends GooglePlaylistItemService
                         new \DateTime(),
                         $error['error']
                     );
-                    $youtubeDocument->setError($error);
+                    $youtubeDocument->setPlaylistUpdateError($error);
                 }
 
-                $youtubeDocument->removeError();
+                $youtubeDocument->removePlaylistUpdateError();
                 $youtubeDocument->removePlaylist($playlistId);
             } else {
                 $playlistToDoNothing[] = $playlistId;
@@ -129,7 +129,7 @@ class PlaylistItemInsertService extends GooglePlaylistItemService
             try {
                 $response = $this->insert($account, $playlist, $youtubeDocument->getYoutubeId());
                 $youtubeDocument->setPlaylist($playlist, $response->getId());
-                $youtubeDocument->removeError();
+                $youtubeDocument->removePlaylistUpdateError();
             } catch (\Exception $exception) {
                 $error = json_decode($exception->getMessage(), true);
                 $error = \Pumukit\YoutubeBundle\Document\Error::create(
@@ -138,7 +138,7 @@ class PlaylistItemInsertService extends GooglePlaylistItemService
                     new \DateTime(),
                     $error['error']
                 );
-                $youtubeDocument->setError($error);
+                $youtubeDocument->setPlaylistUpdateError($error);
             }
         }
         $this->documentManager->flush();
