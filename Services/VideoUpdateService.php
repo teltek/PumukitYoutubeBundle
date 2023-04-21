@@ -77,7 +77,7 @@ class VideoUpdateService extends GoogleVideoService
             $youtubeDocument->setError($error);
             $this->documentManager->flush();
 
-            $this->logger->error($errorLog);
+            $this->logger->error($error);
 
             return false;
         }
