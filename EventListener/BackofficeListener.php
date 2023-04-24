@@ -11,6 +11,7 @@ use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\SchemaBundle\Services\TagService;
 use Pumukit\YoutubeBundle\Document\Youtube;
+use Pumukit\YoutubeBundle\PumukitYoutubeBundle;
 
 class BackofficeListener
 {
@@ -27,7 +28,7 @@ class BackofficeListener
     {
         $request = $event->getRequest();
         $multimediaObject = $event->getMultimediaObject();
-        $youtubeTag = $this->documentManager->getRepository(Tag::class)->findOneBy(['cod' => Youtube::YOUTUBE_TAG_CODE]);
+        $youtubeTag = $this->documentManager->getRepository(Tag::class)->findOneBy(['cod' => PumukitYoutubeBundle::YOUTUBE_TAG_CODE]);
         if (!$youtubeTag) {
             return false;
         }
@@ -43,7 +44,7 @@ class BackofficeListener
         }
 
         $pubChannels = array_keys($request->request->get('pub_channels'));
-        if (!in_array(Youtube::YOUTUBE_PUBLICATION_CHANNEL_CODE, $pubChannels, true)) {
+        if (!in_array(PumukitYoutubeBundle::YOUTUBE_PUBLICATION_CHANNEL_CODE, $pubChannels, true)) {
             return false;
         }
 

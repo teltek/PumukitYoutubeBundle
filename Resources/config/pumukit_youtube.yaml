@@ -12,13 +12,9 @@ services:
 
   Pumukit\YoutubeBundle\Command\:
     resource: '../../Command/'
-    tags: ['console.command']
-
-  Pumukit\YoutubeBundle\Services\YoutubeService:
-    class: Pumukit\YoutubeBundle\Services\YoutubeService
-
-  Pumukit\YoutubeBundle\Services\YoutubeProcessService:
-    class: Pumukit\YoutubeBundle\Services\YoutubeProcessService
+    tags:
+      - { name: 'console.command' }
+      - { name: 'monolog.logger', channel: 'youtube' }
 
   Pumukit\YoutubeBundle\EventListener\UpdateListener:
     class: Pumukit\YoutubeBundle\EventListener\UpdateListener
@@ -50,18 +46,6 @@ services:
     tags:
       - { name: "pumukitnewadmin.mmobjmenuitem" }
 
-  Pumukit\YoutubeBundle\Services\CaptionService:
-    class: Pumukit\YoutubeBundle\Services\CaptionService
-    tags:
-      - { name: "monolog.logger", channel: "youtube" }
-
-  Pumukit\YoutubeBundle\Services\YoutubePlaylistService:
-    class: Pumukit\YoutubeBundle\Services\YoutubePlaylistService
-    arguments:
-      $kernelRootDir: "%kernel.project_dir%"
-    tags:
-      - { name: "monolog.logger", channel: "youtube" }
-
   Pumukit\YoutubeBundle\Services\YoutubeStatsService:
     class: Pumukit\YoutubeBundle\Services\YoutubeStatsService
 
@@ -69,15 +53,10 @@ services:
     class: Pumukit\YoutubeBundle\Services\YoutubeConfigurationService
     arguments:
       $playlistPrivateStatus: "%pumukit_youtube.playlist_privacy_status%"
-      $useDefaultPlaylist: "%pumukit_youtube.use_default_playlist%"
-      $defaultPlaylistCod: "%pumukit_youtube.default_playlist_cod%"
-      $defaultPlaylistTitle: "%pumukit_youtube.default_playlist_title%"
-      $metaTagPlaylistCod: "%pumukit_youtube.metatag_playlist_cod%"
       $playlistMaster: "%pumukit_youtube.playlists_master%"
       $deletePlaylist: "%pumukit_youtube.delete_playlists%"
       $locale: "%pumukit_youtube.locale%"
       $publicationChannelsTags: "%pumukit_youtube.pub_channels_tags%"
-      $processTimeOut: "%pumukit_youtube.process_timeout%"
       $syncStatus: "%pumukit_youtube.sync_status%"
       $defaultTrackUpload: "%pumukit_youtube.default_track_upload%"
       $defaultImageForAudio: "%pumukit_youtube.default_image_for_audio%"
@@ -85,8 +64,78 @@ services:
       $generateSbs: "%pumukit_youtube.generate_sbs%"
       $uploadRemovedVideos: "%pumukit_youtube.upload_removed_videos%"
       $sbsProfileName: "%pumukit_youtube.sbs_profile_name%"
+      $accountStorage: "%pumukit_youtube.account_storage%"
+
+  Pumukit\YoutubeBundle\Services\GoogleAccountService:
+    class: Pumukit\YoutubeBundle\Services\GoogleAccountService
 
   Pumukit\YoutubeBundle\Twig\YoutubeExtension:
     class: Pumukit\YoutubeBundle\Twig\YoutubeExtension
     tags:
       - { name: "twig.extension" }
+
+  Pumukit\YoutubeBundle\Services\GooglePlaylistService:
+    class: Pumukit\YoutubeBundle\Services\GooglePlaylistService
+
+
+  Pumukit\YoutubeBundle\Services\GooglePlaylistItemService:
+    class: Pumukit\YoutubeBundle\Services\GooglePlaylistItemService
+
+  Pumukit\YoutubeBundle\Services\PlaylistItemInsertService:
+    class: Pumukit\YoutubeBundle\Services\PlaylistItemInsertService
+
+  Pumukit\YoutubeBundle\Services\PlaylistItemDeleteService:
+    class: Pumukit\YoutubeBundle\Services\PlaylistItemDeleteService
+
+  Pumukit\YoutubeBundle\Services\GoogleResourceService:
+    class: Pumukit\YoutubeBundle\Services\GoogleResourceService
+
+  Pumukit\YoutubeBundle\Services\PlaylistDataValidationService:
+    class: Pumukit\YoutubeBundle\Services\PlaylistDataValidationService
+
+  Pumukit\YoutubeBundle\Services\PlaylistInsertService:
+    class: Pumukit\YoutubeBundle\Services\PlaylistInsertService
+
+  Pumukit\YoutubeBundle\Services\PlaylistListService:
+    class: Pumukit\YoutubeBundle\Services\PlaylistListService
+
+  Pumukit\YoutubeBundle\Services\PlaylistDeleteService:
+    class: Pumukit\YoutubeBundle\Services\PlaylistDeleteService
+
+  Pumukit\YoutubeBundle\Services\GoogleVideoService:
+    class: Pumukit\YoutubeBundle\Services\GoogleVideoService
+
+  Pumukit\YoutubeBundle\Services\VideoInsertService:
+    class: Pumukit\YoutubeBundle\Services\VideoInsertService
+
+  Pumukit\YoutubeBundle\Services\VideoUpdateService:
+    class: Pumukit\YoutubeBundle\Services\VideoUpdateService
+
+  Pumukit\YoutubeBundle\Services\VideoListService:
+    class: Pumukit\YoutubeBundle\Services\VideoListService
+
+  Pumukit\YoutubeBundle\Services\VideoDeleteService:
+    class: Pumukit\YoutubeBundle\Services\VideoDeleteService
+
+  Pumukit\YoutubeBundle\Services\VideoDataValidationService:
+    class: Pumukit\YoutubeBundle\Services\VideoDataValidationService
+
+  Pumukit\YoutubeBundle\Services\NotificationService:
+    class: Pumukit\YoutubeBundle\Services\NotificationService
+
+  Pumukit\YoutubeBundle\Services\CaptionsInsertService:
+    class: Pumukit\YoutubeBundle\Services\CaptionsInsertService
+
+  Pumukit\YoutubeBundle\Services\CaptionsDeleteService:
+    class: Pumukit\YoutubeBundle\Services\CaptionsDeleteService
+
+  Pumukit\YoutubeBundle\Services\CaptionsListService:
+    class: Pumukit\YoutubeBundle\Services\CaptionsListService
+
+  Pumukit\YoutubeBundle\Services\CaptionsDataValidationService:
+    class: Pumukit\YoutubeBundle\Services\CaptionsDataValidationService
+
+
+  Pumukit\YoutubeBundle\Services\CommonDataValidationService:
+    class: Pumukit\YoutubeBundle\Services\CommonDataValidationService
+

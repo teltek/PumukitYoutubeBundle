@@ -1,0 +1,93 @@
+<h3 class="cab_body_div">
+    <ul class="breadcrumb" style="margin-bottom: 5px;">
+        <li class="active">
+            {{ "Youtube Status Error"|trans }}
+        </li>
+    </ul>
+</h3>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="row">
+            <div class="col-md-3 col-sm-6 col-xs-12">
+                <a class="youtube_status_link_list" href="{{ path('pumukit_youtube_stat_by_error') }}">
+                    <div class="info-box" data-toggle="tooltip" data-placement="bottom">
+                        <span class="info-box-icon bg-warning">
+                            {{ "Upload error"|trans|first|upper }}
+                        </span>
+                        <div class="info-box-content">
+                            <span class="info-box-number">
+                                <span class="info-box-text"> {{ "Upload Error"|trans }}</span>
+                                {% set number = upload_errors_count() %}
+                                {{ number }}
+                                <small>
+                                    {{ "{0} videos|{1} video|]1,Inf] videos"|trans({'%count%': number }) }}
+                                </small>
+                            </span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col-md-3 col-sm-6 col-xs-12">
+                <a class="youtube_status_link_list" href="{{ path('pumukit_youtube_stat_by_metadata_error') }}">
+                    <div class="info-box" data-toggle="tooltip" data-placement="bottom">
+                        <span class="info-box-icon bg-warning">
+                            {{ "Metadata Update Error"|trans|first|upper }}
+                        </span>
+                        <div class="info-box-content">
+                            <span class="info-box-number">
+                                <span class="info-box-text"> {{ "Metadata Update Error" }}</span>
+                                {% set number = metadata_update_errors_count() %}
+                                {{ number }}
+                                <small>
+                                    {{ "{0} videos|{1} video|]1,Inf] videos"|trans({'%count%': number }) }}
+                                </small>
+                            </span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col-md-3 col-sm-6 col-xs-12">
+                <a class="youtube_status_link_list" href="{{ path('pumukit_youtube_stat_by_playlists_error') }}">
+                    <div class="info-box" data-toggle="tooltip" data-placement="bottom">
+                        <span class="info-box-icon bg-warning">
+                            {{ "Playlists Update Error"|trans|first|upper }}
+                        </span>
+                        <div class="info-box-content">
+                            <span class="info-box-number">
+                                <span class="info-box-text"> {{ "Playlists Update Error"|trans }}</span>
+                                {% set number = playlists_update_errors_count() %}
+                                {{ number }}
+                                <small>
+                                    {{ "{0} videos|{1} video|]1,Inf] videos"|trans({'%count%': number }) }}
+                                </small>
+                            </span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col-md-3 col-sm-6 col-xs-12">
+                <a class="youtube_status_link_list" href="{{ path('pumukit_youtube_stat_by_caption_error') }}">
+                    <div class="info-box" data-toggle="tooltip" data-placement="bottom">
+                        <span class="info-box-icon bg-warning">
+                            {{ "Captions Update Error"|trans|first|upper }}
+                        </span>
+                        <div class="info-box-content">
+                            <span class="info-box-number">
+                                <span class="info-box-text"> {{ "Captions Update Error"|trans }}</span>
+                                {% set number = captions_update_errors_count() %}
+                                {{ number }}
+                                <small>
+                                    {{ "{0} videos|{1} video|]1,Inf] videos"|trans({'%count%': number }) }}
+                                </small>
+                            </span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

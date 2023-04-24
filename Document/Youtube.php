@@ -12,9 +12,6 @@ use Doctrine\ODM\MongoDB\Mapping\Annotations as MongoDB;
  */
 class Youtube
 {
-    public const YOUTUBE_TAG_CODE = 'YOUTUBE';
-    public const YOUTUBE_PUBLICATION_CHANNEL_CODE = 'PUCHYOUTUBE';
-
     public const STATUS_DEFAULT = 0;
     public const STATUS_UPLOADING = 1;
     public const STATUS_PROCESSING = 2;
@@ -107,7 +104,7 @@ class Youtube
     private $uploadDate;
 
     /**
-     * @MongoDB\EmbedMany(targetDocument="Caption")
+     * @MongoDB\EmbedMany(targetDocument=Caption::class)
      */
     private $captions;
 
@@ -115,6 +112,26 @@ class Youtube
      * @MongoDB\Field(type="string")
      */
     private $fileUploaded;
+
+    /**
+     * @MongoDB\EmbedOne(targetDocument=Error::class)
+     */
+    private $error;
+
+    /**
+     * @MongoDB\EmbedOne(targetDocument=Error::class)
+     */
+    private $metadataUpdateError;
+
+    /**
+     * @MongoDB\EmbedOne(targetDocument=Error::class)
+     */
+    private $playlistUpdateError;
+
+    /**
+     * @MongoDB\EmbedOne(targetDocument=Error::class)
+     */
+    private $captionUpdateError;
 
     public function __construct()
     {
@@ -146,7 +163,7 @@ class Youtube
         $this->youtubeId = $youtubeId;
     }
 
-    public function getYoutubeId(): string
+    public function getYoutubeId(): ?string
     {
         return $this->youtubeId;
     }
@@ -334,7 +351,7 @@ class Youtube
         return $this->captions->contains($caption);
     }
 
-    public function getCaptions(): ?ArrayCollection
+    public function getCaptions()
     {
         return $this->captions;
     }
@@ -403,5 +420,65 @@ class Youtube
     public function setFileUploaded(string $fileUploaded): void
     {
         $this->fileUploaded = $fileUploaded;
+    }
+
+    public function setError(Error $error): void
+    {
+        $this->error = $error;
+    }
+
+    public function getError(): ?Error
+    {
+        return $this->error;
+    }
+
+    public function removeError(): void
+    {
+        $this->error = null;
+    }
+
+    public function setMetadataUpdateError(Error $error): void
+    {
+        $this->metadataUpdateError = $error;
+    }
+
+    public function getMetadataUpdateError(): ?Error
+    {
+        return $this->metadataUpdateError;
+    }
+
+    public function removeMetadataUpdateError(): void
+    {
+        $this->metadataUpdateError = null;
+    }
+
+    public function setPlaylistUpdateError(Error $error): void
+    {
+        $this->playlistUpdateError = $error;
+    }
+
+    public function getPlaylistUpdateError(): ?Error
+    {
+        return $this->playlistUpdateError;
+    }
+
+    public function removePlaylistUpdateError(): void
+    {
+        $this->playlistUpdateError = null;
+    }
+
+    public function setCaptionUpdateError(Error $error): void
+    {
+        $this->captionUpdateError = $error;
+    }
+
+    public function getCaptionUpdateError(): ?Error
+    {
+        return $this->captionUpdateError;
+    }
+
+    public function removeCaptionUpdateError(): void
+    {
+        $this->captionUpdateError = null;
     }
 }

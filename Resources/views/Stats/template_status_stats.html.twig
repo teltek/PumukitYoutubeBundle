@@ -10,33 +10,82 @@
 <div class="row">
     <div class="col-md-12">
         <div class="row">
-            {% for status, text in youtubeStatus | filter(status != 0) %}
-                <div class="col-md-4 col-sm-6 col-xs-12">
-                    <a class="youtube_status_link_list" href="{{ path('pumukit_youtube_stat_list', {'status': status }) }}">
-                        <div class="info-box"   data-toggle="tooltip" data-placement="bottom" title="{{ ("Show documents by status "|trans) ~ text|trans }}">
-                            <span class="info-box-icon bg-warning">
-                                {{ text|trans|first|upper }}
+            <div class="col-md-3 col-sm-6 col-xs-12">
+                <a class="youtube_status_link_list" href="{{ path('pumukit_youtube_stat_list', {'status': 1 }) }}">
+                    <div class="info-box" data-toggle="tooltip" data-placement="bottom">
+                        <span class="info-box-icon bg-warning">
+                            {{ "Processing"|trans|first|upper }}
+                        </span>
+                        <div class="info-box-content">
+                            <span class="info-box-number">
+                                <span class="info-box-text"> {{ "Processing"|trans }}</span>
+                                {% set number = processing_videos()|length %}
+                                {{ number }}
+                                <small>
+                                    {{ "{0} videos|{1} video|]1,Inf] videos"|trans({'%count%': number }) }}
+                                </small>
                             </span>
-                            <div class="info-box-content">
-                                <span class="info-box-number">
-                                    <span class="info-box-text"> {{ text|trans }}</span>
-                                    {% if youtubeStatusDocuments[status] is defined %}
-                                        {% set number = (youtubeStatusDocuments[status])|length %}
-                                    {% else %}
-                                        {% set number = 0 %}
-                                    {% endif %}
-                                    {{ number }}
-                                    <small>
-                                        {% transchoice number %}
-                                            {0} videos|{1} video|]1,Inf] videos
-                                        {% endtranschoice %}
-                                    </small>
-                                </span>
-                            </div>
                         </div>
-                    </a>
-                </div>
-            {% endfor %}
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-3 col-sm-6 col-xs-12">
+                <a class="youtube_status_link_list" href="{{ path('pumukit_youtube_stat_list', {'status': 3 }) }}">
+                    <div class="info-box" data-toggle="tooltip" data-placement="bottom">
+                        <span class="info-box-icon bg-warning">
+                            {{ "Published"|trans|first|upper }}
+                        </span>
+                        <div class="info-box-content">
+                            <span class="info-box-number">
+                                <span class="info-box-text"> {{ "Published"|trans }}</span>
+                                {% set number = published_videos()|length %}
+                                {{ number }}
+                                <small>
+                                    {{ "{0} videos|{1} video|]1,Inf] videos"|trans({'%count%': number }) }}
+                                </small>
+                            </span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-3 col-sm-6 col-xs-12">
+                <a class="youtube_status_link_list" href="{{ path('pumukit_youtube_stat_list', {'status': 8 }) }}">
+                    <div class="info-box" data-toggle="tooltip" data-placement="bottom">
+                        <span class="info-box-icon bg-warning">
+                            {{ "Removed"|trans|first|upper }}
+                        </span>
+                        <div class="info-box-content">
+                            <span class="info-box-number">
+                                <span class="info-box-text"> {{ "Removed"|trans }}</span>
+                                {% set number = removed_videos()|length %}
+                                {{ number }}
+                                <small>
+                                    {{ "{0} videos|{1} video|]1,Inf] videos"|trans({'%count%': number }) }}
+                                </small>
+                            </span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-3 col-sm-6 col-xs-12">
+                <a class="youtube_status_link_list" href="{{ path('pumukit_youtube_stat_list', {'status': 10 }) }}">
+                    <div class="info-box" data-toggle="tooltip" data-placement="bottom">
+                        <span class="info-box-icon bg-warning">
+                            {{ "To delete"|trans|first|upper }}
+                        </span>
+                        <div class="info-box-content">
+                            <span class="info-box-number">
+                                <span class="info-box-text"> {{ "To delete"|trans }}</span>
+                                {% set number = to_delete_videos()|length %}
+                                {{ number }}
+                                <small>
+                                    {{ "{0} videos|{1} video|]1,Inf] videos"|trans({'%count%': number }) }}
+                                </small>
+                            </span>
+                        </div>
+                    </div>
+                </a>
+            </div>
         </div>
     </div>
 </div>

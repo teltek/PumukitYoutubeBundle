@@ -11,6 +11,7 @@ use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\SchemaBundle\Event\MultimediaObjectEvent;
 use Pumukit\YoutubeBundle\Document\Youtube;
+use Pumukit\YoutubeBundle\PumukitYoutubeBundle;
 
 class UpdateListener
 {
@@ -51,11 +52,11 @@ class UpdateListener
     private function setYoutubeAccount(MultimediaObject $multimediaObject): void
     {
         $youtubeTag = $this->documentManager->getRepository(Tag::class)->findOneBy([
-            'cod' => Youtube::YOUTUBE_TAG_CODE,
+            'cod' => PumukitYoutubeBundle::YOUTUBE_TAG_CODE,
         ]);
 
         if (!$youtubeTag) {
-            throw new \Exception(Youtube::YOUTUBE_TAG_CODE.' tag not found');
+            throw new \Exception(PumukitYoutubeBundle::YOUTUBE_TAG_CODE.' tag not found');
         }
 
         if (!$multimediaObject->isPrototype() && !$multimediaObject->containsTag($youtubeTag)) {

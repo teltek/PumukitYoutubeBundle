@@ -8,7 +8,8 @@ use Doctrine\ODM\MongoDB\DocumentManager;
 use Psr\Log\LoggerInterface;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\YoutubeBundle\Document\Youtube;
-use Pumukit\YoutubeBundle\Services\CaptionService;
+use Pumukit\YoutubeBundle\Services\CaptionsDataValidationService;
+use Pumukit\YoutubeBundle\Services\CaptionsDeleteService;
 use Pumukit\YoutubeBundle\Services\YoutubeConfigurationService;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -16,34 +17,31 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 class CaptionDeleteCommand extends Command
 {
-    private $mmobjRepo;
-    private $allowedCaptionMimeTypes;
-    private $syncStatus;
-    private $okDelete = [];
-    private $failedDelete = [];
-    private $errors = [];
-    private $input;
     private $output;
 
     private $documentManager;
     private $configurationService;
-    private $captionService;
+
+    private $captionsDataValidationService;
+    private $captionsDeleteService;
     private $logger;
 
     public function __construct(
         DocumentManager $documentManager,
         YoutubeConfigurationService $configurationService,
-        CaptionService $captionService,
+        CaptionsDeleteService $captionsDeleteService,
+        CaptionsDataValidationService $captionsDataValidationService,
         LoggerInterface $logger
     ) {
         $this->documentManager = $documentManager;
         $this->configurationService = $configurationService;
-        $this->captionService = $captionService;
+        $this->captionsDeleteService = $captionsDeleteService;
+        $this->captionsDataValidationService = $captionsDataValidationService;
         $this->logger = $logger;
         parent::__construct();
     }
 
-    protected function configure()
+    protected function configure(): void
     {
         $this
             ->setName('pumukit:youtube:caption:delete')
@@ -59,52 +57,34 @@ EOT
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
+        $this->output = $output;
+
         $youtubeMultimediaObjects = $this->getYoutubeMultimediaObjects();
+
+        $infoLog = '[YouTube] Deleting captions for '.count($youtubeMultimediaObjects).' videos.';
+        $this->logger->info($infoLog);
         $this->deleteCaptionsFromYoutube($youtubeMultimediaObjects);
-        $this->checkResultsAndSendEmail();
 
         return 0;
     }
 
-    protected function initialize(InputInterface $input, OutputInterface $output)
+    private function deleteCaptionsFromYoutube($multimediaObjects): void
     {
-        $this->mmobjRepo = $this->documentManager->getRepository(MultimediaObject::class);
-        $this->allowedCaptionMimeTypes = $this->configurationService->allowedCaptionMimeTypes();
-        $this->okDelete = [];
-        $this->failedDelete = [];
-        $this->errors = [];
-        $this->input = $input;
-        $this->output = $output;
-    }
-
-    private function deleteCaptionsFromYoutube(array $mms)
-    {
-        foreach ($mms as $multimediaObject) {
+        foreach ($multimediaObjects as $multimediaObject) {
             try {
-                $youtube = $this->captionService->getYoutubeDocument($multimediaObject);
-                if (null == $youtube) {
+                $youtube = $this->getYoutubeDocument($multimediaObject);
+                if (!$youtube instanceof Youtube) {
                     continue;
                 }
                 $deleteCaptionIds = $this->getDeleteCaptionIds($youtube, $multimediaObject);
                 if ($deleteCaptionIds) {
-                    $outDelete = $this->captionService->deleteCaption($multimediaObject, $deleteCaptionIds);
-                    if (0 !== $outDelete) {
-                        $errorLog = sprintf('%s [%s] Unknown error in deleting caption from Youtube of MultimediaObject with id %s: %s', __CLASS__, __FUNCTION__, $multimediaObject->getId(), $outDelete);
-                        $this->logger->error($errorLog);
-                        $this->output->writeln($errorLog);
-                        $this->failedDelete[] = $multimediaObject;
-                        $this->errors[] = $errorLog;
-
-                        continue;
-                    }
-                    $this->okDelete[] = $multimediaObject;
+                    $account = $this->captionsDataValidationService->validateMultimediaObjectAccount($multimediaObject);
+                    $result = $this->captionsDeleteService->deleteCaption($account, $youtube, $deleteCaptionIds);
                 }
-            } catch (\Exception $e) {
-                $errorLog = sprintf('%s [%s] The deletion of the caption from Youtube of MultimediaObject with id %s failed: %s', __CLASS__, __FUNCTION__, $multimediaObject->getId(), $e->getMessage());
+            } catch (\Exception $exception) {
+                $errorLog = sprintf('[YouTube] Remove captions for video %s failed. Error: %s', $multimediaObject->getId(), $exception->getMessage());
                 $this->logger->error($errorLog);
                 $this->output->writeln($errorLog);
-                $this->failedDelete[] = $multimediaObject;
-                $this->errors[] = $e->getMessage();
             }
         }
     }
@@ -112,7 +92,7 @@ EOT
     private function getYoutubeMultimediaObjects()
     {
         $pubChannelTags = $this->configurationService->publicationChannelsTags();
-        $queryBuilder = $this->captionService->createYoutubeMultimediaObjectsQueryBuilder($pubChannelTags);
+        $queryBuilder = $this->createYoutubeMultimediaObjectsQueryBuilder($pubChannelTags);
 
         return $queryBuilder
             ->field('properties.youtube')->exists(true)
@@ -135,7 +115,9 @@ EOT
     {
         $materialIds = $this->getMmMaterialIds($multimediaObject);
         $deleteCaptionIds = [];
-        foreach ($youtube->getCaptions() as $caption) {
+        $youtubeCaptions = $youtube->getCaptions();
+
+        foreach ($youtubeCaptions as $caption) {
             $material = $multimediaObject->getMaterialById($caption->getMaterialId());
             if (in_array($caption->getMaterialId(), $materialIds) && !$material->isHide()) {
                 continue;
@@ -149,10 +131,26 @@ EOT
         return $deleteCaptionIds;
     }
 
-    private function checkResultsAndSendEmail(): void
+    private function getYoutubeDocument(MultimediaObject $multimediaObject)
     {
-        if (!empty($this->failedDelete)) {
-            $this->captionService->sendEmail('caption delete', $this->okDelete, $this->failedDelete, $this->errors);
+        return $this->documentManager->getRepository(Youtube::class)->findOneBy([
+            'multimediaObjectId' => $multimediaObject->getId(),
+        ]);
+    }
+
+    private function createYoutubeMultimediaObjectsQueryBuilder(array $pubChannelTags)
+    {
+        if ($this->configurationService->syncStatus()) {
+            $aStatus = [MultimediaObject::STATUS_PUBLISHED, MultimediaObject::STATUS_BLOCKED, MultimediaObject::STATUS_HIDDEN];
+        } else {
+            $aStatus = [MultimediaObject::STATUS_PUBLISHED];
         }
+
+        return $this->documentManager->getRepository(MultimediaObject::class)->createQueryBuilder()
+            ->field('properties.pumukit1id')->exists(false)
+            ->field('properties.origin')->notEqual('youtube')
+            ->field('status')->in($aStatus)
+            ->field('embeddedBroadcast.type')->equals('public')
+            ->field('tags.cod')->all($pubChannelTags);
     }
 }

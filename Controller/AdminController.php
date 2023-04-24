@@ -12,6 +12,7 @@ use Pumukit\SchemaBundle\Services\TagService;
 use Pumukit\YoutubeBundle\Document\Youtube;
 use Pumukit\YoutubeBundle\Form\Type\AccountType;
 use Pumukit\YoutubeBundle\Form\Type\YoutubePlaylistType;
+use Pumukit\YoutubeBundle\PumukitYoutubeBundle;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -58,7 +59,7 @@ class AdminController extends AbstractController
      */
     public function listAction(): Response
     {
-        $youtubeAccounts = $this->documentManager->getRepository(Tag::class)->findOneBy(['cod' => Youtube::YOUTUBE_TAG_CODE]);
+        $youtubeAccounts = $this->documentManager->getRepository(Tag::class)->findOneBy(['cod' => PumukitYoutubeBundle::YOUTUBE_TAG_CODE]);
         if (!$youtubeAccounts) {
             throw new NotFoundHttpException($this->translator->trans('Youtube tag not defined'));
         }
@@ -79,7 +80,7 @@ class AdminController extends AbstractController
         if ('POST' === $request->getMethod() && $form->isValid()) {
             try {
                 $youtubeTag = $this->documentManager->getRepository(Tag::class)->findOneBy([
-                    'cod' => Youtube::YOUTUBE_TAG_CODE,
+                    'cod' => PumukitYoutubeBundle::YOUTUBE_TAG_CODE,
                 ]);
                 $data = $form->getData();
                 $tag = new Tag();
@@ -175,8 +176,6 @@ class AdminController extends AbstractController
      * @Security("is_granted('ROLE_ACCESS_YOUTUBE')")
      *
      * @route("/children/{id}", name="pumukit_youtube_children_tag")
-     *
-     * @ParamConverter("tag", class="PumukitSchemaBundle:Tag")
      */
     public function childrenAction(Tag $tag): Response
     {
@@ -268,7 +267,7 @@ class AdminController extends AbstractController
     public function updateYTAction(MultimediaObject $multimediaObject): Response
     {
         $youtubeAccounts = $this->documentManager->getRepository(Tag::class)->findOneBy([
-            'cod' => Youtube::YOUTUBE_TAG_CODE,
+            'cod' => PumukitYoutubeBundle::YOUTUBE_TAG_CODE,
         ]);
         $accountSelectedTag = '';
         $playlistSelectedTag = [];

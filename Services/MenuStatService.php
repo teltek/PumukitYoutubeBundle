@@ -25,6 +25,6 @@ class MenuStatService implements ItemInterface
 
     public function getServiceTag(): string
     {
-        return 'menustat';
+        return 'menu';
     }
 }

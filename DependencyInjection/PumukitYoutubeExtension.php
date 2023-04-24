@@ -34,15 +34,10 @@ class PumukitYoutubeExtension extends Extension implements PrependExtensionInter
         $config = $this->processConfiguration($configuration, $configs);
 
         $container->setParameter('pumukit_youtube.playlist_privacy_status', $config['playlist_privacy_status']);
-        $container->setParameter('pumukit_youtube.use_default_playlist', $config['use_default_playlist']);
-        $container->setParameter('pumukit_youtube.default_playlist_cod', $config['default_playlist_cod']);
-        $container->setParameter('pumukit_youtube.default_playlist_title', $config['default_playlist_title']);
-        $container->setParameter('pumukit_youtube.metatag_playlist_cod', $config['metatag_playlist_cod']);
         $container->setParameter('pumukit_youtube.playlists_master', $config['playlists_master']);
         $container->setParameter('pumukit_youtube.delete_playlists', $config['delete_playlists']);
         $container->setParameter('pumukit_youtube.locale', $config['locale']);
         $container->setParameter('pumukit_youtube.pub_channels_tags', $config['pub_channels_tags']);
-        $container->setParameter('pumukit_youtube.process_timeout', $config['process_timeout']);
         $container->setParameter('pumukit_youtube.sync_status', $config['sync_status']);
         $container->setParameter('pumukit_youtube.default_track_upload', $config['default_track_upload']);
         $container->setParameter('pumukit_youtube.default_image_for_audio', $config['default_image_for_audio']);
@@ -50,6 +45,7 @@ class PumukitYoutubeExtension extends Extension implements PrependExtensionInter
         $container->setParameter('pumukit_youtube.generate_sbs', $config['generate_sbs']);
         $container->setParameter('pumukit_youtube.sbs_profile_name', $config['sbs_profile_name']);
         $container->setParameter('pumukit_youtube.upload_removed_videos', $config['upload_removed_videos']);
+        $container->setParameter('pumukit_youtube.account_storage', $config['account_storage']);
 
         $bundleConfiguration = Yaml::parse(file_get_contents(__DIR__.'/../Resources/config/encoders.yml'));
         if (!$config['profiles'] && $bundleConfiguration['pumukit_youtube']['profiles']) {
