@@ -43,5 +43,14 @@
         <td headers="th-file">
             {{ youtubeDocument.fileUploaded|default(icon_close)|raw }}
         </td>
+        <td headers="th-error">
+            {% if youtubeDocument.getError() or youtubeDocument.getMetadataUpdateError() or youtubeDocument.getPlaylistUpdateError() or youtubeDocument.getCaptionUpdateError() %}
+                <a data-toggle="modal" data-backdrop="static" data-dismiss="modal" data-target="#myModal" href="{{ path('pumukit_youtube_errors', {id: youtubeDocument.id}) }}">
+                    <i class="glyphicon glyphicon-eye-open"></i>
+                </a>
+            {% else %}
+                <i class="mdi-navigation-close"></i>
+            {% endif %}
+        </td>
     </tr>
 {% endfor %}

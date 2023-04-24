@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pumukit\YoutubeBundle\Controller;
 
+use MongoDB\BSON\ObjectId;
 use Pumukit\CoreBundle\Services\PaginationService;
 use Pumukit\YoutubeBundle\Document\Youtube;
 use Pumukit\YoutubeBundle\Services\YoutubeConfigurationService;
@@ -51,8 +52,6 @@ class StatsController extends AbstractController
         return $this->render('@PumukitYoutube/Stats/template.html.twig', [
             'youtubeAccounts' => $this->youtubeStatsService->getYoutubeAccounts(),
             'accountsStats' => $this->youtubeStatsService->getAccountsStats(),
-            'youtubeStatusDocuments' => $statsYoutubeDocuments,
-            'youtubeStatus' => Youtube::$statusTexts,
         ]);
     }
 
@@ -101,6 +100,70 @@ class StatsController extends AbstractController
     }
 
     /**
+     * @Route("/list/error/upload", name="pumukit_youtube_stat_by_error")
+     */
+    public function listByErrorAction(Request $request): Response
+    {
+        $youtubeDocuments = $this->youtubeStatsService->getByError();
+
+        $page = (int) $request->get('page', 1);
+        $youtubeDocuments = $this->paginationService->createArrayAdapter($youtubeDocuments, $page, 20);
+
+        return $this->render('@PumukitYoutube/Stats/template_list.html.twig', [
+            'youtubeDocuments' => $youtubeDocuments,
+            'title' => 'Upload error',
+        ]);
+    }
+
+    /**
+     * @Route("/list/error/metadata", name="pumukit_youtube_stat_by_metadata_error")
+     */
+    public function listByMetadataErrorAction(Request $request): Response
+    {
+        $youtubeDocuments = $this->youtubeStatsService->getByMetadataUpdateError();
+
+        $page = (int) $request->get('page', 1);
+        $youtubeDocuments = $this->paginationService->createArrayAdapter($youtubeDocuments, $page, 20);
+
+        return $this->render('@PumukitYoutube/Stats/template_list.html.twig', [
+            'youtubeDocuments' => $youtubeDocuments,
+            'title' => 'Metadata update error',
+        ]);
+    }
+
+    /**
+     * @Route("/list/error/playlists", name="pumukit_youtube_stat_by_playlists_error")
+     */
+    public function listByPlaylistsErrorAction(Request $request): Response
+    {
+        $youtubeDocuments = $this->youtubeStatsService->getByPlaylistUpdateError();
+
+        $page = (int) $request->get('page', 1);
+        $youtubeDocuments = $this->paginationService->createArrayAdapter($youtubeDocuments, $page, 20);
+
+        return $this->render('@PumukitYoutube/Stats/template_list.html.twig', [
+            'youtubeDocuments' => $youtubeDocuments,
+            'title' => 'Metadata update error',
+        ]);
+    }
+
+    /**
+     * @Route("/list/error/caption", name="pumukit_youtube_stat_by_caption_error")
+     */
+    public function listByCaptionErrorAction(Request $request): Response
+    {
+        $youtubeDocuments = $this->youtubeStatsService->getByCaptionUpdateError();
+
+        $page = (int) $request->get('page', 1);
+        $youtubeDocuments = $this->paginationService->createArrayAdapter($youtubeDocuments, $page, 20);
+
+        return $this->render('@PumukitYoutube/Stats/template_list.html.twig', [
+            'youtubeDocuments' => $youtubeDocuments,
+            'title' => 'Metadata update error',
+        ]);
+    }
+
+    /**
      * @Route("/configuration/", name="pumukit_youtube_configuration")
      */
     public function modalConfigurationAction(): Response
@@ -111,6 +174,20 @@ class StatsController extends AbstractController
 
         return $this->render('@PumukitYoutube/Stats/modal_configuration.html.twig', [
             'youtubeConfiguration' => $this->youtubeConfigurationService->getBundleConfiguration(),
+        ]);
+    }
+
+    /**
+     * @Route("/modal/error/{id}", name="pumukit_youtube_errors")
+     */
+    public function infoJobAction(string $id): Response
+    {
+        $youtube = $this->youtubeStatsService->getYoutubeDocumentByCriteria([
+            '_id' => new ObjectId($id),
+        ]);
+
+        return $this->render('@PumukitYoutube/Modal/infoError.html.twig', [
+            'youtube' => $youtube,
         ]);
     }
 

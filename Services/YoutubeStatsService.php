@@ -47,6 +47,11 @@ class YoutubeStatsService
         return $this->documentManager->getRepository(Youtube::class)->findBy($criteria, ['uploadDate' => -1]);
     }
 
+    public function getYoutubeDocumentByCriteria(array $criteria = [])
+    {
+        return $this->documentManager->getRepository(Youtube::class)->findOneBy($criteria, ['uploadDate' => -1]);
+    }
+
     public function getAccountsStats(): array
     {
         $youtubeAccounts = $this->getYoutubeAccounts();
@@ -71,5 +76,61 @@ class YoutubeStatsService
         }
 
         return $stats;
+    }
+
+    public function getByError(): array
+    {
+        return $this->documentManager->getRepository(Youtube::class)->findBy([
+            'error' => ['$exists' => true],
+        ]);
+    }
+
+    public function getByMetadataUpdateError(): array
+    {
+        return $this->documentManager->getRepository(Youtube::class)->findBy([
+            'metadataUpdateError' => ['$exists' => true],
+        ]);
+    }
+
+    public function getByPlaylistUpdateError(): array
+    {
+        return $this->documentManager->getRepository(Youtube::class)->findBy([
+            'playlistUpdateError' => ['$exists' => true],
+        ]);
+    }
+
+    public function getByCaptionUpdateError(): array
+    {
+        return $this->documentManager->getRepository(Youtube::class)->findBy([
+            'captionUpdateError' => ['$exists' => true],
+        ]);
+    }
+
+    public function getProcessingVideos(): array
+    {
+        return $this->documentManager->getRepository(Youtube::class)->findBy([
+            'status' => ['$in' => [Youtube::STATUS_DEFAULT, Youtube::STATUS_UPLOADING, Youtube::STATUS_PROCESSING]],
+        ]);
+    }
+
+    public function getPublishedVideos(): array
+    {
+        return $this->documentManager->getRepository(Youtube::class)->findBy([
+            'status' => Youtube::STATUS_PUBLISHED,
+        ]);
+    }
+
+    public function getRemovedVideos(): array
+    {
+        return $this->documentManager->getRepository(Youtube::class)->findBy([
+            'status' => Youtube::STATUS_REMOVED,
+        ]);
+    }
+
+    public function getToDeleteVideos(): array
+    {
+        return $this->documentManager->getRepository(Youtube::class)->findBy([
+            'status' => Youtube::STATUS_TO_DELETE,
+        ]);
     }
 }

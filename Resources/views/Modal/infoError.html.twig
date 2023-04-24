@@ -1,0 +1,29 @@
+<div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+    <h4 class="modal-title" id="myModalLabel">{% trans %}YouTube error info{% endtrans %}</h4>
+</div>
+<div class="modal-body">
+    {% if youtube.getError() %}
+        <h3 class="text-center">{{ "Upload error"|trans }}</h3>
+        <p><strong>{{ youtube.getError().id() }}</strong></p>
+        <pre>{{ youtube.getError().raw()|json_encode(constant('JSON_PRETTY_PRINT')) }}</pre>
+    {% endif %}
+
+    {% if youtube.getMetadataUpdateError() %}
+        <h3 class="text-center">{{ "Metadata error"|trans }}</h3>
+        <p><strong>{{ youtube.getMetadataUpdateError().id() }}</strong></p>
+        <pre>{{ youtube.getMetadataUpdateError().raw()|json_encode(constant('JSON_PRETTY_PRINT')) }}</pre>
+    {% endif %}
+
+    {% if youtube.getPlaylistUpdateError() %}
+        <h3 class="text-center">{{ "Playlist error"|trans }}</h3>
+        <p><strong>{{ youtube.getPlaylistUpdateError().id() }}</strong></p>
+        <pre>{{ youtube.getPlaylistUpdateError().raw()|json_encode(constant('JSON_PRETTY_PRINT')) }}</pre>
+    {% endif %}
+
+    {% if youtube.getCaptionUpdateError() %}
+        <h3 class="text-center">{{ "Caption error"|trans }}</h3>
+        <p><strong>{{ youtube.getCaptionUpdateError().id() }}</strong></p>
+        <pre>{{ youtube.getCaptionUpdateError().raw()|json_encode(constant('JSON_PRETTY_PRINT')) }}</pre>
+    {% endif %}
+</div>
