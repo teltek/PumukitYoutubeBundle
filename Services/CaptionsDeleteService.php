@@ -57,6 +57,9 @@ class CaptionsDeleteService extends GoogleCaptionService
 
     private function delete(Tag $account, string $captionId)
     {
+        $infoLog = sprintf('[YouTube] Caption delete: %s ', $captionId);
+        $this->logger->info($infoLog);
+
         $service = $this->googleAccountService->googleServiceFromAccount($account);
 
         return $service->captions->delete($captionId);

@@ -28,6 +28,9 @@ class PlaylistItemDeleteService extends GooglePlaylistService
 
     private function delete(Tag $youtubeAccount, string $playlistId)
     {
+        $infoLog = sprintf('[YouTube] Playlist item delete: %s ', $playlistId);
+        $this->logger->info($infoLog);
+
         $service = $this->googleAccountService->googleServiceFromAccount($youtubeAccount);
 
         return $service->playlistItems->delete($playlistId);

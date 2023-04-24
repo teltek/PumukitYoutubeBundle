@@ -93,6 +93,9 @@ class VideoUpdateService extends GoogleVideoService
         Tag $youtubeAccount,
         \Google_Service_YouTube_Video $video,
     ): \Google\Service\YouTube\Video {
+        $infoLog = sprintf('[YouTube] Video update: %s ', $video->getId());
+        $this->logger->info($infoLog);
+
         $service = $this->googleAccountService->googleServiceFromAccount($youtubeAccount);
 
         return $service->videos->update('snippet,status', $video);

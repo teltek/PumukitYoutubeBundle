@@ -136,6 +136,9 @@ class PlaylistInsertService extends GooglePlaylistService
         Tag $youtubeAccount,
         \Google_Service_YouTube_Playlist $playlist
     ): ?Playlist {
+        $infoLog = sprintf('[YouTube] Playlist insert: %s ', $playlist->getId());
+        $this->logger->info($infoLog);
+
         $service = $this->googleAccountService->googleServiceFromAccount($youtubeAccount);
 
         return $service->playlists->insert('snippet,status', $playlist);

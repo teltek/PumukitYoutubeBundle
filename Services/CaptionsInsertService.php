@@ -75,6 +75,9 @@ class CaptionsInsertService extends GoogleCaptionService
 
     private function insert(Tag $account, Material $material, string $videoId): \Google\Service\YouTube\Caption
     {
+        $infoLog = sprintf('[YouTube] Caption with material ID %s insert on video %s', $material->getId(), $videoId);
+        $this->logger->info($infoLog);
+
         $service = $this->googleAccountService->googleServiceFromAccount($account);
         $caption = $this->createCaptionItem($material, $videoId);
 

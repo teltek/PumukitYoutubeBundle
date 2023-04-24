@@ -146,6 +146,9 @@ class PlaylistItemInsertService extends GooglePlaylistItemService
 
     private function insert(Tag $account, string $playlist, string $videoId): PlaylistItem
     {
+        $infoLog = sprintf('[YouTube] Playlist item insert: (playlist) %s (video Id): %s', $playlist, $videoId);
+        $this->logger->info($infoLog);
+
         $service = $this->googleAccountService->googleServiceFromAccount($account);
         $playlistItemSnippet = $this->createPlaylistItemSnippet($playlist, $videoId);
         $playlistItem = $this->createPlaylistItem($playlistItemSnippet);

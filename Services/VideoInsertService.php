@@ -94,6 +94,9 @@ class VideoInsertService extends GoogleVideoService
         \Google_Service_YouTube_Video $video,
         Track $track
     ): ?Video {
+        $infoLog = sprintf('[YouTube] Video insert ( %s ) with track %s', $video->getSnippet()->getTitle(), $track->getId());
+        $this->logger->info($infoLog);
+
         $service = $this->googleAccountService->googleServiceFromAccount($youtubeAccount);
 
         return $service->videos->insert(
