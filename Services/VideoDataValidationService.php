@@ -165,15 +165,13 @@ class VideoDataValidationService extends CommonDataValidationService
             $description = $multimediaObject->getTitle($this->locale)."\n".
                 $multimediaObject->getSubtitle($this->locale)."\n".
                 $recDateI18N.': '.$recDate."\n".
-                str_replace($break, "\n", $multimediaObject->getDescription($this->locale))."\n"
-            ;
+                str_replace($break, "\n", $multimediaObject->getDescription($this->locale))."\n";
         } else {
             $description = $multimediaObject->getTitle($this->locale)."\n".
                 $multimediaObject->getSubtitle($this->locale)."\n".
                 $this->translator->trans('i18n.one.Series', [], null, $this->locale).': '.$series->getTitle($this->locale)."\n".
                 $recDateI18N.': '.$recDate."\n".
-                str_replace($break, "\n", $multimediaObject->getDescription($this->locale))."\n"
-            ;
+                str_replace($break, "\n", $multimediaObject->getDescription($this->locale))."\n";
         }
 
         if ($bPeople) {

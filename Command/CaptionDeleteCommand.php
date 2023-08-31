@@ -151,6 +151,7 @@ EOT
             ->field('properties.origin')->notEqual('youtube')
             ->field('status')->in($aStatus)
             ->field('embeddedBroadcast.type')->equals('public')
-            ->field('tags.cod')->all($pubChannelTags);
+            ->field('tags.cod')->all($pubChannelTags)
+        ;
     }
 }

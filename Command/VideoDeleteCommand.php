@@ -201,7 +201,8 @@ EOT
         $qb = $this->documentManager->getRepository(MultimediaObject::class)
             ->createQueryBuilder()
             ->field('properties.youtube')->in($youtubeIds)
-            ->field('properties.origin')->notEqual('youtube');
+            ->field('properties.origin')->notEqual('youtube')
+        ;
         if (!$this->usePumukit1) {
             $qb->field('properties.pumukit1id')->exists(false);
         }

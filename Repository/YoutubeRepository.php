@@ -13,7 +13,8 @@ class YoutubeRepository extends DocumentRepository
     public function getWithAnyStatusQueryBuilder(array $statusArray = []): Builder
     {
         return $this->createQueryBuilder()
-            ->field('status')->in($statusArray);
+            ->field('status')->in($statusArray)
+        ;
     }
 
     public function getWithAnyStatusQuery(array $statusArray = []): Query
@@ -39,7 +40,8 @@ class YoutubeRepository extends DocumentRepository
     {
         return $this->createQueryBuilder()
             ->field('status')->equals($status)
-            ->field('force')->equals($force);
+            ->field('force')->equals($force)
+        ;
     }
 
     public function getWithStatusAndForceQuery(int $status, bool $force = false): Query
@@ -73,7 +75,8 @@ class YoutubeRepository extends DocumentRepository
     public function getWithoutAnyStatusQueryBuilder(array $statusArray = []): Builder
     {
         return $this->createQueryBuilder()
-            ->field('status')->notIn($statusArray);
+            ->field('status')->notIn($statusArray)
+        ;
     }
 
     public function getWithoutAnyStatusQuery(array $statusArray = []): Query
@@ -99,7 +102,8 @@ class YoutubeRepository extends DocumentRepository
     {
         return $this->createQueryBuilder()
             ->field('status')->equals($status)
-            ->field('updatePlaylist')->equals($updatePlaylist);
+            ->field('updatePlaylist')->equals($updatePlaylist)
+        ;
     }
 
     public function getWithStatusAndUpdatePlaylistQuery(int $status, bool $updatePlaylist = false): Query

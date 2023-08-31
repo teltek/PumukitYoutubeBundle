@@ -194,7 +194,7 @@ class StatsController extends AbstractController
     private function processYoutubeDocuments(array $youtubeStatusDocuments): array
     {
         $stats = [];
-        foreach ($youtubeStatusDocuments  as $document) {
+        foreach ($youtubeStatusDocuments as $document) {
             $stats[$document->getStatus()][] = $document;
         }
 
