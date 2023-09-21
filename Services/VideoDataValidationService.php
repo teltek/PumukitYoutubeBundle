@@ -125,7 +125,7 @@ class VideoDataValidationService extends CommonDataValidationService
             $title = substr($title, 0, strrpos($title, ' '));
         }
         if (strlen($multimediaObject->getTitle($this->locale)) > ($limit - 5)) {
-            $title = $title.'(...)';
+            $title .= '(...)';
         }
 
         return $title;

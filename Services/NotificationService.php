@@ -68,9 +68,7 @@ class NotificationService
         return $this->sendEmail2('upload', $result);
     }
 
-    public function notificationPlaylistsErrorResult(array $result)
-    {
-    }
+    public function notificationPlaylistsErrorResult(array $result) {}
 
     /*public function notificationOfUploadedVideoResults(array $uploadedVideos, array $failedVideos, array $errors): void
     {
@@ -259,7 +257,7 @@ class NotificationService
             } elseif ('duplicated' === $cause) {
                 if ($multimediaObject instanceof MultimediaObject) {
                     $body = $body.'<br/>YouTube has rejected the upload of the video: "'.$multimediaObject->getTitle($this->locale).'"</br>';
-                    $body = $body.'because it has been published previously.<br/>';
+                    $body .= 'because it has been published previously.<br/>';
                 }
                 if ($youtube instanceof Youtube) {
                     $body = $body.'<br/>'.$youtube->getLink().'<br/>';
