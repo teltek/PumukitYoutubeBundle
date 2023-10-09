@@ -30,7 +30,7 @@ class PumukitYoutubeExtension extends Extension implements PrependExtensionInter
 
     public function load(array $configs, ContainerBuilder $container): void
     {
-        $configuration = new Configuration($container->getParameter('locale'));
+        $configuration = new Configuration($container->getParameter('kernel.default_locale'));
         $config = $this->processConfiguration($configuration, $configs);
 
         $container->setParameter('pumukit_youtube.playlist_privacy_status', $config['playlist_privacy_status']);
@@ -78,6 +78,6 @@ class PumukitYoutubeExtension extends Extension implements PrependExtensionInter
 
     public function getConfiguration(array $config, ContainerBuilder $container): Configuration
     {
-        return new Configuration($container->getParameter('locale'));
+        return new Configuration($container->getParameter('kernel.default_locale'));
     }
 }
