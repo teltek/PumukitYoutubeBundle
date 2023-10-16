@@ -61,7 +61,7 @@ EOT
 
         $youtubeMultimediaObjects = $this->getYoutubeMultimediaObjects();
 
-        $infoLog = '[YouTube] Deleting captions for '.count($youtubeMultimediaObjects).' videos.';
+        $infoLog = '[YouTube] Deleting captions for '.(is_countable($youtubeMultimediaObjects) ? count($youtubeMultimediaObjects) : 0).' videos.';
         $this->logger->info($infoLog);
         $this->deleteCaptionsFromYoutube($youtubeMultimediaObjects);
 
@@ -123,7 +123,7 @@ EOT
                 continue;
             }
             $deleteCaptionIds[] = $caption->getCaptionId();
-            $infoLog = sprintf('%s [%s] Started deleting caption from Youtube with id %s and Caption with id %s', __CLASS__, __FUNCTION__, $youtube->getId(), $caption->getId());
+            $infoLog = sprintf('%s [%s] Started deleting caption from Youtube with id %s and Caption with id %s', self::class, __FUNCTION__, $youtube->getId(), $caption->getId());
             $this->logger->info($infoLog);
             $this->output->writeln($infoLog);
         }

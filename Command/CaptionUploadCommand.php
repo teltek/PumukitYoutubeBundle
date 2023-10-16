@@ -55,7 +55,7 @@ EOT
     {
         $this->output = $output;
         $youtubeMultimediaObjects = $this->getYoutubeMultimediaObjects();
-        $infoLog = '[YouTube] Upload captions for '.count($youtubeMultimediaObjects).' videos.';
+        $infoLog = '[YouTube] Upload captions for '.(is_countable($youtubeMultimediaObjects) ? count($youtubeMultimediaObjects) : 0).' videos.';
         $this->logger->info($infoLog);
         $this->uploadCaptionsToYoutube($youtubeMultimediaObjects, $output);
 
@@ -123,7 +123,7 @@ EOT
                 continue;
             }
             $newMaterialIds[] = $material->getId();
-            $infoLog = sprintf('%s [%s] Started uploading captions to Youtube of MultimediaObject with id %s and Material with id %s', __CLASS__, __FUNCTION__, $multimediaObject->getId(), $material->getId());
+            $infoLog = sprintf('%s [%s] Started uploading captions to Youtube of MultimediaObject with id %s and Material with id %s', self::class, __FUNCTION__, $multimediaObject->getId(), $material->getId());
             $this->logger->info($infoLog);
             $this->output->writeln($infoLog);
         }

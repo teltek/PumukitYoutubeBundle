@@ -104,7 +104,7 @@ class PlaylistItemInsertService extends GooglePlaylistItemService
                 try {
                     $response = $this->playlistItemDeleteService->deleteOnePlaylist($account, $playlistRel);
                 } catch (\Exception $exception) {
-                    $error = json_decode($exception->getMessage(), true);
+                    $error = json_decode($exception->getMessage(), true, 512, JSON_THROW_ON_ERROR);
                     $error = \Pumukit\YoutubeBundle\Document\Error::create(
                         $error['error']['errors'][0]['reason'],
                         $error['error']['errors'][0]['message'],
@@ -131,7 +131,7 @@ class PlaylistItemInsertService extends GooglePlaylistItemService
                 $youtubeDocument->setPlaylist($playlist, $response->getId());
                 $youtubeDocument->removePlaylistUpdateError();
             } catch (\Exception $exception) {
-                $error = json_decode($exception->getMessage(), true);
+                $error = json_decode($exception->getMessage(), true, 512, JSON_THROW_ON_ERROR);
                 $error = \Pumukit\YoutubeBundle\Document\Error::create(
                     $error['error']['errors'][0]['reason'],
                     $error['error']['errors'][0]['message'],

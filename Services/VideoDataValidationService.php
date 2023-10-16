@@ -75,14 +75,14 @@ class VideoDataValidationService extends CommonDataValidationService
 
         $trackPath = $track->getPath();
         if (!file_exists($trackPath)) {
-            $errorLog = __CLASS__.' ['.__FUNCTION__.'] Error, there is no file '.$trackPath;
+            $errorLog = self::class.' ['.__FUNCTION__.'] Error, there is no file '.$trackPath;
             $this->logger->error($errorLog);
 
             return null;
         }
 
         if (str_contains($trackPath, '.m4v')) {
-            $errorLog = __CLASS__.' ['.__FUNCTION__.'] Youtube not support m4v files. To upload this video to Youtube, convert to mp4.'.$trackPath;
+            $errorLog = self::class.' ['.__FUNCTION__.'] Youtube not support m4v files. To upload this video to Youtube, convert to mp4.'.$trackPath;
             $this->logger->error($errorLog);
 
             return null;
@@ -228,7 +228,7 @@ class VideoDataValidationService extends CommonDataValidationService
             }
             $track = $tracks[0];
             $path = $track->getPath();
-            $language = $track->getLanguage() ? $track->getLanguage() : \Locale::getDefault();
+            $language = $track->getLanguage() ?: \Locale::getDefault();
             $job = $this->jobService->addJob($path, $this->youtubeConfigurationService->sbsProfileName(), 2, $multimediaObject, $language, [], [], $track->getDuration());
         }
 
@@ -250,7 +250,7 @@ class VideoDataValidationService extends CommonDataValidationService
             $multimediaObject->getId()
         );
 
-        return 0 !== count($jobs);
+        return 0 !== (is_countable($jobs) ? count($jobs) : 0);
     }
 
     private function filterSpecialCharacters(string $value): string

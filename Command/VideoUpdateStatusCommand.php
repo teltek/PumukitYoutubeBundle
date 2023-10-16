@@ -68,7 +68,7 @@ EOT
         ];
         $youtubeDocuments = $this->documentManager->getRepository(Youtube::class)->getWithoutAnyStatus($statusArray);
 
-        $infoLog = '[YouTube] Updating status for '.count($youtubeDocuments).' videos.';
+        $infoLog = '[YouTube] Updating status for '.(is_countable($youtubeDocuments) ? count($youtubeDocuments) : 0).' videos.';
         $this->logger->info($infoLog);
         $this->updateVideoStatusInYoutube($youtubeDocuments, $output);
 

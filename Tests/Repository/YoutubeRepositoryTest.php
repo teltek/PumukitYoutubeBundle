@@ -33,7 +33,7 @@ class YoutubeRepositoryTest extends PumukitTestCase
 
     public function testRepositoryEmpty()
     {
-        $this->assertEquals(0, count($this->repo->findAll()));
+        $this->assertEquals(0, is_countable($this->repo->findAll()) ? count($this->repo->findAll()) : 0);
     }
 
     public function testRepository()
@@ -42,13 +42,13 @@ class YoutubeRepositoryTest extends PumukitTestCase
         $this->dm->persist($youtube1);
         $this->dm->flush();
 
-        $this->assertEquals(1, count($this->repo->findAll()));
+        $this->assertEquals(1, is_countable($this->repo->findAll()) ? count($this->repo->findAll()) : 0);
 
         $youtube2 = new Youtube();
         $this->dm->persist($youtube2);
         $this->dm->flush();
 
-        $this->assertEquals(2, count($this->repo->findAll()));
+        $this->assertEquals(2, is_countable($this->repo->findAll()) ? count($this->repo->findAll()) : 0);
     }
 
     public function testGetWithAnyStatus()

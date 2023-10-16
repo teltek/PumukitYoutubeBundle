@@ -58,19 +58,19 @@ EOT
         $this->usePumukit1 = $input->getOption('use-pmk1');
 
         $newMultimediaObjects = $this->getNewMultimediaObjectsToUpload();
-        $infoLog = '[YouTube] Uploading '.count($newMultimediaObjects).' new videos to YouTube';
+        $infoLog = '[YouTube] Uploading '.(is_countable($newMultimediaObjects) ? count($newMultimediaObjects) : 0).' new videos to YouTube';
         $this->logger->info($infoLog);
         $this->uploadVideosToYoutube($newMultimediaObjects, $output);
 
         $failureMultimediaObjects = $this->getUploadsByStatus([Youtube::STATUS_ERROR]);
-        $infoLog = '[YouTube] Uploading '.count($failureMultimediaObjects).' failure videos to YouTube';
+        $infoLog = '[YouTube] Uploading '.(is_countable($failureMultimediaObjects) ? count($failureMultimediaObjects) : 0).' failure videos to YouTube';
         $this->logger->info($infoLog);
         $this->uploadVideosToYoutube($failureMultimediaObjects, $output);
 
         if ($this->youtubeConfigurationService->uploadRemovedVideos()) {
             $removedStatus = [Youtube::STATUS_REMOVED];
             $removedYoutubeMultimediaObjects = $this->getUploadsByStatus($removedStatus);
-            $infoLog = '[YouTube] Uploading '.count($removedYoutubeMultimediaObjects).' removed videos to YouTube';
+            $infoLog = '[YouTube] Uploading '.(is_countable($removedYoutubeMultimediaObjects) ? count($removedYoutubeMultimediaObjects) : 0).' removed videos to YouTube';
             $this->logger->info($infoLog);
             $this->uploadVideosToYoutube($removedYoutubeMultimediaObjects, $output);
         }

@@ -67,7 +67,7 @@ class VideoInsertService extends GoogleVideoService
         } catch (\Exception $exception) {
             $this->updateVideoAndYoutubeDocumentByErrorResult(
                 $youtubeDocument,
-                json_decode($exception->getMessage(), true)
+                json_decode($exception->getMessage(), true, 512, JSON_THROW_ON_ERROR)
             );
 
             $errorLog = '[YouTube] Multimedia object with ID ('.$multimediaObject->getId().') failed uploading to YouTube. '.$exception->getMessage();

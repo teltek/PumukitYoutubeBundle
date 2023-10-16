@@ -171,15 +171,15 @@ class NotificationService
                 if (0 < $output) {
                     if (is_array($emailTo)) {
                         foreach ($emailTo as $email) {
-                            $infoLog = __CLASS__.' ['.__FUNCTION__.'] Sent notification email to "'.$email.'"';
+                            $infoLog = self::class.' ['.__FUNCTION__.'] Sent notification email to "'.$email.'"';
                             $this->logger->info($infoLog);
                         }
                     } else {
-                        $infoLog = __CLASS__.' ['.__FUNCTION__.'] Sent notification email to "'.$emailTo.'"';
+                        $infoLog = self::class.' ['.__FUNCTION__.'] Sent notification email to "'.$emailTo.'"';
                         $this->logger->info($infoLog);
                     }
                 } else {
-                    $infoLog = __CLASS__.' ['.__FUNCTION__.'] Unable to send notification email to "'.$emailTo.'", '.$output.'email(s) were sent.';
+                    $infoLog = self::class.' ['.__FUNCTION__.'] Unable to send notification email to "'.$emailTo.'", '.$output.'email(s) were sent.';
                     $this->logger->info($infoLog);
                 }
 

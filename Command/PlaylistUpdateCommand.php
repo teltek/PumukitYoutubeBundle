@@ -56,7 +56,7 @@ EOT
             ->execute()
         ;
 
-        $infoLog = '[YouTube] Updating playlist for '.count($multimediaObjects).' videos.';
+        $infoLog = '[YouTube] Updating playlist for '.(is_countable($multimediaObjects) ? count($multimediaObjects) : 0).' videos.';
         $this->logger->info($infoLog);
         foreach ($multimediaObjects as $multimediaObject) {
             try {

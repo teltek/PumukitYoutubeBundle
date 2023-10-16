@@ -34,7 +34,7 @@ class CaptionsDeleteService extends GoogleCaptionService
             } catch (\Exception $exception) {
                 $errorLog = sprintf('[YouTube] Remove caption for Youtube document %s failed. Error: %s', $youtube->getId(), $exception->getMessage());
                 $this->logger->error($errorLog);
-                $error = json_decode($exception->getMessage(), true);
+                $error = json_decode($exception->getMessage(), true, 512, JSON_THROW_ON_ERROR);
                 $error = \Pumukit\YoutubeBundle\Document\Error::create(
                     $error['error']['errors'][0]['reason'],
                     $error['error']['errors'][0]['message'],

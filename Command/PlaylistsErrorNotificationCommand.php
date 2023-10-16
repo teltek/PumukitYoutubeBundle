@@ -40,6 +40,7 @@ EOT
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
+        $result = [];
         $elements = $this->getAllPlaylistErrors();
         $result['playlistUploadError'] = $elements;
         $this->notificationService->notificationVideoErrorResult($result);

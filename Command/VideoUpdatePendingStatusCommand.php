@@ -45,7 +45,7 @@ EOT
     {
         $statusArray = [Youtube::STATUS_UPLOADING, Youtube::STATUS_PROCESSING];
         $youtubeDocuments = $this->documentManager->getRepository(Youtube::class)->getWithAnyStatus($statusArray);
-        $infoLog = '[YouTube] Updating (pending) status for '.count($youtubeDocuments).' videos.';
+        $infoLog = '[YouTube] Updating (pending) status for '.(is_countable($youtubeDocuments) ? count($youtubeDocuments) : 0).' videos.';
         $this->logger->info($infoLog);
         $this->updateVideoStatusInYoutube($youtubeDocuments, $output);
 

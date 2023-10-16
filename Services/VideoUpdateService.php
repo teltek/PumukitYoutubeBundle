@@ -67,7 +67,7 @@ class VideoUpdateService extends GoogleVideoService
         try {
             $response = $this->update($account, $video);
         } catch (\Exception $exception) {
-            $error = json_decode($exception->getMessage(), true);
+            $error = json_decode($exception->getMessage(), true, 512, JSON_THROW_ON_ERROR);
             $error = \Pumukit\YoutubeBundle\Document\Error::create(
                 $error['error']['errors'][0]['reason'],
                 $error['error']['errors'][0]['message'],

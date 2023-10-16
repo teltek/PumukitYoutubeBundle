@@ -45,7 +45,7 @@ class VideoListService extends GoogleVideoService
     {
         $infoLog = sprintf(
             '%s [%s] Started update video status on MultimediaObject with id %s',
-            __CLASS__,
+            self::class,
             __FUNCTION__,
             $multimediaObject->getId()
         );
@@ -64,7 +64,7 @@ class VideoListService extends GoogleVideoService
             $response = $this->list($account, $video);
             $status = $this->getStatusFromYouTubeResponse($response, $video);
         } catch (\Exception $exception) {
-            $error = json_decode($exception->getMessage(), true);
+            $error = json_decode($exception->getMessage(), true, 512, JSON_THROW_ON_ERROR);
             $error = \Pumukit\YoutubeBundle\Document\Error::create(
                 $error['error']['errors'][0]['reason'],
                 $error['error']['errors'][0]['message'],

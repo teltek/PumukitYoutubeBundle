@@ -42,14 +42,14 @@ class VideoDeleteService extends GoogleVideoService
         if (!$account) {
             $accountLogin = $youtube->getYoutubeAccount();
             if (!$accountLogin) {
-                $errorLog = __CLASS__.' ['.__FUNCTION__.'] Multimedia object '.$multimediaObject->getId().': doesnt have account';
+                $errorLog = self::class.' ['.__FUNCTION__.'] Multimedia object '.$multimediaObject->getId().': doesnt have account';
                 $this->logger->error($errorLog);
 
                 return false;
             }
             $account = $this->documentManager->getRepository(Tag::class)->findOneBy(['properties.login' => $accountLogin]);
             if (!$account) {
-                $errorLog = __CLASS__.' ['.__FUNCTION__.'] Youtube account '.$accountLogin.' doesnt exists';
+                $errorLog = self::class.' ['.__FUNCTION__.'] Youtube account '.$accountLogin.' doesnt exists';
                 $this->logger->error($errorLog);
 
                 return false;
@@ -79,7 +79,7 @@ class VideoDeleteService extends GoogleVideoService
                 return false;
             }
         } catch (\Exception $exception) {
-            $error = json_decode($exception->getMessage(), true);
+            $error = json_decode($exception->getMessage(), true, 512, JSON_THROW_ON_ERROR);
             $error = \Pumukit\YoutubeBundle\Document\Error::create(
                 $error['error']['errors'][0]['reason'],
                 $error['error']['errors'][0]['message'],
@@ -133,7 +133,7 @@ class VideoDeleteService extends GoogleVideoService
                 return false;
             }
         } catch (\Exception $exception) {
-            $error = json_decode($exception->getMessage(), true);
+            $error = json_decode($exception->getMessage(), true, 512, JSON_THROW_ON_ERROR);
             $error = \Pumukit\YoutubeBundle\Document\Error::create(
                 $error['error']['errors'][0]['reason'],
                 $error['error']['errors'][0]['message'],
