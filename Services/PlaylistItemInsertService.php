@@ -9,6 +9,7 @@ use Google\Service\YouTube\PlaylistItem;
 use Psr\Log\LoggerInterface;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Tag;
+use Pumukit\YoutubeBundle\Document\Error;
 use Pumukit\YoutubeBundle\Document\Youtube;
 use Pumukit\YoutubeBundle\PumukitYoutubeBundle;
 
@@ -105,7 +106,7 @@ class PlaylistItemInsertService extends GooglePlaylistItemService
                     $response = $this->playlistItemDeleteService->deleteOnePlaylist($account, $playlistRel);
                 } catch (\Exception $exception) {
                     $error = json_decode($exception->getMessage(), true, 512, JSON_THROW_ON_ERROR);
-                    $error = \Pumukit\YoutubeBundle\Document\Error::create(
+                    $error = Error::create(
                         $error['error']['errors'][0]['reason'],
                         $error['error']['errors'][0]['message'],
                         new \DateTime(),
@@ -132,7 +133,7 @@ class PlaylistItemInsertService extends GooglePlaylistItemService
                 $youtubeDocument->removePlaylistUpdateError();
             } catch (\Exception $exception) {
                 $error = json_decode($exception->getMessage(), true, 512, JSON_THROW_ON_ERROR);
-                $error = \Pumukit\YoutubeBundle\Document\Error::create(
+                $error = Error::create(
                     $error['error']['errors'][0]['reason'],
                     $error['error']['errors'][0]['message'],
                     new \DateTime(),

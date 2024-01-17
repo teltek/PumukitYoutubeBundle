@@ -7,6 +7,7 @@ namespace Pumukit\YoutubeBundle\Services;
 use Doctrine\ODM\MongoDB\DocumentManager;
 use Psr\Log\LoggerInterface;
 use Pumukit\SchemaBundle\Document\Tag;
+use Pumukit\YoutubeBundle\Document\Error;
 use Pumukit\YoutubeBundle\Document\Youtube;
 
 class CaptionsDeleteService extends GoogleCaptionService
@@ -35,7 +36,7 @@ class CaptionsDeleteService extends GoogleCaptionService
                 $errorLog = sprintf('[YouTube] Remove caption for Youtube document %s failed. Error: %s', $youtube->getId(), $exception->getMessage());
                 $this->logger->error($errorLog);
                 $error = json_decode($exception->getMessage(), true, 512, JSON_THROW_ON_ERROR);
-                $error = \Pumukit\YoutubeBundle\Document\Error::create(
+                $error = Error::create(
                     $error['error']['errors'][0]['reason'],
                     $error['error']['errors'][0]['message'],
                     new \DateTime(),

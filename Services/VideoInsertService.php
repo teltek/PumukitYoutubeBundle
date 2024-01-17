@@ -10,6 +10,7 @@ use Psr\Log\LoggerInterface;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\SchemaBundle\Document\Track;
+use Pumukit\YoutubeBundle\Document\Error;
 use Pumukit\YoutubeBundle\Document\Youtube;
 
 class VideoInsertService extends GoogleVideoService
@@ -174,7 +175,7 @@ class VideoInsertService extends GoogleVideoService
         array $exception
     ): void {
         $youtube->setStatus(Youtube::STATUS_ERROR);
-        $error = \Pumukit\YoutubeBundle\Document\Error::create(
+        $error = Error::create(
             $exception['error']['errors'][0]['reason'],
             $exception['error']['message'],
             new \DateTime(),

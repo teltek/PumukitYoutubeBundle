@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace Pumukit\YoutubeBundle\Services;
 
 use Doctrine\ODM\MongoDB\DocumentManager;
+use Google\Service\YouTube\Video;
 use Psr\Log\LoggerInterface;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Tag;
+use Pumukit\YoutubeBundle\Document\Error;
 use Pumukit\YoutubeBundle\Document\Youtube;
 
 class VideoUpdateService extends GoogleVideoService
@@ -68,7 +70,7 @@ class VideoUpdateService extends GoogleVideoService
             $response = $this->update($account, $video);
         } catch (\Exception $exception) {
             $error = json_decode($exception->getMessage(), true, 512, JSON_THROW_ON_ERROR);
-            $error = \Pumukit\YoutubeBundle\Document\Error::create(
+            $error = Error::create(
                 $error['error']['errors'][0]['reason'],
                 $error['error']['errors'][0]['message'],
                 new \DateTime(),
@@ -92,7 +94,7 @@ class VideoUpdateService extends GoogleVideoService
     private function update(
         Tag $youtubeAccount,
         \Google_Service_YouTube_Video $video,
-    ): \Google\Service\YouTube\Video {
+    ): Video {
         $infoLog = sprintf('[YouTube] Video update: %s ', $video->getId());
         $this->logger->info($infoLog);
 

@@ -10,6 +10,7 @@ use Pumukit\SchemaBundle\Document\Material;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\YoutubeBundle\Document\Caption;
+use Pumukit\YoutubeBundle\Document\Error;
 use Pumukit\YoutubeBundle\Document\Youtube;
 
 class CaptionsInsertService extends GoogleCaptionService
@@ -56,7 +57,7 @@ class CaptionsInsertService extends GoogleCaptionService
                 $youtube->removeCaptionUpdateError();
             } catch (\Exception $exception) {
                 $error = json_decode($exception->getMessage(), true, 512, JSON_THROW_ON_ERROR);
-                $error = \Pumukit\YoutubeBundle\Document\Error::create(
+                $error = Error::create(
                     $error['error']['errors'][0]['reason'],
                     $error['error']['errors'][0]['message'],
                     new \DateTime(),

@@ -8,6 +8,7 @@ use Doctrine\ODM\MongoDB\DocumentManager;
 use MongoDB\BSON\ObjectId;
 use Psr\Log\LoggerInterface;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
+use Pumukit\YoutubeBundle\Document\Error;
 use Pumukit\YoutubeBundle\Document\Youtube;
 use Pumukit\YoutubeBundle\Services\VideoListService;
 use Symfony\Component\Console\Command\Command;
@@ -81,7 +82,7 @@ EOT
             if (!$youtube->getYoutubeId()) {
                 $errorLog = sprintf('YouTube document %s does not have a Youtube ID variable set.', $youtube->getId());
                 $youtube->setStatus(Youtube::STATUS_ERROR);
-                $error = \Pumukit\YoutubeBundle\Document\Error::create(
+                $error = Error::create(
                     'pumukit.youtubeIdNotFound',
                     $errorLog,
                     new \DateTime(),
@@ -98,7 +99,7 @@ EOT
             if (!$multimediaObject instanceof MultimediaObject) {
                 $errorLog = sprintf("No multimedia object for YouTube document %s\n", $youtube->getId());
                 $youtube->setStatus(Youtube::STATUS_ERROR);
-                $error = \Pumukit\YoutubeBundle\Document\Error::create(
+                $error = Error::create(
                     'pumukit.videoNotFound',
                     $errorLog,
                     new \DateTime(),

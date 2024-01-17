@@ -10,6 +10,7 @@ use Google\Service\YouTube\VideoListResponse;
 use Psr\Log\LoggerInterface;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Tag;
+use Pumukit\YoutubeBundle\Document\Error;
 use Pumukit\YoutubeBundle\Document\Youtube;
 
 class VideoListService extends GoogleVideoService
@@ -65,7 +66,7 @@ class VideoListService extends GoogleVideoService
             $status = $this->getStatusFromYouTubeResponse($response, $video);
         } catch (\Exception $exception) {
             $error = json_decode($exception->getMessage(), true, 512, JSON_THROW_ON_ERROR);
-            $error = \Pumukit\YoutubeBundle\Document\Error::create(
+            $error = Error::create(
                 $error['error']['errors'][0]['reason'],
                 $error['error']['errors'][0]['message'],
                 new \DateTime(),
@@ -81,7 +82,7 @@ class VideoListService extends GoogleVideoService
         $youtube->setStatus($status);
         if (Youtube::STATUS_ERROR === $status || Youtube::STATUS_TO_REVIEW === $status) {
             $reason = $this->getReasonStatusFromYoutubeResponse($response, $video);
-            $error = \Pumukit\YoutubeBundle\Document\Error::create(
+            $error = Error::create(
                 'pumukit.statusError',
                 $reason,
                 new \DateTime(),
