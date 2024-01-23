@@ -12,10 +12,10 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use YouTube\DownloadOptions;
+use YouTube\Exception\YouTubeException;
 use YouTube\Models\StreamFormat;
 use YouTube\Utils\Utils;
 use YouTube\YouTubeDownloader;
-use YouTube\Exception\YouTubeException;
 
 final class ImportDownloadVideosFromYoutubeChannel extends Command
 {
@@ -78,13 +78,13 @@ EOT
             'properties.login' => $input->getOption('account'),
         ]);
 
-        if(!$youtubeAccount) {
+        if (!$youtubeAccount) {
             throw new \Exception('Account not found');
         }
 
         $service = $this->googleAccountService->googleServiceFromAccount($youtubeAccount);
         $queryParams = [
-            'id' => $channel
+            'id' => $channel,
         ];
 
         $channels = $service->channels->listChannels('snippet', $queryParams);
@@ -97,48 +97,49 @@ EOT
                 'channelId' => $channelId,
                 'maxResults' => 50,
                 'order' => 'date',
-                'type' => 'video'
+                'type' => 'video',
             ];
 
-            if($input->getOption('limit') !== null && $count >= $input->getOption('limit')) {
+            if (null !== $input->getOption('limit') && $count >= $input->getOption('limit')) {
                 break;
             }
 
-            if($nextPageToken !== null) {
+            if (null !== $nextPageToken) {
                 $queryParams['pageToken'] = $nextPageToken;
             }
 
             $response = $service->search->listSearch('snippet', $queryParams);
             $nextPageToken = $response->getNextPageToken();
-            foreach($response->getItems() as $item) {
-
-                if($input->getOption('limit') !== null && $count >= $input->getOption('limit')) {
+            foreach ($response->getItems() as $item) {
+                if (null !== $input->getOption('limit') && $count >= $input->getOption('limit')) {
                     break;
                 }
-                $count++;
+                ++$count;
                 $videoId = $item->getId()->getVideoId();
                 $youtubeDownloader = new YouTubeDownloader();
+
                 try {
                     $youtubeURL = self::BASE_URL_YOUTUBE_VIDEO.$videoId;
                     $downloadOptions = $youtubeDownloader->getDownloadLinks($youtubeURL);
 
                     if (empty($downloadOptions->getAllFormats())) {
-                        $output->writeln('URL: '. $youtubeURL . ' no formats found.');
+                        $output->writeln('URL: '.$youtubeURL.' no formats found.');
+
                         continue;
                     }
 
                     $url = $this->selectBestStreamFormat($downloadOptions);
+
                     try {
                         $this->moveFileToStorage($item, $url, $downloadOptions, $channelId);
                     } catch (\Exception $exception) {
-                        $output->writeln('Error moving file to storage: ' . $exception->getMessage());
+                        $output->writeln('Error moving file to storage: '.$exception->getMessage());
                     }
-
                 } catch (YouTubeException $e) {
-                    echo 'Something went wrong: ' . $e->getMessage();
+                    echo 'Something went wrong: '.$e->getMessage();
                 }
             }
-        } while(null !== $nextPageToken);
+        } while (null !== $nextPageToken);
 
         return 0;
     }
@@ -146,15 +147,15 @@ EOT
     private function selectBestStreamFormat(DownloadOptions $downloadOptions): ?StreamFormat
     {
         $quality720p = Utils::arrayFilterReset($downloadOptions->getAllFormats(), function ($format) {
-            return str_starts_with($format->mimeType, 'video') && !empty($format->audioQuality) && $format->qualityLabel === '720p';
+            return str_starts_with($format->mimeType, 'video') && !empty($format->audioQuality) && '720p' === $format->qualityLabel;
         });
 
         $quality360p = Utils::arrayFilterReset($downloadOptions->getAllFormats(), function ($format) {
-            return str_starts_with($format->mimeType, 'video') && !empty($format->audioQuality) && $format->qualityLabel === '360p';
+            return str_starts_with($format->mimeType, 'video') && !empty($format->audioQuality) && '360p' === $format->qualityLabel;
         });
 
         $quality240p = Utils::arrayFilterReset($downloadOptions->getAllFormats(), function ($format) {
-            return str_starts_with($format->mimeType, 'video') && !empty($format->audioQuality) && $format->qualityLabel === '240p';
+            return str_starts_with($format->mimeType, 'video') && !empty($format->audioQuality) && '240p' === $format->qualityLabel;
         });
 
         return $quality720p[0] ?? $quality360p[0] ?? $quality240p[0] ?? null;
@@ -167,7 +168,7 @@ EOT
         $this->createChannelDir($channelId);
         $file = $this->tempDir.'/'.$channelId.'/'.$videoId.'.'.$mimeType;
 
-        if(file_exists($file)) {
+        if (file_exists($file)) {
             return;
         }
 
@@ -182,5 +183,4 @@ EOT
             mkdir($this->tempDir.'/'.$channelId, 0775, true);
         }
     }
-
 }
