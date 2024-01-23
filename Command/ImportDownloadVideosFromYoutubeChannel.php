@@ -146,6 +146,18 @@ EOT
 
     private function selectBestStreamFormat(DownloadOptions $downloadOptions): ?StreamFormat
     {
+        $quality2160p = Utils::arrayFilterReset($downloadOptions->getAllFormats(), function ($format) {
+            return str_starts_with($format->mimeType, 'video') && !empty($format->audioQuality) && '2160p' === $format->qualityLabel;
+        });
+
+        $quality1440p = Utils::arrayFilterReset($downloadOptions->getAllFormats(), function ($format) {
+            return str_starts_with($format->mimeType, 'video') && !empty($format->audioQuality) && '1440p' === $format->qualityLabel;
+        });
+
+        $quality1080p = Utils::arrayFilterReset($downloadOptions->getAllFormats(), function ($format) {
+            return str_starts_with($format->mimeType, 'video') && !empty($format->audioQuality) && '1080p' === $format->qualityLabel;
+        });
+
         $quality720p = Utils::arrayFilterReset($downloadOptions->getAllFormats(), function ($format) {
             return str_starts_with($format->mimeType, 'video') && !empty($format->audioQuality) && '720p' === $format->qualityLabel;
         });
@@ -158,7 +170,7 @@ EOT
             return str_starts_with($format->mimeType, 'video') && !empty($format->audioQuality) && '240p' === $format->qualityLabel;
         });
 
-        return $quality720p[0] ?? $quality360p[0] ?? $quality240p[0] ?? null;
+        return $quality2160p[0] ?? $quality1440p[0] ?? $quality1080p[0] ?? $quality720p[0] ?? $quality360p[0] ?? $quality240p[0] ?? null;
     }
 
     private function moveFileToStorage($item, $url, DownloadOptions $downloadOptions, string $channelId): void
