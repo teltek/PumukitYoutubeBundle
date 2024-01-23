@@ -5,6 +5,7 @@ services:
     public:        true
     bind:
       $pumukitLocales: "%pumukit.locales%"
+      $tempDir: "%pumukit.tmp%"
 
   Pumukit\YoutubeBundle\Controller\:
     resource: '../../Controller'
