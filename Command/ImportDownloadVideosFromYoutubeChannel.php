@@ -8,6 +8,7 @@ use Doctrine\ODM\MongoDB\DocumentManager;
 use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\YoutubeBundle\Services\GoogleAccountService;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -24,14 +25,12 @@ final class ImportDownloadVideosFromYoutubeChannel extends Command
     private DocumentManager $documentManager;
     private GoogleAccountService $googleAccountService;
     private string $tempDir;
-    private array $qualities;
 
     public function __construct(DocumentManager $documentManager, GoogleAccountService $googleAccountService, string $tempDir)
     {
         $this->documentManager = $documentManager;
         $this->googleAccountService = $googleAccountService;
         $this->tempDir = $tempDir;
-        $this->qualities = [];
         parent::__construct();
     }
 
@@ -74,32 +73,25 @@ EOT
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $channel = $input->getOption('channel');
-        $youtubeAccount = $this->documentManager->getRepository(Tag::class)->findOneBy([
-            'properties.login' => $input->getOption('account'),
-        ]);
 
-        if (!$youtubeAccount) {
-            throw new \Exception('Account not found');
-        }
+        $youtubeAccount = $this->getYoutubeAccount($input);
 
         $service = $this->googleAccountService->googleServiceFromAccount($youtubeAccount);
-        $queryParams = [
-            'id' => $channel,
-        ];
-
-        $channels = $service->channels->listChannels('snippet', $queryParams);
-        $channelId = $channels->getItems()[0]->getId();
+        $channelId = $this->channelId($channel, $service);
 
         $nextPageToken = null;
         $count = 0;
-        do {
-            $queryParams = [
-                'channelId' => $channelId,
-                'maxResults' => 50,
-                'order' => 'date',
-                'type' => 'video',
-            ];
+        $queryParams = [
+            'type' => 'video',
+            'forMine' => true,
+        ];
 
+        $response = $service->search->listSearch('snippet', $queryParams);
+
+        $progressBar = new ProgressBar($output, $response->pageInfo->getTotalResults());
+        $progressBar->start();
+
+        do {
             if (null !== $input->getOption('limit') && $count >= $input->getOption('limit')) {
                 break;
             }
@@ -110,7 +102,9 @@ EOT
 
             $response = $service->search->listSearch('snippet', $queryParams);
             $nextPageToken = $response->getNextPageToken();
+
             foreach ($response->getItems() as $item) {
+                $progressBar->advance();
                 if (null !== $input->getOption('limit') && $count >= $input->getOption('limit')) {
                     break;
                 }
@@ -136,10 +130,15 @@ EOT
                         $output->writeln('Error moving file to storage: '.$exception->getMessage());
                     }
                 } catch (YouTubeException $e) {
-                    echo 'Something went wrong: '.$e->getMessage();
+                    $output->writeln('There was error downloaded video with title '.$item->snippet->title.'  and id '.$videoId);
+
+                    continue;
                 }
             }
         } while (null !== $nextPageToken);
+
+        $progressBar->finish();
+        $output->writeln(' ');
 
         return 0;
     }
@@ -147,30 +146,54 @@ EOT
     private function selectBestStreamFormat(DownloadOptions $downloadOptions): ?StreamFormat
     {
         $quality2160p = Utils::arrayFilterReset($downloadOptions->getAllFormats(), function ($format) {
-            return str_starts_with($format->mimeType, 'video') && !empty($format->audioQuality) && '2160p' === $format->qualityLabel;
+            return str_starts_with($format->mimeType, 'video') && '2160p' === $format->qualityLabel;
         });
 
+        if (!empty($quality2160p)) {
+            return $quality2160p[0];
+        }
+
         $quality1440p = Utils::arrayFilterReset($downloadOptions->getAllFormats(), function ($format) {
-            return str_starts_with($format->mimeType, 'video') && !empty($format->audioQuality) && '1440p' === $format->qualityLabel;
+            return str_starts_with($format->mimeType, 'video') && '1440p' === $format->qualityLabel;
         });
+
+        if (!empty($quality1440p)) {
+            return $quality1440p[0];
+        }
 
         $quality1080p = Utils::arrayFilterReset($downloadOptions->getAllFormats(), function ($format) {
             return str_starts_with($format->mimeType, 'video') && !empty($format->audioQuality) && '1080p' === $format->qualityLabel;
         });
 
+        if (!empty($quality1080p)) {
+            return $quality1080p[0];
+        }
+
         $quality720p = Utils::arrayFilterReset($downloadOptions->getAllFormats(), function ($format) {
             return str_starts_with($format->mimeType, 'video') && !empty($format->audioQuality) && '720p' === $format->qualityLabel;
         });
+
+        if (!empty($quality720p)) {
+            return $quality720p[0];
+        }
 
         $quality360p = Utils::arrayFilterReset($downloadOptions->getAllFormats(), function ($format) {
             return str_starts_with($format->mimeType, 'video') && !empty($format->audioQuality) && '360p' === $format->qualityLabel;
         });
 
+        if (!empty($quality360p)) {
+            return $quality360p[0];
+        }
+
         $quality240p = Utils::arrayFilterReset($downloadOptions->getAllFormats(), function ($format) {
             return str_starts_with($format->mimeType, 'video') && !empty($format->audioQuality) && '240p' === $format->qualityLabel;
         });
 
-        return $quality2160p[0] ?? $quality1440p[0] ?? $quality1080p[0] ?? $quality720p[0] ?? $quality360p[0] ?? $quality240p[0] ?? null;
+        if (!empty($quality240p)) {
+            return $quality240p[0];
+        }
+
+        return null;
     }
 
     private function moveFileToStorage($item, $url, DownloadOptions $downloadOptions, string $channelId): void
@@ -194,5 +217,29 @@ EOT
         if (!is_dir($this->tempDir.'/'.$channelId)) {
             mkdir($this->tempDir.'/'.$channelId, 0775, true);
         }
+    }
+
+    private function getYoutubeAccount(InputInterface $input): Tag
+    {
+        $youtubeAccount = $this->documentManager->getRepository(Tag::class)->findOneBy([
+            'properties.login' => $input->getOption('account'),
+        ]);
+
+        if (!$youtubeAccount) {
+            throw new \Exception('Account not found');
+        }
+
+        return $youtubeAccount;
+    }
+
+    private function channelId(string $channel, \Google_Service_YouTube $service): string
+    {
+        $queryParams = [
+            'id' => $channel,
+        ];
+
+        $channels = $service->channels->listChannels('snippet', $queryParams);
+
+        return $channels->getItems()[0]->getId();
     }
 }
