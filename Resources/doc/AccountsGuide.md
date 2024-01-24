@@ -65,7 +65,21 @@ PuMuKIT 3.0.x or higher have a new panel to create/modifiy or delete Youtube acc
 php bin/console pumukit:youtube:account:create --account={login}
 ```
 
+9. The first time you configure the account, you must authorize the application to access to your Youtube account.
+
+        You must copy the URL and paste on your browser.
+
+        You must login with your Youtube account and authorize the application.
+
+        When you authorize the application, you will see a code, copy the code and paste on the PuMuKIT PHP container.
+
+        The code will be returned on URL as GET parameter "code".
+
 #### Check account connection
+
+To test the account connection you can execute the following command {login} should be the name of the account created.
+
+It will return the list of playlists of the account.
 
 ```bash
 php bin/console pumukit:youtube:account:test --account={login}
