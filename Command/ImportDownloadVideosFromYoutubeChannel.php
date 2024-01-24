@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Pumukit\YoutubeBundle\Command;
 
 use Doctrine\ODM\MongoDB\DocumentManager;
+use Pumukit\EncoderBundle\Document\Job;
+use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\YoutubeBundle\Services\GoogleAccountService;
 use Symfony\Component\Console\Command\Command;
@@ -203,7 +205,16 @@ EOT
         $this->createChannelDir($channelId);
         $file = $this->tempDir.'/'.$channelId.'/'.$videoId.'.'.$mimeType;
 
-        if (file_exists($file)) {
+        $multimediaObject = $this->documentManager->getRepository(MultimediaObject::class)->findOneBy([
+            'properties.youtube_video_id' => $videoId,
+        ]);
+
+        $failedJobs = $this->documentManager->getRepository(Job::class)->findOneBy([
+            'status' => Job::STATUS_ERROR,
+            'mm_id' => $multimediaObject,
+        ]);
+
+        if (!file_exists($file) && $multimediaObject instanceof MultimediaObject && !$failedJobs instanceof Job) {
             return;
         }
 

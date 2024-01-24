@@ -226,7 +226,7 @@ EOT
     private function autocompleteMultimediaObjectMetadata(MultimediaObject $multimediaObject, DownloadOptions $downloadOptions)
     {
         $youtubeInfo = $downloadOptions->getInfo();
-        $text = $this->generateTextWithLocales($youtubeInfo->id);
+        $text = $this->generateTextWithLocales($youtubeInfo->title);
         $multimediaObject->setI18nTitle($text);
         $text = $this->generateTextWithLocales($youtubeInfo->description);
         $multimediaObject->setI18nDescription($text);
