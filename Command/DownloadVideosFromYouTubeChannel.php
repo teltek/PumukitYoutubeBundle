@@ -20,7 +20,7 @@ use YouTube\Models\StreamFormat;
 use YouTube\Utils\Utils;
 use YouTube\YouTubeDownloader;
 
-final class ImportDownloadVideosFromYoutubeChannel extends Command
+final class DownloadVideosFromYouTubeChannel extends Command
 {
     public const BASE_URL_YOUTUBE_VIDEO = 'https://www.youtube.com/watch?v=';
 
@@ -39,7 +39,7 @@ final class ImportDownloadVideosFromYoutubeChannel extends Command
     protected function configure(): void
     {
         $this
-            ->setName('pumukit:youtube:import:videos:from:channel')
+            ->setName('pumukit:youtube:download:videos:from:channel')
             ->addOption(
                 'account',
                 null,
@@ -61,11 +61,12 @@ final class ImportDownloadVideosFromYoutubeChannel extends Command
             ->setDescription('Import all videos from Youtube channel')
             ->setHelp(
                 <<<'EOT'
-Import all videos from Youtube channel
+
+Download all videos "published" and "hidden" from Youtube channel on storage.
 
 Limit is optional to test the command. If you don't set it, all videos will be downloaded.
 
-Usage: php bin/console pumukit:youtube:import:videos:from:channel --account={ACCOUNT} --channel={CHANNEL_ID} --limit={LIMIT}
+Usage: php bin/console pumukit:youtube:download:videos:from:channel --account={ACCOUNT} --channel={CHANNEL_ID} --limit={LIMIT}
 
 EOT
             )
@@ -76,7 +77,7 @@ EOT
     {
         $channel = $input->getOption('channel');
 
-        $youtubeAccount = $this->getYoutubeAccount($input);
+        $youtubeAccount = $this->ensureYouTubeAccountExists($input);
 
         $service = $this->googleAccountService->googleServiceFromAccount($youtubeAccount);
         $channelId = $this->channelId($channel, $service);
@@ -206,7 +207,7 @@ EOT
         $file = $this->tempDir.'/'.$channelId.'/'.$videoId.'.'.$mimeType;
 
         $multimediaObject = $this->documentManager->getRepository(MultimediaObject::class)->findOneBy([
-            'properties.youtube_video_id' => $videoId,
+            'properties.youtube_import_id' => $videoId,
         ]);
 
         $failedJobs = $this->documentManager->getRepository(Job::class)->findOneBy([
@@ -230,7 +231,7 @@ EOT
         }
     }
 
-    private function getYoutubeAccount(InputInterface $input): Tag
+    private function ensureYouTubeAccountExists(InputInterface $input): Tag
     {
         $youtubeAccount = $this->documentManager->getRepository(Tag::class)->findOneBy([
             'properties.login' => $input->getOption('account'),
