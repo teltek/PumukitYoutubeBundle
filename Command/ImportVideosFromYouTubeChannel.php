@@ -166,7 +166,8 @@ EOT
             }
         } while (null !== $nextPageToken);
 
-        $this->mongoDBFlush($count);
+        $this->documentManager->flush();
+        $this->documentManager->clear();
 
         $progressBar->finish();
         $output->writeln(' ');
