@@ -248,6 +248,7 @@ EOT
         $multimediaObject->setProperty('youtube_import_channel', $youtubeInfo->id);
 
         $multimediaObject->setPublicDate(new \DateTime($youtubeInfo->snippet->publishedAt));
+        $multimediaObject->setRecordDate(new \DateTime($youtubeInfo->snippet->publishedAt));
         $multimediaObject->setStatus($this->convertYouTubeStatus($youtubeInfo->status->privacyStatus));
         $this->addBasicTags($multimediaObject);
         $multimediaObject = $this->addKeywords($multimediaObject, $youtubeInfo);
