@@ -103,9 +103,6 @@ EOT
 
             foreach ($response->getItems() as $item) {
                 $progressBar->advance();
-                if (null !== $input->getOption('limit') && $count >= $input->getOption('limit')) {
-                    break;
-                }
                 ++$count;
                 $videoId = $item->getId()->getVideoId();
                 $youtubeDownloader = new YouTubeDownloader();
