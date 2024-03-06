@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace Pumukit\YoutubeBundle\Command;
 
 use Doctrine\ODM\MongoDB\DocumentManager;
-use Pumukit\EncoderBundle\Document\Job;
-use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\YoutubeBundle\Services\GoogleAccountService;
 use Symfony\Component\Console\Command\Command;
@@ -28,6 +26,7 @@ final class EstimatedStorageAccountCommand extends Command
     private GoogleAccountService $googleAccountService;
 
     private $sumStorage;
+
     public function __construct(DocumentManager $documentManager, GoogleAccountService $googleAccountService)
     {
         $this->documentManager = $documentManager;
@@ -84,7 +83,7 @@ EOT
             'forMine' => true,
         ];
 
-        if($input->getOption('live')){
+        if ($input->getOption('live')) {
             $queryParams['eventType'] = 'live';
         }
 
@@ -124,14 +123,14 @@ EOT
                     $url = $this->selectBestStreamFormat($downloadOptions);
 
                     try {
-
                         $duration = $downloadOptions->getInfo()->durationSeconds;
                         $bitrate = $url->bitrate;
-                        $output->writeln('Duration: '.$duration . ' and bitrate: ' . $bitrate);
+                        $output->writeln('Duration: '.$duration.' and bitrate: '.$bitrate);
                         $storage = $duration * $bitrate;
                         $this->sumStorage += $storage;
                     } catch (\Exception $exception) {
                         $output->writeln('There was error calculating storage video with title '.$item->snippet->title.'  and id '.$videoId);
+
                         continue;
                     }
                 } catch (YouTubeException $e) {
@@ -142,10 +141,9 @@ EOT
             }
         } while (null !== $nextPageToken);
 
-
         $progressBar->finish();
         $output->writeln(' ');
-        $output->writeln('Total storage: '. $this->sumStorage);
+        $output->writeln('Total storage: '.$this->sumStorage);
 
         return 0;
     }
