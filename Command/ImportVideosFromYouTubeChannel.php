@@ -120,6 +120,7 @@ EOT
         $queryParams = [
             'type' => 'video',
             'forMine' => true,
+            'maxResults' => 50,
         ];
 
         $response = $service->search->listSearch('snippet', $queryParams);

@@ -81,6 +81,7 @@ EOT
         $queryParams = [
             'type' => 'video',
             'forMine' => true,
+            'maxResults' => 50,
         ];
 
         if ($input->getOption('live')) {
