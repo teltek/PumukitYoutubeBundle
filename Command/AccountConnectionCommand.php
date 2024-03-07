@@ -33,6 +33,9 @@ class AccountConnectionCommand extends Command
             ->addOption('channel', null, InputOption::VALUE_REQUIRED, 'UID of channel')
             ->setHelp(
                 <<<'EOT'
+
+Account connection will return the number of playlists of the account. If there are problems on connection, result will be a exception.
+
 Check:
 
     php bin/console pumukit:youtube:account:test --account={login} --channel={channelId}

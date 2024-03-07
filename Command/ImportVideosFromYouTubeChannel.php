@@ -29,7 +29,8 @@ final class ImportVideosFromYouTubeChannel extends Command
 {
     public const YOUTUBE_STATUS_MAPPING = [
         'public' => MultimediaObject::STATUS_PUBLISHED,
-        'hidden' => MultimediaObject::STATUS_HIDDEN,
+        'unlisted' => MultimediaObject::STATUS_HIDDEN,
+        'private' => MultimediaObject::STATUS_BLOCKED,
     ];
     public const DEFAULT_PROFILE_ENCODER = 'broadcastable_master';
     private DocumentManager $documentManager;
@@ -45,6 +46,7 @@ final class ImportVideosFromYouTubeChannel extends Command
     private PlaylistListService $playlistListService;
     private string $tempDir;
     private string $channelId;
+    private $youtubeErrors = [];
 
     public function __construct(
         DocumentManager $documentManager,
@@ -73,24 +75,10 @@ final class ImportVideosFromYouTubeChannel extends Command
     {
         $this
             ->setName('pumukit:youtube:import:videos:from:channel')
-            ->addOption(
-                'account',
-                null,
-                InputOption::VALUE_REQUIRED,
-                'Account'
-            )
-            ->addOption(
-                'channel',
-                null,
-                InputOption::VALUE_REQUIRED,
-                'Channel ID'
-            )
-            ->addOption(
-                'limit',
-                null,
-                InputOption::VALUE_OPTIONAL,
-                'limit'
-            )
+            ->addOption('account', null, InputOption::VALUE_REQUIRED, 'Account')
+            ->addOption('channel', null, InputOption::VALUE_REQUIRED, 'Channel ID')
+            ->addOption('limit', null, InputOption::VALUE_OPTIONAL, 'limit')
+            ->addOption('live', null, InputOption::VALUE_OPTIONAL, 'Import lives instead of videos')
             ->setDescription('Import all videos from Youtube channel')
             ->setHelp(
                 <<<'EOT'
@@ -99,7 +87,11 @@ Import all videos from Youtube channel
 
 Limit is optional to test the command.
 
-Usage: php bin/console pumukit:youtube:import:videos:from:channel --account={ACCOUNT} --channel={CHANNEL_ID} --limit={LIMIT}
+Usage: php bin/console pumukit:youtube:import:videos:from:channel --account={ACCOUNT} --channel={CHANNEL_ID} --limit={LIMIT} --live
+
+To import live instead of videos use --live param
+
+Usage: php bin/console pumukit:youtube:import:videos:from:channel --account={ACCOUNT} --channel={CHANNEL_ID} --limit={LIMIT} --live
 
 EOT
             )
@@ -114,6 +106,8 @@ EOT
 
         $service = $this->googleAccountService->googleServiceFromAccount($youtubeAccount);
         $this->channelId = $this->channelId($channel, $service);
+
+        $this->defaultSeries();
 
         $nextPageToken = null;
         $count = 0;
@@ -144,22 +138,19 @@ EOT
                 if (null !== $input->getOption('limit') && $count >= $input->getOption('limit')) {
                     break;
                 }
+
                 ++$count;
                 $videoId = $item->getId()->getVideoId();
 
                 try {
                     $videoInfo = $this->videoInfo($service, $videoId);
+
                     $series = $this->obtainSeriesToSave($service, $videoId);
 
                     $multimediaObject = $this->ensureMultimediaObjectExists($series, $videoId);
                     $multimediaObject = $this->autocompleteMultimediaObjectMetadata($multimediaObject, $videoInfo);
-
-                    // Download and add maxRes PIC.
-
-                    $this->addJob($multimediaObject, $videoId);
                 } catch (\Exception $exception) {
-                    $output->writeln('There was error downloaded video with title '.$item->snippet->title.'  and id '.$videoId);
-                    $output->writeln($exception->getMessage());
+                    $this->youtubeErrors[] = 'YouTube ERROR: '.$exception->getMessage().' - Video ID: '.$videoId;
 
                     continue;
                 }
@@ -173,6 +164,10 @@ EOT
 
         $progressBar->finish();
         $output->writeln(' ');
+
+        foreach ($this->youtubeErrors as $error) {
+            $output->writeln($error);
+        }
 
         return 0;
     }

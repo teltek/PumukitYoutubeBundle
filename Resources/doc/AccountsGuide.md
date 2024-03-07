@@ -82,6 +82,6 @@ To test the account connection you can execute the following command {login} sho
 It will return the list of playlists of the account.
 
 ```bash
-php bin/console pumukit:youtube:account:test --account={login}
+php bin/console pumukit:youtube:account:test --account={login} --channel={channel_id}
 ```
 
