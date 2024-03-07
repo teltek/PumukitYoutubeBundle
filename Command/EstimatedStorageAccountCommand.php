@@ -13,7 +13,6 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use YouTube\DownloadOptions;
-use YouTube\Exception\YouTubeException;
 use YouTube\Models\StreamFormat;
 use YouTube\Utils\Utils;
 use YouTube\YouTubeDownloader;
@@ -25,13 +24,12 @@ final class EstimatedStorageAccountCommand extends Command
     private DocumentManager $documentManager;
     private GoogleAccountService $googleAccountService;
 
-    private $sumStorage;
+    private $sumStorage = 0;
 
     public function __construct(DocumentManager $documentManager, GoogleAccountService $googleAccountService)
     {
         $this->documentManager = $documentManager;
         $this->googleAccountService = $googleAccountService;
-        $this->sumStorage = 0;
         parent::__construct();
     }
 
@@ -108,34 +106,31 @@ EOT
                 $videoId = $item->getId()->getVideoId();
                 $youtubeDownloader = new YouTubeDownloader();
 
-                try {
-                    $youtubeURL = self::BASE_URL_YOUTUBE_VIDEO.$videoId;
-                    $downloadOptions = $youtubeDownloader->getDownloadLinks($youtubeURL);
+                $youtubeURL = self::BASE_URL_YOUTUBE_VIDEO.$videoId;
+                $downloadOptions = $youtubeDownloader->getDownloadLinks($youtubeURL);
 
-                    if (empty($downloadOptions->getAllFormats())) {
-                        $output->writeln('URL: '.$youtubeURL.' no formats found.');
-
-                        continue;
-                    }
-
-                    $url = $this->selectBestStreamFormat($downloadOptions);
-
-                    try {
-                        $duration = $downloadOptions->getInfo()->durationSeconds;
-                        $bitrate = $url->bitrate;
-                        $output->writeln('Duration: '.$duration.' and bitrate: '.$bitrate);
-                        $storage = $duration * $bitrate;
-                        $this->sumStorage += $storage;
-                    } catch (\Exception $exception) {
-                        $output->writeln('There was error calculating storage video with title '.$item->snippet->title.'  and id '.$videoId);
-
-                        continue;
-                    }
-                } catch (YouTubeException $e) {
-                    $output->writeln('There was error downloaded video with title '.$item->snippet->title.'  and id '.$videoId);
+                if (empty($downloadOptions->getAllFormats())) {
+                    $output->writeln('URL: '.$youtubeURL.' no formats found.');
 
                     continue;
                 }
+
+                $url = $this->selectBestStreamFormat($downloadOptions);
+
+                try {
+                    $duration = $downloadOptions->getInfo()->durationSeconds;
+                } catch (\Exception $exception) {
+                    continue;
+                }
+
+                try {
+                    $bitrate = $url->bitrate;
+                } catch (\Exception $exception) {
+                    continue;
+                }
+
+                $storage = (int) $duration * (int) $bitrate;
+                $this->sumStorage += $storage;
             }
         } while (null !== $nextPageToken);
 
