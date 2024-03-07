@@ -30,11 +30,12 @@ class AccountConnectionCommand extends Command
             ->setName('pumukit:youtube:account:test')
             ->setDescription('Test connection accounts')
             ->addOption('account', null, InputOption::VALUE_REQUIRED, 'Name of account')
+            ->addOption('channel', null, InputOption::VALUE_REQUIRED, 'UID of channel')
             ->setHelp(
                 <<<'EOT'
 Check:
 
-    php bin/console pumukit:youtube:account:test --account={login}
+    php bin/console pumukit:youtube:account:test --account={login} --channel={channelId}
 
 EOT
             )
@@ -45,33 +46,31 @@ EOT
     {
         $output->writeln('<info>----- Testing connection with YouTube -----</info>');
 
-        $account = $this->accountExists($input->getOption('account'));
-        if (!$account) {
-            $output->writeln('<notice>Account not in DB</notice>');
+        $youtubeAccount = $this->ensureYouTubeAccountExists($input);
 
-            return 0;
-        }
+        $service = $this->googleAccountService->googleServiceFromAccount($youtubeAccount);
 
-        $service = $this->googleAccountService->googleServiceFromAccount($account);
-
-        $response = $service->playlists->listPlaylists('snippet,contentDetails', [
+        $queryParams = [
+            'channelId' => $input->getOption('channel'),
             'maxResults' => 5,
-            'mine' => true,
-        ]);
+        ];
 
-        print_r($response);
+        $response = $service->playlists->listPlaylists('snippet', $queryParams);
+        $output->writeln('Number of playlist of account: '.$response->pageInfo->getTotalResults());
 
         return 0;
     }
 
-    private function accountExists(string $login): ?Tag
+    private function ensureYouTubeAccountExists(InputInterface $input): Tag
     {
-        $account = $this->documentManager->getRepository(Tag::class)->findOneBy(['properties.login' => $login]);
+        $youtubeAccount = $this->documentManager->getRepository(Tag::class)->findOneBy([
+            'properties.login' => $input->getOption('account'),
+        ]);
 
-        if ($account->getProperty('access_token') || $account->getProperty('refresh_token')) {
-            return $account;
+        if (!$youtubeAccount) {
+            throw new \Exception('Account not found');
         }
 
-        return null;
+        return $youtubeAccount;
     }
 }
