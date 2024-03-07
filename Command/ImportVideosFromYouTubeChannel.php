@@ -242,7 +242,7 @@ EOT
         $multimediaObject->setProperty('youtube_import_raw', $youtubeInfo);
         $multimediaObject->setProperty('youtube_import_id', $youtubeInfo->id);
         $multimediaObject->setProperty('youtube_import_type', 'video');
-        $multimediaObject->setProperty('youtube_import_channel', $youtubeInfo->id);
+        $multimediaObject->setProperty('youtube_import_channel', $this->channelId);
 
         $multimediaObject->setPublicDate(new \DateTime());
         $multimediaObject->setRecordDate(new \DateTime($youtubeInfo->snippet->publishedAt));
