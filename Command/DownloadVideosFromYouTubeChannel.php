@@ -65,7 +65,7 @@ EOT
         $channel = $input->getOption('channel');
         $limit = (int) $input->getOption('limit');
 
-        $youtubeAccount = $this->ensureYouTubeAccountExists($input);
+        $this->ensureYouTubeAccountExists($input);
 
         $multimediaObjects = $this->documentManager->getRepository(MultimediaObject::class)->findBy([
             'status' => ['$in' => [MultimediaObject::STATUS_PUBLISHED, MultimediaObject::STATUS_HIDDEN]],
@@ -193,7 +193,7 @@ EOT
         }
     }
 
-    private function ensureYouTubeAccountExists(InputInterface $input): Tag
+    private function ensureYouTubeAccountExists(InputInterface $input): void
     {
         $youtubeAccount = $this->documentManager->getRepository(Tag::class)->findOneBy([
             'properties.login' => $input->getOption('account'),
@@ -202,8 +202,6 @@ EOT
         if (!$youtubeAccount) {
             throw new \Exception('Account not found');
         }
-
-        return $youtubeAccount;
     }
 
 }
