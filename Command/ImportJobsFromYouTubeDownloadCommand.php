@@ -60,7 +60,7 @@ EOT
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $channel = $input->getOption('channel');
+        $this->channelId = $channel = $input->getOption('channel');
         $limit = (int) $input->getOption('limit') ?? null;
 
         $this->ensureYouTubeAccountExists($input);
