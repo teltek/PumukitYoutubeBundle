@@ -7,6 +7,7 @@ namespace Pumukit\YoutubeBundle\Command;
 use Doctrine\ODM\MongoDB\DocumentManager;
 use Pumukit\EncoderBundle\Document\Job;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
+use Pumukit\SchemaBundle\Document\Series;
 use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\YoutubeBundle\Services\GoogleAccountService;
 use Symfony\Component\Console\Command\Command;
@@ -27,6 +28,7 @@ final class DownloadVideosFromYouTubeChannel extends Command
     private DocumentManager $documentManager;
     private GoogleAccountService $googleAccountService;
     private string $tempDir;
+    private array $youtubeErrors = [];
 
     public function __construct(DocumentManager $documentManager, GoogleAccountService $googleAccountService, string $tempDir)
     {
@@ -40,24 +42,9 @@ final class DownloadVideosFromYouTubeChannel extends Command
     {
         $this
             ->setName('pumukit:youtube:download:videos:from:channel')
-            ->addOption(
-                'account',
-                null,
-                InputOption::VALUE_REQUIRED,
-                'Account'
-            )
-            ->addOption(
-                'channel',
-                null,
-                InputOption::VALUE_REQUIRED,
-                'Channel ID'
-            )
-            ->addOption(
-                'limit',
-                null,
-                InputOption::VALUE_OPTIONAL,
-                'limit'
-            )
+            ->addOption('account', null, InputOption::VALUE_REQUIRED, 'Account')
+            ->addOption('channel', null, InputOption::VALUE_REQUIRED, 'Channel ID')
+            ->addOption('limit', null, InputOption::VALUE_OPTIONAL, 'limit')
             ->setDescription('Import all videos from Youtube channel')
             ->setHelp(
                 <<<'EOT'
@@ -76,74 +63,60 @@ EOT
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $channel = $input->getOption('channel');
+        $limit = (int) $input->getOption('limit');
 
         $youtubeAccount = $this->ensureYouTubeAccountExists($input);
 
-        $service = $this->googleAccountService->googleServiceFromAccount($youtubeAccount);
-        $channelId = $this->channelId($channel, $service);
+        $multimediaObjects = $this->documentManager->getRepository(MultimediaObject::class)->findBy([
+            'status' => ['$in' => [MultimediaObject::STATUS_PUBLISHED, MultimediaObject::STATUS_HIDDEN]],
+            'properties.youtube_import_status' => ['$exists' => false],
+            'properties.youtube_import_channel' => $channel,
+        ], [], $limit ?? null);
 
-        $nextPageToken = null;
-        $count = 0;
-        $queryParams = [
-            'type' => 'video',
-            'forMine' => true,
-            'maxResults' => 50,
-        ];
-
-        $response = $service->search->listSearch('snippet', $queryParams);
-
-        $progressBar = new ProgressBar($output, $response->pageInfo->getTotalResults());
+        $progressBar = new ProgressBar($output, count($multimediaObjects));
         $progressBar->start();
 
-        do {
+        $count = 0;
+        foreach($multimediaObjects as $multimediaObject) {
+            $progressBar->advance();
             if (null !== $input->getOption('limit') && $count >= $input->getOption('limit')) {
                 break;
             }
+            $count++;
 
-            if (null !== $nextPageToken) {
-                $queryParams['pageToken'] = $nextPageToken;
+            $videoId = $multimediaObject->getProperty('youtube_import_id');
+            $youtubeDownloader = new YouTubeDownloader();
+
+            $youtubeURL = self::BASE_URL_YOUTUBE_VIDEO.$videoId;
+            $downloadOptions = $youtubeDownloader->getDownloadLinks($youtubeURL);
+
+            if (empty($downloadOptions->getAllFormats())) {
+                $multimediaObject->setProperty('youtube_download_info', json_encode($downloadOptions));
+                $this->documentManager->flush();
+
+                $this->youtubeErrors[] = 'URL: '.$youtubeURL.' no formats found. Formats: '.json_encode($downloadOptions->getAllFormats());
+
+                continue;
             }
 
-            $service = $this->googleAccountService->googleServiceFromAccount($youtubeAccount);
-            $response = $service->search->listSearch('snippet', $queryParams);
-            $nextPageToken = $response->getNextPageToken();
+            $url = $this->selectBestStreamFormat($downloadOptions);
 
-            foreach ($response->getItems() as $item) {
-                $progressBar->advance();
-                if (null !== $input->getOption('limit') && $count >= $input->getOption('limit')) {
-                    break;
-                }
-                ++$count;
-                $videoId = $item->getId()->getVideoId();
-                $youtubeDownloader = new YouTubeDownloader();
-
-                try {
-                    $youtubeURL = self::BASE_URL_YOUTUBE_VIDEO.$videoId;
-                    $downloadOptions = $youtubeDownloader->getDownloadLinks($youtubeURL);
-
-                    if (empty($downloadOptions->getAllFormats())) {
-                        $output->writeln('URL: '.$youtubeURL.' no formats found.');
-
-                        continue;
-                    }
-
-                    $url = $this->selectBestStreamFormat($downloadOptions);
-
-                    try {
-                        $this->moveFileToStorage($item, $url, $downloadOptions, $channelId);
-                    } catch (\Exception $exception) {
-                        $output->writeln('Error moving file to storage: '.$exception->getMessage());
-                    }
-                } catch (YouTubeException $e) {
-                    $output->writeln('There was error downloaded video with title '.$item->snippet->title.'  and id '.$videoId);
-
-                    continue;
-                }
+            try {
+                $this->moveFileToStorage($multimediaObject, $url, $downloadOptions, $channel);
+                $multimediaObject->setProperty('youtube_import_status', 'downloaded');
+                $this->documentManager->flush();
+            } catch (\Exception $exception) {
+                $this->youtubeErrors[] = 'Error moving file to storage: '.$exception->getMessage();
+                continue;
             }
-        } while (null !== $nextPageToken);
+        }
 
         $progressBar->finish();
         $output->writeln(' ');
+
+        foreach ($this->youtubeErrors as $error) {
+            $output->writeln($error);
+        }
 
         return 0;
     }
@@ -201,25 +174,12 @@ EOT
         return null;
     }
 
-    private function moveFileToStorage($item, $url, DownloadOptions $downloadOptions, string $channelId): void
+    private function moveFileToStorage(MultimediaObject $multimediaObject, $url, DownloadOptions $downloadOptions, string $channelId): void
     {
-        $videoId = $item->getId()->getVideoId();
+        $videoId = $multimediaObject->getProperty('youtube_import_id');
         $mimeType = explode('video/', $this->selectBestStreamFormat($downloadOptions)->getCleanMimeType())[1];
         $this->createChannelDir($channelId);
         $file = $this->tempDir.'/'.$channelId.'/'.$videoId.'.'.$mimeType;
-
-        $multimediaObject = $this->documentManager->getRepository(MultimediaObject::class)->findOneBy([
-            'properties.youtube_import_id' => $videoId,
-        ]);
-
-        $failedJobs = $this->documentManager->getRepository(Job::class)->findOneBy([
-            'status' => Job::STATUS_ERROR,
-            'mm_id' => $multimediaObject,
-        ]);
-
-        if (!file_exists($file) && $multimediaObject instanceof MultimediaObject && !$failedJobs instanceof Job) {
-            return;
-        }
 
         $content = file_get_contents($url->url);
 
@@ -246,14 +206,4 @@ EOT
         return $youtubeAccount;
     }
 
-    private function channelId(string $channel, \Google_Service_YouTube $service): string
-    {
-        $queryParams = [
-            'id' => $channel,
-        ];
-
-        $channels = $service->channels->listChannels('snippet', $queryParams);
-
-        return $channels->getItems()[0]->getId();
-    }
 }

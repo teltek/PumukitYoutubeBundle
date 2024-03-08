@@ -15,9 +15,9 @@ where ACCOUNT is the name added for YouTube tag created on PuMuKIT and CHANNEL_I
 
 ###  2. Import videos from YouTube
 
-Before download videos you will be able to import videos from YouTube to PuMuKIT using this command.
+Import videos metadata from YouTube
 
-The command will be autocomplete metadata from YouTube and create a new video on PuMuKIT and move the video to the series created on step 1.
+The command creates a new video on PuMuKIT for each video on YouTube and move it to the series created on step 1.
 
 ```
     php bin/console pumukit:youtube:import:videos:from:channel --account={ACCOUNT} --channel={CHANNEL_ID}

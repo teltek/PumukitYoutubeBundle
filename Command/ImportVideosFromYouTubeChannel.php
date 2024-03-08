@@ -78,7 +78,6 @@ final class ImportVideosFromYouTubeChannel extends Command
             ->addOption('account', null, InputOption::VALUE_REQUIRED, 'Account')
             ->addOption('channel', null, InputOption::VALUE_REQUIRED, 'Channel ID')
             ->addOption('limit', null, InputOption::VALUE_OPTIONAL, 'limit')
-            ->addOption('live', null, InputOption::VALUE_OPTIONAL, 'Import lives instead of videos')
             ->setDescription('Import all videos from Youtube channel')
             ->setHelp(
                 <<<'EOT'
@@ -87,11 +86,7 @@ Import all videos from Youtube channel
 
 Limit is optional to test the command.
 
-Usage: php bin/console pumukit:youtube:import:videos:from:channel --account={ACCOUNT} --channel={CHANNEL_ID} --limit={LIMIT} --live
-
-To import live instead of videos use --live param
-
-Usage: php bin/console pumukit:youtube:import:videos:from:channel --account={ACCOUNT} --channel={CHANNEL_ID} --limit={LIMIT} --live
+Usage: php bin/console pumukit:youtube:import:videos:from:channel --account={ACCOUNT} --channel={CHANNEL_ID} --limit={LIMIT}
 
 EOT
             )
