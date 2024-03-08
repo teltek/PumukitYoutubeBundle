@@ -5,9 +5,7 @@ declare(strict_types=1);
 namespace Pumukit\YoutubeBundle\Command;
 
 use Doctrine\ODM\MongoDB\DocumentManager;
-use Pumukit\EncoderBundle\Document\Job;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
-use Pumukit\SchemaBundle\Document\Series;
 use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\YoutubeBundle\Services\GoogleAccountService;
 use Symfony\Component\Console\Command\Command;
@@ -16,7 +14,6 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use YouTube\DownloadOptions;
-use YouTube\Exception\YouTubeException;
 use YouTube\Models\StreamFormat;
 use YouTube\Utils\Utils;
 use YouTube\YouTubeDownloader;
@@ -77,12 +74,12 @@ EOT
         $progressBar->start();
 
         $count = 0;
-        foreach($multimediaObjects as $multimediaObject) {
+        foreach ($multimediaObjects as $multimediaObject) {
             $progressBar->advance();
             if (null !== $input->getOption('limit') && $count >= $input->getOption('limit')) {
                 break;
             }
-            $count++;
+            ++$count;
 
             $videoId = $multimediaObject->getProperty('youtube_import_id');
             $youtubeDownloader = new YouTubeDownloader();
@@ -107,6 +104,7 @@ EOT
                 $this->documentManager->flush();
             } catch (\Exception $exception) {
                 $this->youtubeErrors[] = 'Error moving file to storage: '.$exception->getMessage();
+
                 continue;
             }
         }
@@ -203,5 +201,4 @@ EOT
             throw new \Exception('Account not found');
         }
     }
-
 }
