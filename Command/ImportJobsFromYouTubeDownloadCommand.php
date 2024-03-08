@@ -8,6 +8,7 @@ use Doctrine\ODM\MongoDB\DocumentManager;
 use Pumukit\CoreBundle\Utils\FinderUtils;
 use Pumukit\EncoderBundle\Services\JobService;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
+use Pumukit\SchemaBundle\Document\Tag;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Input\InputInterface;
@@ -62,7 +63,7 @@ EOT
         $channel = $input->getOption('channel');
         $limit = (int) $input->getOption('limit') ?? null;
 
-        $youtubeAccount = $this->ensureYouTubeAccountExists($input);
+        $this->ensureYouTubeAccountExists($input);
 
         $multimediaObjects = $this->documentManager->getRepository(MultimediaObject::class)->findBy([
             'status' => ['$in' => [MultimediaObject::STATUS_PUBLISHED, MultimediaObject::STATUS_HIDDEN]],
@@ -115,5 +116,16 @@ EOT
             0,
             0
         );
+    }
+
+    private function ensureYouTubeAccountExists(InputInterface $input): void
+    {
+        $youtubeAccount = $this->documentManager->getRepository(Tag::class)->findOneBy([
+            'properties.login' => $input->getOption('account'),
+        ]);
+
+        if (!$youtubeAccount) {
+            throw new \Exception('Account not found');
+        }
     }
 }
