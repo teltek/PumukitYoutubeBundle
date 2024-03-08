@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Pumukit\YoutubeBundle\Command;
 
+use Doctrine\ODM\MongoDB\DocumentManager;
+use Pumukit\EncoderBundle\Services\JobService;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\ProgressBar;
@@ -13,6 +15,8 @@ use Symfony\Component\Console\Output\OutputInterface;
 final class ImportJobsFromYouTubeDownloadCommand extends Command
 {
     public const DEFAULT_PROFILE_ENCODER = 'broadcastable_master';
+
+    private DocumentManager $documentManager;
     private JobService $jobService;
     private string $tempDir;
     private string $channelId;
