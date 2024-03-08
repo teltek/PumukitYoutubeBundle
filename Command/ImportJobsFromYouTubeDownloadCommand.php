@@ -60,7 +60,7 @@ EOT
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $channel = $input->getOption('channel');
-        $limit = (int) $input->getOption('limit');
+        $limit = (int) $input->getOption('limit') ?? null;
 
         $youtubeAccount = $this->ensureYouTubeAccountExists($input);
 
@@ -68,7 +68,7 @@ EOT
             'status' => ['$in' => [MultimediaObject::STATUS_PUBLISHED, MultimediaObject::STATUS_HIDDEN]],
             'properties.youtube_import_status' => ['$exists' => true],
             'properties.youtube_import_channel' => $channel,
-        ], [], $limit ?? null);
+        ], [], $limit);
 
         $progressBar = new ProgressBar($output, count($multimediaObjects));
         $progressBar->start();
