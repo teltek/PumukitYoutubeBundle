@@ -38,3 +38,13 @@ Max resolution will be downloaded.
 where ACCOUNT is the name added for YouTube tag created on PuMuKIT and CHANNEL_ID is the channel id of the YouTube channel.
 
 You can use limit to test the download using optional parameter --limit={NUMBER_OF_VIDEOS}.
+
+### 4. Generate jobs for downloaded videos
+
+This process will generate jobs for downloaded videos.
+
+```
+    php bin/console pumukit:youtube:import:add:jobs --account={ACCOUNT} --channel={CHANNEL_ID}
+```
+
+where ACCOUNT is the name added for YouTube tag created on PuMuKIT and CHANNEL_ID is the channel id of the YouTube channel.
