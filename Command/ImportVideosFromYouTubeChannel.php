@@ -125,7 +125,7 @@ EOT
                 $queryParams['pageToken'] = $nextPageToken;
             }
 
-            //$service = $this->googleAccountService->googleServiceFromAccount($youtubeAccount);
+            // $service = $this->googleAccountService->googleServiceFromAccount($youtubeAccount);
             $response = $service->search->listSearch('snippet', $queryParams);
             $nextPageToken = $response->getNextPageToken();
             foreach ($response->getItems() as $item) {
