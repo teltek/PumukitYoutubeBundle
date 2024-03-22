@@ -229,6 +229,9 @@ EOT
     private function autocompleteMultimediaObjectMetadata(MultimediaObject $multimediaObject, VideoListResponse $videoInfo): MultimediaObject
     {
         $youtubeInfo = $videoInfo->getItems()[0];
+        if (!$youtubeInfo->snippet) {
+            throw new \Exception('Snippet not found for MultimediaObject '. $multimediaObject->getId());
+        }
 
         $text = $this->i18nService->generateI18nText($youtubeInfo->snippet->title);
         $multimediaObject->setI18nTitle($text);
