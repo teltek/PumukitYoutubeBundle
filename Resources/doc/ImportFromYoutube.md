@@ -17,7 +17,7 @@ where ACCOUNT is the name added for YouTube tag created on PuMuKIT and CHANNEL_I
 
 Import videos metadata from YouTube
 
-The command creates a new video on PuMuKIT for each video on YouTube and move it to the series created on step 1.
+The command creates a new video on PuMuKIT for each video on YouTube on default series.
 
 ```
     php bin/console pumukit:youtube:import:videos:from:channel --account={ACCOUNT} --channel={CHANNEL_ID}
@@ -39,7 +39,18 @@ where ACCOUNT is the name added for YouTube tag created on PuMuKIT and CHANNEL_I
 
 You can use limit to test the download using optional parameter --limit={NUMBER_OF_VIDEOS}.
 
-### 4. Generate jobs for downloaded videos
+
+### 4. Move imported videos from imported series
+
+This process will move imported videos from default series to imported series.
+
+```
+    php bin/console pumukit:youtube:import:videos:on:playlist --account={ACCOUNT} --channel={CHANNEL_ID}
+```
+
+where ACCOUNT is the name added for YouTube tag created on PuMuKIT and CHANNEL_ID is the channel id of the YouTube channel.
+
+### 5. Generate jobs for downloaded videos
 
 This process will generate jobs for downloaded videos.
 

@@ -325,24 +325,24 @@ EOT
 
     private function obtainSeriesToSave(\Google_Service_YouTube $service, string $videoId): Series
     {
-        $playlists = $this->documentManager->getRepository(Series::class)->findBy([
-            'properties.youtube_import_type' => 'playlist',
-        ]);
-
-        foreach ($playlists as $playlist) {
-            $response = $service->playlistItems->listPlaylistItems('snippet', [
-                'playlistId' => $playlist->getProperty('youtube_import_id'),
-                'videoId' => $videoId,
-            ]);
-
-            if (0 === count($response->getItems())) {
-                continue;
-            }
-
-            if (1 === count($response->getItems())) {
-                return $playlist;
-            }
-        }
+        //        $playlists = $this->documentManager->getRepository(Series::class)->findBy([
+        //            'properties.youtube_import_type' => 'playlist',
+        //        ]);
+        //
+        //        foreach ($playlists as $playlist) {
+        //            $response = $service->playlistItems->listPlaylistItems('snippet', [
+        //                'playlistId' => $playlist->getProperty('youtube_import_id'),
+        //                'videoId' => $videoId,
+        //            ]);
+        //
+        //            if (0 === count($response->getItems())) {
+        //                continue;
+        //            }
+        //
+        //            if (1 === count($response->getItems())) {
+        //                return $playlist;
+        //            }
+        //        }
 
         return $this->defaultSeries();
     }
