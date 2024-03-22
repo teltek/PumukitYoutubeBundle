@@ -186,6 +186,7 @@ EOT
         $series->setProperty('youtube_import_id', $item->id);
         $series->setProperty('youtube_import_raw', json_encode($item->snippet));
         $series->setProperty('youtube_import_type', 'playlist');
+        $series->setProperty('youtube_import_playlist_channel', $this->channelId);
 
         $series->setI18nTitle($this->i18nService->generateI18nText($item->snippet->title));
         $series->setI18nDescription($this->i18nService->generateI18nText($item->snippet->description));
