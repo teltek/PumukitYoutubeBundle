@@ -231,8 +231,9 @@ EOT
         $youtubeInfo = $videoInfo->getItems()[0];
 
         if (!$youtubeInfo) {
-            $this->youtubeErrors[] = 'YouTube info not found for video ID '. $multimediaObject->getId();
-            throw new \Exception('Snippet not found for MultimediaObject '. $multimediaObject->getId());
+            $this->youtubeErrors[] = 'YouTube info not found for video ID '.$multimediaObject->getId();
+
+            throw new \Exception('Snippet not found for MultimediaObject '.$multimediaObject->getId());
         }
 
         $text = $this->i18nService->generateI18nText($youtubeInfo->snippet->title);
