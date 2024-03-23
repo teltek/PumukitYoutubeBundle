@@ -63,7 +63,6 @@ EOT
         $service = $this->googleAccountService->googleServiceFromAccount($youtubeAccount);
         $this->channelId = $this->channelId($channel, $service);
 
-        $nextPageToken = null;
         $count = 0;
         $queryParams = [
             'maxResults' => 50,
@@ -82,8 +81,9 @@ EOT
 
             $queryParams['playlistId'] = $playlist->getProperty('youtube_import_id');
 
+            $service = $this->googleAccountService->googleServiceFromAccount($youtubeAccount);
             $response = $service->playlistItems->listPlaylistItems('snippet', $queryParams);
-            $nextPageToken = $response->getNextPageToken();
+            $nextPageToken = null;
 
             if (0 === count($response->getItems())) {
                 continue;
@@ -97,6 +97,10 @@ EOT
                 if (null !== $nextPageToken) {
                     $queryParams['pageToken'] = $nextPageToken;
                 }
+
+                $service = $this->googleAccountService->googleServiceFromAccount($youtubeAccount);
+                $response = $service->playlistItems->listPlaylistItems('snippet', $queryParams);
+                $nextPageToken = $response->getNextPageToken();
 
                 foreach ($response->getItems() as $item) {
                     $videoId = $item->getSnippet()->getResourceId()->getVideoId();
