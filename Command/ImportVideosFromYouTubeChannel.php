@@ -125,7 +125,7 @@ EOT
                 $queryParams['pageToken'] = $nextPageToken;
             }
 
-            // $service = $this->googleAccountService->googleServiceFromAccount($youtubeAccount);
+            $service = $this->googleAccountService->googleServiceFromAccount($youtubeAccount);
             $response = $service->search->listSearch('snippet', $queryParams);
             $nextPageToken = $response->getNextPageToken();
             foreach ($response->getItems() as $item) {
@@ -229,7 +229,9 @@ EOT
     private function autocompleteMultimediaObjectMetadata(MultimediaObject $multimediaObject, VideoListResponse $videoInfo): MultimediaObject
     {
         $youtubeInfo = $videoInfo->getItems()[0];
-        if (!$youtubeInfo->snippet) {
+
+        if (!$youtubeInfo) {
+            $this->youtubeErrors[] = 'YouTube info not found for video ID '. $multimediaObject->getId();
             throw new \Exception('Snippet not found for MultimediaObject '. $multimediaObject->getId());
         }
 
