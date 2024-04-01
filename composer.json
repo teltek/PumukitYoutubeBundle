@@ -24,7 +24,7 @@
         "php": "^8.2",
         "pumukit/pumukit": ">4.0",
         "google/apiclient" : "^2.0",
-        "athlon1600/youtube-downloader": "^4.0"
+        "sorshion/youtube-downloader": "dev-master"
     },
     "autoload": {
         "psr-4": {
