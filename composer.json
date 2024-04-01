@@ -24,8 +24,9 @@
         "php": "^8.2",
         "pumukit/pumukit": ">4.0",
         "google/apiclient" : "^2.0",
-        "sorshion/youtube-downloader": "dev-master as 4.0"
+        "sorshion/youtube-downloader": "dev-master"
     },
+    "minimum-stability": "dev",
     "autoload": {
         "psr-4": {
             "Pumukit\\YoutubeBundle\\": ""
