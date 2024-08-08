@@ -41,6 +41,9 @@ EOT
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $elements = $this->getAllYouTubeDocumentsWithErrors();
+        if (empty($elements)) {
+            return 0;
+        }
         $result = $this->processAndGroupErrors($elements);
         $this->notificationService->notificationVideoErrorResult($result);
 

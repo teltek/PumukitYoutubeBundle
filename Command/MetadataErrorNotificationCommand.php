@@ -45,6 +45,9 @@ EOT
         $captionsUpdateErrors = $this->getCaptionUpdateError();
 
         $elements = array_merge($metadataUpdateErrors, $playlistsUpdateErrors, $captionsUpdateErrors);
+        if (empty($elements)) {
+            return 0;
+        }
 
         $result = $this->processAndGroupErrors($elements);
         $this->notificationService->notificationVideoErrorResult($result);

@@ -42,6 +42,10 @@ EOT
     {
         $result = [];
         $elements = $this->getAllPlaylistErrors();
+        if (empty($elements)) {
+            return 0;
+        }
+
         $result['playlistUploadError'] = $elements;
         $this->notificationService->notificationVideoErrorResult($result);
 
