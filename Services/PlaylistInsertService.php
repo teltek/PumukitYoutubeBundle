@@ -58,7 +58,7 @@ class PlaylistInsertService extends GooglePlaylistService
     {
         foreach ($account->getChildren() as $child) {
             try {
-                if ($this->playlistDataValidationService->isValidTitle($child->getTitle())) {
+                if ($this->playlistDataValidationService->isValidTitle($child->getTitle($this->youtubeConfigurationService->locale()))) {
                     $child->setProperty('youtube_error', 'Playlist title have more characters than allowed on YouTube');
 
                     continue;
@@ -115,7 +115,7 @@ class PlaylistInsertService extends GooglePlaylistService
     public function insertOnePlaylist(Tag $account, Tag $playlistTag): void
     {
         $playlist = $this->createGoogleServiceYoutubePlaylist();
-        $playlistSnippet = $this->createPlaylistSnippet($playlistTag->getTitle(), '');
+        $playlistSnippet = $this->createPlaylistSnippet($playlistTag->getTitle($this->youtubeConfigurationService->locale()), '');
         $playlistStatus = $this->createPlaylistStatus($this->youtubeConfigurationService->playlistPrivateStatus());
         $playlist->setSnippet($playlistSnippet);
         $playlist->setStatus($playlistStatus);
@@ -127,7 +127,7 @@ class PlaylistInsertService extends GooglePlaylistService
             $playlistTag->removeProperty('youtube_error');
         } catch (\Exception $exception) {
             $playlistTag->setProperty('youtube_error', $exception->getMessage());
-            $errorLog = sprintf('[YouTube] Upload playlist %s failed. Error: %s', $playlistTag->getTitle(), $exception->getMessage());
+            $errorLog = sprintf('[YouTube] Upload playlist %s failed. Error: %s', $playlistTag->getTitle($this->youtubeConfigurationService->locale()), $exception->getMessage());
             $this->logger->error($errorLog);
         }
     }
