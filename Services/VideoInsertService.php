@@ -129,7 +129,9 @@ class VideoInsertService extends GoogleVideoService
         ]);
 
         if ($youtube) {
-            return $youtube;
+            $this->documentManager->remove($youtube);
+            $multimediaObject->removeProperty('youtubeurl');
+            $this->documentManager->flush();
         }
 
         $youtube = new Youtube();
