@@ -56,7 +56,7 @@ class CaptionsInsertService extends GoogleCaptionService
                 ]);
 
                 if (!empty($youtube->getCaptionUpdateError()) && 'captionExists' === $youtube->getCaptionUpdateError()->id()) {
-                    $captionsUploaded = $this->captionsListService->findAll($account, $videoId);
+                    $captionsUploaded = $this->captionsListService->findAll($account, $youtube->getYoutubeId());
                     foreach ($captionsUploaded->getItems() as $caption) {
                         if ($caption->getSnippet()->getName() === $material->getName() && $caption->getSnippet()->getLanguage() === $material->getLanguage()) {
                             $this->captionsDeleteService->deleteCaption($account, $youtube, [$caption->getId()]);
