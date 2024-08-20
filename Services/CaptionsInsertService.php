@@ -17,16 +17,21 @@ class CaptionsInsertService extends GoogleCaptionService
 {
     private $documentManager;
     private $googleAccountService;
-
+    private $captionsDeleteService;
+    private $captionsListService;
     private $logger;
 
     public function __construct(
         DocumentManager $documentManager,
         GoogleAccountService $googleAccountService,
+        CaptionsDeleteService $captionsDeleteService,
+        CaptionsListService $captionsListService,
         LoggerInterface $logger
     ) {
         $this->documentManager = $documentManager;
         $this->googleAccountService = $googleAccountService;
+        $this->captionsDeleteService = $captionsDeleteService;
+        $this->captionsListService = $captionsListService;
         $this->logger = $logger;
     }
 
@@ -49,6 +54,15 @@ class CaptionsInsertService extends GoogleCaptionService
                 $account = $this->documentManager->getRepository(Tag::class)->findOneBy([
                     'properties.login' => $youtube->getYoutubeAccount(),
                 ]);
+
+                if (!empty($youtube->getCaptionUpdateError()) && $youtube->getCaptionUpdateError()->id() === 'captionExists') {
+                    $captionsUploaded = $this->captionsListService->findAll($account, $videoId);
+                    foreach ($captionsUploaded->getItems() as $caption) {
+                        if($caption->getSnippet()->getName() === $material->getName() && $caption->getSnippet()->getLanguage() === $material->getLanguage()) {
+                            $this->captionsDeleteService->deleteCaption($account, $youtube, [$caption->getId()]);
+                        }
+                    }
+                }
 
                 $result = $this->insert($account, $material, $youtube->getYoutubeId());
 
