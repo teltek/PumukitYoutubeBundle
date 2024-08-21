@@ -115,6 +115,9 @@ EOT
 
             try {
                 $result = $this->videoListService->updateVideoStatus($youtube, $multimediaObject);
+                if (false === $result['status'] && 'quotaExceeded' === $result['message']) {
+                    break;
+                }
             } catch (\Exception $e) {
                 $errorLog = sprintf('[YouTube] Update status of the video %s failed: %s', $multimediaObject->getId(), $e->getMessage());
                 $output->writeln($errorLog);

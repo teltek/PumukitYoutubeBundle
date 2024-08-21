@@ -42,7 +42,7 @@ class VideoListService extends GoogleVideoService
         $this->logger = $logger;
     }
 
-    public function updateVideoStatus(Youtube $youtube, MultimediaObject $multimediaObject): bool
+    public function updateVideoStatus(Youtube $youtube, MultimediaObject $multimediaObject): array
     {
         $infoLog = sprintf(
             '%s [%s] Started update video status on MultimediaObject with id %s',
@@ -56,7 +56,7 @@ class VideoListService extends GoogleVideoService
         if (!$account) {
             $this->logger->error('Multimedia object with ID '.$multimediaObject->getId().' doesnt have Youtube account set.');
 
-            return false;
+            return ['status' => false, 'message' => 'Multimedia object doesnt have Youtube account set'];
         }
 
         $video = $this->createVideo($youtube->getYoutubeId());
@@ -76,7 +76,7 @@ class VideoListService extends GoogleVideoService
             $youtube->setError($error);
             $this->documentManager->flush();
 
-            return false;
+            return ['status' => false, 'message' => $error['error']['errors'][0]['reason']];
         }
 
         $youtube->setStatus($status);
@@ -92,7 +92,7 @@ class VideoListService extends GoogleVideoService
 
             $this->documentManager->flush();
 
-            return false;
+            return ['status' => false, 'message' => 'pumukit.statusError'];
         }
 
         $youtube->setSyncMetadataDate(new \DateTime('now'));
@@ -100,7 +100,7 @@ class VideoListService extends GoogleVideoService
 
         $this->documentManager->flush();
 
-        return true;
+        return ['status' => true];
     }
 
     private function list(Tag $youtubeAccount, \Google_Service_YouTube_Video $video): VideoListResponse
