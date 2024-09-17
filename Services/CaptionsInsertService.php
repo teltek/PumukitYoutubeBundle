@@ -73,7 +73,7 @@ class CaptionsInsertService extends GoogleCaptionService
                 $error = json_decode($exception->getMessage(), true, 512, JSON_THROW_ON_ERROR);
                 $error = Error::create(
                     $error['error']['errors'][0]['reason'],
-                    $error['error']['errors'][0]['message'],
+                    $error['error']['errors'][0]['message'] ?? 'No message received',
                     new \DateTime(),
                     $error['error']
                 );
