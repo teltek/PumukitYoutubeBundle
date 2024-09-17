@@ -84,7 +84,7 @@ class PlaylistItemInsertService extends GooglePlaylistItemService
             $errorLog = sprintf('[YouTube] Video %s does not have account set.', $multimediaObject->getId());
             $this->logger->error($errorLog);
 
-            return;
+            return null;
         }
 
         $playlists = [];
