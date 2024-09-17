@@ -42,6 +42,9 @@ class PlaylistItemInsertService extends GooglePlaylistItemService
         }
 
         $playlists = $this->getPlaylistFromMultimediaObject($multimediaObject);
+        if (empty($playlists)) {
+            return false;
+        }
 
         $this->fixPlaylistsForMultimediaObject($multimediaObject, $playlists);
 
@@ -74,11 +77,14 @@ class PlaylistItemInsertService extends GooglePlaylistItemService
         ]);
     }
 
-    private function getPlaylistFromMultimediaObject(MultimediaObject $multimediaObject): array
+    private function getPlaylistFromMultimediaObject(MultimediaObject $multimediaObject): ?array
     {
         $account = $this->validateMultimediaObjectAccount($multimediaObject);
         if (!$account instanceof Tag) {
-            // Error de que el video no tiene cuenta en youtube y/o tag.
+            $errorLog = sprintf('[YouTube] Video %s does not have account set.', $multimediaObject->getId());
+            $this->logger->error($errorLog);
+
+            return;
         }
 
         $playlists = [];
