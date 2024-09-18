@@ -31,6 +31,7 @@ class Youtube
         self::STATUS_DUPLICATED => 'Duplicated',
         self::STATUS_REMOVED => 'Removed',
         self::STATUS_TO_DELETE => 'To delete',
+        self::STATUS_TO_REVIEW => 'To review',
     ];
 
     /**
