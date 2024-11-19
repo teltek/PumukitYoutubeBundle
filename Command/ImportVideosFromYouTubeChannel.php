@@ -9,10 +9,12 @@ use Google\Service\YouTube\Video;
 use Google\Service\YouTube\VideoListResponse;
 use Pumukit\CoreBundle\Services\i18nService;
 use Pumukit\CoreBundle\Utils\FinderUtils;
-use Pumukit\EncoderBundle\Services\JobService;
+use Pumukit\EncoderBundle\Services\DTO\JobOptions;
+use Pumukit\EncoderBundle\Services\JobCreator;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Series;
 use Pumukit\SchemaBundle\Document\Tag;
+use Pumukit\SchemaBundle\Document\ValueObject\Path;
 use Pumukit\SchemaBundle\Services\FactoryService;
 use Pumukit\SchemaBundle\Services\MultimediaObjectPicService;
 use Pumukit\SchemaBundle\Services\TagService;
@@ -36,7 +38,7 @@ final class ImportVideosFromYouTubeChannel extends Command
     private DocumentManager $documentManager;
     private GoogleAccountService $googleAccountService;
     private FactoryService $factoryService;
-    private JobService $jobService;
+    private $jobCreator;
     private i18nService $i18nService;
 
     private TagService $tagService;
@@ -52,7 +54,7 @@ final class ImportVideosFromYouTubeChannel extends Command
         DocumentManager $documentManager,
         GoogleAccountService $googleAccountService,
         FactoryService $factoryService,
-        JobService $jobService,
+        JobCreator $jobCreator,
         i18nService $i18nService,
         TagService $tagService,
         MultimediaObjectPicService $multimediaObjectPicService,
@@ -62,7 +64,7 @@ final class ImportVideosFromYouTubeChannel extends Command
         $this->documentManager = $documentManager;
         $this->googleAccountService = $googleAccountService;
         $this->factoryService = $factoryService;
-        $this->jobService = $jobService;
+        $this->jobCreator = $jobCreator;
         $this->i18nService = $i18nService;
         $this->tagService = $tagService;
         $this->multimediaObjectPicService = $multimediaObjectPicService;
@@ -272,17 +274,10 @@ EOT
         $priority = 0;
         $language = null;
 
-        return $this->jobService->createTrackFromInboxOnServer(
-            $multimediaObject,
-            $trackUrl,
-            $profile,
-            $priority,
-            $language,
-            $description = '',
-            $initVars = [],
-            $duration = 0,
-            $flags = 0
-        );
+        $jobOptions = new JobOptions($profile, $priority, $language, [], []);
+        $path = Path::create($trackUrl);
+
+        return $this->jobCreator->fromPath($multimediaObject, $path, $jobOptions);
     }
 
     private function videoInfo(\Google_Service_YouTube $service, string $videoId): VideoListResponse

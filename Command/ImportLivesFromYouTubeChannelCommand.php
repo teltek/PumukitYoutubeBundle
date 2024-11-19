@@ -8,7 +8,6 @@ use Doctrine\ODM\MongoDB\DocumentManager;
 use Google\Service\YouTube\Video;
 use Google\Service\YouTube\VideoListResponse;
 use Pumukit\CoreBundle\Services\i18nService;
-use Pumukit\EncoderBundle\Services\JobService;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Series;
 use Pumukit\SchemaBundle\Document\Tag;
@@ -35,7 +34,6 @@ final class ImportLivesFromYouTubeChannelCommand extends Command
     private DocumentManager $documentManager;
     private GoogleAccountService $googleAccountService;
     private FactoryService $factoryService;
-    private JobService $jobService;
     private i18nService $i18nService;
 
     private TagService $tagService;
@@ -51,7 +49,6 @@ final class ImportLivesFromYouTubeChannelCommand extends Command
         DocumentManager $documentManager,
         GoogleAccountService $googleAccountService,
         FactoryService $factoryService,
-        JobService $jobService,
         i18nService $i18nService,
         TagService $tagService,
         MultimediaObjectPicService $multimediaObjectPicService,
@@ -61,7 +58,6 @@ final class ImportLivesFromYouTubeChannelCommand extends Command
         $this->documentManager = $documentManager;
         $this->googleAccountService = $googleAccountService;
         $this->factoryService = $factoryService;
-        $this->jobService = $jobService;
         $this->i18nService = $i18nService;
         $this->tagService = $tagService;
         $this->multimediaObjectPicService = $multimediaObjectPicService;

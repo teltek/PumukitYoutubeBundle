@@ -6,7 +6,6 @@ namespace Pumukit\YoutubeBundle\Command;
 
 use Doctrine\ODM\MongoDB\DocumentManager;
 use Psr\Log\LoggerInterface;
-use Pumukit\EncoderBundle\Services\JobService;
 use Pumukit\EncoderBundle\Services\ProfileService;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Pic;
@@ -35,7 +34,6 @@ class YoutubeImportVideoCommand extends Command
     private $tagService;
     private $youtubeService;
     private $factoryService;
-    private $jobService;
     private $profileService;
     private $multimediaObjectPicService;
     private $multimediaObjectEventDispatcherService;
@@ -45,7 +43,6 @@ class YoutubeImportVideoCommand extends Command
         DocumentManager $documentManager,
         TagService $tagService,
         FactoryService $factoryService,
-        JobService $jobService,
         ProfileService $profileService,
         MultimediaObjectPicService $multimediaObjectPicService,
         MultimediaObjectEventDispatcherService $multimediaObjectEventDispatcherService,
@@ -54,7 +51,6 @@ class YoutubeImportVideoCommand extends Command
         $this->documentManager = $documentManager;
         $this->tagService = $tagService;
         $this->factoryService = $factoryService;
-        $this->jobService = $jobService;
         $this->profileService = $profileService;
         $this->multimediaObjectPicService = $multimediaObjectPicService;
         $this->multimediaObjectEventDispatcherService = $multimediaObjectEventDispatcherService;

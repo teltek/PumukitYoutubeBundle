@@ -8,12 +8,14 @@ use Doctrine\ODM\MongoDB\DocumentManager;
 use MongoDB\BSON\ObjectId;
 use Psr\Log\LoggerInterface;
 use Pumukit\EncoderBundle\Document\Job;
-use Pumukit\EncoderBundle\Services\JobService;
+use Pumukit\EncoderBundle\Services\DTO\JobOptions;
+use Pumukit\EncoderBundle\Services\JobCreator;
 use Pumukit\OpencastBundle\Services\OpencastService;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Person;
 use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\SchemaBundle\Document\Track;
+use Pumukit\SchemaBundle\Document\ValueObject\Path;
 use Pumukit\SchemaBundle\Services\TagService;
 use Pumukit\YoutubeBundle\PumukitYoutubeBundle;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
@@ -24,7 +26,7 @@ class VideoDataValidationService extends CommonDataValidationService
 {
     private $documentManager;
     private $youtubeConfigurationService;
-    private $jobService;
+    private $jobCreator;
     private $tagService;
     private $opencastService;
     private $router;
@@ -35,7 +37,7 @@ class VideoDataValidationService extends CommonDataValidationService
     public function __construct(
         DocumentManager $documentManager,
         YoutubeConfigurationService $youtubeConfigurationService,
-        JobService $jobService,
+        JobCreator $jobCreator,
         TagService $tagService,
         OpencastService $opencastService = null,
         RouterInterface $router,
@@ -45,7 +47,7 @@ class VideoDataValidationService extends CommonDataValidationService
     ) {
         $this->documentManager = $documentManager;
         $this->youtubeConfigurationService = $youtubeConfigurationService;
-        $this->jobService = $jobService;
+        $this->jobCreator = $jobCreator;
         $this->tagService = $tagService;
         $this->opencastService = $opencastService;
         $this->router = $router;
@@ -229,7 +231,9 @@ class VideoDataValidationService extends CommonDataValidationService
             $track = $tracks[0];
             $path = $track->getPath();
             $language = $track->getLanguage() ?: \Locale::getDefault();
-            $job = $this->jobService->addJob($path, $this->youtubeConfigurationService->sbsProfileName(), 2, $multimediaObject, $language, [], [], $track->getDuration());
+            $jobOptions = new JobOptions($this->youtubeConfigurationService->sbsProfileName(), 2, $language, [], [], $track->getDuration());
+            $path = Path::create($path);
+            $job = $this->jobCreator->fromPath($multimediaObject, $path, $jobOptions);
         }
 
         return 0;

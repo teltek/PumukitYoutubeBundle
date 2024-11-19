@@ -6,9 +6,11 @@ namespace Pumukit\YoutubeBundle\Command;
 
 use Doctrine\ODM\MongoDB\DocumentManager;
 use Pumukit\CoreBundle\Utils\FinderUtils;
-use Pumukit\EncoderBundle\Services\JobService;
+use Pumukit\EncoderBundle\Services\DTO\JobOptions;
+use Pumukit\EncoderBundle\Services\JobCreator;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Tag;
+use Pumukit\SchemaBundle\Document\ValueObject\Path;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Input\InputInterface;
@@ -20,18 +22,18 @@ final class ImportJobsFromYouTubeDownloadCommand extends Command
     public const DEFAULT_PROFILE_ENCODER = 'broadcastable_master';
 
     private DocumentManager $documentManager;
-    private JobService $jobService;
+    private $jobCreator;
     private string $tempDir;
     private string $channelId;
     private $youtubeErrors = [];
 
     public function __construct(
         DocumentManager $documentManager,
-        JobService $jobService,
+        JobCreator $jobCreator,
         string $tempDir
     ) {
         $this->documentManager = $documentManager;
-        $this->jobService = $jobService;
+        $this->jobCreator = $jobCreator;
         $this->tempDir = $tempDir;
         parent::__construct();
     }
@@ -105,17 +107,10 @@ EOT
             return $multimediaObject;
         }
 
-        return $this->jobService->createTrackFromInboxOnServer(
-            $multimediaObject,
-            $trackUrl,
-            self::DEFAULT_PROFILE_ENCODER,
-            0,
-            null,
-            '',
-            [],
-            0,
-            0
-        );
+        $jobOptions = new JobOptions(self::DEFAULT_PROFILE_ENCODER, 0, null, [], []);
+        $path = Path::create($trackUrl);
+
+        return $this->jobCreator->fromPath($multimediaObject, $path, $jobOptions);
     }
 
     private function ensureYouTubeAccountExists(InputInterface $input): void
