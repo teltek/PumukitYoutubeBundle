@@ -281,11 +281,11 @@ class VideoDataValidationService extends CommonDataValidationService
         } else {
             $track = $multimediaObject->getTrackWithTag($this->youtubeConfigurationService->defaultTrackUpload());
         }
-        if (!$track || $track->isOnlyAudio()) {
+        if (!$track || $track->metadata()->isOnlyAudio()) {
             $track = $multimediaObject->getTrackWithTag('master');
         }
 
-        if ($track && !$track->isOnlyAudio()) {
+        if ($track && !$track->metadata()->isOnlyAudio()) {
             return $track;
         }
 
