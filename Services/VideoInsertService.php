@@ -95,7 +95,7 @@ class VideoInsertService extends GoogleVideoService
         \Google_Service_YouTube_Video $video,
         Track $track
     ): ?Video {
-        $infoLog = sprintf('[YouTube] Video insert ( %s ) with track %s', $video->getSnippet()->getTitle(), $track->getId());
+        $infoLog = sprintf('[YouTube] Video insert ( %s ) with track %s', $video->getSnippet()->getTitle(), $track->id());
         $this->logger->info($infoLog);
 
         $service = $this->googleAccountService->googleServiceFromAccount($youtubeAccount);
@@ -104,7 +104,7 @@ class VideoInsertService extends GoogleVideoService
             'snippet,status',
             $video,
             [
-                'data' => file_get_contents($track->getPath()),
+                'data' => file_get_contents($track->storage()->path()->path()),
                 'mimeType' => 'application/octet-stream',
                 'uploadType' => 'multipart',
             ]
@@ -156,7 +156,7 @@ class VideoInsertService extends GoogleVideoService
             $youtube->removeError();
             $youtube->setYoutubeId($video->getId());
             $youtube->setLink('https://www.youtube.com/watch?v='.$video->getId());
-            $youtube->setFileUploaded(basename($track->getPath()));
+            $youtube->setFileUploaded(basename($track->storage()->path()->path()));
             $multimediaObject->setProperty('youtubeurl', $youtube->getLink());
 
             $code = $this->getEmbed($video->getId());
