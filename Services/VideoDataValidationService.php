@@ -14,7 +14,7 @@ use Pumukit\OpencastBundle\Services\OpencastService;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Person;
 use Pumukit\SchemaBundle\Document\Tag;
-use Pumukit\SchemaBundle\Document\Track;
+use Pumukit\SchemaBundle\Document\MediaType\Track;
 use Pumukit\SchemaBundle\Document\ValueObject\Path;
 use Pumukit\SchemaBundle\Services\TagService;
 use Pumukit\YoutubeBundle\PumukitYoutubeBundle;
@@ -75,7 +75,7 @@ class VideoDataValidationService extends CommonDataValidationService
             return null;
         }
 
-        $trackPath = $track->getPath();
+        $trackPath = $track->storage()->path()->path();
         if (!file_exists($trackPath)) {
             $errorLog = self::class.' ['.__FUNCTION__.'] Error, there is no file '.$trackPath;
             $this->logger->error($errorLog);
@@ -229,7 +229,7 @@ class VideoDataValidationService extends CommonDataValidationService
                 return 0;
             }
             $track = $tracks[0];
-            $path = $track->getPath();
+            $path = $track->storage()->path()->path();
             $language = $track->getLanguage() ?: \Locale::getDefault();
             $jobOptions = new JobOptions($this->youtubeConfigurationService->sbsProfileName(), 2, $language, [], [], $track->getDuration());
             $path = Path::create($path);
@@ -281,11 +281,11 @@ class VideoDataValidationService extends CommonDataValidationService
         } else {
             $track = $multimediaObject->getTrackWithTag($this->youtubeConfigurationService->defaultTrackUpload());
         }
-        if (!$track || $track->isOnlyAudio()) {
+        if (!$track || $track->metadata()->isOnlyAudio()) {
             $track = $multimediaObject->getTrackWithTag('master');
         }
 
-        if ($track && !$track->isOnlyAudio()) {
+        if ($track && !$track->metadata()->isOnlyAudio()) {
             return $track;
         }
 
