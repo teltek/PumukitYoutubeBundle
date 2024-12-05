@@ -5,7 +5,15 @@ declare(strict_types=1);
 namespace Pumukit\YoutubeBundle\Command;
 
 use Doctrine\ODM\MongoDB\DocumentManager;
+use Pumukit\CoreBundle\Services\i18nService;
+use Pumukit\SchemaBundle\Document\MediaType\External;
+use Pumukit\SchemaBundle\Document\MediaType\MediaInterface;
+use Pumukit\SchemaBundle\Document\MediaType\Metadata\Generic;
+use Pumukit\SchemaBundle\Document\MediaType\Storage;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
+use Pumukit\SchemaBundle\Document\ValueObject\i18nText;
+use Pumukit\SchemaBundle\Document\ValueObject\StorageUrl;
+use Pumukit\SchemaBundle\Document\ValueObject\Tags;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Input\InputInterface;
@@ -14,10 +22,12 @@ use Symfony\Component\Console\Output\OutputInterface;
 final class ImportYouTubeExternalPlayerCommand extends Command
 {
     private $documentManager;
+    private i18nService $i18nService;
 
-    public function __construct(DocumentManager $documentManager)
+    public function __construct(DocumentManager $documentManager, i18nService $i18nService)
     {
         $this->documentManager = $documentManager;
+        $this->i18nService = $i18nService;
         parent::__construct();
     }
 
@@ -75,8 +85,24 @@ EOT
 
     private function updateMultimediaObject(MultimediaObject $multimediaObject): void
     {
-        $externalPlayer = 'https://www.youtube.com/embed/'.$multimediaObject->getProperty('youtube_import_id');
-        $multimediaObject->setProperty('externalplayer', $externalPlayer);
-        $multimediaObject->setType(MultimediaObject::TYPE_EXTERNAL);
+        $externalLink = 'https://www.youtube.com/embed/'.$multimediaObject->getProperty('youtube_import_id');
+        $externalMedia = $this->createExternalMedia($externalLink);
+        $multimediaObject->addExternal($externalMedia);
+    }
+
+    private function createExternalMedia(string $externalLink): MediaInterface
+    {
+        $originalName = '';
+        $description = i18nText::create($this->i18nService->generateI18nText(''));
+        $language = '';
+        $tags = Tags::create(['display']);
+        $url = StorageUrl::create($externalLink);
+        $storage = Storage::external($url);
+        $metadata = Generic::create('');
+        $external = External::create($originalName, $description, $language, $tags, false, false, 0, $storage, $metadata);
+
+        $this->documentManager->persist($external);
+
+        return $external;
     }
 }
