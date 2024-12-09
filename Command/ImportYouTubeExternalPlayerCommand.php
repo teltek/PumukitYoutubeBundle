@@ -60,7 +60,7 @@ EOT
             $progressBar->advance();
             ++$count;
 
-            if (!empty($multimediaObject->external())) {
+            if (0 !== count($multimediaObject->external())) {
                 continue;
             }
 
