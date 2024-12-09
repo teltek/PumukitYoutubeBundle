@@ -60,6 +60,10 @@ EOT
             $progressBar->advance();
             ++$count;
 
+            if (!empty($multimediaObject->external())) {
+                continue;
+            }
+
             $this->updateMultimediaObject($multimediaObject);
 
             if (0 == $count % 50) {
@@ -88,6 +92,7 @@ EOT
         $externalLink = 'https://www.youtube.com/embed/'.$multimediaObject->getProperty('youtube_import_id');
         $externalMedia = $this->createExternalMedia($externalLink);
         $multimediaObject->addExternal($externalMedia);
+        $multimediaObject->setExternalType();
     }
 
     private function createExternalMedia(string $externalLink): MediaInterface
