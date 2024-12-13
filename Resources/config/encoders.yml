@@ -17,14 +17,14 @@ pumukit_youtube:
             channels: 1
             audio: true
             bat: |
-                /usr/local/bin/ffmpeg -loop 1 -i __IMAGE__ -i "{{input}}" -s 640x480 -c:v libx264 -c:a libfdk_aac -strict experimental -ar 44100 -b:a 128k -f mp4 -shortest "{{output}}"
+                ffmpeg -loop 1 -i __IMAGE__ -i "{{input}}" -s 640x480 -c:v libx264 -c:a libfdk_aac -strict experimental -ar 44100 -b:a 128k -f mp4 -shortest "{{output}}"
             streamserver:
                 name: Localhost
                 type: download
                 host: 127.0.0.1
                 description: Local download server
-                dir_out: "%kernel.project_dir%%/public/storage/downloads"
-                url_out: "/storage/downloads"
+                dir_out: "%pumukit.downloads_dir%"
+                url_out: "%pumukit.downloads_url%"
             app: ffmpeg
             rel_duration_size: 1
             rel_duration_trans: 1
