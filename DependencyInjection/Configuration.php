@@ -59,7 +59,7 @@ class Configuration implements ConfigurationInterface
             ->info('Default track to youtube upload')
             ->end()
             ->scalarNode('default_image_for_audio')
-            ->defaultValue(dirname(__DIR__, 2).'/SchemaBundle/Resources/public/images/playlist_folder.png')
+            ->defaultValue(dirname(__DIR__, 4).'/public/bundles/pumukitschema/images/playlist_folder.png')
             ->info('Default image for audio to youtube upload')
             ->end()
             ->arrayNode('allowed_caption_mimetypes')

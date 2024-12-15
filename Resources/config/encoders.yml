@@ -29,3 +29,4 @@ pumukit_youtube:
             rel_duration_size: 1
             rel_duration_trans: 1
             downloadable: true
+            generate_pic: false
