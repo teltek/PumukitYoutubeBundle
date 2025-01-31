@@ -31,7 +31,7 @@ class NotificationService
         DocumentManager $documentManager,
         YoutubeConfigurationService $youtubeConfigurationService,
         TagService $tagService,
-        SenderService $senderService = null,
+        ?SenderService $senderService = null,
         LoggerInterface $logger,
         RouterInterface $router,
         TranslatorInterface $translator,

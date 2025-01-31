@@ -37,7 +37,7 @@ class VideoDataValidationService extends CommonDataValidationService
         YoutubeConfigurationService $youtubeConfigurationService,
         JobService $jobService,
         TagService $tagService,
-        OpencastService $opencastService = null,
+        ?OpencastService $opencastService = null,
         RouterInterface $router,
         TranslatorInterface $translator,
         LoggerInterface $logger,
