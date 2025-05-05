@@ -69,7 +69,6 @@ EOT
 
         $multimediaObjects = $this->documentManager->getRepository(MultimediaObject::class)->findBy([
             'status' => ['$in' => [MultimediaObject::STATUS_PUBLISHED, MultimediaObject::STATUS_HIDDEN]],
-            'properties.youtube_import_status' => ['$exists' => true],
             'properties.youtube_import_channel' => $channel,
         ], [], $limit);
 
@@ -107,7 +106,7 @@ EOT
             return $multimediaObject;
         }
 
-        $jobOptions = new JobOptions(self::DEFAULT_PROFILE_ENCODER, 0, null, [], []);
+        $jobOptions = new JobOptions(self::DEFAULT_PROFILE_ENCODER, 0, 'en', [], []);
         $path = Path::create($trackUrl);
 
         return $this->jobCreator->fromPath($multimediaObject, $path, $jobOptions);
