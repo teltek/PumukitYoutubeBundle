@@ -82,6 +82,7 @@ EOT
                 break;
             }
             ++$count;
+            sleep(2);
             $this->addJob($multimediaObject, $multimediaObject->getProperty('youtube_import_id'));
         }
 
