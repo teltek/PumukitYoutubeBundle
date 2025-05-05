@@ -85,10 +85,12 @@ EOT
             $youtubeDownloader = new YouTubeDownloader();
 
             $youtubeURL = self::BASE_URL_YOUTUBE_VIDEO.$videoId;
+
             try {
                 $downloadOptions = $youtubeDownloader->getDownloadLinks($youtubeURL);
             } catch (\Exception $exception) {
-                $this->youtubeErrors[] = 'Error getting download links for YouTube ID '. $videoId;
+                $this->youtubeErrors[] = 'Error getting download links for YouTube ID '.$videoId;
+
                 continue;
             }
 
