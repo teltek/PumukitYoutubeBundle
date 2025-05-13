@@ -19,7 +19,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 final class ImportJobsFromYouTubeDownloadCommand extends Command
 {
-    public const DEFAULT_PROFILE_ENCODER = 'broadcastable_master';
+    public const DEFAULT_PROFILE_ENCODER = 'video_master_broadcastable';
 
     private DocumentManager $documentManager;
     private $jobCreator;
