@@ -95,7 +95,7 @@ EOT
     protected function initialize(InputInterface $input, OutputInterface $output): void
     {
         $this->accountName = $input->getOption('account');
-        $this->step = $input->getOption('step');
+        $this->step = (int) $input->getOption('step');
         $this->force = (true === $input->getOption('force'));
         $this->output = $output;
     }
@@ -103,7 +103,7 @@ EOT
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         if (!$this->force) {
-            return $this->check();
+            return (int) $this->check();
         }
 
         $this->output->writeln('<info>***** MIGRATE SCHEMA *****</info>');
@@ -111,7 +111,7 @@ EOT
         if (!$this->check()) {
             $this->output->writeln('<error>Check before migration failed</error>');
 
-            return false;
+            return 1;
         }
 
         if (1 === $this->step || 99 === $this->step) {
@@ -130,7 +130,7 @@ EOT
             if (!$result) {
                 $this->createTable();
 
-                return false;
+                return 1;
             }
         }
 
@@ -140,7 +140,7 @@ EOT
             if (!$result) {
                 $this->createTable();
 
-                return false;
+                return 1;
             }
         }
 
@@ -151,7 +151,7 @@ EOT
 
         $this->createTable();
 
-        return false;
+        return 0;
     }
 
     private function check(): bool
@@ -187,6 +187,7 @@ EOT
             return false;
         }
 
+        $this->output->writeln('All checks passed successfully');
         return true;
     }
 
