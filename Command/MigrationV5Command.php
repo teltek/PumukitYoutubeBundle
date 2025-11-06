@@ -188,6 +188,7 @@ EOT
         }
 
         $this->output->writeln('All checks passed successfully');
+
         return true;
     }
 
