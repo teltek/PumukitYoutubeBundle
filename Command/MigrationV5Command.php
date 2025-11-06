@@ -48,7 +48,7 @@ class MigrationV5Command extends Command
     protected function configure(): void
     {
         $this
-            ->setName('pumukit:youtube:migration:schema')
+            ->setName('pumukit:youtube:migration:v5:schema')
             ->setDescription('Migrate schema from PumukitYoutubeBundle single account to PumukitYoutubeBundle multiple account')
             ->addOption('account', null, InputOption::VALUE_REQUIRED, 'Name of .json from YoutubeBundle single account')
             ->addOption('step', null, InputOption::VALUE_REQUIRED, 'Execute one step of migration')
