@@ -159,7 +159,7 @@ class PlaylistInsertService extends GooglePlaylistService
         foreach ($playlistItems as $item) {
             $tag = $this->documentManager->getRepository(Tag::class)->findOneBy(['properties.youtube' => $item->getId()]);
             if (!$tag instanceof Tag) {
-                $this->playlistDeleteService->deleteOnePlaylist($account, $item);
+                $this->playlistDeleteService->deleteOnePlaylist($account, $item->getId());
             }
         }
     }
