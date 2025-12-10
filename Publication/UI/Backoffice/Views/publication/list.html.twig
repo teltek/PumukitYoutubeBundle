@@ -1,0 +1,96 @@
+{% extends '@PumukitNewAdmin/layout.html.twig' %}
+
+{% block title %}YouTube Publications{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h1>YouTube Publications</h1>
+            
+            <div class="mb-3">
+                <a href="{{ path('pumukit_youtube_publication_new') }}" class="btn btn-primary">
+                    <i class="fa fa-plus"></i> New Publication
+                </a>
+                
+                <div class="btn-group ms-3" role="group">
+                    <a href="{{ path('pumukit_youtube_publication_list') }}" 
+                       class="btn btn-outline-secondary {{ filter == 'all' ? 'active' : '' }}">
+                        All
+                    </a>
+                    <a href="{{ path('pumukit_youtube_publication_list', {filter: 'pending'}) }}" 
+                       class="btn btn-outline-secondary {{ filter == 'pending' ? 'active' : '' }}">
+                        Pending
+                    </a>
+                    <a href="{{ path('pumukit_youtube_publication_list', {filter: 'uploaded'}) }}" 
+                       class="btn btn-outline-secondary {{ filter == 'uploaded' ? 'active' : '' }}">
+                        Uploaded
+                    </a>
+                    <a href="{{ path('pumukit_youtube_publication_errors') }}" 
+                       class="btn btn-outline-danger {{ filter == 'errors' ? 'active' : '' }}">
+                        Errors
+                    </a>
+                </div>
+            </div>
+
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Multimedia Object</th>
+                        <th>YouTube Account</th>
+                        <th>Playlists</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for publication in publications %}
+                    <tr>
+                        <td>{{ publication.id }}</td>
+                        <td>{{ publication.multimediaObjectId }}</td>
+                        <td>{{ publication.youtubeAccountId }}</td>
+                        <td>{{ publication.playlists|length }}</td>
+                        <td>
+                            {% if publication.complete %}
+                                <span class="badge bg-success">Complete</span>
+                            {% elseif publication.error %}
+                                <span class="badge bg-danger">Error</span>
+                            {% elseif publication.upload %}
+                                <span class="badge bg-info">Uploaded</span>
+                            {% else %}
+                                <span class="badge bg-warning">Pending</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{{ path('pumukit_youtube_publication_edit', {id: publication.id}) }}" 
+                               class="btn btn-sm btn-secondary">
+                                <i class="fa fa-edit"></i> Edit
+                            </a>
+                            
+                            {% if publication.error %}
+                                <form method="post" action="{{ path('pumukit_youtube_publication_retry', {id: publication.id}) }}" style="display:inline;">
+                                    <button type="submit" class="btn btn-sm btn-warning">
+                                        <i class="fa fa-refresh"></i> Retry
+                                    </button>
+                                </form>
+                            {% endif %}
+                            
+                            <form method="post" action="{{ path('pumukit_youtube_publication_delete', {id: publication.id}) }}" style="display:inline;">
+                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">
+                                    <i class="fa fa-trash"></i> Delete
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center">No publications found</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

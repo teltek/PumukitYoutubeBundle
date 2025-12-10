@@ -1,0 +1,74 @@
+{% extends '@PumukitNewAdmin/layout.html.twig' %}
+
+{% block title %}{{ publication ? 'Edit' : 'New' }} YouTube Publication{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h1>{{ publication ? 'Edit' : 'New' }} YouTube Publication</h1>
+
+            <form method="post">
+                <div class="mb-3">
+                    <label for="multimediaObjectId" class="form-label">Multimedia Object ID</label>
+                    <input type="text" class="form-control" id="multimediaObjectId" name="multimediaObjectId" 
+                           value="{{ publication ? publication.multimediaObjectId : '' }}" required>
+                </div>
+
+                <div class="mb-3">
+                    <label for="youtubeAccountId" class="form-label">YouTube Account</label>
+                    <select class="form-control" id="youtubeAccountId" name="youtubeAccountId" required>
+                        <option value="">Select an account...</option>
+                        {# TODO: Load accounts from service #}
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label for="playlists" class="form-label">Playlists</label>
+                    <select multiple class="form-control" id="playlists" name="playlists[]" size="5">
+                        {# TODO: Load playlists from service #}
+                    </select>
+                    <small class="form-text text-muted">Hold Ctrl/Cmd to select multiple playlists</small>
+                </div>
+
+                {% if publication %}
+                <div class="mb-3">
+                    <h5>Status</h5>
+                    <ul class="list-unstyled">
+                        <li><strong>Upload:</strong> {{ publication.upload ? 'Yes' : 'No' }}</li>
+                        <li><strong>Updated:</strong> {{ publication.updated ? 'Yes' : 'No' }}</li>
+                        <li><strong>Assigned:</strong> {{ publication.assigned ? 'Yes' : 'No' }}</li>
+                        <li><strong>Removed:</strong> {{ publication.removed ? 'Yes' : 'No' }}</li>
+                        <li><strong>Complete:</strong> {{ publication.complete ? 'Yes' : 'No' }}</li>
+                        <li><strong>Error:</strong> {{ publication.error ? 'Yes' : 'No' }}</li>
+                    </ul>
+                </div>
+
+                {% if publication.errors|length > 0 %}
+                <div class="mb-3">
+                    <h5>Errors</h5>
+                    <div class="list-group">
+                        {% for error in publication.errors %}
+                        <div class="list-group-item">
+                            <p class="mb-1"><strong>{{ error.date|date('Y-m-d H:i:s') }}</strong></p>
+                            <p class="mb-1">{{ error.message }}</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+                {% endif %}
+
+                <div class="mb-3">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa fa-save"></i> Save
+                    </button>
+                    <a href="{{ path('pumukit_youtube_publication_list') }}" class="btn btn-secondary">
+                        <i class="fa fa-times"></i> Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

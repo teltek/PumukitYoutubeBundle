@@ -1,0 +1,81 @@
+{% extends '@PumukitNewAdmin/layout.html.twig' %}
+
+{% block title %}YouTube Playlists{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h1>YouTube Playlists</h1>
+            
+            <div class="mb-3">
+                <a href="{{ path('pumukit_youtube_playlist_new') }}" class="btn btn-primary">
+                    <i class="fa fa-plus"></i> New Playlist
+                </a>
+                
+                <a href="{{ path('pumukit_youtube_playlist_sync') }}" class="btn btn-secondary">
+                    <i class="fa fa-refresh"></i> Sync from YouTube
+                </a>
+            </div>
+
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Title</th>
+                        <th>YouTube Account</th>
+                        <th>YouTube Playlist ID</th>
+                        <th>Privacy</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for playlist in playlists %}
+                    <tr>
+                        <td>{{ playlist.id }}</td>
+                        <td>{{ playlist.title }}</td>
+                        <td>{{ playlist.youtubeAccountId }}</td>
+                        <td>
+                            <a href="https://www.youtube.com/playlist?list={{ playlist.youtubePlaylistId }}" target="_blank">
+                                {{ playlist.youtubePlaylistId }}
+                                <i class="fa fa-external-link"></i>
+                            </a>
+                        </td>
+                        <td>
+                            {% if playlist.privacyStatus == 'public' %}
+                                <span class="badge bg-success">Public</span>
+                            {% elseif playlist.privacyStatus == 'unlisted' %}
+                                <span class="badge bg-warning">Unlisted</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Private</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{{ path('pumukit_youtube_playlist_edit', {id: playlist.id}) }}" 
+                               class="btn btn-sm btn-secondary">
+                                <i class="fa fa-edit"></i> Edit
+                            </a>
+                            
+                            <a href="{{ path('pumukit_youtube_playlist_items', {id: playlist.id}) }}" 
+                               class="btn btn-sm btn-info">
+                                <i class="fa fa-list"></i> Items
+                            </a>
+                            
+                            <form method="post" action="{{ path('pumukit_youtube_playlist_delete', {id: playlist.id}) }}" style="display:inline;">
+                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">
+                                    <i class="fa fa-trash"></i> Delete
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center">No playlists found</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
