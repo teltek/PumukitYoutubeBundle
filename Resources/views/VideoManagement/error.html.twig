@@ -1,0 +1,29 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Error{% endblock %}
+
+{% block content %}
+<div style="padding: 40px; text-align: center;">
+    <div style="max-width: 600px; margin: 0 auto; background: white; padding: 40px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+        <svg width="80" height="80" viewBox="0 0 24 24" fill="#dc3545" style="margin-bottom: 20px;">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+        </svg>
+        
+        <h2 style="font-size: 24px; color: #dc3545; margin-bottom: 15px;">Error Loading YouTube Management</h2>
+        
+        <p style="color: #721c24; font-size: 16px; margin-bottom: 25px;">
+            {{ error }}
+        </p>
+        
+        <p style="color: #495057; font-size: 14px;">
+            <strong>{{ multimediaObject.title }}</strong>
+        </p>
+        
+        <div style="margin-top: 30px;">
+            <a href="{{ path('pumukitadmin_mms_list') }}" class="btn" style="background: #007bff; color: white; padding: 10px 30px; text-decoration: none; border-radius: 4px; display: inline-block;">
+                Back to Multimedia Objects
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

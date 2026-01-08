@@ -1,0 +1,427 @@
+{% extends '@PumukitNewAdmin/layout.html.twig' %}
+
+{% block title %}YouTube API Quota Status{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .quota-page {
+            background-color: #f5f5f5;
+            padding: 20px 0;
+            min-height: 100vh;
+        }
+        .quota-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .quota-header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 600;
+        }
+        .quota-header p {
+            margin: 10px 0 0 0;
+            opacity: 0.9;
+            font-size: 14px;
+        }
+        .account-card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+            margin-bottom: 20px;
+            overflow: hidden;
+            transition: box-shadow 0.3s;
+        }
+        .account-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .account-header {
+            padding: 20px;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .account-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin: 0;
+        }
+        .account-status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .status-active {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .status-inactive {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .quota-stats {
+            padding: 20px;
+        }
+        .stat-box {
+            text-align: center;
+            padding: 15px;
+        }
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #667eea;
+            margin: 0;
+        }
+        .stat-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            color: #6c757d;
+            margin-top: 5px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        .progress-section {
+            padding: 0 20px 20px 20px;
+        }
+        .progress {
+            height: 30px;
+            border-radius: 15px;
+            background-color: #e9ecef;
+            overflow: hidden;
+        }
+        .progress-bar {
+            font-size: 14px;
+            line-height: 30px;
+            font-weight: 600;
+            transition: width 0.6s ease;
+        }
+        .progress-bar-success { background-color: #28a745; }
+        .progress-bar-warning { background-color: #ffc107; }
+        .progress-bar-danger { background-color: #dc3545; }
+        
+        .api-responses-section {
+            margin-top: 10px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-top: 1px solid #e9ecef;
+        }
+        .api-responses-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+        }
+        .api-response-item {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            overflow: hidden;
+        }
+        .api-response-header {
+            padding: 12px 15px;
+            background-color: #fff;
+            border-bottom: 1px solid #dee2e6;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background-color 0.2s;
+        }
+        .api-response-header:hover {
+            background-color: #f8f9fa;
+        }
+        .api-response-title-section {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .operation-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .badge-success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .badge-error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .api-response-body {
+            padding: 15px;
+            background-color: #f8f9fa;
+        }
+        .json-viewer {
+            background-color: #282c34;
+            color: #abb2bf;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        .json-viewer pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .operations-table {
+            margin-top: 15px;
+            padding: 20px;
+        }
+        .operations-table table {
+            width: 100%;
+            background: white;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        .operations-table th {
+            background-color: #f8f9fa;
+            font-size: 12px;
+            text-transform: uppercase;
+            color: #6c757d;
+            font-weight: 600;
+            padding: 12px;
+            border-bottom: 2px solid #dee2e6;
+            text-align: center;
+        }
+        .operations-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #e9ecef;
+            font-size: 13px;
+            text-align: center;
+        }
+        .operations-table td:first-child {
+            text-align: left;
+        }
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+        }
+        .refresh-info {
+            text-align: center;
+            padding: 10px;
+            color: #6c757d;
+            font-size: 12px;
+            margin-top: 20px;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="quota-page">
+    <div class="container-fluid">
+        <div class="quota-header">
+            <h1><i class="fa fa-youtube-play"></i> YouTube API Quota Status</h1>
+            <p>Monitor your daily YouTube Data API v3 usage and remaining quota</p>
+        </div>
+
+        {% if accounts_quota is empty %}
+        <div class="row">
+            <div class="col-md-12">
+                <div class="account-card">
+                    <div class="no-data">
+                        <i class="fa fa-inbox fa-3x" style="color: #ccc; margin-bottom: 15px;"></i>
+                        <p>No active YouTube accounts found</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% for account_data in accounts_quota %}
+        <div class="row">
+            <div class="col-md-12">
+                <div class="account-card">
+                    <!-- Account Header -->
+                    <div class="account-header">
+                        <h2 class="account-name">
+                            <i class="fa fa-youtube-play" style="color: #FF0000;"></i>
+                            {{ account_data.account.name }}
+                        </h2>
+                        <span class="account-status {{ account_data.account.isActive ? 'status-active' : 'status-inactive' }}">
+                            {{ account_data.account.isActive ? 'Active' : 'Inactive' }}
+                        </span>
+                    </div>
+
+                    <!-- Quota Statistics -->
+                    <div class="quota-stats">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="stat-box">
+                                    <p class="stat-value">{{ account_data.quota.used|number_format }}</p>
+                                    <p class="stat-label">Used Today</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="stat-box">
+                                    <p class="stat-value">{{ account_data.quota.remaining|number_format }}</p>
+                                    <p class="stat-label">Remaining</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="stat-box">
+                                    <p class="stat-value">{{ account_data.quota.limit|number_format }}</p>
+                                    <p class="stat-label">Daily Limit</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="stat-box">
+                                    <p class="stat-value" style="color: {{ account_data.quota.percentage >= 90 ? '#dc3545' : (account_data.quota.percentage >= 80 ? '#ffc107' : '#28a745') }}">
+                                        {{ account_data.quota.percentage }}%
+                                    </p>
+                                    <p class="stat-label">Usage</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Progress Bar -->
+                    <div class="progress-section">
+                        <div class="progress">
+                            <div class="progress-bar progress-bar-{{ account_data.quota.percentage >= 90 ? 'danger' : (account_data.quota.percentage >= 80 ? 'warning' : 'success') }}"
+                                 role="progressbar"
+                                 style="width: {{ account_data.quota.percentage }}%"
+                                 aria-valuenow="{{ account_data.quota.percentage }}"
+                                 aria-valuemin="0"
+                                 aria-valuemax="100">
+                                {{ account_data.quota.used|number_format }} / {{ account_data.quota.limit|number_format }} units
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Operations -->
+                    {% if account_data.operations is defined and account_data.operations|length > 0 %}
+                    <div class="operations-table">
+                        <h4 class="api-responses-title">
+                            <i class="fa fa-history"></i> Recent Operations ({{ account_data.operations|length }})
+                        </h4>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Operation</th>
+                                    <th>Cost (units)</th>
+                                    <th>Timestamp</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for operation in account_data.operations|slice(0, 10) %}
+                                <tr>
+                                    <td><i class="fa fa-cog"></i> {{ operation.operation }}</td>
+                                    <td><strong>{{ operation.cost|number_format }}</strong></td>
+                                    <td>
+                                        {% if operation.timestamp is iterable and operation.timestamp.date is defined %}
+                                            {{ operation.timestamp.date|date('Y-m-d H:i:s') }}
+                                        {% elseif operation.timestamp %}
+                                            {{ operation.timestamp|date('Y-m-d H:i:s') }}
+                                        {% else %}
+                                            N/A
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% endif %}
+
+                    <!-- API Responses -->
+                    {% if account_data.api_responses is defined and account_data.api_responses|length > 0 %}
+                    <div class="api-responses-section">
+                        <h4 class="api-responses-title">
+                            <i class="fa fa-exchange"></i> YouTube API Responses ({{ account_data.api_responses|length }})
+                        </h4>
+                        
+                        {% for response in account_data.api_responses|slice(0, 20) %}
+                        <div class="api-response-item">
+                            <div class="api-response-header" data-toggle="collapse" data-target="#api-response-{{ response.id }}">
+                                <div class="api-response-title-section">
+                                    <span class="operation-badge {{ response.success ? 'badge-success' : 'badge-error' }}">
+                                        {{ response.operation }}
+                                    </span>
+                                    <span style="font-size: 13px; color: #6c757d;">
+                                        {% if response.timestamp is iterable and response.timestamp.date is defined %}
+                                            {{ response.timestamp.date|date('Y-m-d H:i:s') }}
+                                        {% elseif response.timestamp %}
+                                            {{ response.timestamp|date('Y-m-d H:i:s') }}
+                                        {% else %}
+                                            N/A
+                                        {% endif %}
+                                    </span>
+                                    {% if response.httpStatusCode %}
+                                    <span style="font-size: 12px; color: {{ response.httpStatusCode >= 200 and response.httpStatusCode < 300 ? '#28a745' : '#dc3545' }}; font-weight: 600;">
+                                        HTTP {{ response.httpStatusCode }}
+                                    </span>
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    <span style="font-size: 12px; color: #6c757d; margin-right: 10px;">
+                                        <strong>{{ response.quotaCost }}</strong> units
+                                    </span>
+                                    <i class="fa fa-chevron-down"></i>
+                                </div>
+                            </div>
+                            <div id="api-response-{{ response.id }}" class="collapse api-response-body">
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        {% if response.success %}
+                                        <h5 style="margin-top: 0; font-size: 14px; color: #28a745;">
+                                            <i class="fa fa-arrow-circle-down"></i> Response
+                                        </h5>
+                                        <div class="json-viewer">
+                                            <pre>{{ response.responseJson|raw }}</pre>
+                                        </div>
+                                        {% else %}
+                                        <h5 style="margin-top: 0; font-size: 14px; color: #dc3545;">
+                                            <i class="fa fa-exclamation-triangle"></i> Error
+                                        </h5>
+                                        <div style="background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; padding: 15px; border-radius: 4px; margin-bottom: 10px;">
+                                            <strong>{{ response.errorMessage }}</strong>
+                                        </div>
+                                        {% if response.errorDetailsJson %}
+                                        <div class="json-viewer">
+                                            <pre>{{ response.errorDetailsJson|raw }}</pre>
+                                        </div>
+                                        {% endif %}
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+
+        <div class="refresh-info">
+            <i class="fa fa-refresh"></i> Page auto-refreshes every 30 seconds
+        </div>
+    </div> {# container-fluid #}
+</div> {# quota-page #}
+
+<script>
+    // Auto-refresh every 30 seconds
+    setTimeout(function() {
+        location.reload();
+    }, 30000);
+</script>
+{% endblock %}

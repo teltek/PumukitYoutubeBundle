@@ -8,15 +8,18 @@ use Doctrine\ODM\MongoDB\DocumentManager;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\SchemaBundle\Services\TagService;
+use Pumukit\YoutubeBundle\Application\Message\Playlist\UpdatePlaylistItemsMessage;
+use Pumukit\YoutubeBundle\Application\Message\Video\UploadYoutubeVideoMessage;
 use Pumukit\YoutubeBundle\Document\Youtube;
 use Pumukit\YoutubeBundle\Services\PlaylistItemInsertService;
 use Pumukit\YoutubeBundle\Services\VideoDeleteService;
-use Pumukit\YoutubeBundle\Services\VideoInsertService;
 use Pumukit\YoutubeBundle\Services\YoutubeConfigurationService;
 use Pumukit\YoutubeBundle\Services\YoutubeService;
+use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Annotation\Route;
 
 /**
@@ -29,18 +32,23 @@ class ModalController extends AbstractController
     private $playlistItemInsertService;
 
     private $videoDeleteService;
-    private $videoInsertService;
+    
+    private $messageBus;
+    
+    private $logger;
 
     public function __construct(
         DocumentManager $documentManager,
         PlaylistItemInsertService $playlistItemInsertService,
         VideoDeleteService $videoDeleteService,
-        VideoInsertService $videoInsertService
+        MessageBusInterface $messageBus,
+        LoggerInterface $logger
     ) {
         $this->documentManager = $documentManager;
         $this->playlistItemInsertService = $playlistItemInsertService;
         $this->videoDeleteService = $videoDeleteService;
-        $this->videoInsertService = $videoInsertService;
+        $this->messageBus = $messageBus;
+        $this->logger = $logger;
     }
 
     /**
@@ -65,9 +73,22 @@ class ModalController extends AbstractController
      */
     public function updatePlaylistAction(MultimediaObject $multimediaObject): JsonResponse
     {
-        $out = $this->playlistItemInsertService->updatePlaylist($multimediaObject);
+        // Despachar mensaje para procesamiento asíncrono
+        $message = new UpdatePlaylistItemsMessage(
+            multimediaObjectId: $multimediaObject->getId()
+        );
 
-        return new JsonResponse($out);
+        $this->messageBus->dispatch($message);
+
+        $this->logger->info('[YouTube Modal] Playlist update message dispatched', [
+            'multimediaObjectId' => $multimediaObject->getId(),
+            'title' => $multimediaObject->getTitle(),
+        ]);
+
+        return new JsonResponse([
+            'success' => true,
+            'message' => 'Playlist update queued successfully. The playlists will be updated in the background.',
+        ]);
     }
 
     /**
@@ -75,24 +96,41 @@ class ModalController extends AbstractController
      */
     public function forceUploadAction(MultimediaObject $multimediaObject): JsonResponse
     {
-        /*$saveYoutubeAccount = $this->youtubeService->getMultimediaObjectYoutubeAccount($multimediaObject);
-        $saveYoutubePlaylists = $this->youtubeService->getMultimediaObjectYoutubePlaylists($multimediaObject, $saveYoutubeAccount);*/
-        $response = $this->videoDeleteService->deleteVideoFromYouTubeByMultimediaObject($multimediaObject);
-        if (!$response) {
-            return new JsonResponse(['error' => 'Cannot remove multimedia object from Youtube.']);
-        }
-        /*        $this->tagService->addTagToMultimediaObject($multimediaObject, $saveYoutubeAccount->getId());
-                foreach ($saveYoutubePlaylists as $playlist) {
-                    if ($playlist instanceof Tag) {
-                        $this->tagService->addTagToMultimediaObject($multimediaObject, $playlist->getId());
-                    }
-                }*/
-        /*$status = 'public';
-        if ($this->configurationService->syncStatus()) {
-            $status = $this->youtubeConfigurationService->videoStatusMapping($multimediaObject->getStatus());
-        }*/
-        $out = $this->videoInsertService->uploadVideoToYoutube($multimediaObject);
+        try {
+            // Delete video from YouTube first (if exists)
+            $response = $this->videoDeleteService->deleteVideoFromYouTubeByMultimediaObject($multimediaObject);
+            if (!$response) {
+                return new JsonResponse(['error' => 'Cannot remove multimedia object from Youtube.']);
+            }
 
-        return new JsonResponse($out);
+            // Dispatch upload message using Symfony Messenger
+            // This will be processed asynchronously by the UploadYoutubeVideoMessageHandler
+            $message = new UploadYoutubeVideoMessage(
+                multimediaObjectId: $multimediaObject->getId(),
+                accountName: null, // Will use default account from configuration
+                forceReupload: true
+            );
+
+            $this->messageBus->dispatch($message);
+
+            $this->logger->info('[YouTube Modal] Force upload message dispatched', [
+                'multimediaObjectId' => $multimediaObject->getId(),
+                'title' => $multimediaObject->getTitle(),
+            ]);
+
+            return new JsonResponse([
+                'success' => true,
+                'message' => 'YouTube upload queued successfully. The video will be uploaded in the background.',
+            ]);
+        } catch (\Exception $e) {
+            $this->logger->error('[YouTube Modal] Error dispatching force upload message', [
+                'multimediaObjectId' => $multimediaObject->getId(),
+                'error' => $e->getMessage(),
+            ]);
+
+            return new JsonResponse([
+                'error' => 'Error queueing YouTube upload: '.$e->getMessage(),
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
 }

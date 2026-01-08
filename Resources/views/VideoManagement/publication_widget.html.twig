@@ -1,0 +1,325 @@
+{% set youtube_video_id = mm.getProperty('youtube_video_id') %}
+{% set youtube_account_id = mm.getProperty('youtube_account_id') %}
+{% set youtube_status = mm.getProperty('youtube_status') %}
+{% set youtube_playlist_ids = mm.getProperty('youtube_playlist_ids') %}
+
+{% if youtube_video_id and youtube_account_id %}
+<div class="youtube-management-section" style="margin-top: 2rem; padding: 20px; background: linear-gradient(135deg, #ff0000 0%, #cc0000 100%); border-radius: 8px; color: white;">
+    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+        </svg>
+        <div>
+            <h4 style="margin: 0; font-size: 18px; font-weight: 600;">{% trans %}Published on YouTube{% endtrans %}</h4>
+            <small style="opacity: 0.9;">
+                Video ID: <code style="background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 3px;">{{ youtube_video_id }}</code>
+                {% if youtube_status %}
+                    | Status: <strong>{{ youtube_status }}</strong>
+                {% endif %}
+            </small>
+        </div>
+        <div style="margin-left: auto;">
+            <a href="https://www.youtube.com/watch?v={{ youtube_video_id }}" target="_blank" 
+               class="btn btn-sm" 
+               style="background: white; color: #cc0000; padding: 6px 12px; text-decoration: none; border-radius: 4px; font-weight: 600;">
+                <i class="mdi-action-exit-to-app"></i> {% trans %}View on YouTube{% endtrans %}
+            </a>
+        </div>
+    </div>
+
+    <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+        <div class="row">
+            <!-- Actions Column -->
+            <div class="col-md-12">
+                <h5 style="font-size: 14px; font-weight: 600; margin-bottom: 10px;">
+                    <i class="mdi-editor-mode-edit"></i> {% trans %}Actions{% endtrans %}
+                </h5>
+                <button type="button" class="btn btn-sm btn-block youtube-action-btn" 
+                        onclick="syncMetadataFromPumukit('{{ mm.id }}')"
+                        style="background: rgba(255,255,255,0.9); color: #333; margin-bottom: 8px;">
+                    <i class="mdi-notification-sync"></i> {% trans %}Sync Metadata from PuMuKIT{% endtrans %}
+                </button>
+                <button type="button" class="btn btn-sm btn-block youtube-action-btn" 
+                        onclick="openAssignPlaylistsModal('{{ mm.id }}', '{{ youtube_account_id }}')"
+                        style="background: rgba(255,255,255,0.9); color: #333; margin-bottom: 8px;">
+                    <i class="mdi-av-playlist-add"></i> {% trans %}Assign to Playlists{% endtrans %}
+                </button>
+                <a href="{{ path('pumukit_youtube_playlists_index') }}" target="_blank"
+                   class="btn btn-sm btn-block youtube-action-btn"
+                   style="background: rgba(255,255,255,0.9); color: #333; text-decoration: none; display: block; text-align: center;">
+                    <i class="mdi-action-list"></i> {% trans %}Manage YouTube Playlists{% endtrans %}
+                </a>
+            </div>
+        </div>
+        
+        {% if youtube_playlist_ids and youtube_playlist_ids is iterable and youtube_playlist_ids|length > 0 %}
+        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.2);">
+            <h6 style="font-size: 13px; font-weight: 600; margin-bottom: 8px;">
+                <i class="mdi-av-playlist-play"></i> {% trans %}Assigned to Playlists:{% endtrans %}
+            </h6>
+            <div style="background: rgba(255,255,255,0.1); padding: 8px; border-radius: 4px;">
+                {% for playlist_id in youtube_playlist_ids %}
+                    <span style="display: inline-block; background: rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 3px; margin: 2px; font-size: 12px;">
+                        {{ playlist_id }}
+                    </span>
+                {% endfor %}
+            </div>
+            <small style="display: block; margin-top: 8px; opacity: 0.8; font-size: 11px;">
+                {% trans %}Note: Playlists are assigned during upload. Manage playlists from the link above.{% endtrans %}
+            </small>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Danger Zone -->
+    <div style="background: rgba(0,0,0,0.2); padding: 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.3);">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+            <div>
+                <strong style="font-size: 13px;">{% trans %}Danger Zone{% endtrans %}</strong>
+                <small style="display: block; opacity: 0.85; font-size: 12px;">{% trans %}This will permanently delete the video from YouTube{% endtrans %}</small>
+            </div>
+            <button type="button" class="btn btn-sm" 
+                    onclick="deleteVideoFromYoutube('{{ mm.id }}')"
+                    style="background: rgba(220, 53, 69, 0.9); color: white; padding: 6px 16px; border-radius: 4px;">
+                <i class="mdi-action-delete"></i> {% trans %}Delete from YouTube{% endtrans %}
+            </button>
+        </div>
+    </div>
+
+    <div id="youtube-alert-{{ mm.id }}" style="margin-top: 10px; display: none;"></div>
+</div>
+
+<script>
+// Sync from PuMuKIT
+function syncMetadataFromPumukit(mmId) {
+    if (!confirm('{% trans %}This will overwrite YouTube metadata with PuMuKIT data. Continue?{% endtrans %}')) {
+        return;
+    }
+
+    $.ajax({
+        url: '{{ path('pumukit_youtube_video_update', {'id': '__MM_ID__'}) }}'.replace('__MM_ID__', mmId),
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({sync_from_mm: true}),
+        success: function(response) {
+            showYoutubeAlert(mmId, 'success', response.message || '{% trans %}Metadata synced successfully{% endtrans %}');
+        },
+        error: function(xhr) {
+            const response = xhr.responseJSON || {message: '{% trans %}Error syncing metadata{% endtrans %}'};
+            showYoutubeAlert(mmId, 'danger', response.message);
+        }
+    });
+}
+
+// Open Assign Playlists Modal
+function openAssignPlaylistsModal(mmId, accountId) {
+    // Load available playlists for the account
+    $.ajax({
+        url: '{{ path('pumukit_youtube_playlists_index') }}',
+        type: 'GET',
+        success: function(html) {
+            // Parse the HTML to extract playlists
+            // For now, we'll use a simpler approach with a dedicated API endpoint
+            loadPlaylistsForAssignment(mmId, accountId);
+        },
+        error: function() {
+            alert('{% trans %}Error loading playlists{% endtrans %}');
+        }
+    });
+}
+
+function loadPlaylistsForAssignment(mmId, accountId) {
+    // Create modal with loading state
+    const modal = `
+        <div class="modal fade" id="assignPlaylistsModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header" style="background: linear-gradient(135deg, #ff0000 0%, #cc0000 100%); color: white;">
+                        <button type="button" class="close" data-dismiss="modal" style="color: white;">&times;</button>
+                        <h4 class="modal-title">
+                            <i class="mdi-av-playlist-add"></i> {% trans %}Assign Video to YouTube Playlists{% endtrans %}
+                        </h4>
+                    </div>
+                    <div class="modal-body" id="playlists-modal-body">
+                        <div class="text-center">
+                            <i class="mdi-action-autorenew" style="font-size: 48px; animation: spin 1s linear infinite;"></i>
+                            <p>{% trans %}Loading playlists...{% endtrans %}</p>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">{% trans %}Cancel{% endtrans %}</button>
+                        <button type="button" class="btn btn-primary" id="assign-playlists-btn" disabled>
+                            {% trans %}Assign to Selected Playlists{% endtrans %}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    $('body').append(modal);
+    $('#assignPlaylistsModal').modal('show');
+    $('#assignPlaylistsModal').on('hidden.bs.modal', function () {
+        $(this).remove();
+    });
+    
+    // Load playlists via API
+    $.ajax({
+        url: '{{ path('pumukit_youtube_video_playlists_list', {'accountId': '__ACCOUNT_ID__'}) }}'.replace('__ACCOUNT_ID__', accountId),
+        type: 'GET',
+        success: function(response) {
+            displayPlaylistsInModal(mmId, accountId, response.playlists);
+        },
+        error: function(xhr) {
+            $('#playlists-modal-body').html(`
+                <div class="alert alert-danger">
+                    <strong>{% trans %}Error:{% endtrans %}</strong> ${xhr.responseJSON?.message || '{% trans %}Could not load playlists{% endtrans %}'}
+                </div>
+                <p>{% trans %}Make sure you have created YouTube playlists in Tools → YouTube Playlists{% endtrans %}</p>
+            `);
+        }
+    });
+}
+
+function displayPlaylistsInModal(mmId, accountId, playlists) {
+    if (!playlists || playlists.length === 0) {
+        $('#playlists-modal-body').html(`
+            <div class="alert alert-warning">
+                <strong>{% trans %}No playlists found{% endtrans %}</strong>
+                <p>{% trans %}You need to create YouTube playlists first.{% endtrans %}</p>
+                <a href="{{ path('pumukit_youtube_playlists_index') }}" target="_blank" class="btn btn-primary">
+                    <i class="mdi-content-add"></i> {% trans %}Create Playlists{% endtrans %}
+                </a>
+            </div>
+        `);
+        return;
+    }
+    
+    let html = '<div class="playlist-selection-list">';
+    html += '<p class="help-block">{% trans %}Select the playlists where you want to add this video:{% endtrans %}</p>';
+    
+    playlists.forEach(function(playlist) {
+        html += `
+            <div class="checkbox" style="padding: 10px; margin: 5px 0; background: #f5f5f5; border-radius: 4px;">
+                <label style="display: flex; align-items: center; cursor: pointer;">
+                    <input type="checkbox" class="playlist-checkbox" value="${playlist.id}" style="margin-right: 10px;">
+                    <div style="flex: 1;">
+                        <strong>${playlist.title}</strong>
+                        <br>
+                        <small class="text-muted">
+                            <i class="mdi-av-videocam"></i> ${playlist.videoCount || 0} videos
+                            ${playlist.description ? '| ' + playlist.description : ''}
+                        </small>
+                    </div>
+                </label>
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    $('#playlists-modal-body').html(html);
+    $('#assign-playlists-btn').prop('disabled', false);
+    
+    // Handle checkbox changes
+    $('.playlist-checkbox').on('change', function() {
+        const selectedCount = $('.playlist-checkbox:checked').length;
+        const btnText = selectedCount > 0 
+            ? `{% trans %}Assign to{% endtrans %} ${selectedCount} {% trans %}playlist(s){% endtrans %}`
+            : '{% trans %}Assign to Selected Playlists{% endtrans %}';
+        $('#assign-playlists-btn').text(btnText);
+    });
+    
+    // Handle assignment
+    $('#assign-playlists-btn').off('click').on('click', function() {
+        assignToSelectedPlaylists(mmId);
+    });
+}
+
+function assignToSelectedPlaylists(mmId) {
+    const selectedPlaylists = [];
+    $('.playlist-checkbox:checked').each(function() {
+        selectedPlaylists.push($(this).val());
+    });
+    
+    if (selectedPlaylists.length === 0) {
+        alert('{% trans %}Please select at least one playlist{% endtrans %}');
+        return;
+    }
+    
+    const btn = $('#assign-playlists-btn');
+    const originalText = btn.text();
+    btn.prop('disabled', true).text('{% trans %}Assigning...{% endtrans %}');
+    
+    $.ajax({
+        url: '{{ path('pumukit_youtube_video_assign_playlists', {'id': '__MM_ID__'}) }}'.replace('__MM_ID__', mmId),
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({playlist_ids: selectedPlaylists}),
+        success: function(response) {
+            showYoutubeAlert(mmId, 'success', response.message || '{% trans %}Video assigned to playlists successfully{% endtrans %}');
+            $('#assignPlaylistsModal').modal('hide');
+            setTimeout(function() {
+                location.reload();
+            }, 2000);
+        },
+        error: function(xhr) {
+            btn.prop('disabled', false).text(originalText);
+            const response = xhr.responseJSON || {message: '{% trans %}Error assigning to playlists{% endtrans %}'};
+            showYoutubeAlert(mmId, 'danger', response.message);
+        }
+    });
+}
+
+// Delete from YouTube
+function deleteVideoFromYoutube(mmId) {
+    if (!confirm('{% trans %}Are you sure you want to delete this video from YouTube?{% endtrans %}')) {
+        return;
+    }
+    if (!confirm('{% trans %}Final confirmation: This will PERMANENTLY delete the video from YouTube. The video will remain in PuMuKIT. Continue?{% endtrans %}')) {
+        return;
+    }
+
+    $.ajax({
+        url: '{{ path('pumukit_youtube_video_delete', {'id': '__MM_ID__'}) }}'.replace('__MM_ID__', mmId),
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({async: false}),
+        success: function(response) {
+            showYoutubeAlert(mmId, 'success', response.message);
+            setTimeout(function() {
+                location.reload();
+            }, 2000);
+        },
+        error: function(xhr) {
+            const response = xhr.responseJSON || {message: '{% trans %}Error deleting video{% endtrans %}'};
+            showYoutubeAlert(mmId, 'danger', response.message);
+        }
+    });
+}
+
+// Alert helper
+function showYoutubeAlert(mmId, type, message) {
+    const alertDiv = $(`#youtube-alert-${mmId}`);
+    const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+    const bgColor = type === 'success' ? 'rgba(40, 167, 69, 0.9)' : 'rgba(220, 53, 69, 0.9)';
+    
+    alertDiv.html(`
+        <div class="alert ${alertClass}" style="background: ${bgColor}; color: white; border: none; padding: 12px; border-radius: 4px;">
+            ${message}
+        </div>
+    `).show();
+    
+    setTimeout(function() {
+        alertDiv.fadeOut();
+    }, 5000);
+}
+</script>
+
+<style>
+.youtube-action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    transition: all 0.3s;
+}
+</style>
+{% endif %}

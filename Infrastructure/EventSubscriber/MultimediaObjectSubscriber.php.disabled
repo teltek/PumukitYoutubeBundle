@@ -1,0 +1,140 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Pumukit\YoutubeBundle\Infrastructure\EventSubscriber;
+
+use Doctrine\Common\EventSubscriber;
+use Doctrine\ODM\MongoDB\Event\LifecycleEventArgs;
+use Doctrine\ODM\MongoDB\Events;
+use Pumukit\YoutubeBundle\Application\Service\UploadOrchestrator;
+use Psr\Log\LoggerInterface;
+
+/**
+ * Listens to MultimediaObject lifecycle events and triggers automatic YouTube uploads.
+ * 
+ * DISABLED: This subscriber caused duplicate uploads. We now use manual uploads via the UI button.
+ * To re-enable automatic uploads, uncomment the "implements EventSubscriber" part.
+ */
+class MultimediaObjectSubscriber // implements EventSubscriber
+{
+    private const MULTIMEDIA_OBJECT_CLASS = 'Pumukit\SchemaBundle\Document\MultimediaObject';
+
+    public function __construct(
+        private readonly UploadOrchestrator $uploadOrchestrator,
+        private readonly LoggerInterface $logger
+    ) {
+    }
+
+    public function getSubscribedEvents(): array
+    {
+        return [
+            Events::postPersist,
+            Events::postUpdate,
+        ];
+    }
+
+    /**
+     * Handles postPersist events (new MultimediaObject created).
+     */
+    public function postPersist(LifecycleEventArgs $args): void
+    {
+        $document = $args->getDocument();
+
+        if (!$this->isMultimediaObject($document)) {
+            return;
+        }
+
+        // Verificar si tiene el tag PUCHYOUTUBE
+        if (!$this->hasYoutubeTag($document)) {
+            $this->logger->debug('[MultimediaObjectSubscriber] MM does not have PUCHYOUTUBE tag, skipping', [
+                'multimediaObjectId' => $document->getId(),
+            ]);
+            return;
+        }
+
+        $this->logger->debug('[MultimediaObjectSubscriber] postPersist triggered', [
+            'multimediaObjectId' => $document->getId(),
+        ]);
+
+        $this->processDocument($document, 'postPersist');
+    }
+
+    /**
+     * Handles postUpdate events (existing MultimediaObject updated).
+     */
+    public function postUpdate(LifecycleEventArgs $args): void
+    {
+        $document = $args->getDocument();
+
+        if (!$this->isMultimediaObject($document)) {
+            return;
+        }
+
+        // Verificar si tiene el tag PUCHYOUTUBE
+        if (!$this->hasYoutubeTag($document)) {
+            $this->logger->debug('[MultimediaObjectSubscriber] MM does not have PUCHYOUTUBE tag, skipping', [
+                'multimediaObjectId' => $document->getId(),
+            ]);
+            return;
+        }
+
+        $this->logger->debug('[MultimediaObjectSubscriber] postUpdate triggered', [
+            'multimediaObjectId' => $document->getId(),
+        ]);
+
+        $this->processDocument($document, 'postUpdate');
+    }
+
+    /**
+     * Verifica si el MultimediaObject tiene el tag PUCHYOUTUBE
+     */
+    private function hasYoutubeTag(object $document): bool
+    {
+        if (!method_exists($document, 'containsTagWithCod')) {
+            return false;
+        }
+        
+        return $document->containsTagWithCod('PUCHYOUTUBE');
+    }
+
+    /**
+     * Checks if document is a MultimediaObject.
+     */
+    private function isMultimediaObject(object $document): bool
+    {
+        return $document instanceof \Pumukit\SchemaBundle\Document\MultimediaObject
+            || get_class($document) === self::MULTIMEDIA_OBJECT_CLASS;
+    }
+
+    /**
+     * Processes the document through the UploadOrchestrator.
+     */
+    private function processDocument(object $document, string $eventType): void
+    {
+        try {
+            $triggered = $this->uploadOrchestrator->processMultimediaObject($document);
+
+            if ($triggered) {
+                $this->logger->info('[MultimediaObjectSubscriber] Upload workflow triggered', [
+                    'multimediaObjectId' => $document->getId(),
+                    'eventType' => $eventType,
+                ]);
+            } else {
+                $this->logger->debug('[MultimediaObjectSubscriber] Upload workflow not triggered', [
+                    'multimediaObjectId' => $document->getId(),
+                    'eventType' => $eventType,
+                    'reason' => 'validation_failed_or_skipped',
+                ]);
+            }
+        } catch (\Exception $e) {
+            // Log error but don't propagate - we don't want to break MultimediaObject operations
+            $this->logger->error('[MultimediaObjectSubscriber] Error processing document', [
+                'multimediaObjectId' => $document->getId(),
+                'eventType' => $eventType,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+        }
+    }
+}

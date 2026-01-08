@@ -1,0 +1,579 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}YouTube Video Management - {{ multimediaObject.title }}{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .youtube-panel {
+            padding: 20px;
+            background: #f8f9fa;
+        }
+        .youtube-card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        .youtube-card-header {
+            background: linear-gradient(135deg, #ff0000 0%, #cc0000 100%);
+            color: white;
+            padding: 15px 20px;
+            font-size: 18px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .youtube-card-body {
+            padding: 20px;
+        }
+        .video-info {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .video-info-item {
+            flex: 1;
+        }
+        .video-info-label {
+            font-size: 12px;
+            color: #6c757d;
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        .video-info-value {
+            font-size: 14px;
+            color: #333;
+        }
+        .video-info-value a {
+            color: #ff0000;
+            text-decoration: none;
+        }
+        .video-info-value a:hover {
+            text-decoration: underline;
+        }
+        .action-section {
+            margin-bottom: 25px;
+        }
+        .action-section h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #ff0000;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 5px;
+            display: block;
+        }
+        .form-control {
+            width: 100%;
+            padding: 8px 12px;
+            font-size: 14px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+        }
+        .form-control:focus {
+            outline: none;
+            border-color: #ff0000;
+            box-shadow: 0 0 0 0.2rem rgba(255, 0, 0, 0.25);
+        }
+        .btn {
+            padding: 8px 20px;
+            font-size: 14px;
+            font-weight: 600;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn-primary {
+            background: #ff0000;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #cc0000;
+        }
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        .btn-success:hover {
+            background: #218838;
+        }
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        .checkbox-group label {
+            margin: 0;
+            cursor: pointer;
+        }
+        .alert {
+            padding: 12px 15px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            display: none;
+        }
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .alert-danger {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .playlist-select {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+        .playlist-select > div {
+            flex: 1;
+        }
+        .file-upload-wrapper {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+        .file-upload-wrapper > div {
+            flex: 1;
+        }
+        .privacy-options {
+            display: flex;
+            gap: 15px;
+        }
+        .privacy-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .privacy-option input[type="radio"] {
+            cursor: pointer;
+        }
+        .privacy-option label {
+            margin: 0;
+            cursor: pointer;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="youtube-panel">
+    <div class="youtube-card">
+        <div class="youtube-card-header">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+            </svg>
+            YouTube Video Management
+        </div>
+        <div class="youtube-card-body">
+            <div class="video-info">
+                <div class="video-info-item">
+                    <div class="video-info-label">PuMuKIT Title</div>
+                    <div class="video-info-value">{{ multimediaObject.title }}</div>
+                </div>
+                <div class="video-info-item">
+                    <div class="video-info-label">YouTube Video ID</div>
+                    <div class="video-info-value">
+                        <a href="https://www.youtube.com/watch?v={{ youtubeVideoId }}" target="_blank">
+                            {{ youtubeVideoId }}
+                        </a>
+                    </div>
+                </div>
+                <div class="video-info-item">
+                    <div class="video-info-label">YouTube Account</div>
+                    <div class="video-info-value">{{ account.accountName }}</div>
+                </div>
+            </div>
+
+            <div id="alertContainer"></div>
+
+            <!-- Update Metadata Section -->
+            <div class="action-section">
+                <h3>📝 Update Video Metadata</h3>
+                <form id="updateMetadataForm">
+                    <div class="form-group">
+                        <label for="videoTitle">Title</label>
+                        <input type="text" id="videoTitle" name="title" class="form-control" placeholder="Leave empty to keep current title">
+                    </div>
+                    <div class="form-group">
+                        <label for="videoDescription">Description</label>
+                        <textarea id="videoDescription" name="description" class="form-control" rows="4" placeholder="Leave empty to keep current description"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Privacy Status</label>
+                        <div class="privacy-options">
+                            <div class="privacy-option">
+                                <input type="radio" id="privacyPublic" name="privacy" value="public">
+                                <label for="privacyPublic">Public</label>
+                            </div>
+                            <div class="privacy-option">
+                                <input type="radio" id="privacyUnlisted" name="privacy" value="unlisted">
+                                <label for="privacyUnlisted">Unlisted</label>
+                            </div>
+                            <div class="privacy-option">
+                                <input type="radio" id="privacyPrivate" name="privacy" value="private">
+                                <label for="privacyPrivate">Private</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="videoTags">Tags (comma-separated)</label>
+                        <input type="text" id="videoTags" name="tags" class="form-control" placeholder="tag1, tag2, tag3">
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="syncFromMM" name="sync_from_mm">
+                        <label for="syncFromMM">Sync metadata from PuMuKIT MultimediaObject</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="updateAsync" name="async">
+                        <label for="updateAsync">Process in background (async)</label>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Update Video</button>
+                </form>
+            </div>
+
+            <!-- Upload Captions Section -->
+            <div class="action-section">
+                <h3>💬 Upload Captions/Subtitles</h3>
+                <form id="uploadCaptionsForm" enctype="multipart/form-data">
+                    <div class="file-upload-wrapper">
+                        <div class="form-group" style="flex: 2;">
+                            <label for="captionFile">Caption File (SRT, VTT, or SBV)</label>
+                            <input type="file" id="captionFile" name="caption_file" class="form-control" accept=".srt,.vtt,.sbv" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="captionLanguage">Language Code</label>
+                            <input type="text" id="captionLanguage" name="language" class="form-control" value="en" placeholder="en" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="captionName">Caption Name</label>
+                            <input type="text" id="captionName" name="name" class="form-control" value="Subtitles" placeholder="Subtitles">
+                        </div>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="captionDraft" name="is_draft">
+                        <label for="captionDraft">Upload as draft</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="captionAsync" name="async">
+                        <label for="captionAsync">Process in background (async)</label>
+                    </div>
+                    <button type="submit" class="btn btn-success">Upload Captions</button>
+                </form>
+            </div>
+
+            <!-- Playlist Management Section -->
+            <div class="action-section">
+                <h3>📋 Manage Playlists</h3>
+                
+                <div class="form-group">
+                    <label>Add to Playlist</label>
+                    <div class="playlist-select">
+                        <div>
+                            <select id="addPlaylistId" class="form-control">
+                                <option value="">Select a playlist...</option>
+                                {% for playlist in playlists %}
+                                    <option value="{{ playlist.id }}">{{ playlist.title }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <button type="button" class="btn btn-success" onclick="addToPlaylist()">Add to Playlist</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Remove from Playlist</label>
+                    <div class="playlist-select">
+                        <div>
+                            <select id="removePlaylistId" class="form-control">
+                                <option value="">Select a playlist...</option>
+                                {% for playlist in playlists %}
+                                    <option value="{{ playlist.id }}">{{ playlist.title }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <button type="button" class="btn btn-secondary" onclick="removeFromPlaylist()">Remove from Playlist</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Move Between Playlists</label>
+                    <div class="playlist-select">
+                        <div>
+                            <label style="font-size: 11px; color: #6c757d;">From Playlist</label>
+                            <select id="fromPlaylistId" class="form-control">
+                                <option value="">Select source playlist...</option>
+                                {% for playlist in playlists %}
+                                    <option value="{{ playlist.id }}">{{ playlist.title }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label style="font-size: 11px; color: #6c757d;">To Playlist</label>
+                            <select id="toPlaylistId" class="form-control">
+                                <option value="">Select target playlist...</option>
+                                {% for playlist in playlists %}
+                                    <option value="{{ playlist.id }}">{{ playlist.title }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <button type="button" class="btn btn-primary" onclick="moveToPlaylist()">Move Video</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Delete Video Section -->
+            <div class="action-section">
+                <h3>🗑️ Delete from YouTube</h3>
+                <p style="color: #721c24; font-size: 13px; margin-bottom: 15px;">
+                    ⚠️ Warning: This will permanently delete the video from YouTube. This action cannot be undone.
+                </p>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="deleteAsync" name="async">
+                    <label for="deleteAsync">Process in background (async)</label>
+                </div>
+                <button type="button" class="btn btn-danger" onclick="deleteVideo()">Delete Video from YouTube</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const multimediaObjectId = '{{ multimediaObject.id }}';
+
+// Update Metadata Form
+document.getElementById('updateMetadataForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const data = {};
+    
+    // Only include non-empty fields
+    if (formData.get('title')) data.title = formData.get('title');
+    if (formData.get('description')) data.description = formData.get('description');
+    if (formData.get('tags')) data.tags = formData.get('tags');
+    
+    const privacy = document.querySelector('input[name="privacy"]:checked');
+    if (privacy) data.privacy = privacy.value;
+    
+    data.sync_from_mm = document.getElementById('syncFromMM').checked;
+    data.async = document.getElementById('updateAsync').checked;
+    
+    try {
+        const response = await fetch(`/admin/youtube/video/update/${multimediaObjectId}`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        showAlert(result.success ? 'success' : 'danger', result.message);
+        
+        if (result.success) {
+            this.reset();
+        }
+    } catch (error) {
+        showAlert('danger', 'Error: ' + error.message);
+    }
+});
+
+// Upload Captions Form
+document.getElementById('uploadCaptionsForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    
+    try {
+        const response = await fetch(`/admin/youtube/video/captions/upload/${multimediaObjectId}`, {
+            method: 'POST',
+            body: formData
+        });
+        
+        const result = await response.json();
+        showAlert(result.success ? 'success' : 'danger', result.message);
+        
+        if (result.success) {
+            this.reset();
+        }
+    } catch (error) {
+        showAlert('danger', 'Error: ' + error.message);
+    }
+});
+
+// Playlist Management Functions
+async function addToPlaylist() {
+    const playlistId = document.getElementById('addPlaylistId').value;
+    if (!playlistId) {
+        showAlert('danger', 'Please select a playlist');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/admin/youtube/video/playlist/add/${multimediaObjectId}`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({playlist_id: playlistId})
+        });
+        
+        const result = await response.json();
+        showAlert(result.success ? 'success' : 'danger', result.message);
+        
+        if (result.success) {
+            document.getElementById('addPlaylistId').value = '';
+        }
+    } catch (error) {
+        showAlert('danger', 'Error: ' + error.message);
+    }
+}
+
+async function removeFromPlaylist() {
+    const playlistId = document.getElementById('removePlaylistId').value;
+    if (!playlistId) {
+        showAlert('danger', 'Please select a playlist');
+        return;
+    }
+    
+    if (!confirm('Are you sure you want to remove this video from the playlist?')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/admin/youtube/video/playlist/remove/${multimediaObjectId}`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({playlist_id: playlistId})
+        });
+        
+        const result = await response.json();
+        showAlert(result.success ? 'success' : 'danger', result.message);
+        
+        if (result.success) {
+            document.getElementById('removePlaylistId').value = '';
+        }
+    } catch (error) {
+        showAlert('danger', 'Error: ' + error.message);
+    }
+}
+
+async function moveToPlaylist() {
+    const fromPlaylist = document.getElementById('fromPlaylistId').value;
+    const toPlaylist = document.getElementById('toPlaylistId').value;
+    
+    if (!toPlaylist) {
+        showAlert('danger', 'Please select a target playlist');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/admin/youtube/video/playlist/move/${multimediaObjectId}`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                from_playlist: fromPlaylist || null,
+                to_playlist: toPlaylist
+            })
+        });
+        
+        const result = await response.json();
+        showAlert(result.success ? 'success' : 'danger', result.message);
+        
+        if (result.success) {
+            document.getElementById('fromPlaylistId').value = '';
+            document.getElementById('toPlaylistId').value = '';
+        }
+    } catch (error) {
+        showAlert('danger', 'Error: ' + error.message);
+    }
+}
+
+// Delete Video Function
+async function deleteVideo() {
+    if (!confirm('Are you sure you want to delete this video from YouTube? This action cannot be undone!')) {
+        return;
+    }
+    
+    if (!confirm('Final confirmation: This will PERMANENTLY delete the video from YouTube. Continue?')) {
+        return;
+    }
+    
+    const isAsync = document.getElementById('deleteAsync').checked;
+    
+    try {
+        const response = await fetch(`/admin/youtube/video/delete/${multimediaObjectId}`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({async: isAsync})
+        });
+        
+        const result = await response.json();
+        showAlert(result.success ? 'success' : 'danger', result.message);
+        
+        if (result.success && !isAsync) {
+            setTimeout(() => {
+                window.location.reload();
+            }, 2000);
+        }
+    } catch (error) {
+        showAlert('danger', 'Error: ' + error.message);
+    }
+}
+
+// Alert Helper Function
+function showAlert(type, message) {
+    const alertContainer = document.getElementById('alertContainer');
+    const alert = document.createElement('div');
+    alert.className = `alert alert-${type}`;
+    alert.textContent = message;
+    alert.style.display = 'block';
+    
+    alertContainer.innerHTML = '';
+    alertContainer.appendChild(alert);
+    
+    setTimeout(() => {
+        alert.style.display = 'none';
+    }, 5000);
+}
+</script>
+{% endblock %}
