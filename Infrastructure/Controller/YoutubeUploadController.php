@@ -51,9 +51,25 @@ class YoutubeUploadController extends AbstractController
                 ], Response::HTTP_NOT_FOUND);
             }
 
+            // Check if video is already uploaded to YouTube
+            $youtubeVideoId = $multimediaObject->getProperty('youtube_video_id');
+            if ($youtubeVideoId) {
+                $this->logger->warning('[YouTube Backoffice] Upload attempted for already uploaded video', [
+                    'multimediaObjectId' => $multimediaObject->getId(),
+                    'youtubeVideoId' => $youtubeVideoId,
+                    'title' => $multimediaObject->getTitle(),
+                    'user' => $this->getUser()?->getUsername(),
+                ]);
+
+                return new JsonResponse([
+                    'status' => 'warning',
+                    'message' => 'This video is already uploaded to YouTube (ID: ' . $youtubeVideoId . '). Use "Force Re-upload" if you want to upload it again.',
+                    'youtubeVideoId' => $youtubeVideoId,
+                ], Response::HTTP_OK);
+            }
+
             // Dispatch upload message using Symfony Messenger
             // This will be processed asynchronously by the UploadYoutubeVideoMessageHandler
-            // The handler will check for duplicates and send appropriate notifications
             $message = new UploadYoutubeVideoMessage(
                 multimediaObjectId: $multimediaObject->getId(),
                 accountName: null, // Will use default account from configuration

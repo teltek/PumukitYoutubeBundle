@@ -8,7 +8,7 @@ use Doctrine\ODM\MongoDB\DocumentManager;
 use MongoDB\BSON\ObjectId;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\YoutubeBundle\Application\Message\Playlist\AssignToPlaylistsMessage;
-use Pumukit\YoutubeBundle\Document\YoutubeAccount;
+use Pumukit\YoutubeBundle\Domain\Model\YoutubeAccount;
 use Pumukit\YoutubeBundle\Domain\Service\YoutubeEventService;
 use Pumukit\YoutubeBundle\Infrastructure\Service\GoogleClientFactory;
 use Pumukit\YoutubeBundle\Message\DeleteYoutubeVideoMessage;
@@ -168,11 +168,9 @@ class YoutubeVideoManagementController extends AbstractController
 
             $account = $this->documentManager->getRepository(YoutubeAccount::class)->find($accountId);
             $this->youtubeEventService->updateVideoOnYoutube(
-                $multimediaObject,
                 $account,
                 $youtubeVideoId,
-                $metadata,
-                $syncFromMM
+                $metadata
             );
 
             return new JsonResponse([

@@ -273,6 +273,33 @@ class QuotaService
             'remaining' => max(0, $available - $cost),
         ];
     }
+
+    /**
+     * Force quota exhaustion when YouTube returns 429.
+     * This syncs local quota with YouTube's actual quota.
+     */
+    public function forceQuotaExhaustion(string $youtubeAccountId): void
+    {
+        $quota = $this->getOrCreateDailyQuota($youtubeAccountId);
+        
+        // Mark all remaining quota as used
+        $remaining = $quota->getQuotaRemaining();
+        if ($remaining > 0) {
+            $quota->addOperation('quota.sync.exhausted', $remaining, [
+                'reason' => 'YouTube returned 429 - quota exceeded',
+                'synced_at' => (new \DateTimeImmutable())->format('Y-m-d H:i:s'),
+            ]);
+            
+            $this->documentManager->flush();
+            
+            $this->logger->warning('[QuotaService] Forced quota exhaustion due to YouTube 429', [
+                'youtubeAccountId' => $youtubeAccountId,
+                'remainingQuotaConsumed' => $remaining,
+                'totalQuotaUsed' => $quota->getQuotaUsed(),
+            ]);
+        }
+    }
 }
+
 
 

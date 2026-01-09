@@ -12,6 +12,7 @@ use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\YoutubeBundle\Application\Message\Playlist\UpdatePlaylistItemsMessage;
 use Pumukit\YoutubeBundle\Document\Error;
 use Pumukit\YoutubeBundle\Document\Youtube;
+use Pumukit\YoutubeBundle\Infrastructure\Service\QueueDrainService;
 use Pumukit\YoutubeBundle\PumukitYoutubeBundle;
 use Pumukit\YoutubeBundle\Services\GoogleAccountService;
 use Pumukit\YoutubeBundle\Services\GooglePlaylistItemService;
@@ -33,6 +34,7 @@ final class UpdatePlaylistItemsMessageHandler extends GooglePlaylistItemService
         private readonly DocumentManager $dm,
         private readonly GoogleAccountService $googleAccountService,
         private readonly PlaylistItemDeleteService $playlistItemDeleteService,
+        private readonly QueueDrainService $queueDrainService,
         private readonly LoggerInterface $logger
     ) {}
 
@@ -333,10 +335,21 @@ final class UpdatePlaylistItemsMessageHandler extends GooglePlaylistItemService
         ]);
 
         if ($errorCode === 429) {
-            // Quota exceeded - No reintentar
-            $this->logger->warning('[UpdatePlaylistItemsMessageHandler] ⚠️ QUOTA EXCEEDED', [
+            // Quota exceeded - Vaciar cola de eventos
+            $this->logger->warning('[UpdatePlaylistItemsMessageHandler] ⚠️ QUOTA EXCEEDED - Draining event queue', [
                 'multimediaObjectId' => $message->getMultimediaObjectId(),
             ]);
+            
+            // Extraer accountId del multimedia object
+            $accountId = $this->extractAccountId($message->getMultimediaObjectId());
+            if ($accountId) {
+                $drainedCount = $this->queueDrainService->drainEventsQueue($accountId);
+                $this->logger->warning('[UpdatePlaylistItemsMessageHandler] Events queue drained', [
+                    'accountId' => $accountId,
+                    'drainedCount' => $drainedCount,
+                ]);
+            }
+            
             return;
         }
 
@@ -350,5 +363,31 @@ final class UpdatePlaylistItemsMessageHandler extends GooglePlaylistItemService
 
         // Para otros errores, re-lanzar para reintentar
         throw $e;
+    }
+
+    /**
+     * Extrae el accountId del MultimediaObject
+     */
+    private function extractAccountId(string $multimediaObjectId): ?string
+    {
+        try {
+            $multimediaObject = $this->dm->getRepository(MultimediaObject::class)
+                ->find(new ObjectId($multimediaObjectId));
+
+            if (!$multimediaObject) {
+                return null;
+            }
+
+            $youtube = $this->dm->getRepository(Youtube::class)->findOneBy([
+                'multimediaObjectId' => $multimediaObject->getId(),
+            ]);
+
+            return $youtube?->getYoutubeAccount();
+        } catch (\Exception $e) {
+            $this->logger->error('[UpdatePlaylistItemsMessageHandler] Error extracting accountId', [
+                'error' => $e->getMessage(),
+            ]);
+            return null;
+        }
     }
 }
