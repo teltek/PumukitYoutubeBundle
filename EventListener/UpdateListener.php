@@ -6,9 +6,12 @@ namespace Pumukit\YoutubeBundle\EventListener;
 
 use Doctrine\ODM\MongoDB\DocumentManager;
 use MongoDB\BSON\ObjectId;
+use Pumukit\EncoderBundle\Services\DTO\JobOptions;
+use Pumukit\EncoderBundle\Services\JobCreator;
 use Pumukit\SchemaBundle\Document\EmbeddedTag;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Tag;
+use Pumukit\SchemaBundle\Document\ValueObject\Path;
 use Pumukit\SchemaBundle\Event\MultimediaObjectEvent;
 use Pumukit\YoutubeBundle\Document\Youtube;
 use Pumukit\YoutubeBundle\PumukitYoutubeBundle;
@@ -16,18 +19,48 @@ use Pumukit\YoutubeBundle\PumukitYoutubeBundle;
 class UpdateListener
 {
     private $documentManager;
+    private $jobCreator;
 
-    public function __construct(DocumentManager $documentManager)
+    public function __construct(DocumentManager $documentManager, JobCreator $jobCreator)
     {
         $this->documentManager = $documentManager;
+        $this->jobCreator = $jobCreator;
     }
 
     public function onMultimediaObjectUpdate(MultimediaObjectEvent $event): void
     {
         $multimediaObject = $event->getMultimediaObject();
 
+        $puchYoutube = $this->documentManager->getRepository(Tag::class)->findOneBy(['cod' => PumukitYoutubeBundle::YOUTUBE_TAG_CODE]);
+        if ($puchYoutube && !$multimediaObject->containsTag($puchYoutube)) {
+            return;
+        }
+
         $this->updateYoutubeDocument($multimediaObject);
         $this->setYoutubeAccount($multimediaObject);
+
+        $master = $multimediaObject->getTrackWithTag('master');
+        if (!$master || !$multimediaObject->isOnlyAudio()) {
+            return;
+        }
+
+        if ($multimediaObject->getTrackWithTag('profile:video_youtube')) {
+            return;
+        }
+
+        $jobOptions = new JobOptions(
+            'video_youtube',
+            2,
+            $master->language(),
+            [],
+            [],
+            0,
+            0,
+            true
+        );
+
+        $path = Path::create($master->storage()->path()->path());
+        $this->jobCreator->fromPath($multimediaObject, $path, $jobOptions);
     }
 
     private function updateYoutubeDocument(MultimediaObject $multimediaObject): void
