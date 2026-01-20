@@ -31,16 +31,29 @@ class UpdateListener
     {
         $multimediaObject = $event->getMultimediaObject();
 
-        $puchYoutube = $this->documentManager->getRepository(Tag::class)->findOneBy(['cod' => PumukitYoutubeBundle::YOUTUBE_TAG_CODE]);
-        if ($puchYoutube && !$multimediaObject->containsTag($puchYoutube)) {
-            return;
-        }
-
         $this->updateYoutubeDocument($multimediaObject);
         $this->setYoutubeAccount($multimediaObject);
 
+        $this->shouldGenerateJobForAudio($multimediaObject);
+    }
+
+    private function shouldGenerateJobForAudio(MultimediaObject $multimediaObject): void
+    {
+        $youtubeTag = $this->documentManager
+            ->getRepository(Tag::class)
+            ->findOneBy(['cod' => PumukitYoutubeBundle::YOUTUBE_TAG_CODE])
+        ;
+
+        if (!$youtubeTag || !$multimediaObject->containsTag($youtubeTag)) {
+            return;
+        }
+
+        if (!$multimediaObject->isOnlyAudio()) {
+            return;
+        }
+
         $master = $multimediaObject->getTrackWithTag('master');
-        if (!$master || !$multimediaObject->isOnlyAudio()) {
+        if (!$master) {
             return;
         }
 
