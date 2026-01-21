@@ -6,7 +6,7 @@ namespace Pumukit\YoutubeBundle\Infrastructure\Service;
 
 use Doctrine\ODM\MongoDB\DocumentManager;
 use Psr\Log\LoggerInterface;
-use Pumukit\YoutubeBundle\Application\Message\WaitingMessage;
+use Pumukit\YoutubeBundle\QuotaHexagonal\Application\Waiting\WaitingMessage;
 use Symfony\Component\Messenger\MessageBusInterface;
 
 /**
@@ -200,8 +200,6 @@ class QueueDrainService
         // Map to subnamespaces
         $subnamespaces = [
             'Video' => ['UploadVideoMessage', 'UpdateVideoMessage', 'DeleteVideoMessage', 'UpdatePublicationMessage', 'UploadYoutubeVideoMessage'],
-            'Playlist' => ['CreatePlaylistMessage', 'UpdatePlaylistMessage', 'DeletePlaylistMessage', 'AddVideoToPlaylistMessage', 'RemoveVideoFromPlaylistMessage', 'AssignToPlaylistsMessage', 'UpdatePlaylistItemsMessage', 'SyncPlaylistsMessage'],
-            'Caption' => ['UploadCaptionsMessage'],
         ];
 
         foreach ($subnamespaces as $sub => $messages) {
@@ -225,14 +223,6 @@ class QueueDrainService
             'UpdateVideoMessage' => 50,
             'DeleteVideoMessage' => 50,
             'UpdatePublicationMessage' => 50,
-            'CreatePlaylistMessage' => 50,
-            'UpdatePlaylistMessage' => 50,
-            'DeletePlaylistMessage' => 50,
-            'AddVideoToPlaylistMessage' => 50,
-            'RemoveVideoFromPlaylistMessage' => 50,
-            'AssignToPlaylistsMessage' => 50,
-            'UpdatePlaylistItemsMessage' => 50,
-            'UploadCaptionsMessage' => 400,
         ];
 
         return $costs[$messageType] ?? 50;
@@ -249,14 +239,6 @@ class QueueDrainService
             'UpdateVideoMessage' => 'videos.update',
             'DeleteVideoMessage' => 'videos.delete',
             'UpdatePublicationMessage' => 'videos.update',
-            'CreatePlaylistMessage' => 'playlists.insert',
-            'UpdatePlaylistMessage' => 'playlists.update',
-            'DeletePlaylistMessage' => 'playlists.delete',
-            'AddVideoToPlaylistMessage' => 'playlistItems.insert',
-            'RemoveVideoFromPlaylistMessage' => 'playlistItems.delete',
-            'AssignToPlaylistsMessage' => 'playlistItems.insert',
-            'UpdatePlaylistItemsMessage' => 'playlistItems.insert',
-            'UploadCaptionsMessage' => 'captions.insert',
         ];
 
         return $operations[$messageType] ?? 'unknown';

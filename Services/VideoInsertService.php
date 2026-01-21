@@ -12,6 +12,7 @@ use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\YoutubeBundle\Document\Error;
 use Pumukit\YoutubeBundle\Document\Youtube;
+use Pumukit\YoutubeBundle\Domain\Service\Validation\YoutubeMetadataValidator;
 
 class VideoInsertService extends GoogleVideoService
 {
@@ -20,6 +21,7 @@ class VideoInsertService extends GoogleVideoService
     private $documentManager;
     private $youtubeConfigurationService;
     private $videoDataValidationService;
+    private $metadataValidator;
 
     private $logger;
 
@@ -28,12 +30,14 @@ class VideoInsertService extends GoogleVideoService
         DocumentManager $documentManager,
         YoutubeConfigurationService $youtubeConfigurationService,
         VideoDataValidationService $videoDataValidationService,
+        YoutubeMetadataValidator $metadataValidator,
         LoggerInterface $logger
     ) {
         $this->googleAccountService = $googleAccountService;
         $this->documentManager = $documentManager;
         $this->youtubeConfigurationService = $youtubeConfigurationService;
         $this->videoDataValidationService = $videoDataValidationService;
+        $this->metadataValidator = $metadataValidator;
         $this->logger = $logger;
     }
 
@@ -52,6 +56,28 @@ class VideoInsertService extends GoogleVideoService
         $description = $this->videoDataValidationService->getDescriptionForYoutube($multimediaObject);
         $tags = $this->videoDataValidationService->getTagsForYoutube($multimediaObject);
 
+        // Validate metadata BEFORE attempting upload to avoid wasting quota
+        $metadataValidation = $this->metadataValidator->validate($title, $description, $tags, '22');
+        
+        if (!$metadataValidation['valid']) {
+            $errorMessage = 'Metadata validation failed: ' . implode(', ', $metadataValidation['errors']);
+            $this->logger->error('[YouTube] Metadata validation failed for MultimediaObject ' . $multimediaObject->getId(), [
+                'errors' => $metadataValidation['errors'],
+                'warnings' => $metadataValidation['warnings'],
+                'title_length' => mb_strlen($title),
+                'description_bytes' => strlen($description),
+                'tags' => $tags,
+            ]);
+            throw new \InvalidArgumentException($errorMessage);
+        }
+        
+        // Log metadata warnings (if any)
+        if (!empty($metadataValidation['warnings'])) {
+            $this->logger->warning('[YouTube] Metadata validation warnings for MultimediaObject ' . $multimediaObject->getId(), [
+                'warnings' => $metadataValidation['warnings'],
+            ]);
+        }
+
         $status = 'public';
         if ($this->youtubeConfigurationService->syncStatus()) {
             $status = $this->youtubeConfigurationService->videoStatusMapping($multimediaObject->getStatus());
@@ -66,15 +92,35 @@ class VideoInsertService extends GoogleVideoService
         try {
             $video = $this->insert($account, $video, $track);
         } catch (\Exception $exception) {
+            // Try to decode as JSON, but don't fail if it's not JSON
+            $errorData = null;
+            try {
+                $errorData = json_decode($exception->getMessage(), true, 512, JSON_THROW_ON_ERROR);
+            } catch (\JsonException $jsonException) {
+                // Message is not JSON, create a standard error structure
+                $errorData = [
+                    'error' => [
+                        'message' => $exception->getMessage(),
+                        'errors' => [
+                            [
+                                'reason' => 'uploadError',
+                                'message' => $exception->getMessage(),
+                            ],
+                        ],
+                    ],
+                ];
+            }
+            
             $this->updateVideoAndYoutubeDocumentByErrorResult(
                 $youtubeDocument,
-                json_decode($exception->getMessage(), true, 512, JSON_THROW_ON_ERROR)
+                $errorData
             );
 
             $errorLog = '[YouTube] Multimedia object with ID ('.$multimediaObject->getId().') failed uploading to YouTube. '.$exception->getMessage();
             $this->logger->error($errorLog);
 
-            return false;
+            // Re-throw the exception so it can be properly handled upstream
+            throw $exception;
         }
 
         $this->updateVideoAndYoutubeDocumentByResult(
@@ -177,11 +223,31 @@ class VideoInsertService extends GoogleVideoService
         array $exception
     ): void {
         $youtube->setStatus(Youtube::STATUS_ERROR);
+        
+        // Extract error information with fallbacks
+        $reason = 'uploadError';
+        $message = 'Unknown error';
+        $errorDetails = [];
+        
+        if (isset($exception['error'])) {
+            if (isset($exception['error']['message'])) {
+                $message = $exception['error']['message'];
+            }
+            
+            if (isset($exception['error']['errors']) && is_array($exception['error']['errors']) && count($exception['error']['errors']) > 0) {
+                if (isset($exception['error']['errors'][0]['reason'])) {
+                    $reason = $exception['error']['errors'][0]['reason'];
+                }
+            }
+            
+            $errorDetails = $exception['error'];
+        }
+        
         $error = Error::create(
-            $exception['error']['errors'][0]['reason'],
-            $exception['error']['message'],
+            $reason,
+            $message,
             new \DateTime(),
-            $exception['error']
+            $errorDetails
         );
         $youtube->setError($error);
 

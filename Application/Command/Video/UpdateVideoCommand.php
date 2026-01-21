@@ -6,7 +6,7 @@ namespace Pumukit\YoutubeBundle\Application\Command\Video;
 
 use Doctrine\ODM\MongoDB\DocumentManager;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
-use Pumukit\YoutubeBundle\Application\Message\Video\UpdateVideoMessage;
+use Pumukit\YoutubeBundle\VideoHexagonal\Application\Update\UpdateVideoMessage;
 use Pumukit\YoutubeBundle\Domain\Model\YoutubeAccount;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;

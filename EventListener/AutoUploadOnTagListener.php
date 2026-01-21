@@ -7,7 +7,8 @@ namespace Pumukit\YoutubeBundle\EventListener;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Event\MultimediaObjectEvent;
 use Pumukit\SchemaBundle\Event\SchemaEvents;
-use Pumukit\YoutubeBundle\Application\Message\Video\UploadYoutubeVideoMessage;
+use Pumukit\YoutubeBundle\VideoHexagonal\Application\Upload\UploadVideoMessage;
+use Pumukit\YoutubeBundle\Domain\Service\AccountResolver;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
@@ -21,7 +22,8 @@ class AutoUploadOnTagListener implements EventSubscriberInterface
     
     public function __construct(
         private readonly MessageBusInterface $messageBus,
-        private readonly LoggerInterface $logger
+        private readonly LoggerInterface $logger,
+        private readonly AccountResolver $accountResolver
     ) {
     }
 
@@ -62,10 +64,13 @@ class AutoUploadOnTagListener implements EventSubscriberInterface
 
         // Dispatch upload message
         try {
-            $message = new UploadYoutubeVideoMessage(
+            $accountId = $this->accountResolver->resolveAccount($multimediaObject);
+            $playlists = $this->accountResolver->resolvePlaylists($multimediaObject);
+            
+            $message = new UploadVideoMessage(
                 multimediaObjectId: $multimediaObject->getId(),
-                accountName: null, // Will use default account from configuration
-                forceReupload: false
+                accountId: $accountId,
+                playlists: $playlists
             );
 
             $this->messageBus->dispatch($message);

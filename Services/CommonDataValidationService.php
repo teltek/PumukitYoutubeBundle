@@ -27,7 +27,17 @@ class CommonDataValidationService
         $account = null;
         foreach ($multimediaObject->getTags() as $tag) {
             if ($tag->isChildOf($youtubeTag)) {
+                // FIXED: Clear DocumentManager to ensure we get fresh data from MongoDB
+                $this->documentManager->clear(Tag::class);
                 $account = $this->documentManager->getRepository(Tag::class)->findOneBy(['cod' => $tag->getCod()]);
+                
+                // DEBUG: Log access_token status
+                if ($account) {
+                    $accessToken = $account->getProperty('access_token');
+                    error_log('[CommonDataValidationService] Account found: ' . $account->getCod());
+                    error_log('[CommonDataValidationService] access_token type: ' . gettype($accessToken));
+                    error_log('[CommonDataValidationService] access_token value: ' . json_encode($accessToken));
+                }
 
                 break;
             }

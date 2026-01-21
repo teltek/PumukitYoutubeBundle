@@ -8,8 +8,8 @@ use Doctrine\ODM\MongoDB\DocumentManager;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\SchemaBundle\Services\TagService;
-use Pumukit\YoutubeBundle\Application\Message\Playlist\UpdatePlaylistItemsMessage;
-use Pumukit\YoutubeBundle\Application\Message\Video\UploadYoutubeVideoMessage;
+use Pumukit\YoutubeBundle\VideoHexagonal\Application\Upload\UploadVideoMessage;
+use Pumukit\YoutubeBundle\Domain\Service\AccountResolver;
 use Pumukit\YoutubeBundle\Document\Youtube;
 use Pumukit\YoutubeBundle\Services\PlaylistItemInsertService;
 use Pumukit\YoutubeBundle\Services\VideoDeleteService;
@@ -36,19 +36,23 @@ class ModalController extends AbstractController
     private $messageBus;
     
     private $logger;
+    
+    private $accountResolver;
 
     public function __construct(
         DocumentManager $documentManager,
         PlaylistItemInsertService $playlistItemInsertService,
         VideoDeleteService $videoDeleteService,
         MessageBusInterface $messageBus,
-        LoggerInterface $logger
+        LoggerInterface $logger,
+        AccountResolver $accountResolver
     ) {
         $this->documentManager = $documentManager;
         $this->playlistItemInsertService = $playlistItemInsertService;
         $this->videoDeleteService = $videoDeleteService;
         $this->messageBus = $messageBus;
         $this->logger = $logger;
+        $this->accountResolver = $accountResolver;
     }
 
     /**
@@ -69,29 +73,6 @@ class ModalController extends AbstractController
     }
 
     /**
-     * @Route ("/updateplaylist/mm/{id}", name="pumukityoutube_updateplaylist")
-     */
-    public function updatePlaylistAction(MultimediaObject $multimediaObject): JsonResponse
-    {
-        // Despachar mensaje para procesamiento asíncrono
-        $message = new UpdatePlaylistItemsMessage(
-            multimediaObjectId: $multimediaObject->getId()
-        );
-
-        $this->messageBus->dispatch($message);
-
-        $this->logger->info('[YouTube Modal] Playlist update message dispatched', [
-            'multimediaObjectId' => $multimediaObject->getId(),
-            'title' => $multimediaObject->getTitle(),
-        ]);
-
-        return new JsonResponse([
-            'success' => true,
-            'message' => 'Playlist update queued successfully. The playlists will be updated in the background.',
-        ]);
-    }
-
-    /**
      * @Route ("/forceuploads/mm/{id}", name="pumukityoutube_force_upload")
      */
     public function forceUploadAction(MultimediaObject $multimediaObject): JsonResponse
@@ -104,11 +85,14 @@ class ModalController extends AbstractController
             }
 
             // Dispatch upload message using Symfony Messenger
-            // This will be processed asynchronously by the UploadYoutubeVideoMessageHandler
-            $message = new UploadYoutubeVideoMessage(
+            // This will be processed asynchronously by the UploadVideoMessageHandler
+            $accountId = $this->accountResolver->resolveAccount($multimediaObject);
+            $playlists = $this->accountResolver->resolvePlaylists($multimediaObject);
+            
+            $message = new UploadVideoMessage(
                 multimediaObjectId: $multimediaObject->getId(),
-                accountName: null, // Will use default account from configuration
-                forceReupload: true
+                accountId: $accountId,
+                playlists: $playlists
             );
 
             $this->messageBus->dispatch($message);

@@ -36,11 +36,35 @@ final class GetQuotaStatusQueryHandler
             throw new \RuntimeException("Account not found: {$accountId}");
         }
 
-        $quotaUsages = $this->documentManager->getRepository(YoutubeQuotaUsage::class)
-            ->findBy([
-                'youtubeAccountId' => $accountId,
-                'date' => $date,
-            ]);
+        // Obtener el Tag asociado a esta cuenta para buscar por ambos IDs
+        $tagRepository = $this->documentManager->getRepository(\Pumukit\SchemaBundle\Document\Tag::class);
+        $accountTag = $tagRepository->findOneBy(['cod' => 'YOUTUBE_ACCOUNT_' . $accountId]);
+        $tagId = $accountTag ? $accountTag->getId() : null;
+
+        // Buscar por rango de fechas (todo el día en cualquier zona horaria)
+        $startOfDay = new \DateTime($date->format('Y-m-d') . ' 00:00:00');
+        $startOfDay->setTimezone(new \DateTimeZone('UTC'));
+        $startOfDay->modify('-1 day'); // Incluir el día anterior por si hay diferencia de zona horaria
+        
+        $endOfDay = new \DateTime($date->format('Y-m-d') . ' 23:59:59');
+        $endOfDay->setTimezone(new \DateTimeZone('UTC'));
+        $endOfDay->modify('+1 day'); // Incluir el día siguiente por si hay diferencia de zona horaria
+
+        // Buscar por YoutubeAccount ID, Tag ID o nombre de cuenta
+        $qb = $this->documentManager->getRepository(YoutubeQuotaUsage::class)
+            ->createQueryBuilder()
+            ->field('date')->gte($startOfDay)
+            ->field('date')->lte($endOfDay);
+        
+        // Buscar por cualquiera de los identificadores posibles
+        $accountIds = [$accountId, $account->getAccountName()];
+        if ($tagId) {
+            $accountIds[] = $tagId;
+        }
+        
+        $qb->field('youtubeAccountId')->in($accountIds);
+        
+        $quotaUsages = $qb->getQuery()->execute();
 
         $totalUsed = 0;
         $operations = [];

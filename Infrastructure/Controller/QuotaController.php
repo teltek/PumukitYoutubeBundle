@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Pumukit\YoutubeBundle\Infrastructure\Controller;
 
-use Pumukit\YoutubeBundle\Application\Query\GetQuotaStatusQuery;
-use Pumukit\YoutubeBundle\Application\Query\GetQuotaStatusQueryHandler;
+use Pumukit\YoutubeBundle\QuotaHexagonal\Application\Query\GetQuotaStatusQueryHandler;
+use Pumukit\YoutubeBundle\QuotaHexagonal\Application\Query\GetQuotaStatusQuery;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
-#[Route('/admin/youtube/quota', name: 'pumukit_youtube_quota_')]
+#[Route('/quota', name: 'pumukit_youtube_quota_')]
 final class QuotaController extends AbstractController
 {
     public function __construct(

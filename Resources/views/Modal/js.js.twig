@@ -1,20 +1,5 @@
 "use strict";
 
-$('.manualUpdatePlaylist').on('click',function() {
-    $('#myModal').modal('toggle');
-    $.ajax({
-        url: '{{ path('pumukityoutube_updateplaylist', {'id': mm.id}) }}',
-        method: 'GET',
-        success: function (response) {
-            success("{{ 'Update playlist successfully' | trans }}");
-        },
-        error: function(response) {
-            no_success(response.error);
-        },
-    });
-    return false;
-});
-
 $('.copy-embed-link').on('click',function() {
     var input = document.getElementById("copy-embed-link");
     var originalStyle = input.style.display;

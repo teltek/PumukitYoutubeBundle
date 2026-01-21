@@ -595,7 +595,7 @@ class YoutubeVideoManagementController extends AbstractController
     /**
      * List all playlists for an account.
      */
-    #[Route('/playlists/list/{accountId}', name: 'playlists_list', methods: ['GET'])]
+    #[Route('/playlists/list/{accountId}', name: 'management_playlists_list', methods: ['GET'])]
     public function listPlaylistsAction(string $accountId): JsonResponse
     {
         try {

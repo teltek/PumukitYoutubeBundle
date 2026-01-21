@@ -15,7 +15,9 @@ class MenuService implements ItemInterface
 
     public function getUri(): string
     {
-        return 'pumukit_youtube_admin_index';
+        // Redirigir al nuevo panel hexagonal de gestión de playlists
+        // que incluye gestión de cuentas
+        return 'pumukit_youtube_playlists_index';
     }
 
     public function getAccessRole(): string

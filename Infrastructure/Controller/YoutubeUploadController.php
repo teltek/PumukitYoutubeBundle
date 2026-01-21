@@ -8,7 +8,7 @@ use Doctrine\ODM\MongoDB\DocumentManager;
 use MongoDB\BSON\ObjectId;
 use Psr\Log\LoggerInterface;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
-use Pumukit\YoutubeBundle\Application\Message\Video\UploadYoutubeVideoMessage;
+use Pumukit\YoutubeBundle\VideoHexagonal\Application\Upload\UploadVideoMessage;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -68,24 +68,23 @@ class YoutubeUploadController extends AbstractController
                 ], Response::HTTP_OK);
             }
 
-            // Dispatch upload message using Symfony Messenger
-            // This will be processed asynchronously by the UploadYoutubeVideoMessageHandler
-            $message = new UploadYoutubeVideoMessage(
-                multimediaObjectId: $multimediaObject->getId(),
-                accountName: null, // Will use default account from configuration
-                forceReupload: false
+            // Dispatch upload message using VideoHexagonal (new async architecture)
+            // This will be processed asynchronously by the UploadVideoMessageHandler
+            $message = new UploadVideoMessage(
+                $multimediaObject->getId(),
+                'default' // TODO: Get actual account from user/configuration
             );
 
             $this->messageBus->dispatch($message);
 
-            $this->logger->info('[YouTube Backoffice] Upload message dispatched', [
+            $this->logger->info('[YouTube Backoffice] Upload message dispatched (VideoHexagonal)', [
                 'multimediaObjectId' => $multimediaObject->getId(),
                 'title' => $multimediaObject->getTitle(),
                 'user' => $this->getUser()?->getUsername(),
             ]);
 
             return new JsonResponse([
-                'status' => 'success',
+                'status' => 'enqueued',
                 'message' => 'YouTube upload queued successfully. The video will be uploaded in the background.',
             ]);
         } catch (\Exception $e) {

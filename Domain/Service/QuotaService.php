@@ -6,7 +6,7 @@ namespace Pumukit\YoutubeBundle\Domain\Service;
 
 use Doctrine\ODM\MongoDB\DocumentManager;
 use Pumukit\YoutubeBundle\Domain\Exception\QuotaExceededException;
-use Pumukit\YoutubeBundle\Domain\Model\YoutubeAccount;
+use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\YoutubeBundle\Domain\Model\YoutubeApiResponse;
 use Pumukit\YoutubeBundle\Domain\Model\YoutubeQuotaUsage;
 use Psr\Log\LoggerInterface;
@@ -121,7 +121,8 @@ class QuotaService
             throw new QuotaExceededException(
                 "Daily quota exceeded for account {$youtubeAccountId}. " .
                 "Required: {$cost} units, Available: {$quota->getQuotaRemaining()} units. " .
-                "Quota resets at midnight Pacific Time."
+                "Quota resets at midnight Pacific Time.",
+                429  // HTTP 429 Too Many Requests
             );
         }
     }
@@ -218,7 +219,7 @@ class QuotaService
     }
 
     public function logApiResponse(
-        YoutubeAccount $account,
+        Tag $accountTag,
         string $operation,
         array $request,
         array $response,
@@ -229,8 +230,11 @@ class QuotaService
     ): void {
         $cost = self::QUOTA_COSTS[$operation] ?? 0;
         
+        // Get youtube_account ID from Tag properties, or use Tag ID as fallback
+        $accountId = $accountTag->getProperty('youtube_account') ?: $accountTag->getId();
+        
         $apiResponse = new YoutubeApiResponse(
-            $account->getId(),
+            $accountId,
             $operation,
             $cost,
             $request
@@ -246,7 +250,7 @@ class QuotaService
         $this->documentManager->flush();
 
         $this->logger->info('[QuotaService] API response logged', [
-            'accountId' => $account->getId(),
+            'accountId' => $accountId,
             'operation' => $operation,
             'success' => $success,
             'quotaCost' => $cost,

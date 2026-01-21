@@ -165,7 +165,7 @@ function loadPlaylistsForAssignment(mmId, accountId) {
     
     // Load playlists via API
     $.ajax({
-        url: '{{ path('pumukit_youtube_video_playlists_list', {'accountId': '__ACCOUNT_ID__'}) }}'.replace('__ACCOUNT_ID__', accountId),
+        url: '{{ path('pumukit_youtube_video_management_playlists_list', {'accountId': '__ACCOUNT_ID__'}) }}'.replace('__ACCOUNT_ID__', accountId),
         type: 'GET',
         success: function(response) {
             displayPlaylistsInModal(mmId, accountId, response.playlists);
@@ -231,11 +231,11 @@ function displayPlaylistsInModal(mmId, accountId, playlists) {
     
     // Handle assignment
     $('#assign-playlists-btn').off('click').on('click', function() {
-        assignToSelectedPlaylists(mmId);
+        assignToSelectedPlaylists(mmId, accountId);
     });
 }
 
-function assignToSelectedPlaylists(mmId) {
+function assignToSelectedPlaylists(mmId, accountId) {
     const selectedPlaylists = [];
     $('.playlist-checkbox:checked').each(function() {
         selectedPlaylists.push($(this).val());
@@ -251,10 +251,13 @@ function assignToSelectedPlaylists(mmId) {
     btn.prop('disabled', true).text('{% trans %}Assigning...{% endtrans %}');
     
     $.ajax({
-        url: '{{ path('pumukit_youtube_video_assign_playlists', {'id': '__MM_ID__'}) }}'.replace('__MM_ID__', mmId),
+        url: '{{ path('pumukit_youtube_video_add_to_playlists', {'multimediaObjectId': '__MM_ID__'}) }}'.replace('__MM_ID__', mmId),
         type: 'POST',
         contentType: 'application/json',
-        data: JSON.stringify({playlist_ids: selectedPlaylists}),
+        data: JSON.stringify({
+            playlistIds: selectedPlaylists,
+            accountId: accountId
+        }),
         success: function(response) {
             showYoutubeAlert(mmId, 'success', response.message || '{% trans %}Video assigned to playlists successfully{% endtrans %}');
             $('#assignPlaylistsModal').modal('hide');

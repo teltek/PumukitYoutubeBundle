@@ -2,9 +2,8 @@
 
 declare(strict_types=1);
 
-namespace Pumukit\YoutubeBundle\Application\MessageHandler;
+namespace Pumukit\YoutubeBundle\QuotaHexagonal\Application\Waiting;
 
-use Pumukit\YoutubeBundle\Application\Message\WaitingMessage;
 use Psr\Log\LoggerInterface;
 
 class WaitingMessageHandler

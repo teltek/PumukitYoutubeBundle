@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Pumukit\YoutubeBundle\Application\Message;
+namespace Pumukit\YoutubeBundle\QuotaHexagonal\Application\Waiting;
 
 use DateTimeImmutable;
 

@@ -5,9 +5,12 @@ declare(strict_types=1);
 namespace Pumukit\YoutubeBundle\Infrastructure\Controller;
 
 use Doctrine\ODM\MongoDB\DocumentManager;
-use Pumukit\YoutubeBundle\Application\Message\Playlist\CreatePlaylistMessage;
-use Pumukit\YoutubeBundle\Application\Message\Playlist\UpdatePlaylistMessage;
-use Pumukit\YoutubeBundle\Application\Message\Playlist\DeletePlaylistMessage;
+use Pumukit\YoutubeBundle\Application\Message\Playlist\CreatePlaylistMessage as OldCreatePlaylistMessage;
+use Pumukit\YoutubeBundle\Application\Message\Playlist\UpdatePlaylistMessage as OldUpdatePlaylistMessage;
+use Pumukit\YoutubeBundle\Application\Message\Playlist\DeletePlaylistMessage as OldDeletePlaylistMessage;
+use Pumukit\YoutubeBundle\PlaylistHexagonal\Application\Create\CreatePlaylistMessage;
+use Pumukit\YoutubeBundle\PlaylistHexagonal\Application\Update\UpdatePlaylistMessage;
+use Pumukit\YoutubeBundle\PlaylistHexagonal\Application\Delete\DeletePlaylistMessage;
 use Pumukit\YoutubeBundle\Domain\Model\YoutubeAccount;
 use Pumukit\YoutubeBundle\Domain\Model\YoutubePlaylist;
 use Pumukit\YoutubeBundle\Infrastructure\Service\GoogleClientFactory;
@@ -160,17 +163,17 @@ class YoutubePlaylistController extends AbstractController
                 ], 404);
             }
 
-            // Dispatch async message
+            // Dispatch async message (using Hexagonal Architecture)
             $message = new CreatePlaylistMessage(
-                accountId: $accountId,
-                title: $title,
-                description: $description,
-                privacy: $privacy
+                $accountId,
+                $title,
+                $description,
+                $privacy
             );
 
             $this->messageBus->dispatch($message);
             
-            $this->logger->info('[YoutubePlaylistController] Playlist creation queued successfully', [
+            $this->logger->info('[YoutubePlaylistController] Playlist creation queued (Hexagonal)', [
                 'accountId' => $accountId,
                 'title' => $title,
             ]);
@@ -179,6 +182,7 @@ class YoutubePlaylistController extends AbstractController
                 'success' => true,
                 'message' => 'Playlist creation queued successfully. It will be processed asynchronously.',
                 'queued' => true,
+                'status' => 'enqueued',
             ]);
         } catch (\Exception $e) {
             $this->logger->error('[YoutubePlaylistController] Error queueing playlist creation', [
@@ -257,24 +261,23 @@ class YoutubePlaylistController extends AbstractController
                 ], 400);
             }
 
-            // Dispatch async message
+            // Dispatch async message (using Hexagonal Architecture)
             $message = new UpdatePlaylistMessage(
-                accountId: $accountId,
-                playlistId: $playlistId,
-                updateData: $updateData
+                $playlistId,
+                $title ?? '',
+                $description ?? '',
+                $privacy ?? 'unlisted'
             );
 
-            error_log("========== ABOUT TO DISPATCH UPDATE MESSAGE ==========");
+            error_log("========== ABOUT TO DISPATCH UPDATE MESSAGE (HEXAGONAL) ==========");
             error_log("Message class: " . get_class($message));
-            error_log("AccountId: " . $accountId);
             error_log("PlaylistId: " . $playlistId);
-            error_log("UpdateData: " . print_r($updateData, true));
 
             $this->messageBus->dispatch($message);
             
             error_log("========== MESSAGE DISPATCHED SUCCESSFULLY ==========");
             
-            $this->logger->info('[YoutubePlaylistController] Playlist update queued successfully', [
+            $this->logger->info('[YoutubePlaylistController] Playlist update queued (Hexagonal)', [
                 'playlistId' => $playlistId,
                 'accountId' => $accountId,
             ]);
@@ -283,6 +286,7 @@ class YoutubePlaylistController extends AbstractController
                 'success' => true,
                 'message' => 'Playlist update queued successfully. It will be processed asynchronously.',
                 'queued' => true,
+                'status' => 'enqueued',
             ]);
         } catch (\Exception $e) {
             $this->logger->error('[YoutubePlaylistController] Error queueing playlist update', [
@@ -329,15 +333,12 @@ class YoutubePlaylistController extends AbstractController
                 ], 404);
             }
 
-            // Dispatch async message
-            $message = new DeletePlaylistMessage(
-                accountId: $accountId,
-                playlistId: $playlistId
-            );
+            // Dispatch async message (using Hexagonal Architecture)
+            $message = new DeletePlaylistMessage($playlistId);
 
             $this->messageBus->dispatch($message);
             
-            $this->logger->info('[YoutubePlaylistController] Playlist deletion queued successfully', [
+            $this->logger->info('[YoutubePlaylistController] Playlist deletion queued (Hexagonal)', [
                 'playlistId' => $playlistId,
                 'accountId' => $accountId,
             ]);
@@ -346,6 +347,7 @@ class YoutubePlaylistController extends AbstractController
                 'success' => true,
                 'message' => 'Playlist deletion queued successfully. It will be processed asynchronously.',
                 'queued' => true,
+                'status' => 'enqueued',
             ]);
         } catch (\Exception $e) {
             $this->logger->error('[YoutubePlaylistController] Error queueing playlist deletion', [

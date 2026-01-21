@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Pumukit\YoutubeBundle\Services;
 
+use Doctrine\ODM\MongoDB\DocumentManager;
 use Google\Client;
 use Google\Service\YouTube;
+use Psr\Log\LoggerInterface;
 use Pumukit\SchemaBundle\Document\Tag;
 use Symfony\Component\Filesystem\Filesystem;
 
@@ -13,10 +15,17 @@ class GoogleAccountService
 {
     private $client;
     private $youtubeConfigurationService;
+    private $documentManager;
+    private $logger;
 
-    public function __construct(YoutubeConfigurationService $youtubeConfigurationService)
-    {
+    public function __construct(
+        YoutubeConfigurationService $youtubeConfigurationService,
+        DocumentManager $documentManager,
+        LoggerInterface $logger
+    ) {
         $this->youtubeConfigurationService = $youtubeConfigurationService;
+        $this->documentManager = $documentManager;
+        $this->logger = $logger;
     }
 
     public function createClient(string $login): Client
@@ -33,6 +42,7 @@ class GoogleAccountService
     public function googleServiceFromAccount(Tag $youtubeAccount): \Google_Service_YouTube
     {
         $client = $this->createClientWithAccessToken(
+            $youtubeAccount,
             $youtubeAccount->getProperty('login'),
             $youtubeAccount->getProperty('access_token')
         );
@@ -40,7 +50,7 @@ class GoogleAccountService
         return $this->createService($client);
     }
 
-    public function createClientWithAccessToken(string $login, array $accessToken): Client
+    public function createClientWithAccessToken(Tag $youtubeAccount, string $login, array $accessToken): Client
     {
         $this->createClient($login);
 
@@ -50,7 +60,42 @@ class GoogleAccountService
             return $this->client;
         }
 
-        $this->client->refreshToken($this->client->getRefreshToken());
+        $this->logger->info('[GoogleAccountService] Access token expired, refreshing...', [
+            'account' => $login,
+            'accountId' => $youtubeAccount->getId(),
+        ]);
+
+        // Refresh the token
+        $newAccessToken = $this->client->fetchAccessTokenWithRefreshToken($this->client->getRefreshToken());
+        
+        if (isset($newAccessToken['error'])) {
+            $this->logger->error('[GoogleAccountService] Failed to refresh access token', [
+                'account' => $login,
+                'error' => $newAccessToken,
+            ]);
+            throw new \RuntimeException('Failed to refresh access token: ' . json_encode($newAccessToken));
+        }
+
+        // Update the Tag with the new access token
+        // Important: Re-fetch the tag to ensure we have a managed entity
+        $tagRepository = $this->documentManager->getRepository(Tag::class);
+        $freshTag = $tagRepository->find($youtubeAccount->getId());
+        
+        if (!$freshTag) {
+            $this->logger->error('[GoogleAccountService] Tag not found after token refresh', [
+                'accountId' => $youtubeAccount->getId(),
+            ]);
+            throw new \RuntimeException('Tag not found: ' . $youtubeAccount->getId());
+        }
+        
+        $freshTag->setProperty('access_token', $newAccessToken);
+        $this->documentManager->flush();
+        
+        $this->logger->info('[GoogleAccountService] Access token refreshed and saved successfully', [
+            'account' => $login,
+            'accountId' => $youtubeAccount->getId(),
+            'newExpiry' => $newAccessToken['created'] + $newAccessToken['expires_in'],
+        ]);
 
         return $this->client;
     }
@@ -70,7 +115,10 @@ class GoogleAccountService
 
     private function getClientSecret(string $login): string
     {
-        $pathFile = $this->youtubeConfigurationService->accountStorage().$login.'.json';
+        $accountStorage = $this->youtubeConfigurationService->accountStorage();
+        // Ensure path ends with /
+        $accountStorage = rtrim($accountStorage, '/') . '/';
+        $pathFile = $accountStorage . $login . '.json';
 
         return $this->findFile($pathFile);
     }

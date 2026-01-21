@@ -266,27 +266,11 @@ class AdminController extends AbstractController
      */
     public function updateYTAction(MultimediaObject $multimediaObject): Response
     {
-        $youtubeAccounts = $this->documentManager->getRepository(Tag::class)->findOneBy([
-            'cod' => PumukitYoutubeBundle::YOUTUBE_TAG_CODE,
-        ]);
-        $accountSelectedTag = '';
-        $playlistSelectedTag = [];
-        foreach ($multimediaObject->getTags() as $tag) {
-            if ($tag->isDescendantOf($youtubeAccounts)) {
-                if (3 === (int) $tag->getLevel()) {
-                    $accountSelectedTag = $tag->getId();
-                } elseif (4 === (int) $tag->getLevel()) {
-                    $playlistSelectedTag[] = $tag->getId();
-                }
-            }
-        }
-
-        return $this->render('@PumukitYoutube/Admin/updateYT.html.twig', [
-            'youtubeAccounts' => $youtubeAccounts->getChildren(),
-            'multimediaObject' => $multimediaObject,
-            'accountId' => $accountSelectedTag,
-            'playlistId' => $playlistSelectedTag,
-        ]);
+        // Redirigir al nuevo controlador hexagonal
+        return $this->forward(
+            'Pumukit\YoutubeBundle\Infrastructure\Controller\YoutubePublicationConfigController::configWidget',
+            ['id' => $multimediaObject->getId()]
+        );
     }
 
     /**

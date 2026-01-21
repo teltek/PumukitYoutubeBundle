@@ -13,11 +13,131 @@ services:
     resource: '../../Controller'
     tags: ['controller.service_arguments']
 
+  # Infrastructure Controllers
+  Pumukit\YoutubeBundle\Infrastructure\Controller\YoutubeUploadController:
+    autowire: true
+    tags: ['controller.service_arguments']
+
+  Pumukit\YoutubeBundle\Infrastructure\Controller\QuotaController:
+    autowire: true
+    tags: ['controller.service_arguments']
+
+  Pumukit\YoutubeBundle\Infrastructure\Controller\YoutubeVideoManagementController:
+    autowire: true
+    tags: ['controller.service_arguments']
+
+  Pumukit\YoutubeBundle\Infrastructure\Controller\YoutubePlaylistController:
+    autowire: true
+    tags: ['controller.service_arguments']
+
+  Pumukit\YoutubeBundle\Infrastructure\Controller\YoutubePublicationConfigController:
+    autowire: true
+    tags: ['controller.service_arguments']
+
   Pumukit\YoutubeBundle\Command\:
     resource: '../../Command/'
     tags:
       - { name: 'console.command' }
       - { name: 'monolog.logger', channel: 'youtube' }
+
+  # Command with transport dependency - MOVIDO A QuotaHexagonal/Infrastructure/CLI/
+  # Pumukit\YoutubeBundle\Application\Command\Quota\ProcessQuotaWaitingCommand:
+  #   arguments:
+  #     $quotaWaitingTransport: '@messenger.transport.pumukit.youtube.quota.waiting'
+  #   tags:
+  #     - { name: 'console.command' }
+
+  # Messenger Debug Listener
+  Pumukit\YoutubeBundle\EventListener\MessengerDebugListener:
+    autowire: true
+    tags:
+      - { name: kernel.event_subscriber }
+
+  # Middleware - Quota Check
+  Pumukit\YoutubeBundle\Infrastructure\Middleware\QuotaCheckMiddleware:
+    autowire: true
+
+  # Query Handlers
+  Pumukit\YoutubeBundle\QuotaHexagonal\Application\Query\GetQuotaStatusQueryHandler:
+    autowire: true
+
+  # Domain Services
+  Pumukit\YoutubeBundle\Domain\Service\:
+    resource: '../../Domain/Service'
+    exclude:
+      - '../../Domain/Service/Validation'
+    autowire: true
+
+  # Infrastructure Services
+  Pumukit\YoutubeBundle\Infrastructure\Service\:
+    resource: '../../Infrastructure/Service'
+    exclude:
+      - '../../Infrastructure/Service/QueueDrainService.php'
+    autowire: true
+
+  Pumukit\YoutubeBundle\Infrastructure\Service\QueueDrainService:
+    arguments:
+      $messengerTransportDsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+
+  Pumukit\YoutubeBundle\Infrastructure\Repository\:
+    resource: '../../Infrastructure/Repository'
+    autowire: true
+
+  # Repository Interface Aliases
+  Pumukit\YoutubeBundle\Domain\Repository\PublicationRepositoryInterface: '@Pumukit\YoutubeBundle\Infrastructure\Repository\DoctrinePublicationRepository'
+
+  # Application Services
+  Pumukit\YoutubeBundle\Application\:
+    resource: '../../Application'
+    exclude:
+      - '../../Application/Message'
+      - '../../Application/Command'
+    autowire: true
+
+  # VideoHexagonal Message Handlers - explicit registration
+  Pumukit\YoutubeBundle\VideoHexagonal\Application\Upload\UploadVideoMessageHandler:
+    autowire: true
+    tags:
+      - { name: 'messenger.message_handler', bus: 'messenger.bus.default', from_transport: 'pumukit.youtube.events' }
+
+  Pumukit\YoutubeBundle\VideoHexagonal\Application\Playlist\AddToPlaylistsMessageHandler:
+    autowire: true
+    tags:
+      - { name: 'messenger.message_handler', bus: 'messenger.bus.default', from_transport: 'pumukit.youtube.events' }
+
+  Pumukit\YoutubeBundle\VideoHexagonal\Application\Upload\UploadVideoService:
+    autowire: true
+
+  Pumukit\YoutubeBundle\VideoHexagonal\Application\Playlist\AddVideoToPlaylistsService:
+    autowire: true
+
+  Pumukit\YoutubeBundle\VideoHexagonal\Application\Upload\UploadVideoValidator:
+    autowire: true
+
+  # VideoHexagonal Application Services (excluding Messages and DTOs)
+  Pumukit\YoutubeBundle\VideoHexagonal\Application\:
+    resource: '../../VideoHexagonal/Application'
+    exclude:
+      - '../../VideoHexagonal/Application/*/*Message.php'
+      - '../../VideoHexagonal/Application/*/*Request.php'
+      - '../../VideoHexagonal/Application/*/*Response.php'
+      - '../../VideoHexagonal/Application/Upload/UploadVideoMessageHandler.php'
+      - '../../VideoHexagonal/Application/Playlist/AddToPlaylistsMessageHandler.php'
+    autowire: true
+
+  # VideoHexagonal Domain Services
+  Pumukit\YoutubeBundle\VideoHexagonal\Domain\:
+    resource: '../../VideoHexagonal/Domain'
+    exclude:
+      - '../../VideoHexagonal/Domain/Event'
+      - '../../VideoHexagonal/Domain/Model'
+      - '../../VideoHexagonal/Domain/ValueObject'
+    autowire: true
+
+  # VideoHexagonal Infrastructure
+  Pumukit\YoutubeBundle\VideoHexagonal\Infrastructure\:
+    resource: '../../VideoHexagonal/Infrastructure'
+    autowire: true
 
   Pumukit\YoutubeBundle\EventListener\UpdateListener:
     class: Pumukit\YoutubeBundle\EventListener\UpdateListener
@@ -31,6 +151,11 @@ services:
 
   Pumukit\YoutubeBundle\EventListener\BackofficeListener:
     class: Pumukit\YoutubeBundle\EventListener\BackofficeListener
+    arguments:
+      - '@doctrine_mongodb.odm.document_manager'
+      - '@pumukitschema.tag'
+      - '@messenger.default_bus'
+      - '@monolog.logger.youtube'
     tags:
       - { name: "kernel.event_listener", event: "publication.submit", method: "onPublicationSubmit" }
 
@@ -142,3 +267,26 @@ services:
   Pumukit\YoutubeBundle\Services\CommonDataValidationService:
     class: Pumukit\YoutubeBundle\Services\CommonDataValidationService
 
+  # Domain Services - Validation
+  Pumukit\YoutubeBundle\Domain\Service\Validation\YoutubeSanitizer:
+    class: Pumukit\YoutubeBundle\Domain\Service\Validation\YoutubeSanitizer
+
+  Pumukit\YoutubeBundle\Domain\Service\Validation\YoutubeFileValidator:
+    class: Pumukit\YoutubeBundle\Domain\Service\Validation\YoutubeFileValidator
+    arguments:
+      - '@logger'
+
+  Pumukit\YoutubeBundle\Domain\Service\Validation\YoutubeMetadataValidator:
+    class: Pumukit\YoutubeBundle\Domain\Service\Validation\YoutubeMetadataValidator
+
+
+  # Event Listeners
+  Pumukit\YoutubeBundle\EventListener\AutoUploadOnTagListener:
+    class: Pumukit\YoutubeBundle\EventListener\AutoUploadOnTagListener
+    arguments:
+      - '@messenger.default_bus'
+      - '@logger'
+    tags:
+      - { name: kernel.event_subscriber }
+
+  # Command Services - DrainQuotaWaiting (eliminado - duplicado)

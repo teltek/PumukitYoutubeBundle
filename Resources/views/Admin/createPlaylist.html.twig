@@ -2,47 +2,86 @@
     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
         <span aria-hidden="true">&times;</span>
     </button>
-    <h3 class="modal-title pumukitnewadmin-modal-title-margin" id="myModalLabel">{% trans %}Add new Youtube account playlist{% endtrans %}</h3>
+    <h3 class="modal-title pumukitnewadmin-modal-title-margin" id="myModalLabel">
+        {% trans %}Add new Youtube account playlist{% endtrans %}
+        <span class="badge badge-success">HEXAGONAL</span>
+    </h3>
 </div>
 
 <div class="modal-body">
     <div class="alert alert-info text-center" role="alert">
         {{ "The maximum size allowed for the playlist title is 150 characters."|trans }}
     </div>
+    <div class="alert alert-warning text-center" role="alert">
+        <strong>🔥 TESTING HEXAGONAL ARCHITECTURE (ASYNC)</strong><br>
+        <small>The playlist will be created asynchronously by a worker</small>
+    </div>
     {% form_theme form '@PumukitNewAdmin/Themes/fields.html.twig' %}
-    <form autocomplete="off" id="pumukit_youtube_create_playlist" action="{{ path('pumukit_youtube_create_playlist', {'id': account }) }}" method="POST">
+    <form autocomplete="off" id="pumukit_youtube_create_playlist_hexagonal">
         {{ form_start(form) }}
         {{ form_row(form.i18n_title) }}
+        <div class="form-group">
+            <label>Description (Optional)</label>
+            <textarea id="playlist_description" class="form-control" rows="3"></textarea>
+        </div>
+        <div class="form-group">
+            <label>Privacy Status</label>
+            <select id="playlist_privacy" class="form-control">
+                <option value="private" selected>Private</option>
+                <option value="public">Public</option>
+                <option value="unlisted">Unlisted</option>
+            </select>
+        </div>
         <div class="text-right">
             <button type="button" class="btn btn-default btn-raised" data-dismiss="modal">{% trans %}Close{% endtrans %}</button>
-            <button type="submit" class="btn btn-pumukit btn-raised">{% trans %}Save changes{% endtrans %}</button>
+            <button type="submit" class="btn btn-pumukit btn-raised">{% trans %}Save changes{% endtrans %} (HEXAGONAL)</button>
         </div>
         {{ form_end(form) }}
     </form>
 </div>
 
 <script type="text/javascript">
-    $('#pumukit_youtube_create_playlist').on('submit', function (event) {
+    $('#pumukit_youtube_create_playlist_hexagonal').on('submit', function (event) {
         event.preventDefault();
         $('#myModal').modal('hide');
+        
+        // Obtener el título del campo i18n
+        var titleEs = $('input[name="pumukit_youtube_playlist[i18n_title][es]"]').val() || '';
+        var titleEn = $('input[name="pumukit_youtube_playlist[i18n_title][en]"]').val() || '';
+        var title = titleEs || titleEn;
+        
+        var description = $('#playlist_description').val() || '';
+        var privacy = $('#playlist_privacy').val() || 'private';
+        
+        console.log('[HEXAGONAL] Creating playlist:', { accountId: '{{ account }}', title, description, privacy });
+        
         $.ajax({
-            url: '{{ path('pumukit_youtube_create_playlist', {'id': account }) }}',
+            url: '{{ path('pumukit_youtube_playlists_hexagonal_create') }}',
             method: 'POST',
-            data: $('#pumukit_youtube_create_playlist').serialize(),
-            success: function (response, textStatus, jqXHR) {
-                if (jqXHR.responseText.indexOf('modal-header') !== -1) {
-                    var message = '{% trans %}There was an error on creating Youtube account playlist.{% endtrans %}';
-                    no_success(message);
-                } else {
+            contentType: 'application/json',
+            data: JSON.stringify({
+                accountId: '{{ account }}',
+                title: title,
+                description: description,
+                privacy: privacy
+            }),
+            success: function (response) {
+                console.log('[HEXAGONAL] Response:', response);
+                if (response.success) {
                     var mm = "{{ path('pumukit_youtube_admin_list') }}";
                     $('#list_youtube_accounts').load(mm);
                     $('#myModal').hide();
-                    var message = '{% trans %}Youtube account playlist was successfully created.{% endtrans %}';
+                    var message = '{% trans %}Youtube account playlist enqueued for creation.{% endtrans %} (HEXAGONAL ASYNC ✅)';
                     success(message);
+                } else {
+                    var message = '{% trans %}There was an error on creating Youtube account playlist.{% endtrans %}: ' + (response.error || 'Unknown error');
+                    no_success(message);
                 }
             },
             error: function (jqXHR, textStatus, errorThrown) {
-                no_success(errorThrown + ': ' + textStatus);
+                console.error('[HEXAGONAL] Error:', jqXHR.responseJSON);
+                var errorMsg = jqXHR.responseJSON?.error || errorThrown;
+                no_success('HEXAGONAL ERROR: ' + errorMsg + ': ' + textStatus);
             }
         });
         return false;
