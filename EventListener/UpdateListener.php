@@ -52,19 +52,19 @@ class UpdateListener
             return;
         }
 
-        $master = $multimediaObject->getTrackWithTag('master');
-        if (!$master) {
+        if ($multimediaObject->getTrackWithTag('profile:video_youtube')) {
             return;
         }
 
-        if ($multimediaObject->getTrackWithTag('profile:video_youtube')) {
+        $track = $this->getTrackForYoutube($multimediaObject);
+        if (!$track) {
             return;
         }
 
         $jobOptions = new JobOptions(
             'video_youtube',
             2,
-            $master->language(),
+            $track->language(),
             [],
             [],
             0,
@@ -72,8 +72,24 @@ class UpdateListener
             true
         );
 
-        $path = Path::create($master->storage()->path()->path());
+        $path = Path::create($track->storage()->path()->path());
         $this->jobCreator->fromPath($multimediaObject, $path, $jobOptions);
+    }
+
+    private function getTrackForYoutube(MultimediaObject $multimediaObject)
+    {
+        $master = $multimediaObject->getTrackWithTag('master');
+        if ($master) {
+            return $master;
+        }
+
+        foreach ($multimediaObject->getTracksWithAnyTag(['display']) as $track) {
+            if ($track->metadata()->isOnlyAudio()) {
+                return $track;
+            }
+        }
+
+        return null;
     }
 
     private function updateYoutubeDocument(MultimediaObject $multimediaObject): void
