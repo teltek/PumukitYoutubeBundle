@@ -20,11 +20,13 @@ class UpdateListener
 {
     private $documentManager;
     private $jobCreator;
+    private $defaultTrackUpload;
 
-    public function __construct(DocumentManager $documentManager, JobCreator $jobCreator)
+    public function __construct(DocumentManager $documentManager, JobCreator $jobCreator, string $defaultTrackUpload)
     {
         $this->documentManager = $documentManager;
         $this->jobCreator = $jobCreator;
+        $this->defaultTrackUpload = $defaultTrackUpload;
     }
 
     public function onMultimediaObjectUpdate(MultimediaObjectEvent $event): void
@@ -52,7 +54,7 @@ class UpdateListener
             return;
         }
 
-        if ($multimediaObject->getTrackWithTag('profile:video_youtube')) {
+        if ($multimediaObject->getTrackWithTag('profile:'.$this->defaultTrackUpload)) {
             return;
         }
 
@@ -62,7 +64,7 @@ class UpdateListener
         }
 
         $jobOptions = new JobOptions(
-            'video_youtube',
+            $this->defaultTrackUpload,
             2,
             $track->language(),
             [],
