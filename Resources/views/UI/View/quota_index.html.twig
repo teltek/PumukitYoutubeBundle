@@ -306,10 +306,10 @@
                     </div>
 
                     <!-- Recent Operations -->
-                    {% if account_data.operations is defined and account_data.operations|length > 0 %}
+                    {% if account_data.quota.operations is defined and account_data.quota.operations|length > 0 %}
                     <div class="operations-table">
                         <h4 class="api-responses-title">
-                            <i class="fa fa-history"></i> Recent Operations ({{ account_data.operations|length }})
+                            <i class="fa fa-history"></i> Recent Operations ({{ account_data.quota.operations|length }})
                         </h4>
                         <table>
                             <thead>
@@ -320,9 +320,9 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for operation in account_data.operations|slice(0, 10) %}
+                                {% for operation in account_data.quota.operations|slice(0, 10) %}
                                 <tr>
-                                    <td><i class="fa fa-cog"></i> {{ operation.operation }}</td>
+                                    <td><i class="fa fa-cog"></i> {{ operation.type }}</td>
                                     <td><strong>{{ operation.cost|number_format }}</strong></td>
                                     <td>
                                         {% if operation.timestamp is iterable and operation.timestamp.date is defined %}
@@ -341,24 +341,22 @@
                     {% endif %}
 
                     <!-- API Responses -->
-                    {% if account_data.api_responses is defined and account_data.api_responses|length > 0 %}
+                    {% if account_data.quota.api_responses is defined and account_data.quota.api_responses|length > 0 %}
                     <div class="api-responses-section">
                         <h4 class="api-responses-title">
-                            <i class="fa fa-exchange"></i> YouTube API Responses ({{ account_data.api_responses|length }})
+                            <i class="fa fa-exchange"></i> YouTube API Responses ({{ account_data.quota.api_responses|length }})
                         </h4>
                         
-                        {% for response in account_data.api_responses|slice(0, 20) %}
+                        {% for response in account_data.quota.api_responses|slice(0, 20) %}
                         <div class="api-response-item">
-                            <div class="api-response-header" data-toggle="collapse" data-target="#api-response-{{ response.id }}">
+                            <div class="api-response-header" data-toggle="collapse" data-target="#api-response-{{ loop.index }}">
                                 <div class="api-response-title-section">
                                     <span class="operation-badge {{ response.success ? 'badge-success' : 'badge-error' }}">
                                         {{ response.operation }}
                                     </span>
                                     <span style="font-size: 13px; color: #6c757d;">
-                                        {% if response.timestamp is iterable and response.timestamp.date is defined %}
-                                            {{ response.timestamp.date|date('Y-m-d H:i:s') }}
-                                        {% elseif response.timestamp %}
-                                            {{ response.timestamp|date('Y-m-d H:i:s') }}
+                                        {% if response.createdAt %}
+                                            {{ response.createdAt|date('Y-m-d H:i:s') }}
                                         {% else %}
                                             N/A
                                         {% endif %}
@@ -376,7 +374,7 @@
                                     <i class="fa fa-chevron-down"></i>
                                 </div>
                             </div>
-                            <div id="api-response-{{ response.id }}" class="collapse api-response-body">
+                            <div id="api-response-{{ loop.index }}" class="collapse api-response-body">
                                 <div class="row">
                                     <div class="col-md-12">
                                         {% if response.success %}
@@ -384,7 +382,7 @@
                                             <i class="fa fa-arrow-circle-down"></i> Response
                                         </h5>
                                         <div class="json-viewer">
-                                            <pre>{{ response.responseJson|raw }}</pre>
+                                            <pre>{{ response.response|json_encode(constant('JSON_PRETTY_PRINT')) }}</pre>
                                         </div>
                                         {% else %}
                                         <h5 style="margin-top: 0; font-size: 14px; color: #dc3545;">
@@ -393,9 +391,9 @@
                                         <div style="background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; padding: 15px; border-radius: 4px; margin-bottom: 10px;">
                                             <strong>{{ response.errorMessage }}</strong>
                                         </div>
-                                        {% if response.errorDetailsJson %}
+                                        {% if response.errorDetails %}
                                         <div class="json-viewer">
-                                            <pre>{{ response.errorDetailsJson|raw }}</pre>
+                                            <pre>{{ response.errorDetails|json_encode(constant('JSON_PRETTY_PRINT')) }}</pre>
                                         </div>
                                         {% endif %}
                                         {% endif %}

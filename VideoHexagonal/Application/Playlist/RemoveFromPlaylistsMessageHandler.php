@@ -11,25 +11,25 @@ use Pumukit\YoutubeBundle\Document\Youtube;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
 #[AsMessageHandler]
-final class AddToPlaylistsMessageHandler
+final class RemoveFromPlaylistsMessageHandler
 {
-    private AddVideoToPlaylistsService $addVideoToPlaylistsService;
+    private RemoveVideoFromPlaylistsService $removeVideoFromPlaylistsService;
     private DocumentManager $documentManager;
     private LoggerInterface $logger;
 
     public function __construct(
-        AddVideoToPlaylistsService $addVideoToPlaylistsService,
+        RemoveVideoFromPlaylistsService $removeVideoFromPlaylistsService,
         DocumentManager $documentManager,
         LoggerInterface $logger
     ) {
-        $this->addVideoToPlaylistsService = $addVideoToPlaylistsService;
+        $this->removeVideoFromPlaylistsService = $removeVideoFromPlaylistsService;
         $this->documentManager = $documentManager;
         $this->logger = $logger;
     }
 
-    public function __invoke(AddToPlaylistsMessage $message): void
+    public function __invoke(RemoveFromPlaylistsMessage $message): void
     {
-        $this->logger->info('[AddToPlaylists] Processing message', [
+        $this->logger->info('[RemoveFromPlaylists] Processing message', [
             'youtubeId' => $message->getYoutubeId(),
             'accountId' => $message->getAccountId(),
             'playlistCount' => count($message->getPlaylistIds()),
@@ -40,7 +40,7 @@ final class AddToPlaylistsMessageHandler
         $youtubeId = $message->getYoutubeId();
         
         if (!$youtubeId && $message->getMultimediaObjectId()) {
-            $this->logger->info('[AddToPlaylists] Looking up youtubeId from multimediaObjectId', [
+            $this->logger->info('[RemoveFromPlaylists] Looking up youtubeId from multimediaObjectId', [
                 'multimediaObjectId' => $message->getMultimediaObjectId(),
             ]);
             
@@ -49,7 +49,7 @@ final class AddToPlaylistsMessageHandler
                 ->findOneBy(['multimediaObjectId' => $message->getMultimediaObjectId()]);
             
             if (!$youtubeDoc || !$youtubeDoc->getYoutubeId()) {
-                $this->logger->error('[AddToPlaylists] Video not uploaded to YouTube yet', [
+                $this->logger->error('[RemoveFromPlaylists] Video not uploaded to YouTube yet', [
                     'multimediaObjectId' => $message->getMultimediaObjectId(),
                 ]);
                 throw new \RuntimeException('Video not uploaded to YouTube yet: ' . $message->getMultimediaObjectId());
@@ -57,14 +57,14 @@ final class AddToPlaylistsMessageHandler
             
             $youtubeId = $youtubeDoc->getYoutubeId();
             
-            $this->logger->info('[AddToPlaylists] Found youtubeId', [
+            $this->logger->info('[RemoveFromPlaylists] Found youtubeId', [
                 'youtubeId' => $youtubeId,
                 'multimediaObjectId' => $message->getMultimediaObjectId(),
             ]);
         }
         
         if (!$youtubeId) {
-            $this->logger->error('[AddToPlaylists] No youtubeId available');
+            $this->logger->error('[RemoveFromPlaylists] No youtubeId available');
             throw new \RuntimeException('No youtubeId provided and could not be looked up');
         }
 
@@ -72,28 +72,28 @@ final class AddToPlaylistsMessageHandler
         $account = $this->findAccountTag($message->getAccountId());
 
         if (!$account) {
-            $this->logger->error('[AddToPlaylists] Account not found', [
+            $this->logger->error('[RemoveFromPlaylists] Account not found', [
                 'accountId' => $message->getAccountId(),
             ]);
             throw new \RuntimeException('YouTube account not found: ' . $message->getAccountId());
         }
 
-        // Add to playlists
-        $results = $this->addVideoToPlaylistsService->addToPlaylists(
+        // Remove from playlists
+        $results = $this->removeVideoFromPlaylistsService->removeFromPlaylists(
             $youtubeId,
             $message->getPlaylistIds(),
             $account
         );
 
-        $this->logger->info('[AddToPlaylists] Completed', [
+        $this->logger->info('[RemoveFromPlaylists] Completed', [
             'youtubeId' => $youtubeId,
             'multimediaObjectId' => $message->getMultimediaObjectId(),
-            'added' => count($results['added']),
+            'removed' => count($results['removed']),
             'failed' => count($results['failed']),
         ]);
         
-        // Update Youtube document with successfully added playlists
-        if (!empty($results['added']) && $message->getMultimediaObjectId()) {
+        // Update Youtube document - remove successfully removed playlists
+        if (!empty($results['removed']) && $message->getMultimediaObjectId()) {
             $youtubeDoc = $this->documentManager
                 ->getRepository(Youtube::class)
                 ->findOneBy(['multimediaObjectId' => $message->getMultimediaObjectId()]);
@@ -101,25 +101,26 @@ final class AddToPlaylistsMessageHandler
             if ($youtubeDoc) {
                 $currentPlaylists = $youtubeDoc->getPlaylists() ?? [];
                 
-                foreach ($results['added'] as $result) {
-                    if (!in_array($result['playlistId'], $currentPlaylists)) {
-                        $currentPlaylists[] = $result['playlistId'];
+                foreach ($results['removed'] as $result) {
+                    $key = array_search($result['playlistId'], $currentPlaylists);
+                    if ($key !== false) {
+                        unset($currentPlaylists[$key]);
                     }
                 }
                 
-                $youtubeDoc->setPlaylists($currentPlaylists);
+                $youtubeDoc->setPlaylists(array_values($currentPlaylists)); // Re-index array
                 $this->documentManager->flush();
                 
-                $this->logger->info('[AddToPlaylists] Updated Youtube document with playlists', [
+                $this->logger->info('[RemoveFromPlaylists] Updated Youtube document, removed playlists', [
                     'youtubeId' => $youtubeId,
-                    'playlists' => $currentPlaylists,
+                    'remainingPlaylists' => $currentPlaylists,
                 ]);
             }
         }
 
         // If any failed, log details
         if (!empty($results['failed'])) {
-            $this->logger->warning('[AddToPlaylists] Some playlists failed', [
+            $this->logger->warning('[RemoveFromPlaylists] Some playlists failed', [
                 'youtubeId' => $youtubeId,
                 'failures' => $results['failed'],
             ]);
@@ -139,33 +140,13 @@ final class AddToPlaylistsMessageHandler
             return $account;
         }
 
-        // Try by login (account name)
+        // Fallback: try by login property
         $account = $this->documentManager->getRepository(Tag::class)
             ->createQueryBuilder()
             ->field('properties.login')->equals($accountId)
             ->getQuery()
             ->getSingleResult();
 
-        if ($account) {
-            return $account;
-        }
-
-        // Try by Tag ID directly
-        try {
-            $account = $this->documentManager->getRepository(Tag::class)
-                ->createQueryBuilder()
-                ->field('_id')->equals($accountId)
-                ->field('cod')->regex(new \MongoDB\BSON\Regex('^YOUTUBE_ACCOUNT_'))
-                ->getQuery()
-                ->getSingleResult();
-
-            if ($account) {
-                return $account;
-            }
-        } catch (\Exception $e) {
-            // Invalid ID format, continue
-        }
-
-        return null;
+        return $account;
     }
 }

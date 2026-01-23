@@ -39,8 +39,7 @@ final class AddVideoToPlaylistsService
             return ['added' => [], 'failed' => []];
         }
 
-        $client = $this->googleAccountService->googleServiceFromAccount($accountTag);
-        $youtube = new \Google_Service_YouTube($client);
+        $youtube = $this->googleAccountService->googleServiceFromAccount($accountTag);
         
         $added = [];
         $failed = [];

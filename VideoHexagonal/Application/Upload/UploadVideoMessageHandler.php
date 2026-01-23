@@ -45,6 +45,7 @@ final class UploadVideoMessageHandler
         error_log('[VideoHexagonal] ===== HANDLER EXECUTING =====');
         error_log('[VideoHexagonal] MM ID: ' . $message->getMultimediaObjectId());
         error_log('[VideoHexagonal] Account ID: ' . $message->getAccountId());
+        error_log('[VideoHexagonal] Playlists: ' . json_encode($message->getPlaylists()));
         
         $this->logger->info('[VideoHexagonal] Processing UploadVideoMessage', [
             'multimediaObjectId' => $message->getMultimediaObjectId(),
@@ -145,11 +146,29 @@ final class UploadVideoMessageHandler
                 error_log('[VideoHexagonal] Playlists added: ' . count($playlistResults['added']) . 
                          ', failed: ' . count($playlistResults['failed']));
                 
+                // Update Youtube document with the playlists that were successfully added
+                if (!empty($playlistResults['added'])) {
+                    $youtubeDoc = $response->getYoutube();
+                    $currentPlaylists = $youtubeDoc->getPlaylists() ?? [];
+                    
+                    foreach ($playlistResults['added'] as $result) {
+                        if (!in_array($result['playlistId'], $currentPlaylists)) {
+                            $currentPlaylists[] = $result['playlistId'];
+                        }
+                    }
+                    
+                    $youtubeDoc->setPlaylists($currentPlaylists);
+                    $this->documentManager->flush();
+                    
+                    error_log('[VideoHexagonal] Updated Youtube document with playlists: ' . json_encode($currentPlaylists));
+                }
+                
                 $this->logger->info('[VideoHexagonal] Playlists processed', [
                     'multimediaObjectId' => $message->getMultimediaObjectId(),
                     'youtubeId' => $response->getYoutubeId(),
                     'added' => count($playlistResults['added']),
                     'failed' => count($playlistResults['failed']),
+                    'playlistsInDocument' => $currentPlaylists ?? [],
                 ]);
             }
 

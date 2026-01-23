@@ -103,6 +103,40 @@ class QuotaCheckMiddleware implements MiddlewareInterface
                     'messageClass' => $messageClass,
                 ]);
 
+                // Registrar en el panel de quota que se rechazó por falta de quota
+                try {
+                    $accountTag = $this->findAccountTag($accountId);
+                    if ($accountTag) {
+                        $this->quotaService->logApiResponse(
+                            $accountTag,
+                            $operationInfo['operation'],
+                            [
+                                'action' => 'quota_check',
+                                'messageClass' => $messageClass,
+                                'messageData' => $this->extractMessageData($message),
+                            ],
+                            [
+                                'status' => 'moved_to_waiting_queue',
+                                'quotaAvailable' => $quotaCheck['available'],
+                                'quotaRequired' => $quotaCheck['required'],
+                                'quotaRemaining' => $quotaCheck['available'] - $quotaCheck['required'],
+                            ],
+                            false, // not success
+                            'Quota exceeded - Message moved to waiting queue',
+                            [
+                                'available' => $quotaCheck['available'],
+                                'required' => $quotaCheck['required'],
+                                'operation' => $operationInfo['operation'],
+                            ],
+                            429 // Too Many Requests
+                        );
+                    }
+                } catch (\Exception $e) {
+                    $this->logger->error('[QuotaCheckMiddleware] Failed to log quota rejection', [
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+
                 // Crear WaitingMessage y enviarlo a la cola de espera
                 $waitingMessage = new WaitingMessage(
                     accountId: $accountId,

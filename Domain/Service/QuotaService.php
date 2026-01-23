@@ -169,6 +169,36 @@ class QuotaService
     {
         $quota = $this->getOrCreateDailyQuota($youtubeAccountId, $date);
 
+        // Get API responses for today
+        $today = $date ?? new \DateTimeImmutable();
+        $startOfDay = new \DateTime($today->format('Y-m-d') . ' 00:00:00');
+        $endOfDay = new \DateTime($today->format('Y-m-d') . ' 23:59:59');
+
+        $apiResponses = $this->documentManager
+            ->getRepository(\Pumukit\YoutubeBundle\Domain\Model\YoutubeApiResponse::class)
+            ->createQueryBuilder()
+            ->field('youtubeAccountId')->equals($youtubeAccountId)
+            ->field('createdAt')->gte($startOfDay)
+            ->field('createdAt')->lte($endOfDay)
+            ->sort('createdAt', 'DESC')
+            ->getQuery()
+            ->execute();
+
+        $apiResponsesArray = [];
+        foreach ($apiResponses as $response) {
+            $apiResponsesArray[] = [
+                'operation' => $response->getOperation(),
+                'quotaCost' => $response->getQuotaCost(),
+                'success' => $response->isSuccess(),
+                'httpStatusCode' => $response->getHttpStatusCode(),
+                'request' => $response->getRequest(),
+                'response' => $response->getResponse(),
+                'errorMessage' => $response->getErrorMessage(),
+                'errorDetails' => $response->getErrorDetails(),
+                'createdAt' => $response->getCreatedAt(),
+            ];
+        }
+
         return [
             'youtubeAccountId' => $youtubeAccountId,
             'date' => $quota->getDate()->format('Y-m-d'),
@@ -178,6 +208,8 @@ class QuotaService
             'percentageUsed' => round($quota->getQuotaPercentageUsed(), 2),
             'isExhausted' => $quota->isQuotaExhausted(),
             'operationsCount' => count($quota->getOperations()),
+            'operations' => $quota->getOperations(), // Operaciones de quota
+            'api_responses' => $apiResponsesArray, // ← Respuestas de la API de YouTube
         ];
     }
 

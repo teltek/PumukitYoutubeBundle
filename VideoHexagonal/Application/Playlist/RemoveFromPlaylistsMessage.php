@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Pumukit\YoutubeBundle\VideoHexagonal\Application\Playlist;
 
-final class AddToPlaylistsMessage
+final class RemoveFromPlaylistsMessage
 {
     private ?string $youtubeId;
     private string $accountId;

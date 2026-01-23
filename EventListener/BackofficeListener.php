@@ -13,6 +13,8 @@ use Pumukit\SchemaBundle\Services\TagService;
 use Pumukit\YoutubeBundle\Document\Youtube;
 use Pumukit\YoutubeBundle\PumukitYoutubeBundle;
 use Pumukit\YoutubeBundle\VideoHexagonal\Application\Upload\UploadVideoMessage;
+use Pumukit\YoutubeBundle\VideoHexagonal\Application\Playlist\AddToPlaylistsMessage;
+use Pumukit\YoutubeBundle\VideoHexagonal\Application\Playlist\RemoveFromPlaylistsMessage;
 use Pumukit\YoutubeBundle\PlaylistHexagonal\Application\AddVideo\AddVideoMessage;
 use Pumukit\YoutubeBundle\PlaylistHexagonal\Application\RemoveVideo\RemoveVideoMessage;
 use Psr\Log\LoggerInterface;
@@ -153,6 +155,8 @@ class BackofficeListener
         // Obtener playlists seleccionadas
         $newPlaylists = $this->extractPlaylistsFromRequest($request);
         
+        error_log('[BackofficeListener] Extracted playlists: ' . json_encode($newPlaylists));
+        
         $this->logger->info('[BackofficeListener] Extracted playlists', [
             'newPlaylists' => $newPlaylists,
             'count' => count($newPlaylists),
@@ -169,8 +173,8 @@ class BackofficeListener
                 'status' => $youtubeDoc->getStatus(),
             ]);
             
-            // Obtener playlists actuales del MultimediaObject
-            $oldPlaylists = $multimediaObject->getProperty('youtube_playlists') ?? [];
+            // Obtener playlists actuales del DOCUMENTO YOUTUBE (IDs de YouTube, no MongoDB)
+            $oldPlaylists = $youtubeDoc->getPlaylists() ?? [];
             if (!is_array($oldPlaylists)) {
                 $oldPlaylists = [];
             }
@@ -184,24 +188,48 @@ class BackofficeListener
             $this->dispatchPlaylistChanges($multimediaObject, $accountId, $oldPlaylists, $newPlaylists);
             
         } else {
-            // VIDEO NUEVO - Upload completo con playlists
-            $this->logger->info('[BackofficeListener] New video upload, dispatching UploadVideoMessage', [
-                'playlists' => $newPlaylists,
-            ]);
+            // VIDEO NUEVO - Separar en dos mensajes: Upload + AddToPlaylists
+            $this->logger->info('[BackofficeListener] New video upload, dispatching UploadVideoMessage WITHOUT playlists');
             
-            $message = new UploadVideoMessage(
+            // 1. Mensaje de upload SIN playlists
+            $uploadMessage = new UploadVideoMessage(
                 $multimediaObject->getId(),
                 $accountId,
-                $newPlaylists
+                [] // No playlists - se añadirán después
             );
 
-            $this->messageBus->dispatch($message);
+            $this->messageBus->dispatch($uploadMessage);
 
-            $this->logger->info('[BackofficeListener] Upload message dispatched', [
+            $this->logger->info('[BackofficeListener] Upload message dispatched (without playlists)', [
                 'multimediaObjectId' => $multimediaObject->getId(),
                 'accountId' => $accountId,
-                'playlists' => $newPlaylists,
             ]);
+            
+            // 2. Si hay playlists, enviar mensaje separado de AddToPlaylists
+            // NOTA: Este mensaje se procesará DESPUÉS de que el video esté subido
+            // porque el worker procesa los mensajes en orden
+            if (!empty($newPlaylists)) {
+                $this->logger->info('[BackofficeListener] Dispatching AddToPlaylistsMessage', [
+                    'playlists' => $newPlaylists,
+                    'count' => count($newPlaylists),
+                ]);
+                
+                // Este mensaje necesita el youtubeId, pero aún no existe
+                // Por eso enviamos el multimediaObjectId y el handler lo buscará
+                $addPlaylistsMessage = new AddToPlaylistsMessage(
+                    null, // youtubeId - será buscado por el handler usando multimediaObjectId
+                    $accountId,
+                    $newPlaylists,
+                    $multimediaObject->getId()
+                );
+                
+                $this->messageBus->dispatch($addPlaylistsMessage);
+                
+                $this->logger->info('[BackofficeListener] AddToPlaylists message dispatched', [
+                    'multimediaObjectId' => $multimediaObject->getId(),
+                    'playlistCount' => count($newPlaylists),
+                ]);
+            }
         }
     }
 
@@ -260,37 +288,39 @@ class BackofficeListener
             'toAdd' => array_values($toAdd),
         ]);
         
-        // Despachar RemoveVideoMessage para cada playlist removida
-        foreach ($toRemove as $playlistId) {
-            $message = new RemoveVideoMessage(
-                $multimediaObject->getId(),
-                $playlistId,
-                $accountId
+        // Despachar RemoveFromPlaylistsMessage si hay playlists a remover (batch)
+        if (!empty($toRemove)) {
+            $message = new RemoveFromPlaylistsMessage(
+                null, // youtubeId - será buscado por el handler
+                $accountId,
+                array_values($toRemove),
+                $multimediaObject->getId()
             );
             
             $this->messageBus->dispatch($message);
             
-            $this->logger->info('[BackofficeListener] RemoveVideoMessage dispatched', [
+            $this->logger->info('[BackofficeListener] RemoveFromPlaylistsMessage dispatched', [
                 'multimediaObjectId' => $multimediaObject->getId(),
-                'playlistId' => $playlistId,
-                'accountId' => $accountId,
+                'playlistCount' => count($toRemove),
+                'playlists' => array_values($toRemove),
             ]);
         }
         
-        // Despachar AddVideoMessage para cada playlist añadida
-        foreach ($toAdd as $playlistId) {
-            $message = new AddVideoMessage(
-                $multimediaObject->getId(),
-                $playlistId,
-                $accountId
+        // Despachar AddToPlaylistsMessage si hay playlists a añadir (batch)
+        if (!empty($toAdd)) {
+            $message = new AddToPlaylistsMessage(
+                null, // youtubeId - será buscado por el handler
+                $accountId,
+                array_values($toAdd),
+                $multimediaObject->getId()
             );
             
             $this->messageBus->dispatch($message);
             
-            $this->logger->info('[BackofficeListener] AddVideoMessage dispatched', [
+            $this->logger->info('[BackofficeListener] AddToPlaylistsMessage dispatched', [
                 'multimediaObjectId' => $multimediaObject->getId(),
-                'playlistId' => $playlistId,
-                'accountId' => $accountId,
+                'playlistCount' => count($toAdd),
+                'playlists' => array_values($toAdd),
             ]);
         }
         
