@@ -82,7 +82,7 @@ class UpdateListener
     private function getTrackForYoutube(MultimediaObject $multimediaObject)
     {
         $master = $multimediaObject->getTrackWithTag('master');
-        if ($master) {
+        if ($master && $master->metadata()->isOnlyAudio()) {
             return $master;
         }
 
