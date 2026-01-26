@@ -15,18 +15,19 @@ use Pumukit\SchemaBundle\Document\ValueObject\Path;
 use Pumukit\SchemaBundle\Event\MultimediaObjectEvent;
 use Pumukit\YoutubeBundle\Document\Youtube;
 use Pumukit\YoutubeBundle\PumukitYoutubeBundle;
+use Pumukit\YoutubeBundle\Services\YoutubeConfigurationService;
 
 class UpdateListener
 {
     private $documentManager;
     private $jobCreator;
-    private $defaultTrackUpload;
+    private $youtubeConfig;
 
-    public function __construct(DocumentManager $documentManager, JobCreator $jobCreator, string $defaultTrackUpload)
+    public function __construct(DocumentManager $documentManager, JobCreator $jobCreator, YoutubeConfigurationService $youtubeConfig)
     {
         $this->documentManager = $documentManager;
         $this->jobCreator = $jobCreator;
-        $this->defaultTrackUpload = $defaultTrackUpload;
+        $this->youtubeConfig = $youtubeConfig;
     }
 
     public function onMultimediaObjectUpdate(MultimediaObjectEvent $event): void
@@ -54,7 +55,7 @@ class UpdateListener
             return;
         }
 
-        if ($multimediaObject->getTrackWithTag('profile:'.$this->defaultTrackUpload)) {
+        if ($multimediaObject->getTrackWithTag('profile:'.$this->youtubeConfig->defaultTrackUpload())) {
             return;
         }
 
@@ -64,7 +65,7 @@ class UpdateListener
         }
 
         $jobOptions = new JobOptions(
-            $this->defaultTrackUpload,
+            $this->youtubeConfig->defaultTrackUpload(),
             2,
             $track->language(),
             [],

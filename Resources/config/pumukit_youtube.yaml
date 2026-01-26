@@ -21,8 +21,6 @@ services:
 
   Pumukit\YoutubeBundle\EventListener\UpdateListener:
     class: Pumukit\YoutubeBundle\EventListener\UpdateListener
-    arguments:
-      $defaultTrackUpload: "%pumukit_youtube.default_track_upload%"
     tags:
       - { name: "kernel.event_listener", event: "multimediaobject.update", method: "onMultimediaObjectUpdate" }
 
