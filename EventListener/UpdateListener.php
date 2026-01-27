@@ -6,20 +6,28 @@ namespace Pumukit\YoutubeBundle\EventListener;
 
 use Doctrine\ODM\MongoDB\DocumentManager;
 use MongoDB\BSON\ObjectId;
+use Pumukit\EncoderBundle\Services\DTO\JobOptions;
+use Pumukit\EncoderBundle\Services\JobCreator;
 use Pumukit\SchemaBundle\Document\EmbeddedTag;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Tag;
+use Pumukit\SchemaBundle\Document\ValueObject\Path;
 use Pumukit\SchemaBundle\Event\MultimediaObjectEvent;
 use Pumukit\YoutubeBundle\Document\Youtube;
 use Pumukit\YoutubeBundle\PumukitYoutubeBundle;
+use Pumukit\YoutubeBundle\Services\YoutubeConfigurationService;
 
 class UpdateListener
 {
     private $documentManager;
+    private $jobCreator;
+    private $youtubeConfig;
 
-    public function __construct(DocumentManager $documentManager)
+    public function __construct(DocumentManager $documentManager, JobCreator $jobCreator, YoutubeConfigurationService $youtubeConfig)
     {
         $this->documentManager = $documentManager;
+        $this->jobCreator = $jobCreator;
+        $this->youtubeConfig = $youtubeConfig;
     }
 
     public function onMultimediaObjectUpdate(MultimediaObjectEvent $event): void
@@ -28,6 +36,63 @@ class UpdateListener
 
         $this->updateYoutubeDocument($multimediaObject);
         $this->setYoutubeAccount($multimediaObject);
+
+        $this->shouldGenerateJobForAudio($multimediaObject);
+    }
+
+    private function shouldGenerateJobForAudio(MultimediaObject $multimediaObject): void
+    {
+        $youtubeTag = $this->documentManager
+            ->getRepository(Tag::class)
+            ->findOneBy(['cod' => PumukitYoutubeBundle::YOUTUBE_TAG_CODE])
+        ;
+
+        if (!$youtubeTag || !$multimediaObject->containsTag($youtubeTag)) {
+            return;
+        }
+
+        if (!$multimediaObject->isOnlyAudio()) {
+            return;
+        }
+
+        if ($multimediaObject->getTrackWithTag('profile:'.$this->youtubeConfig->defaultTrackUpload())) {
+            return;
+        }
+
+        $track = $this->getTrackForYoutube($multimediaObject);
+        if (!$track) {
+            return;
+        }
+
+        $jobOptions = new JobOptions(
+            $this->youtubeConfig->defaultTrackUpload(),
+            2,
+            $track->language(),
+            [],
+            [],
+            0,
+            0,
+            true
+        );
+
+        $path = Path::create($track->storage()->path()->path());
+        $this->jobCreator->fromPath($multimediaObject, $path, $jobOptions);
+    }
+
+    private function getTrackForYoutube(MultimediaObject $multimediaObject)
+    {
+        $master = $multimediaObject->getTrackWithTag('master');
+        if ($master && $master->metadata()->isOnlyAudio()) {
+            return $master;
+        }
+
+        foreach ($multimediaObject->getTracksWithAnyTag(['display']) as $track) {
+            if ($track->metadata()->isOnlyAudio()) {
+                return $track;
+            }
+        }
+
+        return null;
     }
 
     private function updateYoutubeDocument(MultimediaObject $multimediaObject): void
