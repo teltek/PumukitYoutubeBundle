@@ -56,7 +56,7 @@
         console.log('[HEXAGONAL] Creating playlist:', { accountId: '{{ account }}', title, description, privacy });
         
         $.ajax({
-            url: '{{ path('pumukit_youtube_playlists_hexagonal_create') }}',
+            url: '{{ path('pumukit_youtube_playlists_create') }}',
             method: 'POST',
             contentType: 'application/json',
             data: JSON.stringify({

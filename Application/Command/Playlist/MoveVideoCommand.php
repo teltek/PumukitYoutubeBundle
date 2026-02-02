@@ -6,7 +6,7 @@ namespace Pumukit\YoutubeBundle\Application\Command\Playlist;
 
 use App\Message\MoveVideoToPlaylistMessage;
 use Doctrine\ODM\MongoDB\DocumentManager;
-use Pumukit\YoutubeBundle\Domain\Model\YoutubeAccount;
+use Pumukit\YoutubeBundle\Shared\Domain\Model\YoutubeAccount;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;

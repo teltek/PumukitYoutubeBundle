@@ -1,0 +1,408 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Pumukit\YoutubeBundle\Shared\Domain\Service;
+
+use Doctrine\ODM\MongoDB\DocumentManager;
+use Pumukit\YoutubeBundle\Shared\Domain\Exception\QuotaExceededException;
+use Pumukit\SchemaBundle\Document\Tag;
+use Pumukit\YoutubeBundle\Shared\Domain\Model\YoutubeApiResponse;
+use Pumukit\YoutubeBundle\Shared\Domain\Model\YoutubeQuotaUsage;
+use Psr\Log\LoggerInterface;
+
+class QuotaService
+{
+    // Quota costs per operation (based on YouTube Data API v3 official costs)
+    public const QUOTA_COSTS = [
+        'video.upload' => 1600,
+        'video.update' => 50,
+        'video.delete' => 50,
+        'video.list' => 1,
+        'videos.update' => 50,    
+        'videos.delete' => 50,    
+        'videos.insert' => 1600,  
+        
+        'playlist.create' => 50,
+        'playlist.update' => 50,
+        'playlist.delete' => 50,
+        'playlist.list' => 1,
+        'playlists.insert' => 50,
+        'playlists.update' => 50,
+        'playlists.delete' => 50,
+        
+        'playlistItem.insert' => 50,
+        'playlistItem.delete' => 50,
+        'playlistItem.list' => 1,
+        'playlistItems.insert' => 50,
+        'playlistItems.delete' => 50,
+        
+        'caption.insert' => 400,
+        'caption.update' => 450,
+        'caption.delete' => 50,
+        'caption.list' => 50,
+        'captions.insert' => 400,
+        'captions.update' => 450,
+        'captions.delete' => 50,
+        
+        'channel.list' => 1,
+        'search' => 100,
+    ];
+
+    public const DEFAULT_DAILY_QUOTA = 10000;
+
+    public function __construct(
+        private readonly DocumentManager $documentManager,
+        private readonly LoggerInterface $logger
+    ) {
+    }
+
+    public function getOrCreateDailyQuota(string $youtubeAccountId, ?\DateTimeInterface $date = null): YoutubeQuotaUsage
+    {
+        // Use Madrid timezone for consistency (YouTube quotas reset at midnight Pacific Time, but we use Madrid for UI)
+        $timezone = new \DateTimeZone('Europe/Madrid');
+        $now = new \DateTimeImmutable('now', $timezone);
+        $date = $date ?? $now;
+        
+        // Get the date key in Madrid timezone
+        $dateKey = $date->format('Y-m-d');
+
+        $this->logger->debug('[QuotaService] Looking for quota', [
+            'youtubeAccountId' => $youtubeAccountId,
+            'dateKey' => $dateKey,
+            'timezone' => $timezone->getName(),
+        ]);
+
+        // Find existing quota for this account and date
+        // Need to search for dates in the correct timezone
+        $startOfDay = new \DateTime($dateKey . ' 00:00:00', $timezone);
+        $endOfDay = new \DateTime($dateKey . ' 23:59:59', $timezone);
+
+        $quota = $this->documentManager
+            ->getRepository(YoutubeQuotaUsage::class)
+            ->createQueryBuilder()
+            ->field('youtubeAccountId')->equals($youtubeAccountId)
+            ->field('date')->gte($startOfDay)
+            ->field('date')->lte($endOfDay)
+            ->getQuery()
+            ->getSingleResult();
+
+        if ($quota) {
+            $this->logger->debug('[QuotaService] Found existing quota', [
+                'youtubeAccountId' => $youtubeAccountId,
+                'dateKey' => $dateKey,
+                'quotaUsed' => $quota->getQuotaUsed(),
+            ]);
+            return $quota;
+        }
+
+        // Create new quota tracking for today
+        $quotaDate = new \DateTimeImmutable($dateKey . ' 00:00:00', $timezone);
+        $quota = YoutubeQuotaUsage::create(
+            $youtubeAccountId,
+            $quotaDate,
+            self::DEFAULT_DAILY_QUOTA
+        );
+
+        $this->documentManager->persist($quota);
+        $this->documentManager->flush();
+
+        $this->logger->info('[QuotaService] Created new daily quota tracking', [
+            'youtubeAccountId' => $youtubeAccountId,
+            'date' => $dateKey,
+            'quotaLimit' => self::DEFAULT_DAILY_QUOTA,
+            'timezone' => $timezone->getName(),
+        ]);
+
+        return $quota;
+    }
+
+    public function checkQuotaAvailability(string $youtubeAccountId, string $operationType): void
+    {
+        $cost = self::QUOTA_COSTS[$operationType] ?? 0;
+
+        if ($cost === 0) {
+            $this->logger->warning('[QuotaService] Unknown operation type, skipping quota check', [
+                'operationType' => $operationType,
+            ]);
+            return;
+        }
+
+        $quota = $this->getOrCreateDailyQuota($youtubeAccountId);
+
+        if (!$quota->hasQuotaAvailable($cost)) {
+            $this->logger->error('[QuotaService] Quota exceeded', [
+                'youtubeAccountId' => $youtubeAccountId,
+                'operationType' => $operationType,
+                'requiredQuota' => $cost,
+                'quotaRemaining' => $quota->getQuotaRemaining(),
+                'quotaUsed' => $quota->getQuotaUsed(),
+                'quotaLimit' => $quota->getQuotaLimit(),
+            ]);
+
+            throw new QuotaExceededException(
+                "Daily quota exceeded for account {$youtubeAccountId}. " .
+                "Required: {$cost} units, Available: {$quota->getQuotaRemaining()} units. " .
+                "Quota resets at midnight Pacific Time.",
+                429  // HTTP 429 Too Many Requests
+            );
+        }
+    }
+
+    public function consumeQuota(
+        string $youtubeAccountId,
+        string $operationType,
+        array $metadata = []
+    ): void {
+        $cost = self::QUOTA_COSTS[$operationType] ?? 0;
+
+        if ($cost === 0) {
+            $this->logger->warning('[QuotaService] Unknown operation type, skipping quota consumption', [
+                'operationType' => $operationType,
+            ]);
+            return;
+        }
+
+        $quota = $this->getOrCreateDailyQuota($youtubeAccountId);
+        $quota->addOperation($operationType, $cost, $metadata);
+
+        $this->documentManager->flush();
+
+        $this->logger->info('[QuotaService] Quota consumed', [
+            'youtubeAccountId' => $youtubeAccountId,
+            'operationType' => $operationType,
+            'cost' => $cost,
+            'quotaUsed' => $quota->getQuotaUsed(),
+            'quotaRemaining' => $quota->getQuotaRemaining(),
+            'percentageUsed' => round($quota->getQuotaPercentageUsed(), 2) . '%',
+        ]);
+
+        // Warn if quota usage is high
+        if ($quota->getQuotaPercentageUsed() >= 80) {
+            $this->logger->warning('[QuotaService] High quota usage detected', [
+                'youtubeAccountId' => $youtubeAccountId,
+                'percentageUsed' => round($quota->getQuotaPercentageUsed(), 2) . '%',
+                'quotaRemaining' => $quota->getQuotaRemaining(),
+            ]);
+        }
+    }
+
+    public function getQuotaStatus(string $youtubeAccountId, ?\DateTimeInterface $date = null): array
+    {
+        $quota = $this->getOrCreateDailyQuota($youtubeAccountId, $date);
+
+        // Get API responses for today
+        $today = $date ?? new \DateTimeImmutable();
+        $startOfDay = new \DateTime($today->format('Y-m-d') . ' 00:00:00');
+        $endOfDay = new \DateTime($today->format('Y-m-d') . ' 23:59:59');
+
+        $apiResponses = $this->documentManager
+            ->getRepository(\Pumukit\YoutubeBundle\Shared\Domain\Model\YoutubeApiResponse::class)
+            ->createQueryBuilder()
+            ->field('youtubeAccountId')->equals($youtubeAccountId)
+            ->field('createdAt')->gte($startOfDay)
+            ->field('createdAt')->lte($endOfDay)
+            ->sort('createdAt', 'DESC')
+            ->getQuery()
+            ->execute();
+
+        $apiResponsesArray = [];
+        foreach ($apiResponses as $response) {
+            $apiResponsesArray[] = [
+                'operation' => $response->getOperation(),
+                'quotaCost' => $response->getQuotaCost(),
+                'success' => $response->isSuccess(),
+                'httpStatusCode' => $response->getHttpStatusCode(),
+                'request' => $response->getRequest(),
+                'response' => $response->getResponse(),
+                'errorMessage' => $response->getErrorMessage(),
+                'errorDetails' => $response->getErrorDetails(),
+                'createdAt' => $response->getCreatedAt(),
+            ];
+        }
+
+        return [
+            'youtubeAccountId' => $youtubeAccountId,
+            'date' => $quota->getDate()->format('Y-m-d'),
+            'quotaUsed' => $quota->getQuotaUsed(),
+            'quotaLimit' => $quota->getQuotaLimit(),
+            'quotaRemaining' => $quota->getQuotaRemaining(),
+            'percentageUsed' => round($quota->getQuotaPercentageUsed(), 2),
+            'isExhausted' => $quota->isQuotaExhausted(),
+            'operationsCount' => count($quota->getOperations()),
+            'operations' => $quota->getOperations(), // Operaciones de quota
+            'api_responses' => $apiResponsesArray, // ← Respuestas de la API de YouTube
+        ];
+    }
+
+    public function getEstimatedOperations(string $youtubeAccountId, string $operationType): int
+    {
+        $quota = $this->getOrCreateDailyQuota($youtubeAccountId);
+        $cost = self::QUOTA_COSTS[$operationType] ?? 0;
+
+        if ($cost === 0) {
+            return PHP_INT_MAX;
+        }
+
+        return (int) floor($quota->getQuotaRemaining() / $cost);
+    }
+
+    public function resetDailyQuota(string $youtubeAccountId): void
+    {
+        $today = new \DateTimeImmutable();
+        $dateKey = $today->format('Y-m-d');
+
+        $quota = $this->documentManager
+            ->getRepository(YoutubeQuotaUsage::class)
+            ->createQueryBuilder()
+            ->field('youtubeAccountId')->equals($youtubeAccountId)
+            ->field('date')->gte(new \DateTime($dateKey . ' 00:00:00'))
+            ->field('date')->lte(new \DateTime($dateKey . ' 23:59:59'))
+            ->getQuery()
+            ->getSingleResult();
+
+        if ($quota) {
+            $this->documentManager->remove($quota);
+            $this->documentManager->flush();
+
+            $this->logger->info('[QuotaService] Daily quota reset manually', [
+                'youtubeAccountId' => $youtubeAccountId,
+                'date' => $dateKey,
+            ]);
+        }
+    }
+
+    public function logApiResponse(
+        Tag $accountTag,
+        string $operation,
+        array $request,
+        array $response,
+        bool $success = true,
+        ?string $errorMessage = null,
+        ?array $errorDetails = null,
+        ?int $httpStatusCode = null
+    ): void {
+        try {
+            $cost = self::QUOTA_COSTS[$operation] ?? 0;
+            
+            // Get youtube_account ID from Tag properties, or use Tag ID as fallback
+            $accountId = $accountTag->getProperty('youtube_account') ?: $accountTag->getId();
+            
+            $apiResponse = new YoutubeApiResponse(
+                $accountId,
+                $operation,
+                $cost,
+                $request
+            );
+
+            if ($success) {
+                $apiResponse->markAsSuccess($response, $httpStatusCode ?? 200);
+            } else {
+                $apiResponse->markAsFailure($errorMessage ?? 'Unknown error', $errorDetails ?? [], $httpStatusCode);
+            }
+
+            $this->documentManager->persist($apiResponse);
+            $this->documentManager->flush();
+
+            $this->logger->info('[QuotaService] API response logged', [
+                'accountId' => $accountId,
+                'operation' => $operation,
+                'success' => $success,
+                'quotaCost' => $cost,
+            ]);
+        } catch (\Exception $e) {
+            // IMPORTANTE: Si falla el logging de API response, NO falla todo el proceso
+            // Esto asegura que aunque MongoDB tenga problemas, la operación principal continúa
+            $this->logger->error('[QuotaService] Failed to log API response', [
+                'error' => $e->getMessage(),
+                'operation' => $operation,
+            ]);
+        }
+    }
+
+    /**
+     * Verify that API response logging is working correctly
+     * Used for debugging purposes
+     */
+    public function verifyApiResponsesLogging(string $youtubeAccountId): array
+    {
+        $today = new \DateTimeImmutable();
+        $startOfDay = new \DateTime($today->format('Y-m-d') . ' 00:00:00');
+        $endOfDay = new \DateTime($today->format('Y-m-d') . ' 23:59:59');
+
+        $responses = $this->documentManager
+            ->getRepository(YoutubeApiResponse::class)
+            ->createQueryBuilder()
+            ->field('youtubeAccountId')->equals($youtubeAccountId)
+            ->field('createdAt')->gte($startOfDay)
+            ->field('createdAt')->lte($endOfDay)
+            ->sort('createdAt', 'DESC')
+            ->getQuery()
+            ->execute();
+
+        $successful = 0;
+        $failed = 0;
+
+        foreach ($responses as $response) {
+            if ($response->isSuccess()) {
+                $successful++;
+            } else {
+                $failed++;
+            }
+        }
+
+        return [
+            'total' => $successful + $failed,
+            'successful' => $successful,
+            'failed' => $failed,
+            'responses' => $responses,
+        ];
+    }
+
+    /**
+     * Check quota and return result without throwing exception
+     * 
+     * @return array{canProceed: bool, available: int, required: int, remaining: int}
+     */
+    public function checkQuota(string $youtubeAccountId, string $operation): array
+    {
+        $cost = self::QUOTA_COSTS[$operation] ?? 0;
+        $quota = $this->getOrCreateDailyQuota($youtubeAccountId);
+
+        $available = $quota->getQuotaLimit() - $quota->getQuotaUsed();
+        $canProceed = $available >= $cost;
+
+        return [
+            'canProceed' => $canProceed,
+            'available' => $available,
+            'required' => $cost,
+            'remaining' => max(0, $available - $cost),
+        ];
+    }
+
+    /**
+     * Force quota exhaustion when YouTube returns 429.
+     * This syncs local quota with YouTube's actual quota.
+     */
+    public function forceQuotaExhaustion(string $youtubeAccountId): void
+    {
+        $quota = $this->getOrCreateDailyQuota($youtubeAccountId);
+        
+        // Mark all remaining quota as used
+        $remaining = $quota->getQuotaRemaining();
+        if ($remaining > 0) {
+            $quota->addOperation('quota.sync.exhausted', $remaining, [
+                'reason' => 'YouTube returned 429 - quota exceeded',
+                'synced_at' => (new \DateTimeImmutable())->format('Y-m-d H:i:s'),
+            ]);
+            
+            $this->documentManager->flush();
+            
+            $this->logger->warning('[QuotaService] Forced quota exhaustion due to YouTube 429', [
+                'youtubeAccountId' => $youtubeAccountId,
+                'remainingQuotaConsumed' => $remaining,
+                'totalQuotaUsed' => $quota->getQuotaUsed(),
+            ]);
+        }
+    }
+}

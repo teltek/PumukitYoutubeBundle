@@ -17,7 +17,7 @@ class WaitingMessageHandler
     {
         $this->logger->info('[WaitingMessageHandler] Message waiting for quota reset', [
             'accountId' => $message->getAccountId(),
-            'originalMessageClass' => $message->getOriginalMessageClass(),
+            'originalMessageClass' => $message->getOriginalMessageClassName(),
             'operation' => $message->getOperation(),
             'quotaCost' => $message->getQuotaCost(),
             'priority' => $message->getPriority(),

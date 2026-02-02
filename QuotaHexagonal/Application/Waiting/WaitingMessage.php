@@ -16,7 +16,8 @@ final class WaitingMessage
 
     public function __construct(
         private readonly string $accountId,
-        private readonly object $originalMessage,
+        private readonly string $originalMessageClass,
+        private readonly array $originalMessageData,
         private readonly int $quotaCost,
         private readonly string $operation,
         private readonly ?int $priority = 0
@@ -29,9 +30,14 @@ final class WaitingMessage
         return $this->accountId;
     }
 
-    public function getOriginalMessage(): object
+    public function getOriginalMessageClass(): string
     {
-        return $this->originalMessage;
+        return $this->originalMessageClass;
+    }
+
+    public function getOriginalMessageData(): array
+    {
+        return $this->originalMessageData;
     }
 
     public function getQuotaCost(): int
@@ -57,8 +63,8 @@ final class WaitingMessage
     /**
      * Obtiene el nombre de la clase del mensaje original
      */
-    public function getOriginalMessageClass(): string
+    public function getOriginalMessageClassName(): string
     {
-        return get_class($this->originalMessage);
+        return $this->originalMessageClass;
     }
 }

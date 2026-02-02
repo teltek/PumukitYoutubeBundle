@@ -21,7 +21,7 @@ final class DeleteCaptionController extends AbstractController
     }
 
     /**
-     * @Route("/admin/youtube/captions-hexagonal/{youtubeId}/{captionId}/delete", name="pumukit_youtube_caption_hexagonal_delete", methods={"DELETE"})
+     * @Route("/admin/youtube/captions/{youtubeId}/{captionId}/delete", name="pumukit_youtube_caption_delete", methods={"DELETE"})
      */
     public function __invoke(string $youtubeId, string $captionId): JsonResponse
     {

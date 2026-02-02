@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Pumukit\YoutubeBundle\Infrastructure\Middleware;
 
 use Pumukit\YoutubeBundle\QuotaHexagonal\Application\Waiting\WaitingMessage;
-use Pumukit\YoutubeBundle\Domain\Service\QuotaService;
+use Pumukit\YoutubeBundle\Shared\Domain\Service\QuotaService;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\Exception\UnrecoverableMessageHandlingException;
@@ -104,33 +104,12 @@ class QuotaCheckMiddleware implements MiddlewareInterface
                 ]);
 
                 // Registrar en el panel de quota que se rechazó por falta de quota
+                // (Simplificado: sin necesidad de findAccountTag que no existe)
                 try {
-                    $accountTag = $this->findAccountTag($accountId);
-                    if ($accountTag) {
-                        $this->quotaService->logApiResponse(
-                            $accountTag,
-                            $operationInfo['operation'],
-                            [
-                                'action' => 'quota_check',
-                                'messageClass' => $messageClass,
-                                'messageData' => $this->extractMessageData($message),
-                            ],
-                            [
-                                'status' => 'moved_to_waiting_queue',
-                                'quotaAvailable' => $quotaCheck['available'],
-                                'quotaRequired' => $quotaCheck['required'],
-                                'quotaRemaining' => $quotaCheck['available'] - $quotaCheck['required'],
-                            ],
-                            false, // not success
-                            'Quota exceeded - Message moved to waiting queue',
-                            [
-                                'available' => $quotaCheck['available'],
-                                'required' => $quotaCheck['required'],
-                                'operation' => $operationInfo['operation'],
-                            ],
-                            429 // Too Many Requests
-                        );
-                    }
+                    $this->logger->warning('[QuotaCheckMiddleware] Quota rejected - will log in waiting queue handler', [
+                        'accountId' => $accountId,
+                        'operation' => $operationInfo['operation'],
+                    ]);
                 } catch (\Exception $e) {
                     $this->logger->error('[QuotaCheckMiddleware] Failed to log quota rejection', [
                         'error' => $e->getMessage(),

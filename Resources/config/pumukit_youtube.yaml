@@ -13,25 +13,46 @@ services:
     resource: '../../Controller'
     tags: ['controller.service_arguments']
 
-  # Infrastructure Controllers
-  Pumukit\YoutubeBundle\Infrastructure\Controller\YoutubeUploadController:
-    autowire: true
+  # Infrastructure Controllers - DISABLED (using Hexagonal Architecture instead)
+  # Pumukit\YoutubeBundle\Infrastructure\Controller\YoutubeUploadController:
+  #   autowire: true
+  #   tags: ['controller.service_arguments']
+  #
+  # Pumukit\YoutubeBundle\Infrastructure\Controller\QuotaController:
+  #   autowire: true
+  #   tags: ['controller.service_arguments']
+  #
+  # Pumukit\YoutubeBundle\Infrastructure\Controller\YoutubeVideoManagementController:
+  #   autowire: true
+  #   tags: ['controller.service_arguments']
+  #
+  # Pumukit\YoutubeBundle\Infrastructure\Controller\YoutubePlaylistController:
+  #   autowire: true
+  #   tags: ['controller.service_arguments']
+  #
+  # Pumukit\YoutubeBundle\Infrastructure\Controller\YoutubePublicationConfigController:
+  #   autowire: true
+  #   tags: ['controller.service_arguments']
+
+  # Hexagonal Architecture Controllers
+  Pumukit\YoutubeBundle\PlaylistHexagonal\UI\Backoffice\Controller\:
+    resource: '../../PlaylistHexagonal/UI/Backoffice/Controller'
+    autoconfigure: true
     tags: ['controller.service_arguments']
 
-  Pumukit\YoutubeBundle\Infrastructure\Controller\QuotaController:
-    autowire: true
+  Pumukit\YoutubeBundle\AccountHexagonal\UI\Backoffice\Controller\:
+    resource: '../../AccountHexagonal/UI/Backoffice/Controller'
+    autoconfigure: true
     tags: ['controller.service_arguments']
 
-  Pumukit\YoutubeBundle\Infrastructure\Controller\YoutubeVideoManagementController:
-    autowire: true
+  Pumukit\YoutubeBundle\VideoHexagonal\UI\Backoffice\Controller\:
+    resource: '../../VideoHexagonal/UI/Backoffice/Controller'
+    autoconfigure: true
     tags: ['controller.service_arguments']
 
-  Pumukit\YoutubeBundle\Infrastructure\Controller\YoutubePlaylistController:
-    autowire: true
-    tags: ['controller.service_arguments']
-
-  Pumukit\YoutubeBundle\Infrastructure\Controller\YoutubePublicationConfigController:
-    autowire: true
+  Pumukit\YoutubeBundle\CaptionHexagonal\UI\Backoffice\Controller\:
+    resource: '../../CaptionHexagonal/UI/Backoffice/Controller'
+    autoconfigure: true
     tags: ['controller.service_arguments']
 
   Pumukit\YoutubeBundle\Command\:
@@ -68,6 +89,39 @@ services:
       - '../../Domain/Service/Validation'
     autowire: true
 
+  # Application Services (Hexagonal) - Only Playlist, Account, Caption
+  # (Video is handled separately below with exclusions)
+  Pumukit\YoutubeBundle\PlaylistHexagonal\Application\:
+    resource: '../../PlaylistHexagonal/Application'
+    exclude:
+      - '../../PlaylistHexagonal/Application/*/*Message.php'
+      - '../../PlaylistHexagonal/Application/*/*Request.php'
+      - '../../PlaylistHexagonal/Application/*/*Response.php'
+    autowire: true
+
+  Pumukit\YoutubeBundle\AccountHexagonal\Application\:
+    resource: '../../AccountHexagonal/Application'
+    exclude:
+      - '../../AccountHexagonal/Application/*/*Message.php'
+      - '../../AccountHexagonal/Application/*/*Request.php'
+      - '../../AccountHexagonal/Application/*/*Response.php'
+    autowire: true
+
+  Pumukit\YoutubeBundle\CaptionHexagonal\Application\:
+    resource: '../../CaptionHexagonal/Application'
+    exclude:
+      - '../../CaptionHexagonal/Application/*/*Message.php'
+      - '../../CaptionHexagonal/Application/*/*Request.php'
+      - '../../CaptionHexagonal/Application/*/*Response.php'
+    autowire: true
+
+  # Shared Domain Services
+  Pumukit\YoutubeBundle\Shared\Domain\Service\QuotaService:
+    autowire: true
+
+  Pumukit\YoutubeBundle\Shared\Domain\Service\ErrorClassificationService:
+    autowire: true
+
   # Infrastructure Services
   Pumukit\YoutubeBundle\Infrastructure\Service\:
     resource: '../../Infrastructure/Service'
@@ -75,7 +129,11 @@ services:
       - '../../Infrastructure/Service/QueueDrainService.php'
     autowire: true
 
-  Pumukit\YoutubeBundle\Infrastructure\Service\QueueDrainService:
+  # Shared Infrastructure Services
+  Pumukit\YoutubeBundle\Shared\Infrastructure\Service\GoogleClientFactory:
+    autowire: true
+
+  Pumukit\YoutubeBundle\Shared\Infrastructure\Service\QueueDrainService:
     arguments:
       $messengerTransportDsn: '%env(MESSENGER_TRANSPORT_DSN)%'
 
@@ -84,8 +142,67 @@ services:
     autowire: true
 
   # Repository Interface Aliases
-  Pumukit\YoutubeBundle\Domain\Repository\PublicationRepositoryInterface: '@Pumukit\YoutubeBundle\Infrastructure\Repository\DoctrinePublicationRepository'
+  Pumukit\YoutubeBundle\Shared\Infrastructure\Repository\DoctrinePublicationRepository:
+    autowire: true
 
+  Pumukit\YoutubeBundle\Domain\Repository\PublicationRepositoryInterface: '@Pumukit\YoutubeBundle\Shared\Infrastructure\Repository\DoctrinePublicationRepository'
+  
+  Pumukit\YoutubeBundle\Shared\Domain\Repository\PublicationRepositoryInterface: '@Pumukit\YoutubeBundle\Shared\Infrastructure\Repository\DoctrinePublicationRepository'
+
+  # PlaylistHexagonal Repository
+  Pumukit\YoutubeBundle\PlaylistHexagonal\Infrastructure\Persistence\DoctrinePlaylistRepository:
+    autowire: true
+
+  Pumukit\YoutubeBundle\PlaylistHexagonal\Domain\Repository\PlaylistRepositoryInterface: '@Pumukit\YoutubeBundle\PlaylistHexagonal\Infrastructure\Persistence\DoctrinePlaylistRepository'
+
+  # PlaylistHexagonal YoutubeApi
+  Pumukit\YoutubeBundle\PlaylistHexagonal\Infrastructure\ExternalService\GoogleYoutubePlaylistApi:
+    autowire: true
+
+  Pumukit\YoutubeBundle\PlaylistHexagonal\Domain\Repository\YoutubeApiInterface: '@Pumukit\YoutubeBundle\PlaylistHexagonal\Infrastructure\ExternalService\GoogleYoutubePlaylistApi'
+
+  # AccountHexagonal Repository
+  Pumukit\YoutubeBundle\AccountHexagonal\Infrastructure\Persistence\DoctrineAccountRepository:
+    autowire: true
+
+  Pumukit\YoutubeBundle\AccountHexagonal\Domain\Repository\AccountRepositoryInterface: '@Pumukit\YoutubeBundle\AccountHexagonal\Infrastructure\Persistence\DoctrineAccountRepository'
+
+  # VideoHexagonal Repository
+  Pumukit\YoutubeBundle\VideoHexagonal\Infrastructure\Persistence\DoctrineVideoRepository:
+    autowire: true
+
+  Pumukit\YoutubeBundle\VideoHexagonal\Domain\Repository\VideoRepositoryInterface: '@Pumukit\YoutubeBundle\VideoHexagonal\Infrastructure\Persistence\DoctrineVideoRepository'
+
+  # CaptionHexagonal Repository
+  Pumukit\YoutubeBundle\CaptionHexagonal\Infrastructure\Persistence\DoctrineCaptionRepository:
+    autowire: true
+
+  Pumukit\YoutubeBundle\CaptionHexagonal\Domain\Repository\CaptionRepositoryInterface: '@Pumukit\YoutubeBundle\CaptionHexagonal\Infrastructure\Persistence\DoctrineCaptionRepository'
+
+  # YoutubeAccount Repository
+  Pumukit\YoutubeBundle\Shared\Infrastructure\Repository\DoctrineYoutubeAccountRepository:
+    autowire: true
+
+  Pumukit\YoutubeBundle\Shared\Domain\Repository\YoutubeAccountRepositoryInterface: '@Pumukit\YoutubeBundle\Shared\Infrastructure\Repository\DoctrineYoutubeAccountRepository'
+
+  # AccountHexagonal YoutubeAccountApi
+  Pumukit\YoutubeBundle\AccountHexagonal\Infrastructure\ExternalService\GoogleYoutubeAccountApi:
+    autowire: true
+
+  Pumukit\YoutubeBundle\AccountHexagonal\Domain\Repository\YoutubeAccountApiInterface: '@Pumukit\YoutubeBundle\AccountHexagonal\Infrastructure\ExternalService\GoogleYoutubeAccountApi'
+
+  # VideoHexagonal YoutubeVideoApi
+  Pumukit\YoutubeBundle\VideoHexagonal\Infrastructure\ExternalService\GoogleYoutubeVideoApi:
+    autowire: true
+
+  Pumukit\YoutubeBundle\VideoHexagonal\Domain\Repository\YoutubeVideoApiInterface: '@Pumukit\YoutubeBundle\VideoHexagonal\Infrastructure\ExternalService\GoogleYoutubeVideoApi'
+
+  # CaptionHexagonal YoutubeCaptionApi
+  Pumukit\YoutubeBundle\CaptionHexagonal\Infrastructure\ExternalService\GoogleYoutubeCaptionApi:
+    autowire: true
+
+  Pumukit\YoutubeBundle\CaptionHexagonal\Domain\Repository\YoutubeCaptionApiInterface: '@Pumukit\YoutubeBundle\CaptionHexagonal\Infrastructure\ExternalService\GoogleYoutubeCaptionApi'
+  
   # Application Services
   Pumukit\YoutubeBundle\Application\:
     resource: '../../Application'
@@ -168,6 +285,22 @@ services:
     class: Pumukit\YoutubeBundle\Services\MenuStatService
     tags:
       - { name: "pumukitnewadmin.menuitem" }
+
+  Pumukit\YoutubeBundle\Services\MenuPlaylistService:
+    class: Pumukit\YoutubeBundle\Services\MenuPlaylistService
+    tags:
+      - { name: "pumukitnewadmin.menuitem" }
+
+  Pumukit\YoutubeBundle\Services\MenuQuotaService:
+    class: Pumukit\YoutubeBundle\Services\MenuQuotaService
+    tags:
+      - { name: "pumukitnewadmin.menuitem" }
+
+  # Disabled: Requires custom controllers
+  # Pumukit\YoutubeBundle\Services\MenuStatsService:
+  #   class: Pumukit\YoutubeBundle\Services\MenuStatsService
+  #   tags:
+  #     - { name: "pumukitnewadmin.menuitem" }
 
   Pumukit\YoutubeBundle\Services\MultimediaObjectMenuService:
     class: Pumukit\YoutubeBundle\Services\MultimediaObjectMenuService
@@ -267,17 +400,27 @@ services:
   Pumukit\YoutubeBundle\Services\CommonDataValidationService:
     class: Pumukit\YoutubeBundle\Services\CommonDataValidationService
 
-  # Domain Services - Validation
-  Pumukit\YoutubeBundle\Domain\Service\Validation\YoutubeSanitizer:
-    class: Pumukit\YoutubeBundle\Domain\Service\Validation\YoutubeSanitizer
+  # Domain Services - Validation (moved to Shared/)
+  Pumukit\YoutubeBundle\Shared\Domain\Service\Validation\YoutubeSanitizer:
+    class: Pumukit\YoutubeBundle\Shared\Domain\Service\Validation\YoutubeSanitizer
 
-  Pumukit\YoutubeBundle\Domain\Service\Validation\YoutubeFileValidator:
-    class: Pumukit\YoutubeBundle\Domain\Service\Validation\YoutubeFileValidator
+  Pumukit\YoutubeBundle\Shared\Domain\Service\Validation\YoutubeFileValidator:
+    class: Pumukit\YoutubeBundle\Shared\Domain\Service\Validation\YoutubeFileValidator
     arguments:
       - '@logger'
 
+  Pumukit\YoutubeBundle\Shared\Domain\Service\Validation\YoutubeMetadataValidator:
+    class: Pumukit\YoutubeBundle\Shared\Domain\Service\Validation\YoutubeMetadataValidator
+
+  # Legacy aliases for backward compatibility
+  Pumukit\YoutubeBundle\Domain\Service\Validation\YoutubeSanitizer:
+    alias: Pumukit\YoutubeBundle\Shared\Domain\Service\Validation\YoutubeSanitizer
+
+  Pumukit\YoutubeBundle\Domain\Service\Validation\YoutubeFileValidator:
+    alias: Pumukit\YoutubeBundle\Shared\Domain\Service\Validation\YoutubeFileValidator
+
   Pumukit\YoutubeBundle\Domain\Service\Validation\YoutubeMetadataValidator:
-    class: Pumukit\YoutubeBundle\Domain\Service\Validation\YoutubeMetadataValidator
+    alias: Pumukit\YoutubeBundle\Shared\Domain\Service\Validation\YoutubeMetadataValidator
 
 
   # Event Listeners

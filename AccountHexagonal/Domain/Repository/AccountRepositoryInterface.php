@@ -4,17 +4,17 @@ declare(strict_types=1);
 
 namespace Pumukit\YoutubeBundle\AccountHexagonal\Domain\Repository;
 
-use Pumukit\SchemaBundle\Document\Tag;
+use Pumukit\YoutubeBundle\Shared\Domain\Model\YoutubeAccount;
 
 interface AccountRepositoryInterface
 {
-    public function findById(string $id): ?Tag;
+    public function findById(string $id): ?YoutubeAccount;
 
-    public function findByLogin(string $login): ?Tag;
+    public function findByLogin(string $login): ?YoutubeAccount;
 
     public function findAll(): array;
 
-    public function save(Tag $account): void;
+    public function save(YoutubeAccount $account): void;
 
-    public function delete(Tag $account): void;
+    public function delete(YoutubeAccount $account): void;
 }

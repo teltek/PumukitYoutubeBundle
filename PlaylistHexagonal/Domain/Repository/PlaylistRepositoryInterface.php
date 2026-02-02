@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Pumukit\YoutubeBundle\PlaylistHexagonal\Domain\Repository;
 
-use Pumukit\YoutubeBundle\Domain\Model\YoutubePlaylist;
+use Pumukit\YoutubeBundle\Shared\Domain\Model\YoutubePlaylist;
 
 interface PlaylistRepositoryInterface
 {

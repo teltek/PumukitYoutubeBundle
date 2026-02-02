@@ -250,7 +250,7 @@ HELP
             $cutoffDate->setTime(0, 0, 0);
 
             $result = $this->documentManager
-                ->getDocumentCollection('Pumukit\YoutubeBundle\Domain\Model\YoutubeQuotaUsage')
+                ->getDocumentCollection('Pumukit\YoutubeBundle\Shared\Domain\Model\YoutubeQuotaUsage')
                 ->deleteMany([
                     'date' => ['$lt' => new \MongoDB\BSON\UTCDateTime($cutoffDate)],
                 ]);

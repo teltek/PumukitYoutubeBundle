@@ -7,7 +7,7 @@ namespace Pumukit\YoutubeBundle\Application\Command\Video;
 use Doctrine\ODM\MongoDB\DocumentManager;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\YoutubeBundle\VideoHexagonal\Application\Delete\DeleteVideoMessage;
-use Pumukit\YoutubeBundle\Domain\Model\YoutubeAccount;
+use Pumukit\YoutubeBundle\Shared\Domain\Model\YoutubeAccount;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;

@@ -21,7 +21,7 @@ final class UpdateVideoController extends AbstractController
     }
 
     /**
-     * @Route("/admin/youtube/videos-hexagonal/{id}/update", name="pumukit_youtube_video_hexagonal_update", methods={"PUT"})
+     * @Route("/admin/youtube/videos/{id}/update", name="pumukit_youtube_video_update", methods={"PUT"})
      */
     public function __invoke(string $id): JsonResponse
     {

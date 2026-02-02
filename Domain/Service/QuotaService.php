@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace Pumukit\YoutubeBundle\Domain\Service;
 
 use Doctrine\ODM\MongoDB\DocumentManager;
-use Pumukit\YoutubeBundle\Domain\Exception\QuotaExceededException;
+use Pumukit\YoutubeBundle\Shared\Domain\Exception\QuotaExceededException;
 use Pumukit\SchemaBundle\Document\Tag;
-use Pumukit\YoutubeBundle\Domain\Model\YoutubeApiResponse;
-use Pumukit\YoutubeBundle\Domain\Model\YoutubeQuotaUsage;
+use Pumukit\YoutubeBundle\Shared\Domain\Model\YoutubeApiResponse;
+use Pumukit\YoutubeBundle\Shared\Domain\Model\YoutubeQuotaUsage;
 use Psr\Log\LoggerInterface;
 
 class QuotaService

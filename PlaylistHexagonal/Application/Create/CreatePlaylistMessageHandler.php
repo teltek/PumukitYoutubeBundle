@@ -5,10 +5,11 @@ declare(strict_types=1);
 namespace Pumukit\YoutubeBundle\PlaylistHexagonal\Application\Create;
 
 use Doctrine\ODM\MongoDB\DocumentManager;
-use Pumukit\YoutubeBundle\Domain\Exception\QuotaExceededException;
-use Pumukit\YoutubeBundle\Domain\Model\YoutubeAccount;
-use Pumukit\YoutubeBundle\Domain\Service\QuotaService;
-use Pumukit\YoutubeBundle\Infrastructure\Service\QueueDrainService;
+use Pumukit\YoutubeBundle\Shared\Domain\Exception\QuotaExceededException;
+use Pumukit\YoutubeBundle\Shared\Domain\Model\YoutubeAccount;
+use Pumukit\YoutubeBundle\Shared\Domain\Model\YoutubeApiResponse;
+use Pumukit\YoutubeBundle\Shared\Domain\Service\QuotaService;
+use Pumukit\YoutubeBundle\Shared\Infrastructure\Service\QueueDrainService;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
@@ -19,7 +20,7 @@ use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 #[AsMessageHandler(fromTransport: 'pumukit.youtube.events')]
 final class CreatePlaylistMessageHandler
 {
-    private const QUOTA_COST = 50; // Costo de crear una playlist en YouTube
+    private const OPERATION_TYPE = 'create_playlist'; // Tipo de operación para quota
 
     public function __construct(
         private CreatePlaylistService $createPlaylistService,
@@ -38,7 +39,7 @@ final class CreatePlaylistMessageHandler
 
         try {
             // 1. Verificar quota ANTES de ejecutar
-            $this->quotaService->checkQuotaAvailability($message->getAccountId(), self::QUOTA_COST);
+            $this->quotaService->checkQuotaAvailability($message->getAccountId(), self::OPERATION_TYPE);
 
             // 2. Convertir Message → Request (DTO de negocio)
             $request = new CreatePlaylistRequest(
@@ -51,50 +52,47 @@ final class CreatePlaylistMessageHandler
             // 3. Ejecutar el caso de uso (reutiliza el Service)
             $response = $this->createPlaylistService->__invoke($request);
 
-            // 4. Log API Response
-            $account = $this->documentManager->getRepository(YoutubeAccount::class)
-                ->createQueryBuilder()
-                ->field('_id')->equals($message->getAccountId())
-                ->getQuery()->getSingleResult();
-
-            if (!$account) {
-                $account = $this->documentManager->getRepository(YoutubeAccount::class)
-                    ->findOneBy(['accountName' => $message->getAccountId()]);
-            }
-
-            if ($account) {
-                $this->quotaService->logApiResponse(
-                    $account,
-                    'playlist.create',
-                    [
-                        'title' => $message->getTitle(),
-                        'description' => $message->getDescription(),
-                        'privacy' => $message->getPrivacy(),
-                    ],
-                    [
-                        'playlist_id' => $response->playlist->getId(),
-                        'youtube_id' => $response->playlist->getYoutubeId(),
-                    ],
-                    true,
-                    null,
-                    null,
-                    200
-                );
-            }
-
-            // 5. Consumir quota DESPUÉS de éxito
-            $this->quotaService->consumeQuota(
-                $message->getAccountId(),
-                self::QUOTA_COST,
-                'playlist.create',
-                $response->playlist->getId()
-            );
-
             $this->logger->info('[PlaylistHexagonal] Playlist created successfully', [
                 'playlist_id' => $response->playlist->getId(),
                 'youtube_id' => $response->playlist->getYoutubeId(),
-                'quota_consumed' => self::QUOTA_COST,
+                'quota_consumed' => 50,
             ]);
+
+            // 4. Consumir quota DESPUÉS de éxito
+            $this->quotaService->consumeQuota(
+                $message->getAccountId(),
+                'playlist.create',
+                [
+                    'playlist_id' => $response->playlist->getId(),
+                    'title' => $message->getTitle(),
+                ]
+            );
+
+            $this->logger->info('[PlaylistHexagonal] Quota consumed', [
+                'account_id' => $message->getAccountId(),
+                'cost' => 50,
+            ]);
+
+            // 5. Registrar operación exitosa en YoutubeApiResponse para panel de quota
+            $apiResponse = new YoutubeApiResponse(
+                $message->getAccountId(),
+                'playlist.create',
+                50,
+                [
+                    'title' => $message->getTitle(),
+                    'description' => $message->getDescription(),
+                    'privacy' => $message->getPrivacy(),
+                ]
+            );
+            $apiResponse->markAsSuccess(
+                [
+                    'playlist_id' => $response->playlist->getId(),
+                    'youtube_id' => $response->playlist->getYoutubeId(),
+                ],
+                200
+            );
+            $this->documentManager->persist($apiResponse);
+            $this->documentManager->flush();
 
         } catch (QuotaExceededException $e) {
             // Quota local agotada → Mover a cola de espera
@@ -102,40 +100,34 @@ final class CreatePlaylistMessageHandler
                 'account_id' => $message->getAccountId(),
             ]);
 
-            $this->queueDrainService->drainEventsQueue();
-            $this->queueDrainService->moveToWaitingQueue($message);
+            $this->queueDrainService->drainEventsQueue($message->getAccountId());
+            $this->queueDrainService->moveToWaitingQueue($message, $message->getAccountId());
 
         } catch (\Google_Service_Exception $e) {
             // Log API error response
-            $account = $this->documentManager->getRepository(YoutubeAccount::class)
-                ->createQueryBuilder()
-                ->field('_id')->equals($message->getAccountId())
-                ->getQuery()->getSingleResult();
+            $this->logger->error('[PlaylistHexagonal] Google API error', [
+                'code' => $e->getCode(),
+                'error' => $e->getMessage(),
+            ]);
 
-            if (!$account) {
-                $account = $this->documentManager->getRepository(YoutubeAccount::class)
-                    ->findOneBy(['accountName' => $message->getAccountId()]);
-            }
-
-            if ($account) {
-                $this->quotaService->logApiResponse(
-                    $account,
-                    'playlist.create',
-                    [
-                        'title' => $message->getTitle(),
-                        'description' => $message->getDescription(),
-                        'privacy' => $message->getPrivacy(),
-                    ],
-                    [],
-                    false,
-                    $e->getMessage(),
-                    [
-                        'code' => $e->getCode(),
-                        'errors' => $e->getErrors(),
-                    ],
-                    $e->getCode()
-                );
-            }
+            // Registrar error en YoutubeApiResponse
+            $apiResponse = new YoutubeApiResponse(
+                $message->getAccountId(),
+                'playlist.create',
+                50,
+                [
+                    'title' => $message->getTitle(),
+                    'description' => $message->getDescription(),
+                    'privacy' => $message->getPrivacy(),
+                ]
+            );
+            $apiResponse->markAsFailure(
+                $e->getMessage(),
+                ['errors' => $e->getErrors() ?? []],
+                $e->getCode()
+            );
+            $this->documentManager->persist($apiResponse);
+            $this->documentManager->flush();
 
             // Error de YouTube API
             if ($e->getCode() === 429) {
@@ -146,54 +138,40 @@ final class CreatePlaylistMessageHandler
                 ]);
 
                 $this->quotaService->forceQuotaExhaustion($message->getAccountId());
-                $this->queueDrainService->drainEventsQueue();
-                $this->queueDrainService->moveToWaitingQueue($message);
+                $this->queueDrainService->drainEventsQueue($message->getAccountId());
+                $this->queueDrainService->moveToWaitingQueue($message, $message->getAccountId());
 
             } else {
                 // Otro error de YouTube
-                $this->logger->error('[PlaylistHexagonal] YouTube API error', [
-                    'code' => $e->getCode(),
-                    'error' => $e->getMessage(),
-                ]);
                 throw $e; // Re-lanzar para retry de Messenger
             }
 
         } catch (\Exception $e) {
-            // Log general error
-            $account = $this->documentManager->getRepository(YoutubeAccount::class)
-                ->createQueryBuilder()
-                ->field('_id')->equals($message->getAccountId())
-                ->getQuery()->getSingleResult();
-
-            if (!$account) {
-                $account = $this->documentManager->getRepository(YoutubeAccount::class)
-                    ->findOneBy(['accountName' => $message->getAccountId()]);
-            }
-
-            if ($account) {
-                $this->quotaService->logApiResponse(
-                    $account,
-                    'playlist.create',
-                    [
-                        'title' => $message->getTitle(),
-                        'description' => $message->getDescription(),
-                        'privacy' => $message->getPrivacy(),
-                    ],
-                    [],
-                    false,
-                    $e->getMessage(),
-                    [
-                        'trace' => $e->getTraceAsString(),
-                    ],
-                    500
-                );
-            }
-
             // Error inesperado
             $this->logger->error('[PlaylistHexagonal] Unexpected error creating playlist', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
+
+            // Registrar error inesperado en YoutubeApiResponse
+            $apiResponse = new YoutubeApiResponse(
+                $message->getAccountId(),
+                'playlist.create',
+                50,
+                [
+                    'title' => $message->getTitle(),
+                    'description' => $message->getDescription(),
+                    'privacy' => $message->getPrivacy(),
+                ]
+            );
+            $apiResponse->markAsFailure(
+                $e->getMessage(),
+                ['trace' => substr($e->getTraceAsString(), 0, 500)],
+                500
+            );
+            $this->documentManager->persist($apiResponse);
+            $this->documentManager->flush();
+
             throw $e; // Re-lanzar para retry de Messenger
         }
     }

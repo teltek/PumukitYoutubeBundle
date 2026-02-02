@@ -11,9 +11,9 @@ use Pumukit\YoutubeBundle\Application\Message\Playlist\DeletePlaylistMessage as 
 use Pumukit\YoutubeBundle\PlaylistHexagonal\Application\Create\CreatePlaylistMessage;
 use Pumukit\YoutubeBundle\PlaylistHexagonal\Application\Update\UpdatePlaylistMessage;
 use Pumukit\YoutubeBundle\PlaylistHexagonal\Application\Delete\DeletePlaylistMessage;
-use Pumukit\YoutubeBundle\Domain\Model\YoutubeAccount;
-use Pumukit\YoutubeBundle\Domain\Model\YoutubePlaylist;
-use Pumukit\YoutubeBundle\Infrastructure\Service\GoogleClientFactory;
+use Pumukit\YoutubeBundle\Shared\Domain\Model\YoutubeAccount;
+use Pumukit\YoutubeBundle\Shared\Domain\Model\YoutubePlaylist;
+use Pumukit\YoutubeBundle\Shared\Infrastructure\Service\GoogleClientFactory;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -47,6 +47,10 @@ class YoutubePlaylistController extends AbstractController
     }
 
     /**
+     * DEPRECATED: Use PlaylistHexagonal controller instead
+     * This route is commented out because we now use:
+     * @Route("/", name="pumukit_youtube_playlists_list") from PlaylistHexagonal
+     *
      * @Route("/", name="pumukit_youtube_playlists_index", methods={"GET"})
      */
     public function indexAction(Request $request): Response
@@ -198,7 +202,7 @@ class YoutubePlaylistController extends AbstractController
     }
 
     /**
-     * @Route("/{playlistId}/update", name="pumukit_youtube_playlists_update", methods={"POST"})
+     * @Route("/{playlistId}/update", name="pumukit_youtube_playlists_legacy_update", methods={"POST"})
      */
     public function updateAction(string $playlistId, Request $request): JsonResponse
     {

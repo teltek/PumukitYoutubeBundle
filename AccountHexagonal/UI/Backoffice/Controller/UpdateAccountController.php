@@ -13,7 +13,7 @@ use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Annotation\Route;
 
 /**
- * @Route("/admin/youtube/accounts-hexagonal")
+ * @Route("/admin/youtube/accounts")
  */
 final class UpdateAccountController extends AbstractController
 {
@@ -25,7 +25,7 @@ final class UpdateAccountController extends AbstractController
     }
 
     /**
-     * @Route("/{id}/update", name="pumukit_youtube_accounts_hexagonal_update", methods={"PUT", "PATCH"})
+     * @Route("/{id}/update", name="pumukit_youtube_accounts_update", methods={"PUT", "PATCH"})
      */
     public function __invoke(string $id, Request $request): Response
     {

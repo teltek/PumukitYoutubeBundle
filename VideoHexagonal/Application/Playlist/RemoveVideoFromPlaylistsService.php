@@ -6,7 +6,7 @@ namespace Pumukit\YoutubeBundle\VideoHexagonal\Application\Playlist;
 
 use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\YoutubeBundle\Services\GoogleAccountService;
-use Pumukit\YoutubeBundle\Domain\Service\QuotaService;
+use Pumukit\YoutubeBundle\Shared\Domain\Service\QuotaService;
 use Psr\Log\LoggerInterface;
 
 final class RemoveVideoFromPlaylistsService

@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Pumukit\YoutubeBundle\Application\Query;
 
 use Doctrine\ODM\MongoDB\DocumentManager;
-use Pumukit\YoutubeBundle\Domain\Model\YoutubeAccount;
-use Pumukit\YoutubeBundle\Domain\Model\YoutubeApiResponse;
-use Pumukit\YoutubeBundle\Domain\Model\YoutubeQuotaUsage;
+use Pumukit\YoutubeBundle\Shared\Domain\Model\YoutubeAccount;
+use Pumukit\YoutubeBundle\Shared\Domain\Model\YoutubeApiResponse;
+use Pumukit\YoutubeBundle\Shared\Domain\Model\YoutubeQuotaUsage;
 
 final class GetQuotaStatusQueryHandler
 {

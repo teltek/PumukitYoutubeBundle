@@ -21,7 +21,7 @@ final class UploadVideoController extends AbstractController
     }
 
     /**
-     * @Route("/admin/youtube/videos-hexagonal/upload", name="pumukit_youtube_video_hexagonal_upload", methods={"POST"})
+     * @Route("/admin/youtube/videos/upload", name="pumukit_youtube_video_upload", methods={"POST"})
      */
     public function __invoke(Request $request): JsonResponse
     {

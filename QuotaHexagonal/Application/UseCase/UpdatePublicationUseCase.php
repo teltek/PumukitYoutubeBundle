@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Pumukit\YoutubeBundle\QuotaHexagonal\Application\UseCase;
 
 use Psr\Log\LoggerInterface;
-use Pumukit\YoutubeBundle\Domain\Repository\PublicationRepositoryInterface;
-use Pumukit\YoutubeBundle\Domain\Exception\DomainException;
+use Pumukit\YoutubeBundle\Shared\Domain\Repository\PublicationRepositoryInterface;
+use Pumukit\YoutubeBundle\Shared\Domain\Exception\DomainException;
 
 final class UpdatePublicationUseCase
 {

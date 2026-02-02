@@ -6,9 +6,9 @@ namespace Pumukit\YoutubeBundle\PlaylistHexagonal\Application\RemoveVideo;
 
 use Doctrine\ODM\MongoDB\DocumentManager;
 use Psr\Log\LoggerInterface;
-use Pumukit\YoutubeBundle\Domain\Model\YoutubeAccount;
-use Pumukit\YoutubeBundle\Domain\Service\QuotaService;
-use Pumukit\YoutubeBundle\Infrastructure\Service\QueueDrainService;
+use Pumukit\YoutubeBundle\Shared\Domain\Model\YoutubeAccount;
+use Pumukit\YoutubeBundle\Shared\Domain\Service\QuotaService;
+use Pumukit\YoutubeBundle\Shared\Infrastructure\Service\QueueDrainService;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
 #[AsMessageHandler(fromTransport: 'pumukit.youtube.events')]

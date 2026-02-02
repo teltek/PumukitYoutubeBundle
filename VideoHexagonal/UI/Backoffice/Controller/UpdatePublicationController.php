@@ -21,7 +21,7 @@ final class UpdatePublicationController extends AbstractController
     }
 
     /**
-     * @Route("/admin/youtube/videos-hexagonal/{id}/publication", name="pumukit_youtube_video_hexagonal_publication", methods={"POST"})
+     * @Route("/admin/youtube/videos/{id}/publication", name="pumukit_youtube_video_publication", methods={"POST"})
      */
     public function __invoke(string $id, Request $request): JsonResponse
     {

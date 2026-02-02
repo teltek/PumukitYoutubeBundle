@@ -12,7 +12,7 @@ use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\YoutubeBundle\Application\Message\Playlist\UpdatePlaylistItemsMessage;
 use Pumukit\YoutubeBundle\Document\Error;
 use Pumukit\YoutubeBundle\Document\Youtube;
-use Pumukit\YoutubeBundle\Infrastructure\Service\QueueDrainService;
+use Pumukit\YoutubeBundle\Shared\Infrastructure\Service\QueueDrainService;
 use Pumukit\YoutubeBundle\PumukitYoutubeBundle;
 use Pumukit\YoutubeBundle\Services\GoogleAccountService;
 use Pumukit\YoutubeBundle\Services\GooglePlaylistItemService;

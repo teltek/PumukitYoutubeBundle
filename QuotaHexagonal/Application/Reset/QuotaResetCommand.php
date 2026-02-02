@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Pumukit\YoutubeBundle\QuotaHexagonal\Application\Reset;
 
 use Doctrine\ODM\MongoDB\DocumentManager;
-use Pumukit\YoutubeBundle\Domain\Model\YoutubeAccount;
-use Pumukit\YoutubeBundle\Domain\Service\QuotaService;
+use Pumukit\YoutubeBundle\Shared\Domain\Model\YoutubeAccount;
+use Pumukit\YoutubeBundle\Shared\Domain\Service\QuotaService;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;

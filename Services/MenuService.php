@@ -10,14 +10,12 @@ class MenuService implements ItemInterface
 {
     public function getName(): string
     {
-        return 'Youtube - Accounts';
+        return 'Youtube-Accounts';
     }
 
     public function getUri(): string
     {
-        // Redirigir al nuevo panel hexagonal de gestión de playlists
-        // que incluye gestión de cuentas
-        return 'pumukit_youtube_playlists_index';
+        return 'pumukit_youtube_accounts_list';
     }
 
     public function getAccessRole(): string

@@ -20,7 +20,7 @@ final class DeleteVideoController extends AbstractController
     }
 
     /**
-     * @Route("/admin/youtube/videos-hexagonal/{id}/delete", name="pumukit_youtube_video_hexagonal_delete", methods={"DELETE"})
+     * @Route("/admin/youtube/videos/{id}/delete", name="pumukit_youtube_video_delete", methods={"DELETE"})
      */
     public function __invoke(string $id): JsonResponse
     {

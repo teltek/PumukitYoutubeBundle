@@ -49,9 +49,20 @@ class StatsController extends AbstractController
         $youtubeStatusDocuments = $this->youtubeStatsService->getYoutubeDocumentsByCriteria();
         $statsYoutubeDocuments = $this->processYoutubeDocuments($youtubeStatusDocuments);
 
+        // Get hexagonal playlists grouped by account
+        $hexagonalPlaylistsByAccount = [];
+        $allHexagonalPlaylists = $this->youtubeStatsService->getAllHexagonalPlaylists();
+        foreach ($allHexagonalPlaylists as $playlist) {
+            if (!isset($hexagonalPlaylistsByAccount[$playlist->getAccountId()])) {
+                $hexagonalPlaylistsByAccount[$playlist->getAccountId()] = [];
+            }
+            $hexagonalPlaylistsByAccount[$playlist->getAccountId()][] = $playlist;
+        }
+
         return $this->render('@PumukitYoutube/Stats/template.html.twig', [
             'youtubeAccounts' => $this->youtubeStatsService->getYoutubeAccounts(),
             'accountsStats' => $this->youtubeStatsService->getAccountsStats(),
+            'hexagonalPlaylistsByAccount' => $hexagonalPlaylistsByAccount,
         ]);
     }
 

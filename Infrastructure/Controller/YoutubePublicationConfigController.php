@@ -9,6 +9,8 @@ use MongoDB\BSON\ObjectId;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\YoutubeBundle\PumukitYoutubeBundle;
+use Pumukit\YoutubeBundle\Shared\Domain\Model\YoutubeAccount;
+use Pumukit\YoutubeBundle\Shared\Domain\Model\YoutubePlaylist;
 use Psr\Log\LoggerInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -109,7 +111,7 @@ class YoutubePublicationConfigController extends AbstractController
     }
 
     /**
-     * Lista las playlists de una cuenta desde TAGS
+     * Lista las playlists de una cuenta desde TAGS + Hexagonal
      * 
      * @Route("/playlists/{accountId}", name="pumukit_youtube_publication_playlists", methods={"GET"})
      */
@@ -122,36 +124,73 @@ class YoutubePublicationConfigController extends AbstractController
         $data = [];
         
         try {
-            // Buscar el tag de la cuenta directamente
+            // 1. Cargar playlists LEGACY desde Tags
             $accountTag = $this->documentManager->getRepository(Tag::class)
                 ->find($accountId);
 
-            if (!$accountTag) {
+            if ($accountTag) {
+                $this->logger->info('[YoutubePublicationConfig] Found account tag', [
+                    'tagId' => $accountTag->getId(),
+                    'title' => $accountTag->getTitle(),
+                ]);
+
+                // Cargar playlists como hijos del tag de cuenta
+                $playlistTags = $this->documentManager->getRepository(Tag::class)
+                    ->findBy(['parent.$id' => new ObjectId($accountTag->getId())]);
+                
+                $this->logger->info('[YoutubePublicationConfig] Found legacy playlist tags', [
+                    'count' => count($playlistTags),
+                ]);
+
+                foreach ($playlistTags as $playlistTag) {
+                    $data[] = [
+                        'id' => $playlistTag->getId(),
+                        'text' => $playlistTag->getTitle(),
+                        'source' => 'legacy',
+                    ];
+                }
+            } else {
                 $this->logger->warning('[YoutubePublicationConfig] Account tag not found', [
                     'accountId' => $accountId,
                 ]);
-                return new JsonResponse($data);
             }
 
-            $this->logger->info('[YoutubePublicationConfig] Found account tag', [
-                'tagId' => $accountTag->getId(),
-                'title' => $accountTag->getTitle(),
-            ]);
-
-            // Cargar playlists como hijos del tag de cuenta
-            $playlistTags = $this->documentManager->getRepository(Tag::class)
-                ->findBy(['parent.$id' => new ObjectId($accountTag->getId())]);
+            // 2. Cargar playlists HEXAGONALES desde youtube_playlists
+            // El accountId podría ser un Tag ID o un account name, intentamos ambos
+            $hexagonalPlaylists = [];
             
-            $this->logger->info('[YoutubePublicationConfig] Found playlist tags', [
-                'count' => count($playlistTags),
-            ]);
+            // Intenta buscar como YoutubeAccount por ID (desde Tag login property)
+            if ($accountTag && $accountTag->getProperty('login')) {
+                $youtubeAccount = $this->documentManager->getRepository(YoutubeAccount::class)
+                    ->findOneBy(['accountName' => $accountTag->getProperty('login')]);
+                
+                if ($youtubeAccount) {
+                    $hexagonalPlaylists = $this->documentManager->getRepository(YoutubePlaylist::class)
+                        ->findBy(['accountId' => $youtubeAccount->getId()]);
+                    
+                    $this->logger->info('[YoutubePublicationConfig] Found hexagonal playlists', [
+                        'count' => count($hexagonalPlaylists),
+                        'youtubeAccountId' => $youtubeAccount->getId(),
+                    ]);
+                }
+            }
 
-            foreach ($playlistTags as $playlistTag) {
+            // Agregar playlists hexagonales a la respuesta
+            foreach ($hexagonalPlaylists as $playlist) {
                 $data[] = [
-                    'id' => $playlistTag->getId(),
-                    'text' => $playlistTag->getTitle(),
+                    'id' => $playlist->getId(),
+                    'text' => $playlist->getTitle(),
+                    'source' => 'hexagonal',
+                    'youtubeId' => $playlist->getYoutubeId(),
                 ];
             }
+
+            $this->logger->info('[YoutubePublicationConfig] Total playlists loaded', [
+                'legacy' => count($playlistTags ?? []),
+                'hexagonal' => count($hexagonalPlaylists),
+                'total' => count($data),
+            ]);
+
         } catch (\Exception $e) {
             $this->logger->error('[YoutubePublicationConfig] Error loading playlists', [
                 'error' => $e->getMessage(),

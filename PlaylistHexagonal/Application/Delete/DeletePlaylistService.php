@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Pumukit\YoutubeBundle\PlaylistHexagonal\Application\Delete;
 
 use Doctrine\ODM\MongoDB\DocumentManager;
-use Pumukit\YoutubeBundle\Domain\Model\YoutubeAccount;
+use Pumukit\YoutubeBundle\Shared\Domain\Model\YoutubeAccount;
 use Pumukit\YoutubeBundle\PlaylistHexagonal\Domain\Event\PlaylistDeletedEvent;
 use Pumukit\YoutubeBundle\PlaylistHexagonal\Domain\Exception\PlaylistNotFoundException;
 use Pumukit\YoutubeBundle\PlaylistHexagonal\Domain\Repository\PlaylistRepositoryInterface;

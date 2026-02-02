@@ -1,0 +1,104 @@
+{% extends "@PumukitNewAdmin/layout.html.twig" %}
+
+{% block title %}YouTube Playlists Management{% endblock %}
+
+{% block breadcrumbs %}
+<ul class="breadcrumb">
+    <li><a href="{{ path('pumukit_new_admin_series_list') }}">Series</a></li>
+    <li><a href="#">YouTube</a></li>
+    <li class="active">Playlists</li>
+</ul>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">YouTube Playlists Management</h3>
+                </div>
+                <div class="panel-body">
+                    <!-- Account Selection and Create Playlist Form -->
+                    <div class="row" style="margin-bottom: 20px;">
+                        <div class="col-md-8">
+                            <div class="form-group">
+                                <label for="account-selector">Select YouTube Account:</label>
+                                <select id="account-selector" class="form-control" name="account" onchange="filterPlaylistsByAccount()">
+                                    <option value="">-- All Accounts --</option>
+                                    <!-- Accounts will be loaded dynamically -->
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div style="margin-top: 25px;">
+                                <button id="create-playlist-btn" class="btn btn-success" onclick="openCreatePlaylistModal()">
+                                    <i class="fa fa-plus"></i> Create Playlist
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Playlists Table -->
+                    {% if playlists is not empty %}
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Title</th>
+                                        <th>Description</th>
+                                        <th>Privacy</th>
+                                        <th>Videos</th>
+                                        <th>Created At</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for playlist in playlists %}
+                                        <tr>
+                                            <td>{{ playlist.title }}</td>
+                                            <td>{{ playlist.description|slice(0, 50) ~ (playlist.description|length > 50 ? '...' : '') }}</td>
+                                            <td>
+                                                <span class="label {% if playlist.privacy == 'public' %}label-success{% elseif playlist.privacy == 'unlisted' %}label-warning{% else %}label-default{% endif %}">
+                                                    {{ playlist.privacy }}
+                                                </span>
+                                            </td>
+                                            <td>{{ playlist.videoCount }}</td>
+                                            <td>{{ playlist.createdAt ? playlist.createdAt.format('Y-m-d H:i:s') : 'N/A' }}</td>
+                                            <td>
+                                                <button class="btn btn-sm btn-primary" data-playlist-id="{{ playlist.id }}">Edit</button>
+                                                <button class="btn btn-sm btn-danger" data-playlist-id="{{ playlist.id }}">Delete</button>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">
+                            <p>No playlists found. <a href="#" onclick="openCreatePlaylistModal()">Create your first playlist</a>.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function openCreatePlaylistModal() {
+    // Placeholder for create playlist modal
+    alert('Create Playlist functionality coming soon');
+}
+
+function filterPlaylistsByAccount() {
+    var accountId = document.getElementById('account-selector').value;
+    // Reload page with account filter
+    if (accountId) {
+        window.location.href = '{{ path('pumukit_youtube_playlists_index') }}?account=' + accountId;
+    } else {
+        window.location.href = '{{ path('pumukit_youtube_playlists_index') }}';
+    }
+}
+</script>
+{% endblock %}

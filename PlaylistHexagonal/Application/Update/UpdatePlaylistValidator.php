@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Pumukit\YoutubeBundle\PlaylistHexagonal\Application\Update;
 
-use Pumukit\YoutubeBundle\Domain\Service\Validation\YoutubeSanitizer;
+use Pumukit\YoutubeBundle\Shared\Domain\Service\Validation\YoutubeSanitizer;
 use Pumukit\YoutubeBundle\PlaylistHexagonal\Domain\ValueObject\PlaylistPrivacy;
 
 final class UpdatePlaylistValidator

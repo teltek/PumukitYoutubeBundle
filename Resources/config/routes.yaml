@@ -1,36 +1,40 @@
 # ============================================================================
 # YoutubeBundle - Routes Configuration
 # ============================================================================
+# YoutubeBundle - Routes Configuration
+# ============================================================================
 # Este archivo define todas las rutas del YoutubeBundle
 # Paths are relative to: src/Pumukit/YoutubeBundle/
 # ============================================================================
 
 # Infrastructure Controllers
-pumukit_youtube_quota_controller:
-  resource: '../../../YoutubeBundle/Infrastructure/Controller/QuotaController.php'
-  type: annotation
-  prefix: /admin/youtube
+# NOTE: Disabled in favor of Hexagonal Architecture controllers to avoid route conflicts
+# pumukit_youtube_quota_controller:
+#   resource: '../../../YoutubeBundle/Infrastructure/Controller/QuotaController.php'
+#   type: annotation
+#   prefix: /admin/youtube
 
-pumukit_youtube_video_management_controller:
-  resource: '../../../YoutubeBundle/Infrastructure/Controller/YoutubeVideoManagementController.php'
-  type: annotation
-  prefix: /admin/youtube
+# pumukit_youtube_video_management_controller:
+#   resource: '../../../YoutubeBundle/Infrastructure/Controller/YoutubeVideoManagementController.php'
+#   type: annotation
+#   prefix: /admin/youtube
 
-pumukit_youtube_playlist_controller:
-  resource: '../../../YoutubeBundle/Infrastructure/Controller/YoutubePlaylistController.php'
-  type: annotation
-  prefix: /admin/youtube
+# pumukit_youtube_playlist_controller:
+#   resource: '../../../YoutubeBundle/Infrastructure/Controller/YoutubePlaylistController.php'
+#   type: annotation
+#   prefix: /admin/youtube
 
-pumukit_youtube_upload_controller:
-  resource: '../../../YoutubeBundle/Infrastructure/Controller/YoutubeUploadController.php'
-  type: annotation
-  prefix: /admin/youtube
+# pumukit_youtube_upload_controller:
+#   resource: '../../../YoutubeBundle/Infrastructure/Controller/YoutubeUploadController.php'
+#   type: annotation
+#   prefix: /admin/youtube
 
 # Legacy Controllers (Old structure)
-pumukit_youtube_legacy_controllers:
-  resource: '../../../YoutubeBundle/Controller/'
-  type: annotation
-  prefix: /admin/youtube
+# NOTE: Disabled - these are already loaded from config/routes/youtube.yaml
+#pumukit_youtube_legacy_controllers:
+#  resource: '../../../YoutubeBundle/Controller/'
+#  type: annotation
+#  prefix: /admin/youtube
 
 # ============================================================================
 # HEXAGONAL ARCHITECTURE CONTROLLERS
@@ -40,16 +44,19 @@ pumukit_youtube_legacy_controllers:
 pumukit_youtube_playlist_hexagonal:
   resource: '../../../YoutubeBundle/PlaylistHexagonal/UI/Backoffice/Controller/'
   type: annotation
-  prefix: /admin/youtube/playlist
 
 # Video Hexagonal
 pumukit_youtube_video_hexagonal:
   resource: '../../../YoutubeBundle/VideoHexagonal/UI/Backoffice/Controller/'
   type: annotation
-  prefix: /admin/youtube/video
 
 # Account Hexagonal
 pumukit_youtube_account_hexagonal:
   resource: '../../../YoutubeBundle/AccountHexagonal/UI/Backoffice/Controller/'
   type: annotation
-  prefix: /admin/youtube/account
+
+# Caption Hexagonal
+pumukit_youtube_caption_hexagonal:
+  resource: '../../../YoutubeBundle/CaptionHexagonal/UI/Backoffice/Controller/'
+  type: annotation
+

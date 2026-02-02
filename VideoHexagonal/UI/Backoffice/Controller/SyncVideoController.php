@@ -20,7 +20,7 @@ final class SyncVideoController extends AbstractController
     }
 
     /**
-     * @Route("/admin/youtube/videos-hexagonal/{id}/sync", name="pumukit_youtube_video_hexagonal_sync", methods={"POST"})
+     * @Route("/admin/youtube/videos/{id}/sync", name="pumukit_youtube_video_sync", methods={"POST"})
      */
     public function __invoke(string $id): JsonResponse
     {

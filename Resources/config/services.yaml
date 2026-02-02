@@ -1,0 +1,231 @@
+# ============================================================================
+# YoutubeBundle - Services Configuration
+# ============================================================================
+# Este archivo define todos los servicios del YoutubeBundle
+# Symfony lo carga automáticamente desde Resources/config/services.yaml
+# ============================================================================
+
+services:
+  _defaults:
+    autowire: true
+    autoconfigure: true
+    public: false
+    bind:
+      $projectDir: '%kernel.project_dir%'
+
+  # ============================================================================
+  # MIDDLEWARE
+  # ============================================================================
+
+  Pumukit\YoutubeBundle\Infrastructure\Middleware\QuotaCheckMiddleware:
+    arguments:
+      $quotaService: '@Pumukit\YoutubeBundle\Domain\Service\QuotaService'
+      $messageBus: '@messenger.bus.default'
+      $logger: '@logger'
+    tags:
+      - { name: 'monolog.logger', channel: 'messenger' }
+      - { name: 'messenger.middleware', bus: 'messenger.bus.default', priority: -100 }
+
+  # ============================================================================
+  # COMMANDS (Console)
+  # ============================================================================
+
+  Pumukit\YoutubeBundle\Application\Command\:
+    resource: '../../Application/Command'
+    exclude:
+      - '../../Application/Command/Quota/ProcessQuotaWaitingCommand.php'
+    tags: ['console.command']
+
+  # Eliminado DrainQuotaWaitingCommand (duplicado)
+
+  # ============================================================================
+  # MESSAGE HANDLERS (Async - RabbitMQ)
+  # ============================================================================
+
+  # Handlers de la cola 'events'
+  Pumukit\YoutubeBundle\Application\MessageHandler\:
+    resource: '../../Application/MessageHandler'
+    exclude:
+      - '../../Application/MessageHandler/WaitingMessageHandler.php'
+      - '../../Application/MessageHandler/EventMessageHandler.php'
+      - '../../Application/MessageHandler/NotificationMessageHandler.php'
+    autoconfigure: false
+    tags:
+      - { name: 'messenger.message_handler', from_transport: 'pumukit.youtube.events' }
+
+  # Handler de la cola 'quota.waiting'
+  Pumukit\YoutubeBundle\Application\MessageHandler\WaitingMessageHandler:
+    autoconfigure: false
+    tags:
+      - { name: 'messenger.message_handler', from_transport: 'pumukit.youtube.quota.waiting' }
+
+  # Handlers síncronos (no desde transporte)
+  Pumukit\YoutubeBundle\Application\MessageHandler\EventMessageHandler: ~
+  Pumukit\YoutubeBundle\Application\MessageHandler\NotificationMessageHandler: ~
+
+  # ============================================================================
+  # CONTROLLERS
+  # ============================================================================
+  # NOTA: Los controladores están definidos en pumukit_youtube.yaml para evitar
+  # conflictos con los defaults (public: false vs public: true)
+
+  # Pumukit\YoutubeBundle\Infrastructure\Controller\YoutubeUploadController:
+  #   public: true
+  #   autowire: true
+  #   tags: ['controller.service_arguments']
+
+  # Pumukit\YoutubeBundle\Infrastructure\Controller\:
+  #   resource: '../../Infrastructure/Controller'
+  #   public: true
+  #   autowire: true
+  #   tags: ['controller.service_arguments']
+
+  # Pumukit\YoutubeBundle\Controller\:
+  #   resource: '../../Controller'
+  #   public: true
+  #   autowire: true
+  #   tags: ['controller.service_arguments']
+
+  # ============================================================================
+  # SERVICES (Application, Domain, Infrastructure)
+  # ============================================================================
+
+  Pumukit\YoutubeBundle\:
+    resource: '../../{Application,Domain,Infrastructure}'
+    exclude:
+      - '../../Application/Command'
+      - '../../Application/Message'
+      - '../../Application/MessageHandler'
+      - '../../Application/Query/*Query.php'
+      - '../../Domain/Model'
+      - '../../Domain/Exception'
+      - '../../Infrastructure/Controller'
+      - '../../Infrastructure/Middleware'
+
+  # ============================================================================
+  # EVENT LISTENERS
+  # ============================================================================
+
+  Pumukit\YoutubeBundle\EventListener\BackofficeListener:
+    arguments:
+      $documentManager: '@doctrine_mongodb.odm.document_manager'
+      $tagService: '@pumukitschema.tag'
+      $messageBus: '@messenger.default_bus'
+      $logger: '@monolog.logger.youtube'
+    tags:
+      - { name: 'kernel.event_listener', event: 'publication.submit', method: 'onPublicationSubmit' }
+
+  Pumukit\YoutubeBundle\EventListener\UpdateListener:
+    tags:
+      - { name: 'kernel.event_listener', event: 'multimediaobject.update', method: 'onMultimediaObjectUpdate' }
+
+  Pumukit\YoutubeBundle\EventListener\RemoveListener:
+    tags:
+      - { name: 'doctrine_mongodb.odm.event_listener', event: 'preRemove.update' }
+
+  # Playlist Hexagonal - Sync to Legacy
+  Pumukit\YoutubeBundle\PlaylistHexagonal\Infrastructure\EventListener\PlaylistSyncToLegacyListener:
+    arguments:
+      $documentManager: '@doctrine_mongodb.odm.document_manager'
+      $logger: '@monolog.logger.youtube'
+    tags:
+      - { name: 'kernel.event_listener', event: 'Pumukit\YoutubeBundle\PlaylistHexagonal\Domain\Event\PlaylistCreatedEvent', method: 'onPlaylistCreated' }
+      - { name: 'kernel.event_listener', event: 'Pumukit\YoutubeBundle\PlaylistHexagonal\Domain\Event\PlaylistUpdatedEvent', method: 'onPlaylistUpdated' }
+      - { name: 'kernel.event_listener', event: 'Pumukit\YoutubeBundle\PlaylistHexagonal\Domain\Event\PlaylistDeletedEvent', method: 'onPlaylistDeleted' }
+
+  # Queue Drain Service
+  Pumukit\YoutubeBundle\Infrastructure\Service\QueueDrainService:
+    arguments:
+      $messageBus: '@messenger.bus.default'
+      $documentManager: '@doctrine_mongodb.odm.document_manager'
+      $logger: '@logger'
+      $messengerTransportDsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+    tags:
+      - { name: 'monolog.logger', channel: 'messenger' }
+
+  # ============================================================================
+  # REPOSITORIES (Domain Interfaces → Infrastructure Implementations)
+  # ============================================================================
+
+  # Publication Repository
+  Pumukit\YoutubeBundle\Domain\Repository\PublicationRepositoryInterface:
+    alias: Pumukit\YoutubeBundle\Infrastructure\Repository\DoctrinePublicationRepository
+
+  # ============================================================================
+  # PLAYLIST HEXAGONAL (Arquitectura Hexagonal)
+  # ============================================================================
+
+  # Domain Layer - Repository Interfaces
+  Pumukit\YoutubeBundle\PlaylistHexagonal\Domain\Repository\PlaylistRepositoryInterface:
+    alias: Pumukit\YoutubeBundle\PlaylistHexagonal\Infrastructure\Persistence\DoctrinePlaylistRepository
+
+  Pumukit\YoutubeBundle\PlaylistHexagonal\Domain\Repository\YoutubeApiInterface:
+    alias: Pumukit\YoutubeBundle\PlaylistHexagonal\Infrastructure\ExternalService\GoogleYoutubePlaylistApi
+
+  # Application Layer - Message Handlers
+  Pumukit\YoutubeBundle\PlaylistHexagonal\Application\Create\CreatePlaylistMessageHandler:
+    tags:
+      - { name: 'messenger.message_handler', from_transport: 'pumukit.youtube.events' }
+
+  Pumukit\YoutubeBundle\PlaylistHexagonal\Application\Update\UpdatePlaylistMessageHandler:
+    tags:
+      - { name: 'messenger.message_handler', from_transport: 'pumukit.youtube.events' }
+
+  Pumukit\YoutubeBundle\PlaylistHexagonal\Application\Delete\DeletePlaylistMessageHandler:
+    tags:
+      - { name: 'messenger.message_handler', from_transport: 'pumukit.youtube.events' }
+
+  Pumukit\YoutubeBundle\PlaylistHexagonal\Application\AddVideo\AddVideoMessageHandler:
+    tags:
+      - { name: 'messenger.message_handler', from_transport: 'pumukit.youtube.events' }
+
+  Pumukit\YoutubeBundle\PlaylistHexagonal\Application\RemoveVideo\RemoveVideoMessageHandler:
+    tags:
+      - { name: 'messenger.message_handler', from_transport: 'pumukit.youtube.events' }
+
+  # Infrastructure Layer - Controllers
+  Pumukit\YoutubeBundle\PlaylistHexagonal\UI\Backoffice\Controller\:
+    resource: '../../PlaylistHexagonal/UI/Backoffice/Controller'
+    public: true
+    tags: ['controller.service_arguments']
+
+  # ============================================================================
+  # VIDEO HEXAGONAL (Arquitectura Hexagonal)
+  # ============================================================================
+
+  # Domain Layer - Repository Interfaces
+  Pumukit\YoutubeBundle\VideoHexagonal\Domain\Repository\YoutubeAccountRepositoryInterface:
+    alias: Pumukit\YoutubeBundle\VideoHexagonal\Infrastructure\Repository\YoutubeAccountRepository
+
+  Pumukit\YoutubeBundle\VideoHexagonal\Domain\Repository\YoutubePlaylistRepositoryInterface:
+    alias: Pumukit\YoutubeBundle\VideoHexagonal\Infrastructure\Repository\YoutubePlaylistRepository
+
+  # Application Layer - Message Handlers
+  Pumukit\YoutubeBundle\VideoHexagonal\Application\Upload\UploadVideoMessageHandler:
+    tags:
+      - { name: 'messenger.message_handler', from_transport: 'pumukit.youtube.events' }
+
+  Pumukit\YoutubeBundle\VideoHexagonal\Application\Update\UpdateVideoMessageHandler:
+    tags:
+      - { name: 'messenger.message_handler', from_transport: 'pumukit.youtube.events' }
+
+  Pumukit\YoutubeBundle\VideoHexagonal\Application\Delete\DeleteVideoMessageHandler:
+    tags:
+      - { name: 'messenger.message_handler', from_transport: 'pumukit.youtube.events' }
+
+  # ============================================================================
+  # ACCOUNT HEXAGONAL (Arquitectura Hexagonal)
+  # ============================================================================
+
+  # Application Layer - Message Handlers
+  Pumukit\YoutubeBundle\AccountHexagonal\Application\Create\CreateAccountMessageHandler:
+    tags:
+      - { name: 'messenger.message_handler', from_transport: 'pumukit.youtube.events' }
+
+  Pumukit\YoutubeBundle\AccountHexagonal\Application\Update\UpdateAccountMessageHandler:
+    tags:
+      - { name: 'messenger.message_handler', from_transport: 'pumukit.youtube.events' }
+
+  Pumukit\YoutubeBundle\AccountHexagonal\Application\Delete\DeleteAccountMessageHandler:
+    tags:
+      - { name: 'messenger.message_handler', from_transport: 'pumukit.youtube.events' }

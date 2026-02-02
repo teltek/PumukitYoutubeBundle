@@ -10,7 +10,7 @@ class MenuStatService implements ItemInterface
 {
     public function getName(): string
     {
-        return 'Youtube - Statistics';
+        return 'Youtube-Stats';
     }
 
     public function getUri(): string

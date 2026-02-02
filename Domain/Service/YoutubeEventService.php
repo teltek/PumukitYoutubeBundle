@@ -11,11 +11,11 @@ use Google\Service\YouTube\VideoSnippet;
 use Google\Service\YouTube\VideoStatus;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\MediaType\Track;
-use Pumukit\YoutubeBundle\Domain\Model\Publication;
-use Pumukit\YoutubeBundle\Domain\Model\YoutubeAccount;
+use Pumukit\YoutubeBundle\Shared\Domain\Model\Publication;
+use Pumukit\YoutubeBundle\Shared\Domain\Model\YoutubeAccount;
 use Pumukit\YoutubeBundle\Domain\Model\YoutubeUploadConfig;
 use Pumukit\YoutubeBundle\Domain\ValueObject\PublicationStatus;
-use Pumukit\YoutubeBundle\Infrastructure\Service\GoogleClientFactory;
+use Pumukit\YoutubeBundle\Shared\Infrastructure\Service\GoogleClientFactory;
 use Psr\Log\LoggerInterface;
 
 /**

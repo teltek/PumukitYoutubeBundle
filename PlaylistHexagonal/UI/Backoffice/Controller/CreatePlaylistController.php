@@ -13,7 +13,7 @@ use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Annotation\Route;
 
 /**
- * @Route("/admin/youtube/playlists-hexagonal")
+ * @Route("/admin/youtube/playlists")
  * @Security("is_granted('ROLE_ACCESS_YOUTUBE')")
  */
 class CreatePlaylistController extends AbstractController
@@ -23,7 +23,7 @@ class CreatePlaylistController extends AbstractController
     ) {}
 
     /**
-     * @Route("/create", name="pumukit_youtube_playlists_hexagonal_create", methods={"POST"})
+     * @Route("/create", name="pumukit_youtube_playlists_create", methods={"POST"})
      */
     public function __invoke(Request $request): Response
     {

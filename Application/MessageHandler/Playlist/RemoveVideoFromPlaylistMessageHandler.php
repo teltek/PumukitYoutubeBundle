@@ -6,9 +6,9 @@ namespace Pumukit\YoutubeBundle\Application\MessageHandler\Playlist;
 
 use Doctrine\ODM\MongoDB\DocumentManager;
 use Pumukit\YoutubeBundle\Application\Message\Playlist\RemoveVideoFromPlaylistMessage;
-use Pumukit\YoutubeBundle\Domain\Model\YoutubeAccount;
-use Pumukit\YoutubeBundle\Infrastructure\Service\GoogleClientFactory;
-use Pumukit\YoutubeBundle\Domain\Service\QuotaService;
+use Pumukit\YoutubeBundle\Shared\Domain\Model\YoutubeAccount;
+use Pumukit\YoutubeBundle\Shared\Infrastructure\Service\GoogleClientFactory;
+use Pumukit\YoutubeBundle\Shared\Domain\Service\QuotaService;
 use Psr\Log\LoggerInterface;
 
 final class RemoveVideoFromPlaylistMessageHandler

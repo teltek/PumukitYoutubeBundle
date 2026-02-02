@@ -4,46 +4,42 @@ declare(strict_types=1);
 
 namespace Pumukit\YoutubeBundle\PlaylistHexagonal\UI\Backoffice\Controller;
 
-use Pumukit\YoutubeBundle\PlaylistHexagonal\Application\Delete\DeletePlaylistRequest;
-use Pumukit\YoutubeBundle\PlaylistHexagonal\Application\Delete\DeletePlaylistService;
+use Pumukit\YoutubeBundle\PlaylistHexagonal\Application\Delete\DeletePlaylistMessage;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Annotation\Route;
 
 /**
- * @Route("/admin/youtube/playlists-hexagonal")
+ * @Route("/admin/youtube/playlists")
  * @Security("is_granted('ROLE_ACCESS_YOUTUBE')")
  */
 class DeletePlaylistController extends AbstractController
 {
     public function __construct(
-        private DeletePlaylistService $deletePlaylistService
+        private MessageBusInterface $messageBus
     ) {}
 
     /**
-     * @Route("/{id}/delete", name="pumukit_youtube_playlists_hexagonal_delete", methods={"DELETE"})
+     * @Route("/{id}/delete", name="pumukit_youtube_playlists_delete", methods={"DELETE"})
      */
     public function __invoke(string $id): Response
     {
         try {
-            $deleteRequest = new DeletePlaylistRequest($id);
-            $response = $this->deletePlaylistService->__invoke($deleteRequest);
+            // Enviar mensaje a la cola para procesamiento asincrónico
+            $message = new DeletePlaylistMessage($id);
+            $this->messageBus->dispatch($message);
 
             return $this->json([
                 'success' => true,
-                'message' => 'Playlist deleted successfully',
-                'deletedId' => $response->deletedPlaylistId,
+                'message' => 'Playlist deletion queued for processing',
+                'playlistId' => $id,
             ]);
-        } catch (\InvalidArgumentException $e) {
-            return $this->json([
-                'success' => false,
-                'error' => $e->getMessage(),
-            ], 400);
         } catch (\Exception $e) {
             return $this->json([
                 'success' => false,
-                'error' => 'Failed to delete playlist: '.$e->getMessage(),
+                'error' => 'Failed to queue playlist deletion: '.$e->getMessage(),
             ], 500);
         }
     }

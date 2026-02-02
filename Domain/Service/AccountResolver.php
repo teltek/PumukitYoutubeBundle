@@ -190,21 +190,21 @@ class AccountResolver
     private function findAccountByName(string $accountName): ?object
     {
         return $this->documentManager
-            ->getRepository('Pumukit\YoutubeBundle\Domain\Model\YoutubeAccount')
+            ->getRepository('Pumukit\YoutubeBundle\Shared\Domain\Model\YoutubeAccount')
             ->findOneBy(['accountName' => $accountName]);
     }
 
     private function findFirstActiveAccount(): ?object
     {
         return $this->documentManager
-            ->getRepository('Pumukit\YoutubeBundle\Domain\Model\YoutubeAccount')
+            ->getRepository('Pumukit\YoutubeBundle\Shared\Domain\Model\YoutubeAccount')
             ->findOneBy(['active' => true]);
     }
 
     private function findFirstAccount(): ?object
     {
         return $this->documentManager
-            ->getRepository('Pumukit\YoutubeBundle\Domain\Model\YoutubeAccount')
+            ->getRepository('Pumukit\YoutubeBundle\Shared\Domain\Model\YoutubeAccount')
             ->findOneBy([]);
     }
 }

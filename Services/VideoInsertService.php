@@ -12,7 +12,7 @@ use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\YoutubeBundle\Document\Error;
 use Pumukit\YoutubeBundle\Document\Youtube;
-use Pumukit\YoutubeBundle\Domain\Service\Validation\YoutubeMetadataValidator;
+use Pumukit\YoutubeBundle\Shared\Domain\Service\Validation\YoutubeMetadataValidator;
 
 class VideoInsertService extends GoogleVideoService
 {

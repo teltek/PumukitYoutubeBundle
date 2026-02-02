@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Pumukit\YoutubeBundle\PlaylistHexagonal\Application\Create;
 
 use Doctrine\ODM\MongoDB\DocumentManager;
-use Pumukit\YoutubeBundle\Domain\Model\YoutubeAccount;
-use Pumukit\YoutubeBundle\Domain\Model\YoutubePlaylist;
+use Pumukit\YoutubeBundle\Shared\Domain\Model\YoutubeAccount;
+use Pumukit\YoutubeBundle\Shared\Domain\Model\YoutubePlaylist;
 use Pumukit\YoutubeBundle\PlaylistHexagonal\Domain\Event\PlaylistCreatedEvent;
 use Pumukit\YoutubeBundle\PlaylistHexagonal\Domain\Repository\PlaylistRepositoryInterface;
 use Pumukit\YoutubeBundle\PlaylistHexagonal\Domain\Repository\YoutubeApiInterface;

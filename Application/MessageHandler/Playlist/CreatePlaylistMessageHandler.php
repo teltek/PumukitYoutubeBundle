@@ -6,10 +6,10 @@ namespace Pumukit\YoutubeBundle\Application\MessageHandler\Playlist;
 
 use Doctrine\ODM\MongoDB\DocumentManager;
 use Pumukit\YoutubeBundle\Application\Message\Playlist\CreatePlaylistMessage;
-use Pumukit\YoutubeBundle\Domain\Model\YoutubeAccount;
-use Pumukit\YoutubeBundle\Domain\Model\YoutubePlaylist;
-use Pumukit\YoutubeBundle\Domain\Service\QuotaService;
-use Pumukit\YoutubeBundle\Infrastructure\Service\GoogleClientFactory;
+use Pumukit\YoutubeBundle\Shared\Domain\Model\YoutubeAccount;
+use Pumukit\YoutubeBundle\Shared\Domain\Model\YoutubePlaylist;
+use Pumukit\YoutubeBundle\Shared\Domain\Service\QuotaService;
+use Pumukit\YoutubeBundle\Shared\Infrastructure\Service\GoogleClientFactory;
 use Psr\Log\LoggerInterface;
 
 class CreatePlaylistMessageHandler

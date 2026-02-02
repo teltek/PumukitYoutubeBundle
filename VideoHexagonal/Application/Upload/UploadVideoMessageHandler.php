@@ -7,8 +7,9 @@ namespace Pumukit\YoutubeBundle\VideoHexagonal\Application\Upload;
 use Doctrine\ODM\MongoDB\DocumentManager;
 use Psr\Log\LoggerInterface;
 use Pumukit\SchemaBundle\Document\Tag;
-use Pumukit\YoutubeBundle\Domain\Service\QuotaService;
-use Pumukit\YoutubeBundle\Infrastructure\Service\QueueDrainService;
+use Pumukit\YoutubeBundle\Shared\Domain\Service\ErrorClassificationService;
+use Pumukit\YoutubeBundle\Shared\Domain\Service\QuotaService;
+use Pumukit\YoutubeBundle\Shared\Infrastructure\Service\QueueDrainService;
 use Pumukit\YoutubeBundle\VideoHexagonal\Application\Playlist\AddVideoToPlaylistsService;
 use Symfony\Component\Messenger\MessageBusInterface;
 
@@ -17,6 +18,7 @@ final class UploadVideoMessageHandler
     private UploadVideoService $uploadVideoService;
     private AddVideoToPlaylistsService $addVideoToPlaylistsService;
     private QuotaService $quotaService;
+    private ErrorClassificationService $errorClassificationService;
     private QueueDrainService $queueDrainService;
     private DocumentManager $documentManager;
     private LoggerInterface $logger;
@@ -26,6 +28,7 @@ final class UploadVideoMessageHandler
         UploadVideoService $uploadVideoService,
         AddVideoToPlaylistsService $addVideoToPlaylistsService,
         QuotaService $quotaService,
+        ErrorClassificationService $errorClassificationService,
         QueueDrainService $queueDrainService,
         DocumentManager $documentManager,
         LoggerInterface $logger,
@@ -34,6 +37,7 @@ final class UploadVideoMessageHandler
         $this->uploadVideoService = $uploadVideoService;
         $this->addVideoToPlaylistsService = $addVideoToPlaylistsService;
         $this->quotaService = $quotaService;
+        $this->errorClassificationService = $errorClassificationService;
         $this->queueDrainService = $queueDrainService;
         $this->documentManager = $documentManager;
         $this->logger = $logger;
@@ -52,6 +56,10 @@ final class UploadVideoMessageHandler
             'accountId' => $message->getAccountId(),
             'playlists' => $message->getPlaylists(),
         ]);
+
+        // Pre-fetch account tag to use in all cases
+        $account = $this->findAccountTag($message->getAccountId());
+        $multimediaObject = null;
 
         try {
             // 1. Check quota (1600 cost for upload)
@@ -72,11 +80,14 @@ final class UploadVideoMessageHandler
             error_log('[VideoHexagonal] Upload service completed. YouTube ID: ' . $response->getYoutubeId());
 
             // 3.5. Update MultimediaObject properties for UI compatibility
-            $multimediaObject = $this->documentManager->getRepository(\Pumukit\SchemaBundle\Document\MultimediaObject::class)
-                ->find($message->getMultimediaObjectId());
+            if (!$multimediaObject) {
+                $multimediaObject = $this->documentManager->getRepository(\Pumukit\SchemaBundle\Document\MultimediaObject::class)
+                    ->find($message->getMultimediaObjectId());
+            }
             
             if ($multimediaObject) {
                 $multimediaObject->setProperty('youtube_video_id', $response->getYoutubeId());
+                $multimediaObject->setProperty('youtube_account_id', $message->getAccountId());
                 $multimediaObject->setProperty('youtube_status', $response->getYoutube()->getStatus());
                 $multimediaObject->setProperty('youtubeurl', $response->getYoutube()->getLink());
                 $this->documentManager->flush();
@@ -85,25 +96,12 @@ final class UploadVideoMessageHandler
             }
 
             // 4. Log API Response (para visualización en el panel de cuota)
-            $account = $this->documentManager->getRepository(Tag::class)
-                ->createQueryBuilder()
-                ->field('properties.youtube_account')->equals($message->getAccountId())
-                ->getQuery()
-                ->getSingleResult();
-            
-            if (!$account) {
-                // Buscar por nombre de cuenta (login)
-                $account = $this->documentManager->getRepository(Tag::class)
-                    ->createQueryBuilder()
-                    ->field('properties.login')->equals($message->getAccountId())
-                    ->getQuery()
-                    ->getSingleResult();
-            }
-            
             if ($account) {
-                // Get MultimediaObject to log its title
-                $multimediaObject = $this->documentManager->getRepository(\Pumukit\SchemaBundle\Document\MultimediaObject::class)
-                    ->find($message->getMultimediaObjectId());
+                // Ensure multimediaObject is loaded for logging
+                if (!$multimediaObject) {
+                    $multimediaObject = $this->documentManager->getRepository(\Pumukit\SchemaBundle\Document\MultimediaObject::class)
+                        ->find($message->getMultimediaObjectId());
+                }
                 
                 $this->quotaService->logApiResponse(
                     $account,
@@ -178,7 +176,7 @@ final class UploadVideoMessageHandler
             ]);
             
             error_log('[VideoHexagonal] ===== UPLOAD COMPLETED SUCCESSFULLY =====');
-        } catch (\Pumukit\YoutubeBundle\Domain\Exception\QuotaExceededException $e) {
+        } catch (\Pumukit\YoutubeBundle\Shared\Domain\Exception\QuotaExceededException $e) {
             // Local quota check failed - treat same as YouTube quota error
             error_log('[VideoHexagonal] Local Quota Exceeded: ' . $e->getMessage());
             
@@ -186,13 +184,14 @@ final class UploadVideoMessageHandler
                 'multimediaObjectId' => $message->getMultimediaObjectId(),
                 'accountId' => $message->getAccountId(),
             ]);
-            
+
             // Log this as an API response for visibility in quota panel
-            $account = $this->findAccountTag($message->getAccountId());
-            
             if ($account) {
-                $multimediaObject = $this->documentManager->getRepository(\Pumukit\SchemaBundle\Document\MultimediaObject::class)
-                    ->find($message->getMultimediaObjectId());
+                // Ensure multimediaObject is loaded
+                if (!$multimediaObject) {
+                    $multimediaObject = $this->documentManager->getRepository(\Pumukit\SchemaBundle\Document\MultimediaObject::class)
+                        ->find($message->getMultimediaObjectId());
+                }
                 
                 $this->quotaService->logApiResponse(
                     $account,
@@ -237,12 +236,12 @@ final class UploadVideoMessageHandler
             error_log('[VideoHexagonal] Error code: ' . $e->getCode());
             
             // Log API Response error
-            $account = $this->findAccountTag($message->getAccountId());
-            
             if ($account) {
-                // Get MultimediaObject to log its title
-                $multimediaObject = $this->documentManager->getRepository(\Pumukit\SchemaBundle\Document\MultimediaObject::class)
-                    ->find($message->getMultimediaObjectId());
+                // Ensure multimediaObject is loaded for logging
+                if (!$multimediaObject) {
+                    $multimediaObject = $this->documentManager->getRepository(\Pumukit\SchemaBundle\Document\MultimediaObject::class)
+                        ->find($message->getMultimediaObjectId());
+                }
                 
                 $errorDetails = [
                     'errors' => $e->getErrors(),
@@ -264,16 +263,15 @@ final class UploadVideoMessageHandler
                 );
             }
             
-            // Check for quota-related errors
+            // Clasificar error
             $httpCode = $e->getCode();
             $errorMessage = $e->getMessage();
+            $classification = $this->errorClassificationService->classifyError($httpCode, $errorMessage);
+            $reason = $this->errorClassificationService->determineReason($httpCode, $errorMessage);
             
-            // Check if it's uploadLimitExceeded (código 400) o quota exceeded (código 429)
-            $isQuotaError = ($httpCode === 429) || 
-                           (str_contains($errorMessage, 'uploadLimitExceeded')) ||
-                           (str_contains($errorMessage, 'quotaExceeded'));
-            
-            if ($isQuotaError) {
+            // Manejar según clasificación
+            if ($classification === 'quota') {
+                // QUOTA ERROR: Mover a waiting queue
                 $this->logger->warning('[VideoHexagonal] Quota exceeded, draining queue and moving to waiting', [
                     'multimediaObjectId' => $message->getMultimediaObjectId(),
                     'httpCode' => $httpCode,
@@ -306,18 +304,56 @@ final class UploadVideoMessageHandler
                 
                 // Do NOT re-throw - message has been moved to waiting
                 return;
+            } elseif ($classification === 'permanent') {
+                // PERMANENT ERROR: Mover a failed queue
+                $this->logger->error('[VideoHexagonal] Permanent error, moving to failed queue', [
+                    'multimediaObjectId' => $message->getMultimediaObjectId(),
+                    'httpCode' => $httpCode,
+                    'errorMessage' => $errorMessage,
+                    'reason' => $reason,
+                ]);
+                
+                $failedMessage = new \Pumukit\YoutubeBundle\QuotaHexagonal\Application\Failed\FailedVideoMessage(
+                    multimediaObjectId: $message->getMultimediaObjectId(),
+                    accountId: $message->getAccountId(),
+                    errorMessage: $errorMessage,
+                    errorDetails: $e->getErrors() ?? [],
+                    httpStatusCode: $httpCode,
+                    operation: 'video.upload',
+                    reason: $reason
+                );
+                
+                $this->messageBus->dispatch($failedMessage);
+                
+                $this->logger->info('[VideoHexagonal] Message moved to failed queue', [
+                    'multimediaObjectId' => $message->getMultimediaObjectId(),
+                    'reason' => $reason,
+                ]);
+                
+                // Do NOT re-throw - message has been moved to failed
+                return;
+            } else {
+                // RECOVERABLE ERROR: Re-throw for RabbitMQ to retry
+                $this->logger->warning('[VideoHexagonal] Recoverable error, will retry', [
+                    'multimediaObjectId' => $message->getMultimediaObjectId(),
+                    'httpCode' => $httpCode,
+                    'errorMessage' => $errorMessage,
+                ]);
+                
+                throw $e;
             }
-            
-            // For other errors, re-throw
-            throw $e;
         } catch (\Exception $e) {
             error_log('[VideoHexagonal] Exception: ' . $e->getMessage());
             error_log('[VideoHexagonal] Exception trace: ' . $e->getTraceAsString());
             
             // Log API Response error for general exceptions
-            $account = $this->findAccountTag($message->getAccountId());
-            
             if ($account) {
+                // Ensure multimediaObject is loaded
+                if (!$multimediaObject) {
+                    $multimediaObject = $this->documentManager->getRepository(\Pumukit\SchemaBundle\Document\MultimediaObject::class)
+                        ->find($message->getMultimediaObjectId());
+                }
+                
                 $this->quotaService->logApiResponse(
                     $account,
                     'video.upload',

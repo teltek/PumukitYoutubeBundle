@@ -9,6 +9,7 @@ use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\YoutubeBundle\Document\Youtube;
 use Pumukit\YoutubeBundle\PumukitYoutubeBundle;
+use Pumukit\YoutubeBundle\Shared\Domain\Model\YoutubePlaylist;
 
 class YoutubeStatsService
 {
@@ -132,5 +133,26 @@ class YoutubeStatsService
         return $this->documentManager->getRepository(Youtube::class)->findBy([
             'status' => Youtube::STATUS_TO_DELETE,
         ]);
+    }
+
+    /**
+     * Get hexagonal playlists for a specific account
+     * @param string $accountId The account ID (from YoutubeAccount)
+     * @return array<YoutubePlaylist>
+     */
+    public function getHexagonalPlaylistsByAccount(string $accountId): array
+    {
+        return $this->documentManager->getRepository(YoutubePlaylist::class)->findBy([
+            'accountId' => $accountId,
+        ]);
+    }
+
+    /**
+     * Get all hexagonal playlists
+     * @return array<YoutubePlaylist>
+     */
+    public function getAllHexagonalPlaylists(): array
+    {
+        return $this->documentManager->getRepository(YoutubePlaylist::class)->findAll();
     }
 }

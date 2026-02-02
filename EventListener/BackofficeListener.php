@@ -17,6 +17,7 @@ use Pumukit\YoutubeBundle\VideoHexagonal\Application\Playlist\AddToPlaylistsMess
 use Pumukit\YoutubeBundle\VideoHexagonal\Application\Playlist\RemoveFromPlaylistsMessage;
 use Pumukit\YoutubeBundle\PlaylistHexagonal\Application\AddVideo\AddVideoMessage;
 use Pumukit\YoutubeBundle\PlaylistHexagonal\Application\RemoveVideo\RemoveVideoMessage;
+use Pumukit\YoutubeBundle\Shared\Domain\Model\YoutubePlaylist;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Messenger\MessageBusInterface;
@@ -234,39 +235,71 @@ class BackofficeListener
     }
 
     /**
-     * Extrae los IDs de playlists de YouTube del request
+     * Extrae los IDs de playlists de YouTube del request (tanto legacy como hexagonales)
      */
     private function extractPlaylistsFromRequest(Request $request): array
     {
         $playlistLabels = $request->request->get('youtube_playlist_label', []);
         $playlists = [];
         
+        error_log('[BackofficeListener] extractPlaylistsFromRequest - Received labels: ' . json_encode($playlistLabels));
+        
         foreach ($playlistLabels as $playlistTagId) {
             if ($playlistTagId === 'any') {
+                error_log('[BackofficeListener] Skipping "any" option');
                 continue; // Skip "Without playlist" option
             }
             
+            error_log('[BackofficeListener] Processing playlistTagId: ' . $playlistTagId);
+            
+            // Intenta primero como LEGACY (Tag con youtube_playlist_id)
             $playlistTag = $this->documentManager->getRepository(Tag::class)
                 ->findOneBy(['_id' => new ObjectId($playlistTagId)]);
             
             if ($playlistTag) {
+                error_log('[BackofficeListener] Found as legacy Tag');
                 $youtubePlaylistId = $playlistTag->getProperty('youtube_playlist_id');
                 if ($youtubePlaylistId) {
                     $playlists[] = $youtubePlaylistId;
-                    $this->logger->debug('[BackofficeListener] Added playlist', [
+                    $this->logger->debug('[BackofficeListener] Added legacy playlist', [
                         'tagId' => $playlistTagId,
                         'youtubePlaylistId' => $youtubePlaylistId,
                         'title' => $playlistTag->getTitle(),
                     ]);
                 } else {
+                    error_log('[BackofficeListener] Legacy Tag has no youtube_playlist_id property');
                     $this->logger->warning('[BackofficeListener] Playlist tag has no youtube_playlist_id', [
                         'tagId' => $playlistTagId,
                         'title' => $playlistTag->getTitle(),
                     ]);
                 }
+            } else {
+                error_log('[BackofficeListener] Not found as Tag, trying as hexagonal');
+                // Intenta como HEXAGONAL (YoutubePlaylist con youtubeId)
+                $hexagonalPlaylist = $this->documentManager->getRepository(YoutubePlaylist::class)
+                    ->find($playlistTagId);
+                
+                if ($hexagonalPlaylist) {
+                    error_log('[BackofficeListener] Found as hexagonal playlist');
+                    $youtubePlaylistId = $hexagonalPlaylist->getYoutubeId();
+                    if ($youtubePlaylistId) {
+                        $playlists[] = $youtubePlaylistId;
+                        $this->logger->debug('[BackofficeListener] Added hexagonal playlist', [
+                            'playlistId' => $playlistTagId,
+                            'youtubePlaylistId' => $youtubePlaylistId,
+                            'title' => $hexagonalPlaylist->getTitle(),
+                        ]);
+                    }
+                } else {
+                    error_log('[BackofficeListener] Playlist not found (neither legacy nor hexagonal) for ID: ' . $playlistTagId);
+                    $this->logger->warning('[BackofficeListener] Playlist not found (neither legacy nor hexagonal)', [
+                        'playlistId' => $playlistTagId,
+                    ]);
+                }
             }
         }
         
+        error_log('[BackofficeListener] extractPlaylistsFromRequest - Final playlists: ' . json_encode($playlists));
         return $playlists;
     }
 

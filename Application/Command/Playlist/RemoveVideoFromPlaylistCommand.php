@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Pumukit\YoutubeBundle\Application\Command\Playlist;
 
 use Doctrine\ODM\MongoDB\DocumentManager;
-use Pumukit\YoutubeBundle\Domain\Model\YoutubeAccount;
+use Pumukit\YoutubeBundle\Shared\Domain\Model\YoutubeAccount;
 use Pumukit\YoutubeBundle\Domain\Service\YoutubeEventService;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;

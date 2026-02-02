@@ -21,7 +21,7 @@ final class AddVideoController extends AbstractController
     }
 
     /**
-     * @Route("/admin/youtube/playlists-hexagonal/{id}/add-video", name="pumukit_youtube_playlist_hexagonal_add_video", methods={"POST"})
+     * @Route("/admin/youtube/playlists/{id}/add-video", name="pumukit_youtube_playlist_add_video", methods={"POST"})
      */
     public function __invoke(string $id, Request $request): JsonResponse
     {

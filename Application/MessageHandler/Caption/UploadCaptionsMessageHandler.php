@@ -6,9 +6,9 @@ namespace Pumukit\YoutubeBundle\Application\MessageHandler\Caption;
 
 use Doctrine\ODM\MongoDB\DocumentManager;
 use Pumukit\YoutubeBundle\Application\Message\Caption\UploadCaptionsMessage;
-use Pumukit\YoutubeBundle\Domain\Model\YoutubeAccount;
-use Pumukit\YoutubeBundle\Infrastructure\Service\GoogleClientFactory;
-use Pumukit\YoutubeBundle\Domain\Service\QuotaService;
+use Pumukit\YoutubeBundle\Shared\Domain\Model\YoutubeAccount;
+use Pumukit\YoutubeBundle\Shared\Infrastructure\Service\GoogleClientFactory;
+use Pumukit\YoutubeBundle\Shared\Domain\Service\QuotaService;
 use Psr\Log\LoggerInterface;
 
 final class UploadCaptionsMessageHandler
@@ -108,6 +108,12 @@ final class UploadCaptionsMessageHandler
                 'quotaUsed' => 400,
             ]);
 
+            // Remove temporary caption file if it exists to avoid accumulation
+            $captionFile = $message->getCaptionFile();
+            if ($captionFile && file_exists($captionFile)) {
+                @unlink($captionFile);
+            }
+
         } catch (\Exception $e) {
             $this->logger->error('[UploadCaptionsMessageHandler] Error uploading captions', [
                 'multimediaObjectId' => $message->getMultimediaObjectId(),
@@ -117,6 +123,16 @@ final class UploadCaptionsMessageHandler
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
+
+            // Attempt to remove temporary file on error as well
+            try {
+                $captionFile = $message->getCaptionFile();
+                if ($captionFile && file_exists($captionFile)) {
+                    @unlink($captionFile);
+                }
+            } catch (\Throwable $ignore) {
+                // ignore cleanup errors
+            }
             throw $e;
         }
     }

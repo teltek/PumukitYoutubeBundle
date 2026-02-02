@@ -11,7 +11,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
-#[Route('/quota', name: 'pumukit_youtube_quota_')]
+#[Route('/admin/youtube/quota', name: 'pumukit_youtube_quota_')]
 final class QuotaController extends AbstractController
 {
     public function __construct(

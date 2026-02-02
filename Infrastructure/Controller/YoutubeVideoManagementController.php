@@ -8,9 +8,9 @@ use Doctrine\ODM\MongoDB\DocumentManager;
 use MongoDB\BSON\ObjectId;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\YoutubeBundle\Application\Message\Playlist\AssignToPlaylistsMessage;
-use Pumukit\YoutubeBundle\Domain\Model\YoutubeAccount;
+use Pumukit\YoutubeBundle\Shared\Domain\Model\YoutubeAccount;
 use Pumukit\YoutubeBundle\Domain\Service\YoutubeEventService;
-use Pumukit\YoutubeBundle\Infrastructure\Service\GoogleClientFactory;
+use Pumukit\YoutubeBundle\Shared\Infrastructure\Service\GoogleClientFactory;
 use Pumukit\YoutubeBundle\Message\DeleteYoutubeVideoMessage;
 use Pumukit\YoutubeBundle\Message\MoveVideoToPlaylistMessage;
 use Pumukit\YoutubeBundle\Message\UpdateYoutubeVideoMessage;
@@ -600,7 +600,7 @@ class YoutubeVideoManagementController extends AbstractController
     {
         try {
             $playlists = $this->documentManager
-                ->createQueryBuilder(\Pumukit\YoutubeBundle\Domain\Model\YoutubePlaylist::class)
+                ->createQueryBuilder(\Pumukit\YoutubeBundle\Shared\Domain\Model\YoutubePlaylist::class)
                 ->field('accountId')->equals($accountId)
                 ->sort('title', 'ASC')
                 ->getQuery()

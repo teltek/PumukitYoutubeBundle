@@ -8,7 +8,7 @@ use Doctrine\ODM\MongoDB\DocumentManager;
 use Psr\Log\LoggerInterface;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Tag;
-use Pumukit\YoutubeBundle\Domain\Service\Validation\YoutubeFileValidator;
+use Pumukit\YoutubeBundle\Shared\Domain\Service\Validation\YoutubeFileValidator;
 use Pumukit\YoutubeBundle\Services\VideoDataValidationService;
 use Pumukit\YoutubeBundle\Services\VideoInsertService;
 use Pumukit\YoutubeBundle\VideoHexagonal\Domain\Event\VideoUploadedEvent;

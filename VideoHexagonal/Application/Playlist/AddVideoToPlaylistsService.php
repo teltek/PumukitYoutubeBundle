@@ -6,7 +6,7 @@ namespace Pumukit\YoutubeBundle\VideoHexagonal\Application\Playlist;
 
 use Psr\Log\LoggerInterface;
 use Pumukit\SchemaBundle\Document\Tag;
-use Pumukit\YoutubeBundle\Domain\Service\QuotaService;
+use Pumukit\YoutubeBundle\Shared\Domain\Service\QuotaService;
 use Pumukit\YoutubeBundle\Services\GoogleAccountService;
 
 final class AddVideoToPlaylistsService
@@ -134,7 +134,7 @@ final class AddVideoToPlaylistsService
                 ]);
                 
                 // Continue with next playlist instead of failing completely
-            } catch (\Pumukit\YoutubeBundle\Domain\Exception\QuotaExceededException $e) {
+            } catch (\Pumukit\YoutubeBundle\Shared\Domain\Exception\QuotaExceededException $e) {
                 // Quota exceeded - log and stop processing remaining playlists
                 $this->logger->warning('[AddVideoToPlaylists] Quota exceeded, cannot add to more playlists', [
                     'youtubeVideoId' => $youtubeVideoId,

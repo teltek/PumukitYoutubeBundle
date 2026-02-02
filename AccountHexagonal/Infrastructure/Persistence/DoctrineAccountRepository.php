@@ -6,9 +6,8 @@ namespace Pumukit\YoutubeBundle\AccountHexagonal\Infrastructure\Persistence;
 
 use Doctrine\ODM\MongoDB\DocumentManager;
 use MongoDB\BSON\ObjectId;
-use Pumukit\SchemaBundle\Document\Tag;
+use Pumukit\YoutubeBundle\Shared\Domain\Model\YoutubeAccount;
 use Pumukit\YoutubeBundle\AccountHexagonal\Domain\Repository\AccountRepositoryInterface;
-use Pumukit\YoutubeBundle\PumukitYoutubeBundle;
 
 final class DoctrineAccountRepository implements AccountRepositoryInterface
 {
@@ -19,40 +18,41 @@ final class DoctrineAccountRepository implements AccountRepositoryInterface
         $this->documentManager = $documentManager;
     }
 
-    public function findById(string $id): ?Tag
+    public function findById(string $id): ?YoutubeAccount
     {
-        return $this->documentManager->getRepository(Tag::class)->findOneBy([
-            '_id' => new ObjectId($id),
-        ]);
+        return $this->documentManager->getRepository(YoutubeAccount::class)->find($id);
     }
 
-    public function findByLogin(string $login): ?Tag
+    public function findByLogin(string $login): ?YoutubeAccount
     {
-        return $this->documentManager->getRepository(Tag::class)->findOneBy([
-            'properties.login' => $login,
+        return $this->documentManager->getRepository(YoutubeAccount::class)->findOneBy([
+            'accountName' => $login,
         ]);
     }
 
     public function findAll(): array
     {
-        $youtubeTag = $this->documentManager->getRepository(Tag::class)->findOneBy([
-            'cod' => PumukitYoutubeBundle::YOUTUBE_TAG_CODE,
-        ]);
-
-        if (!$youtubeTag) {
-            return [];
-        }
-
-        return $youtubeTag->getChildren()->toArray();
+        error_log('DEBUG DoctrineAccountRepository::findAll - Starting query');
+        $repo = $this->documentManager->getRepository(YoutubeAccount::class);
+        error_log('DEBUG DoctrineAccountRepository - Repository class: ' . get_class($repo));
+        
+        $accounts = $repo->findAll();
+        error_log('DEBUG DoctrineAccountRepository::findAll - Raw result type: ' . gettype($accounts));
+        error_log('DEBUG DoctrineAccountRepository::findAll - Raw result: ' . json_encode($accounts));
+        
+        $result = is_array($accounts) ? $accounts : iterator_to_array($accounts);
+        error_log('DEBUG DoctrineAccountRepository::findAll - Converted result count: ' . count($result));
+        
+        return $result;
     }
 
-    public function save(Tag $account): void
+    public function save(YoutubeAccount $account): void
     {
         $this->documentManager->persist($account);
         $this->documentManager->flush();
     }
 
-    public function delete(Tag $account): void
+    public function delete(YoutubeAccount $account): void
     {
         $this->documentManager->remove($account);
         $this->documentManager->flush();

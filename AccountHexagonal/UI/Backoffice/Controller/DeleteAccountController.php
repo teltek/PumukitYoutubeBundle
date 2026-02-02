@@ -12,7 +12,7 @@ use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Annotation\Route;
 
 /**
- * @Route("/admin/youtube/accounts-hexagonal")
+ * @Route("/admin/youtube/accounts")
  */
 final class DeleteAccountController extends AbstractController
 {
@@ -24,7 +24,7 @@ final class DeleteAccountController extends AbstractController
     }
 
     /**
-     * @Route("/{id}/delete", name="pumukit_youtube_accounts_hexagonal_delete", methods={"DELETE"})
+     * @Route("/{id}/delete", name="pumukit_youtube_accounts_delete", methods={"DELETE"})
      */
     public function __invoke(string $id): Response
     {

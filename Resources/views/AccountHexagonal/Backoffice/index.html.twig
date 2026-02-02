@@ -1,0 +1,117 @@
+{% extends '@PumukitNewAdmin/layout.html.twig' %}
+
+{% block title %}YouTube Accounts Management{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <h2>
+                <i class="fab fa-youtube" style="color: #FF0000;"></i> 
+                YouTube Accounts Management (Hexagonal)
+            </h2>
+            <hr>
+
+            {# Create New Account Button #}
+            <div class="mb-3">
+                <a class="btn btn-success" href="{{ path('pumukit_youtube_create_account') }}" data-toggle="modal" data-backdrop="static" data-target="#myModal">
+                    <i class="fas fa-plus"></i> Create New Account
+                </a>
+            </div>
+
+            {# Accounts Table #}
+            <div class="card">
+                <div class="card-header">
+                    <h5>YouTube Accounts ({{ total }} account{{ total != 1 ? 's' : '' }})</h5>
+                </div>
+                <div class="card-body">
+                    {% if accounts is not empty %}
+                        <table class="table table-striped table-hover" id="accountsTable">
+                            <thead>
+                                <tr>
+                                    <th>Account Name</th>
+                                    <th>Channel ID</th>
+                                    <th>Status</th>
+                                    <th>Created At</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for account in accounts %}
+                                    <tr data-account-id="{{ account.getId() }}">
+                                        <td>
+                                            <strong>{{ account.accountName }}</strong>
+                                            <br>
+                                            <small class="text-muted">{{ account.credentialsPath }}</small>
+                                        </td>
+                                        <td>
+                                            <code>{{ account.channelId }}</code>
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-{{ account.paused ? 'danger' : 'success' }}">
+                                                {{ account.paused ? 'Paused' : 'Active' }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <small>{{ account.createdAt.format('Y-m-d H:i') }}</small>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <a href="{{ path('pumukit_youtube_edit_account', {'id': account.getId()}) }}" 
+                                                   class="btn btn-sm btn-primary" 
+                                                   data-toggle="modal" 
+                                                   data-backdrop="static" 
+                                                   data-target="#myModal">
+                                                    <i class="fas fa-edit"></i> Edit
+                                                </a>
+                                                <button type="button" 
+                                                        class="btn btn-sm btn-danger"
+                                                        onclick="deleteAccount('{{ account.getId() }}', '{{ account.accountName|escape('js') }}')">
+                                                    <i class="fas fa-trash"></i> Delete
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> No YouTube accounts configured yet. 
+                            <a href="{{ path('pumukit_youtube_create_account') }}" data-toggle="modal" data-backdrop="static" data-target="#myModal">Create one now</a>.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    function deleteAccount(accountId, accountName) {
+        if (confirm('Are you sure you want to delete the account "' + accountName + '"?')) {
+            // Use Fetch API to send DELETE request
+            fetch('{{ path('pumukit_youtube_accounts_delete', {'id': 'ACCOUNT_ID'}) }}'.replace('ACCOUNT_ID', accountId), {
+                method: 'DELETE',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    // Reload the page after successful deletion
+                    location.reload();
+                } else {
+                    alert('Error deleting account');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error deleting account');
+            });
+        }
+    }
+</script>
+
+{% endblock %}

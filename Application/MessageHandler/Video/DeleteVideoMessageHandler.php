@@ -7,7 +7,7 @@ namespace Pumukit\YoutubeBundle\Application\MessageHandler\Video;
 use Doctrine\ODM\MongoDB\DocumentManager;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\YoutubeBundle\Application\Message\Video\DeleteVideoMessage;
-use Pumukit\YoutubeBundle\Domain\Model\YoutubeAccount;
+use Pumukit\YoutubeBundle\Shared\Domain\Model\YoutubeAccount;
 use Pumukit\YoutubeBundle\Domain\Service\YoutubeEventService;
 use Psr\Log\LoggerInterface;
 

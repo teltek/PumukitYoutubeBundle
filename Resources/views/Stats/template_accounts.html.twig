@@ -19,10 +19,13 @@
                             <div class="info-box-content">
                                 <span class="info-box-text" data-toggle="tooltip" data-placement="bottom" title="{{ account.getTitle() }}">{{ account.getTitle() }}</span>
                                 <span class="info-box-number">
-                                    {% set playlistNumber = account.getChildren()|length %}
-                                    {{ playlistNumber }}
+                                    {% set legacyPlaylistCount = account.getChildren()|length %}
+                                    {% set hexagonalPlaylists = hexagonalPlaylistsByAccount[account.getId()] is defined ? hexagonalPlaylistsByAccount[account.getId()] : [] %}
+                                    {% set hexagonalPlaylistCount = hexagonalPlaylists|length %}
+                                    {% set totalPlaylistCount = legacyPlaylistCount + hexagonalPlaylistCount %}
+                                    {{ totalPlaylistCount }}
                                     <small>
-                                        {{ "{0} playlist|{1} playlist|]1,Inf] playlists"|trans({'%count%': playlistNumber }) }}
+                                        {{ "{0} playlist|{1} playlist|]1,Inf] playlists"|trans({'%count%': totalPlaylistCount }) }}
                                     </small>
 
                                     <br />

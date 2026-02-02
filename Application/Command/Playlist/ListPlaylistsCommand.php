@@ -6,8 +6,8 @@ namespace Pumukit\YoutubeBundle\Application\Command\Playlist;
 
 use Doctrine\ODM\MongoDB\DocumentManager;
 use Google\Service\YouTube as YouTubeService;
-use Pumukit\YoutubeBundle\Domain\Model\YoutubeAccount;
-use Pumukit\YoutubeBundle\Infrastructure\Service\GoogleClientFactory;
+use Pumukit\YoutubeBundle\Shared\Domain\Model\YoutubeAccount;
+use Pumukit\YoutubeBundle\Shared\Infrastructure\Service\GoogleClientFactory;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;

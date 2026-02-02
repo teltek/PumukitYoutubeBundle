@@ -20,7 +20,7 @@ final class ListCaptionsController extends AbstractController
     }
 
     /**
-     * @Route("/admin/youtube/captions-hexagonal/{youtubeId}", name="pumukit_youtube_caption_hexagonal_list", methods={"GET"})
+     * @Route("/admin/youtube/captions/{youtubeId}", name="pumukit_youtube_caption_list", methods={"GET"})
      */
     public function __invoke(string $youtubeId): JsonResponse
     {

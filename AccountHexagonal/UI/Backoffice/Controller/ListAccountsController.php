@@ -7,12 +7,12 @@ namespace Pumukit\YoutubeBundle\AccountHexagonal\UI\Backoffice\Controller;
 use Pumukit\YoutubeBundle\AccountHexagonal\Application\List\ListAccountsRequest;
 use Pumukit\YoutubeBundle\AccountHexagonal\Application\List\ListAccountsService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Annotation\Route;
 
 /**
- * @Route("/admin/youtube/accounts-hexagonal")
+ * Internal controller for rendering account list table.
+ * Called via render(controller(...)) from AccountsIndexController.
+ * No route annotation - not directly accessible.
  */
 final class ListAccountsController extends AbstractController
 {
@@ -24,24 +24,21 @@ final class ListAccountsController extends AbstractController
     }
 
     /**
-     * @Route("/", name="pumukit_youtube_accounts_hexagonal_list", methods={"GET"})
+     * Renders account list table only (for embedding in main page via render(controller()))
      */
     public function __invoke(): Response
     {
         try {
             $request = new ListAccountsRequest();
             $response = $this->listAccountsService->__invoke($request);
+            $accounts = $response->getAccounts();
 
-            return new JsonResponse([
-                'success' => true,
-                'accounts' => $response->toArray(),
-                'total' => count($response->getAccounts()),
+            return $this->render('@PumukitYoutube/AccountHexagonal/Backoffice/list.html.twig', [
+                'accounts' => $accounts,
+                'total' => count($accounts),
             ]);
-        } catch (\Exception $e) {
-            return new JsonResponse([
-                'success' => false,
-                'message' => $e->getMessage(),
-            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        } catch (\Throwable $e) {
+            return new Response('<pre>Error: ' . $e->getMessage() . "\n\n" . $e->getTraceAsString() . '</pre>');
         }
     }
 }

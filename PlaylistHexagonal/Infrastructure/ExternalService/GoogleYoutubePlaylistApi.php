@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Pumukit\YoutubeBundle\PlaylistHexagonal\Infrastructure\ExternalService;
 
-use Pumukit\YoutubeBundle\Domain\Model\YoutubeAccount;
-use Pumukit\YoutubeBundle\Infrastructure\Service\GoogleClientFactory;
+use Pumukit\YoutubeBundle\Shared\Domain\Model\YoutubeAccount;
+use Pumukit\YoutubeBundle\Shared\Infrastructure\Service\GoogleClientFactory;
 use Pumukit\YoutubeBundle\PlaylistHexagonal\Domain\Repository\YoutubeApiInterface;
 use Psr\Log\LoggerInterface;
 
@@ -22,7 +22,7 @@ final class GoogleYoutubePlaylistApi implements YoutubeApiInterface
         string $description,
         string $privacy
     ): string {
-        $client = $this->googleClientFactory->createForAccount($account);
+        $client = $this->googleClientFactory->createClient($account);
         $youtube = new \Google_Service_YouTube($client);
 
         $playlistSnippet = new \Google_Service_YouTube_PlaylistSnippet();
@@ -53,7 +53,7 @@ final class GoogleYoutubePlaylistApi implements YoutubeApiInterface
         string $description,
         string $privacy
     ): void {
-        $client = $this->googleClientFactory->createForAccount($account);
+        $client = $this->googleClientFactory->createClient($account);
         $youtube = new \Google_Service_YouTube($client);
 
         $playlistSnippet = new \Google_Service_YouTube_PlaylistSnippet();
@@ -79,7 +79,7 @@ final class GoogleYoutubePlaylistApi implements YoutubeApiInterface
         YoutubeAccount $account,
         string $youtubePlaylistId
     ): void {
-        $client = $this->googleClientFactory->createForAccount($account);
+        $client = $this->googleClientFactory->createClient($account);
         $youtube = new \Google_Service_YouTube($client);
 
         $youtube->playlists->delete($youtubePlaylistId);
@@ -93,7 +93,7 @@ final class GoogleYoutubePlaylistApi implements YoutubeApiInterface
         YoutubeAccount $account,
         string $youtubePlaylistId
     ): array {
-        $client = $this->googleClientFactory->createForAccount($account);
+        $client = $this->googleClientFactory->createClient($account);
         $youtube = new \Google_Service_YouTube($client);
 
         $response = $youtube->playlists->listPlaylists('snippet,status,contentDetails', [
@@ -117,7 +117,7 @@ final class GoogleYoutubePlaylistApi implements YoutubeApiInterface
 
     public function listPlaylists(YoutubeAccount $account): array
     {
-        $client = $this->googleClientFactory->createForAccount($account);
+        $client = $this->googleClientFactory->createClient($account);
         $youtube = new \Google_Service_YouTube($client);
 
         $playlists = [];
@@ -160,7 +160,7 @@ final class GoogleYoutubePlaylistApi implements YoutubeApiInterface
         string $youtubePlaylistId,
         string $youtubeVideoId
     ): void {
-        $client = $this->googleClientFactory->createForAccount($account);
+        $client = $this->googleClientFactory->createClient($account);
         $youtube = new \Google_Service_YouTube($client);
 
         $resourceId = new \Google_Service_YouTube_ResourceId();
@@ -186,7 +186,7 @@ final class GoogleYoutubePlaylistApi implements YoutubeApiInterface
         YoutubeAccount $account,
         string $playlistItemId
     ): void {
-        $client = $this->googleClientFactory->createForAccount($account);
+        $client = $this->googleClientFactory->createClient($account);
         $youtube = new \Google_Service_YouTube($client);
 
         $youtube->playlistItems->delete($playlistItemId);

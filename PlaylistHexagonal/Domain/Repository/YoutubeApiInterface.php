@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Pumukit\YoutubeBundle\PlaylistHexagonal\Domain\Repository;
 
-use Pumukit\YoutubeBundle\Domain\Model\YoutubeAccount;
-use Pumukit\YoutubeBundle\Domain\Model\YoutubePlaylist;
+use Pumukit\YoutubeBundle\Shared\Domain\Model\YoutubeAccount;
+use Pumukit\YoutubeBundle\Shared\Domain\Model\YoutubePlaylist;
 
 /**
  * Interface para operaciones con la API de YouTube relacionadas con playlists
