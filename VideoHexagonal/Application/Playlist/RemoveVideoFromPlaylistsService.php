@@ -89,6 +89,8 @@ final class RemoveVideoFromPlaylistsService
                         'playlistItemId' => $playlistItemId,
                     ],
                     true,
+                    null,
+                    null,
                     204
                 );
 
@@ -105,18 +107,17 @@ final class RemoveVideoFromPlaylistsService
                 ]);
 
                 $this->quotaService->logApiResponse(
-                    $accountId,
+                    $accountTag,
                     'playlistItem.delete',
-                    50,
                     [
                         'playlistId' => $playlistId,
                         'videoId' => $youtubeVideoId,
                     ],
-                    null,
+                    [],
                     false,
-                    $e->getCode(),
                     $e->getMessage(),
-                    json_decode($e->getMessage(), true)
+                    json_decode($e->getMessage(), true),
+                    $e->getCode()
                 );
 
                 $failed[] = [

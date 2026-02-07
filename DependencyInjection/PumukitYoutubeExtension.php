@@ -70,7 +70,7 @@ class PumukitYoutubeExtension extends Extension implements PrependExtensionInter
 
         $loader = new Loader\YamlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
         $loader->load('pumukit_youtube.yaml');
-        // $loader->load('services.yaml'); // Comentado - todo está en pumukit_youtube.yaml
+        // $loader->load('services.yaml'); // Comentado - BackofficeListener ahora está en pumukit_youtube.yaml
 
         $permissions = [['role' => 'ROLE_ACCESS_YOUTUBE', 'description' => 'Access youtube CRUD']];
         $newPermissions = array_merge($container->getParameter('pumukitschema.external_permissions'), $permissions);

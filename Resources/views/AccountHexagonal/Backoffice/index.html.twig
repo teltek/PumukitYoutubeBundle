@@ -14,9 +14,9 @@
 
             {# Create New Account Button #}
             <div class="mb-3">
-                <a class="btn btn-success" href="{{ path('pumukit_youtube_create_account') }}" data-toggle="modal" data-backdrop="static" data-target="#myModal">
+                <button class="btn btn-success" data-toggle="modal" data-backdrop="static" data-target="#createAccountModal">
                     <i class="fas fa-plus"></i> Create New Account
-                </a>
+                </button>
             </div>
 
             {# Accounts Table #}
@@ -112,6 +112,112 @@
             });
         }
     }
+</script>
+
+{# Modal for Creating Accounts (Hexagonal - with Messenger) #}
+<div class="modal fade" id="createAccountModal" tabindex="-1" role="dialog" aria-labelledby="createAccountModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createAccountModalLabel">
+                    <i class="fab fa-youtube" style="color: #FF0000;"></i> Create YouTube Account
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="createAccountForm">
+                    <div class="form-group">
+                        <label for="accountLogin">Account Login *</label>
+                        <input type="text" class="form-control" id="accountLogin" placeholder="e.g., my-channel" required>
+                        <small class="form-text text-muted">Unique identifier for the account</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="accountTitleEs">Account Title (Spanish) *</label>
+                        <input type="text" class="form-control" id="accountTitleEs" placeholder="e.g., Mi Canal" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="accountTitleEn">Account Title (English) *</label>
+                        <input type="text" class="form-control" id="accountTitleEn" placeholder="e.g., My Channel" required>
+                    </div>
+
+                    <div id="createAccountMessage" style="display:none;" class="alert" role="alert"></div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" onclick="submitCreateAccount()">
+                    <i class="fas fa-check"></i> Create Account
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    function submitCreateAccount() {
+        const login = document.getElementById('accountLogin').value;
+        const titleEs = document.getElementById('accountTitleEs').value;
+        const titleEn = document.getElementById('accountTitleEn').value;
+        const messageDiv = document.getElementById('createAccountMessage');
+
+        if (!login || !titleEs || !titleEn) {
+            messageDiv.className = 'alert alert-danger';
+            messageDiv.textContent = '❌ All fields are required';
+            messageDiv.style.display = 'block';
+            return;
+        }
+
+        const payload = {
+            login: login,
+            i18n_title: {
+                es: titleEs,
+                en: titleEn
+            }
+        };
+
+        messageDiv.style.display = 'block';
+        messageDiv.className = 'alert alert-info';
+        messageDiv.textContent = '⏳ Creating account...';
+
+        fetch('{{ path("pumukit_youtube_accounts_create") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify(payload)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                messageDiv.className = 'alert alert-success';
+                messageDiv.innerHTML = '✅ <strong>Account created successfully!</strong><br>' +
+                    '<small>Message dispatched to messenger queue. Reloading page...</small>';
+                
+                setTimeout(() => {
+                    location.reload();
+                }, 2000);
+            } else {
+                messageDiv.className = 'alert alert-danger';
+                messageDiv.textContent = '❌ Error: ' + (data.message || 'Unknown error');
+            }
+        })
+        .catch(error => {
+            messageDiv.className = 'alert alert-danger';
+            messageDiv.textContent = '❌ Error: ' + error.message;
+        });
+    }
+
+    // Allow Enter key to submit
+    document.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter' && document.getElementById('createAccountModal').classList.contains('show')) {
+            submitCreateAccount();
+        }
+    });
 </script>
 
 {% endblock %}

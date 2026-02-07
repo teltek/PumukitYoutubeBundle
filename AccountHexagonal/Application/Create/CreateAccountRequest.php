@@ -6,22 +6,22 @@ namespace Pumukit\YoutubeBundle\AccountHexagonal\Application\Create;
 
 final class CreateAccountRequest
 {
-    private string $login;
-    private array $i18nTitle;
+    private string $name;
+    private string $credentialsPath;
 
-    public function __construct(string $login, array $i18nTitle)
+    public function __construct(string $name, string $credentialsPath)
     {
-        $this->login = $login;
-        $this->i18nTitle = $i18nTitle;
+        $this->name = $name;
+        $this->credentialsPath = $credentialsPath;
     }
 
-    public function getLogin(): string
+    public function getName(): string
     {
-        return $this->login;
+        return $this->name;
     }
 
-    public function getI18nTitle(): array
+    public function getCredentialsPath(): string
     {
-        return $this->i18nTitle;
+        return $this->credentialsPath;
     }
 }

@@ -41,10 +41,14 @@ class VideoInsertService extends GoogleVideoService
         $this->logger = $logger;
     }
 
-    public function uploadVideoToYoutube(MultimediaObject $multimediaObject): bool
+    public function uploadVideoToYoutube(MultimediaObject $multimediaObject, ?Tag $account = null): bool
     {
         $track = $this->videoDataValidationService->validateMultimediaObjectTrack($multimediaObject);
-        $account = $this->videoDataValidationService->validateMultimediaObjectAccount($multimediaObject);
+        
+        // Use provided account or try to find from MultimediaObject tags
+        if (!$account) {
+            $account = $this->videoDataValidationService->validateMultimediaObjectAccount($multimediaObject);
+        }
 
         if (!$track || !$account) {
             $this->logger->error('[YouTube] Multimedia object with ID '.$multimediaObject->getId().' cannot upload to YouTube.');

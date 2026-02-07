@@ -62,6 +62,30 @@ final class UploadVideoMessageHandler
         $multimediaObject = null;
 
         try {
+            // 0. VALIDACIÓN CRÍTICA: Verificar que el MM todavía tiene el tag de publicación YouTube
+            // Esto previene subir videos si el usuario quitó el canal de publicación mientras el mensaje estaba en cola
+            $multimediaObject = $this->documentManager->getRepository(\Pumukit\SchemaBundle\Document\MultimediaObject::class)
+                ->find($message->getMultimediaObjectId());
+            
+            if (!$multimediaObject) {
+                $this->logger->warning('[VideoHexagonal] MultimediaObject not found, skipping upload', [
+                    'multimediaObjectId' => $message->getMultimediaObjectId(),
+                ]);
+                error_log('[VideoHexagonal] MultimediaObject not found, skipping upload');
+                return; // No lanzar excepción, simplemente ignorar el mensaje
+            }
+            
+            // Verificar que todavía tiene el tag PUCHYOUTUBE
+            if (!$this->hasYoutubePublicationTag($multimediaObject)) {
+                $this->logger->info('[VideoHexagonal] MultimediaObject no longer has YouTube publication tag, skipping upload', [
+                    'multimediaObjectId' => $message->getMultimediaObjectId(),
+                ]);
+                error_log('[VideoHexagonal] MM no longer has PUCHYOUTUBE tag, skipping upload');
+                return; // El usuario quitó el tag, no subir
+            }
+            
+            error_log('[VideoHexagonal] Publication tag validated OK');
+
             // 1. Check quota (1600 cost for upload)
             error_log('[VideoHexagonal] Checking quota...');
             $this->quotaService->checkQuotaAvailability($message->getAccountId(), 'video.upload');
@@ -90,6 +114,13 @@ final class UploadVideoMessageHandler
                 $multimediaObject->setProperty('youtube_account_id', $message->getAccountId());
                 $multimediaObject->setProperty('youtube_status', $response->getYoutube()->getStatus());
                 $multimediaObject->setProperty('youtubeurl', $response->getYoutube()->getLink());
+                
+                // Añadir nombre de la cuenta para mostrar en el widget
+                if ($account) {
+                    $accountName = $account->getTitle() ?: $account->getProperty('login') ?: $message->getAccountId();
+                    $multimediaObject->setProperty('youtube_account_name', $accountName);
+                }
+                
                 $this->documentManager->flush();
                 
                 error_log('[VideoHexagonal] MultimediaObject properties updated for UI');
@@ -156,6 +187,12 @@ final class UploadVideoMessageHandler
                     }
                     
                     $youtubeDoc->setPlaylists($currentPlaylists);
+                    
+                    // Actualizar también el MultimediaObject con los playlist_ids para el widget UI
+                    if ($multimediaObject) {
+                        $multimediaObject->setProperty('youtube_playlist_ids', $currentPlaylists);
+                    }
+                    
                     $this->documentManager->flush();
                     
                     error_log('[VideoHexagonal] Updated Youtube document with playlists: ' . json_encode($currentPlaylists));
@@ -410,5 +447,19 @@ final class UploadVideoMessageHandler
         }
 
         return null;
+    }
+
+    /**
+     * Check if MultimediaObject still has the YouTube publication tag (PUCHYOUTUBE)
+     * This prevents uploading videos if the user removed the publication channel while the message was queued
+     */
+    private function hasYoutubePublicationTag(\Pumukit\SchemaBundle\Document\MultimediaObject $multimediaObject): bool
+    {
+        foreach ($multimediaObject->getTags() as $tag) {
+            if ($tag->getCod() === 'PUCHYOUTUBE') {
+                return true;
+            }
+        }
+        return false;
     }
 }

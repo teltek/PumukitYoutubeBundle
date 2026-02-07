@@ -18,6 +18,7 @@ use Pumukit\YoutubeBundle\VideoHexagonal\Application\Playlist\RemoveFromPlaylist
 use Pumukit\YoutubeBundle\PlaylistHexagonal\Application\AddVideo\AddVideoMessage;
 use Pumukit\YoutubeBundle\PlaylistHexagonal\Application\RemoveVideo\RemoveVideoMessage;
 use Pumukit\YoutubeBundle\Shared\Domain\Model\YoutubePlaylist;
+use Pumukit\YoutubeBundle\Services\VideoDataValidationService;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Messenger\MessageBusInterface;
@@ -28,17 +29,20 @@ class BackofficeListener
     private $tagService;
     private $messageBus;
     private $logger;
+    private $videoDataValidationService;
 
     public function __construct(
         DocumentManager $documentManager, 
         TagService $tagService,
         MessageBusInterface $messageBus,
-        LoggerInterface $logger
+        LoggerInterface $logger,
+        VideoDataValidationService $videoDataValidationService
     ) {
         $this->documentManager = $documentManager;
         $this->tagService = $tagService;
         $this->messageBus = $messageBus;
         $this->logger = $logger;
+        $this->videoDataValidationService = $videoDataValidationService;
     }
 
     public function onPublicationSubmit(PublicationSubmitEvent $event): bool
@@ -50,6 +54,9 @@ class BackofficeListener
         
         error_log('[BackofficeListener] MM ID: ' . $multimediaObject->getId());
         error_log('[BackofficeListener] Has youtube_label: ' . ($request->request->has('youtube_label') ? 'YES' : 'NO'));
+        error_log('[BackofficeListener] Has youtube_playlist_label: ' . ($request->request->has('youtube_playlist_label') ? 'YES' : 'NO'));
+        error_log('[BackofficeListener] youtube_playlist_label RAW: ' . json_encode($request->request->get('youtube_playlist_label')));
+        error_log('[BackofficeListener] ALL REQUEST PARAMS: ' . json_encode($request->request->all()));
         
         $this->logger->info('[BackofficeListener] Publication submit triggered', [
             'multimediaObjectId' => $multimediaObject->getId(),
@@ -167,8 +174,16 @@ class BackofficeListener
         $youtubeDoc = $this->documentManager->getRepository(Youtube::class)
             ->findOneBy(['multimediaObjectId' => $multimediaObject->getId()]);
         
+        error_log('[BackofficeListener] YoutubeDoc found: ' . ($youtubeDoc ? 'YES' : 'NO'));
+        if ($youtubeDoc) {
+            error_log('[BackofficeListener] YoutubeDoc ID: ' . $youtubeDoc->getId());
+            error_log('[BackofficeListener] YoutubeDoc youtubeId: ' . ($youtubeDoc->getYoutubeId() ?: 'NULL'));
+            error_log('[BackofficeListener] YoutubeDoc playlists: ' . json_encode($youtubeDoc->getPlaylists()));
+        }
+        
         if ($youtubeDoc && $youtubeDoc->getYoutubeId()) {
             // VIDEO YA EXISTE EN YOUTUBE - Optimizar con AddVideo/RemoveVideo
+            error_log('[BackofficeListener] Video already exists, dispatching playlist changes');
             $this->logger->info('[BackofficeListener] Video already exists in YouTube, dispatching playlist changes', [
                 'youtubeId' => $youtubeDoc->getYoutubeId(),
                 'status' => $youtubeDoc->getStatus(),
@@ -189,8 +204,20 @@ class BackofficeListener
             $this->dispatchPlaylistChanges($multimediaObject, $accountId, $oldPlaylists, $newPlaylists);
             
         } else {
-            // VIDEO NUEVO - Separar en dos mensajes: Upload + AddToPlaylists
-            $this->logger->info('[BackofficeListener] New video upload, dispatching UploadVideoMessage WITHOUT playlists');
+            // VIDEO NUEVO - Validar que tiene track antes de encolar
+            $track = $this->videoDataValidationService->validateMultimediaObjectTrack($multimediaObject);
+            
+            if (!$track) {
+                $this->logger->warning('[BackofficeListener] MultimediaObject has no valid track, cannot upload to YouTube', [
+                    'multimediaObjectId' => $multimediaObject->getId(),
+                ]);
+                error_log('[BackofficeListener] MM has no valid track, skipping upload dispatch');
+                // No lanzamos excepción, pero no encolamos el mensaje
+                // El usuario debería ver un mensaje de error en la UI (si se implementa)
+                return;
+            }
+            
+            $this->logger->info('[BackofficeListener] Track validated, dispatching UploadVideoMessage WITHOUT playlists');
             
             // 1. Mensaje de upload SIN playlists
             $uploadMessage = new UploadVideoMessage(

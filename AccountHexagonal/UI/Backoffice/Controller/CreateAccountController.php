@@ -32,24 +32,24 @@ final class CreateAccountController extends AbstractController
         try {
             $data = json_decode($request->getContent(), true);
 
-            if (!isset($data['login']) || !isset($data['i18n_title'])) {
+            if (!isset($data['name']) || !isset($data['credentialsPath'])) {
                 return new JsonResponse([
                     'success' => false,
-                    'message' => 'Missing required fields: login and i18n_title',
+                    'message' => 'Missing required fields: name and credentialsPath',
                 ], Response::HTTP_BAD_REQUEST);
             }
 
             // Create and dispatch message to RabbitMQ
             $message = new CreateAccountMessage(
-                login: $data['login'],
-                i18nTitle: $data['i18n_title']
+                name: $data['name'],
+                credentialsPath: $data['credentialsPath']
             );
 
             $this->messageBus->dispatch($message);
 
             return new JsonResponse([
                 'success' => true,
-                'message' => 'Account creation enqueued successfully (HEXAGONAL ASYNC ✅)',
+                'message' => 'Account creation enqueued successfully',
                 'status' => 'queued',
             ]);
         } catch (\Exception $e) {

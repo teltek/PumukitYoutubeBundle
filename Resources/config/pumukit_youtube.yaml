@@ -68,6 +68,21 @@ services:
   #   tags:
   #     - { name: 'console.command' }
 
+  # ============================================================================
+  # EVENT LISTENERS
+  # ============================================================================
+
+  # BackofficeListener - Escucha publication.submit y despacha mensajes de upload
+  Pumukit\YoutubeBundle\EventListener\BackofficeListener:
+    arguments:
+      $documentManager: '@doctrine_mongodb.odm.document_manager'
+      $tagService: '@pumukitschema.tag'
+      $messageBus: '@messenger.default_bus'
+      $logger: '@monolog.logger.youtube'
+      $videoDataValidationService: '@Pumukit\YoutubeBundle\Services\VideoDataValidationService'
+    tags:
+      - { name: 'kernel.event_listener', event: 'publication.submit', method: 'onPublicationSubmit' }
+
   # Messenger Debug Listener
   Pumukit\YoutubeBundle\EventListener\MessengerDebugListener:
     autowire: true
@@ -203,12 +218,9 @@ services:
 
   Pumukit\YoutubeBundle\CaptionHexagonal\Domain\Repository\YoutubeCaptionApiInterface: '@Pumukit\YoutubeBundle\CaptionHexagonal\Infrastructure\ExternalService\GoogleYoutubeCaptionApi'
   
-  # Application Services
-  Pumukit\YoutubeBundle\Application\:
-    resource: '../../Application'
-    exclude:
-      - '../../Application/Message'
-      - '../../Application/Command'
+  # Application UseCase Services (ONLY UseCase, NOT MessageHandlers)
+  Pumukit\YoutubeBundle\Application\UseCase\:
+    resource: '../../Application/UseCase'
     autowire: true
 
   # VideoHexagonal Message Handlers - explicit registration
@@ -221,6 +233,18 @@ services:
     autowire: true
     tags:
       - { name: 'messenger.message_handler', bus: 'messenger.bus.default', from_transport: 'pumukit.youtube.events' }
+
+  # QuotaHexagonal Message Handlers - Waiting Queue (DISABLED - Only processed by cron youtube:quota:recover-waiting-messages)
+  # Pumukit\YoutubeBundle\QuotaHexagonal\Application\Waiting\WaitingMessageHandler:
+  #   autowire: true
+  #   tags:
+  #     - { name: 'messenger.message_handler', bus: 'messenger.bus.default', from_transport: 'pumukit.youtube.quota.waiting' }
+
+  # QuotaHexagonal Message Handlers - Failed Queue
+  Pumukit\YoutubeBundle\QuotaHexagonal\Application\Failed\FailedVideoMessageHandler:
+    autowire: true
+    tags:
+      - { name: 'messenger.message_handler', bus: 'messenger.bus.default', from_transport: 'pumukit.youtube.quota.failed' }
 
   Pumukit\YoutubeBundle\VideoHexagonal\Application\Upload\UploadVideoService:
     autowire: true
@@ -255,26 +279,6 @@ services:
   Pumukit\YoutubeBundle\VideoHexagonal\Infrastructure\:
     resource: '../../VideoHexagonal/Infrastructure'
     autowire: true
-
-  Pumukit\YoutubeBundle\EventListener\UpdateListener:
-    class: Pumukit\YoutubeBundle\EventListener\UpdateListener
-    tags:
-      - { name: "kernel.event_listener", event: "multimediaobject.update", method: "onMultimediaObjectUpdate" }
-
-  Pumukit\YoutubeBundle\EventListener\RemoveListener:
-    class: Pumukit\YoutubeBundle\EventListener\RemoveListener
-    tags:
-      - { name: "doctrine_mongodb.odm.event_listener", event: "preRemove.update" }
-
-  Pumukit\YoutubeBundle\EventListener\BackofficeListener:
-    class: Pumukit\YoutubeBundle\EventListener\BackofficeListener
-    arguments:
-      - '@doctrine_mongodb.odm.document_manager'
-      - '@pumukitschema.tag'
-      - '@messenger.default_bus'
-      - '@monolog.logger.youtube'
-    tags:
-      - { name: "kernel.event_listener", event: "publication.submit", method: "onPublicationSubmit" }
 
   Pumukit\YoutubeBundle\Services\MenuService:
     class: Pumukit\YoutubeBundle\Services\MenuService

@@ -24,14 +24,15 @@ final class CreateAccountMessageHandler
     public function __invoke(CreateAccountMessage $message): void
     {
         $this->logger->info('[AccountHexagonal] Processing CreateAccountMessage', [
-            'login' => $message->getLogin(),
+            'name' => $message->getName(),
+            'credentialsPath' => $message->getCredentialsPath(),
         ]);
 
         try {
             // Convert Message to Request
             $request = new CreateAccountRequest(
-                login: $message->getLogin(),
-                i18nTitle: $message->getI18nTitle()
+                name: $message->getName(),
+                credentialsPath: $message->getCredentialsPath()
             );
 
             // Execute service
@@ -39,11 +40,11 @@ final class CreateAccountMessageHandler
 
             $this->logger->info('[AccountHexagonal] Account created successfully', [
                 'accountId' => $response->getAccount()->getId(),
-                'login' => $message->getLogin(),
+                'name' => $message->getName(),
             ]);
         } catch (\Exception $e) {
             $this->logger->error('[AccountHexagonal] Failed to create account', [
-                'login' => $message->getLogin(),
+                'name' => $message->getName(),
                 'error' => $e->getMessage(),
             ]);
 

@@ -10,7 +10,7 @@ interface AccountRepositoryInterface
 {
     public function findById(string $id): ?YoutubeAccount;
 
-    public function findByLogin(string $login): ?YoutubeAccount;
+    public function findByName(string $name): ?YoutubeAccount;
 
     public function findAll(): array;
 

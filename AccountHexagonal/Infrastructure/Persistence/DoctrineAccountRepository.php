@@ -23,10 +23,10 @@ final class DoctrineAccountRepository implements AccountRepositoryInterface
         return $this->documentManager->getRepository(YoutubeAccount::class)->find($id);
     }
 
-    public function findByLogin(string $login): ?YoutubeAccount
+    public function findByName(string $name): ?YoutubeAccount
     {
         return $this->documentManager->getRepository(YoutubeAccount::class)->findOneBy([
-            'accountName' => $login,
+            'accountName' => $name,
         ]);
     }
 

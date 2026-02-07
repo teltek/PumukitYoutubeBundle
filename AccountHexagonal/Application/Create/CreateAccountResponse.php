@@ -4,18 +4,18 @@ declare(strict_types=1);
 
 namespace Pumukit\YoutubeBundle\AccountHexagonal\Application\Create;
 
-use Pumukit\SchemaBundle\Document\Tag;
+use Pumukit\YoutubeBundle\Shared\Domain\Model\YoutubeAccount;
 
 final class CreateAccountResponse
 {
-    private Tag $account;
+    private YoutubeAccount $account;
 
-    public function __construct(Tag $account)
+    public function __construct(YoutubeAccount $account)
     {
         $this->account = $account;
     }
 
-    public function getAccount(): Tag
+    public function getAccount(): YoutubeAccount
     {
         return $this->account;
     }
@@ -24,9 +24,9 @@ final class CreateAccountResponse
     {
         return [
             'id' => $this->account->getId(),
-            'login' => $this->account->getProperty('login'),
-            'title' => $this->account->getI18nTitle(),
-            'cod' => $this->account->getCod(),
+            'accountName' => $this->account->getAccountName(),
+            'channelId' => $this->account->getChannelId(),
+            'credentialsPath' => $this->account->getCredentialsPath(),
         ];
     }
 }

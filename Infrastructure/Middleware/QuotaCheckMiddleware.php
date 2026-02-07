@@ -6,6 +6,7 @@ namespace Pumukit\YoutubeBundle\Infrastructure\Middleware;
 
 use Pumukit\YoutubeBundle\QuotaHexagonal\Application\Waiting\WaitingMessage;
 use Pumukit\YoutubeBundle\Shared\Domain\Service\QuotaService;
+use Pumukit\YoutubeBundle\VideoHexagonal\Application\Upload\UploadVideoMessage;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\Exception\UnrecoverableMessageHandlingException;
@@ -117,9 +118,20 @@ class QuotaCheckMiddleware implements MiddlewareInterface
                 }
 
                 // Crear WaitingMessage y enviarlo a la cola de espera
+                // Serializar el mensaje original para almacenarlo
+                $messageData = [];
+                if ($message instanceof UploadVideoMessage) {
+                    $messageData = [
+                        'multimediaObjectId' => $message->getMultimediaObjectId(),
+                        'accountId' => $message->getAccountId(),
+                        'playlists' => $message->getPlaylists(),
+                    ];
+                }
+                
                 $waitingMessage = new WaitingMessage(
                     accountId: $accountId,
-                    originalMessage: $message,
+                    originalMessageClass: $messageClass,
+                    originalMessageData: $messageData,
                     quotaCost: $operationInfo['quotaCost'],
                     operation: $operationInfo['operation']
                 );

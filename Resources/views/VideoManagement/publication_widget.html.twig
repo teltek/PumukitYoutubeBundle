@@ -1,5 +1,6 @@
 {% set youtube_video_id = mm.getProperty('youtube_video_id') %}
 {% set youtube_account_id = mm.getProperty('youtube_account_id') %}
+{% set youtube_account_name = mm.getProperty('youtube_account_name') %}
 {% set youtube_status = mm.getProperty('youtube_status') %}
 {% set youtube_playlist_ids = mm.getProperty('youtube_playlist_ids') %}
 
@@ -16,6 +17,7 @@
                 {% if youtube_status %}
                     | Status: <strong>{{ youtube_status }}</strong>
                 {% endif %}
+                | Account: <strong>{{ youtube_account_name ?: youtube_account_id }}</strong>
             </small>
         </div>
         <div style="margin-left: auto;">
