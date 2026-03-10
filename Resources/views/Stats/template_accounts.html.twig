@@ -11,7 +11,8 @@
         <div class="row">
             {% for account in youtubeAccounts %}
                 <div class="col-md-4 col-sm-6 col-xs-12">
-                    <a  class="youtube_status_link_list" href="{{ path('pumukit_youtube_stat_account_list', {'account' : account.getProperty('login')}) }}">
+                    {# Use the tag id for the route to avoid invalid characters (eg. file paths) in the URL segment #}
+                    <a  class="youtube_status_link_list" href="{{ path('pumukit_youtube_stat_account_list', {'account' : account.getId()}) }}">
                         <div class="info-box">
                             <span class="info-box-icon bg-pumukit">
                                 <i class="glyphicon glyphicon-user"></i>

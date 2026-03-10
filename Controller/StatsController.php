@@ -9,6 +9,7 @@ use Pumukit\CoreBundle\Services\PaginationService;
 use Pumukit\YoutubeBundle\Document\Youtube;
 use Pumukit\YoutubeBundle\Services\YoutubeConfigurationService;
 use Pumukit\YoutubeBundle\Services\YoutubeStatsService;
+use Pumukit\YoutubeBundle\Services\YoutubeAccountService;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
@@ -26,15 +27,18 @@ class StatsController extends AbstractController
     private $youtubeStatsService;
     private $youtubeConfigurationService;
     private $paginationService;
+    private $youtubeAccountService;
 
     public function __construct(
         YoutubeStatsService $youtubeStatsService,
         YoutubeConfigurationService $youtubeConfigurationService,
-        PaginationService $paginationService
+        PaginationService $paginationService,
+        YoutubeAccountService $youtubeAccountService
     ) {
         $this->youtubeStatsService = $youtubeStatsService;
         $this->youtubeConfigurationService = $youtubeConfigurationService;
         $this->paginationService = $paginationService;
+        $this->youtubeAccountService = $youtubeAccountService;
     }
 
     /**
@@ -97,8 +101,24 @@ class StatsController extends AbstractController
             throw new ServiceNotFoundException('YoutubeService not found');
         }
 
+        // The template now passes the Tag ID as the route parameter to avoid
+        // invalid URL characters (for example when a Tag 'login' property
+        // accidentally contains a file path). Resolve the Tag to obtain the
+        // canonical login value used in youtube documents. If resolution
+        // fails, treat the given parameter as the login itself.
+        $accountLogin = $account;
+        try {
+            $tag = $this->youtubeAccountService->findAccountById($account);
+            if ($tag) {
+                $accountLogin = $tag->getProperty('login') ?: $tag->getTitle();
+            }
+        } catch (\Throwable $e) {
+            // If anything goes wrong resolving the tag, fall back to the raw
+            // parameter (keeps behavior safe and avoids throwing during render).
+        }
+
         $youtubeDocuments = $this->youtubeStatsService->getYoutubeDocumentsByCriteria([
-            'youtubeAccount' => $account,
+            'youtubeAccount' => $accountLogin,
         ]);
 
         $page = (int) $request->get('page', 1);

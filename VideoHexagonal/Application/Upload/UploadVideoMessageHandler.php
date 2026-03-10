@@ -6,9 +6,13 @@ namespace Pumukit\YoutubeBundle\VideoHexagonal\Application\Upload;
 
 use Doctrine\ODM\MongoDB\DocumentManager;
 use Psr\Log\LoggerInterface;
+use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Tag;
+use Pumukit\YoutubeBundle\QuotaHexagonal\Application\Failed\FailedVideoMessage;
+use Pumukit\YoutubeBundle\Services\VideoDataValidationService;
 use Pumukit\YoutubeBundle\Shared\Domain\Service\ErrorClassificationService;
 use Pumukit\YoutubeBundle\Shared\Domain\Service\QuotaService;
+use Pumukit\YoutubeBundle\Shared\Domain\Service\Validation\YoutubeMetadataValidator;
 use Pumukit\YoutubeBundle\Shared\Infrastructure\Service\QueueDrainService;
 use Pumukit\YoutubeBundle\VideoHexagonal\Application\Playlist\AddVideoToPlaylistsService;
 use Symfony\Component\Messenger\MessageBusInterface;
@@ -23,6 +27,8 @@ final class UploadVideoMessageHandler
     private DocumentManager $documentManager;
     private LoggerInterface $logger;
     private MessageBusInterface $messageBus;
+    private YoutubeMetadataValidator $metadataValidator;
+    private VideoDataValidationService $videoDataValidationService;
 
     public function __construct(
         UploadVideoService $uploadVideoService,
@@ -32,7 +38,9 @@ final class UploadVideoMessageHandler
         QueueDrainService $queueDrainService,
         DocumentManager $documentManager,
         LoggerInterface $logger,
-        MessageBusInterface $messageBus
+        MessageBusInterface $messageBus,
+        YoutubeMetadataValidator $metadataValidator,
+        VideoDataValidationService $videoDataValidationService
     ) {
         $this->uploadVideoService = $uploadVideoService;
         $this->addVideoToPlaylistsService = $addVideoToPlaylistsService;
@@ -42,6 +50,8 @@ final class UploadVideoMessageHandler
         $this->documentManager = $documentManager;
         $this->logger = $logger;
         $this->messageBus = $messageBus;
+        $this->metadataValidator = $metadataValidator;
+        $this->videoDataValidationService = $videoDataValidationService;
     }
 
     public function __invoke(UploadVideoMessage $message): void
@@ -86,19 +96,67 @@ final class UploadVideoMessageHandler
             
             error_log('[VideoHexagonal] Publication tag validated OK');
 
-            // 1. Check quota (1600 cost for upload)
+            // 1. IDEMPOTENCIA: Verificar si el vídeo ya fue subido a YouTube
+            $existingYoutubeId = $multimediaObject->getProperty('youtube_video_id');
+            if ($existingYoutubeId) {
+                $this->logger->info('[VideoHexagonal] Video already uploaded to YouTube (idempotent skip)', [
+                    'multimediaObjectId' => $message->getMultimediaObjectId(),
+                    'existingYoutubeId' => $existingYoutubeId,
+                ]);
+                error_log('[VideoHexagonal] Video already uploaded with ID: ' . $existingYoutubeId . ', skipping duplicate');
+                return; // No resubir el mismo vídeo
+            }
+            error_log('[VideoHexagonal] Idempotency check passed (no existing youtube_video_id)');
+
+            // 2. VALIDACIÓN DE METADATA: Verificar antes de llamar a la API
+            $metadataValidation = $this->validateMetadataBeforeUpload($multimediaObject, $message);
+            if (!$metadataValidation['valid']) {
+                $this->logger->error('[VideoHexagonal] Metadata validation failed, sending to failed queue', [
+                    'multimediaObjectId' => $message->getMultimediaObjectId(),
+                    'errors' => $metadataValidation['errors'],
+                ]);
+                error_log('[VideoHexagonal] Metadata validation FAILED: ' . implode(', ', $metadataValidation['errors']));
+                
+                // Enviar a cola de fallos con detalle de los campos erróneos
+                $this->messageBus->dispatch(new FailedVideoMessage(
+                    multimediaObjectId: $message->getMultimediaObjectId(),
+                    accountId: $message->getAccountId(),
+                    errorMessage: 'Metadata validation failed: ' . implode(', ', $metadataValidation['errors']),
+                    errorDetails: [
+                        'validation_errors' => $metadataValidation['errors'],
+                        'validation_warnings' => $metadataValidation['warnings'] ?? [],
+                        'fields' => $metadataValidation['fields'] ?? [],
+                    ],
+                    httpStatusCode: 400,
+                    operation: 'video.upload',
+                    reason: 'invalid_metadata'
+                ));
+                
+                return; // No continuar con la subida
+            }
+            
+            // Log warnings si existen
+            if (!empty($metadataValidation['warnings'])) {
+                $this->logger->warning('[VideoHexagonal] Metadata validation warnings', [
+                    'multimediaObjectId' => $message->getMultimediaObjectId(),
+                    'warnings' => $metadataValidation['warnings'],
+                ]);
+            }
+            error_log('[VideoHexagonal] Metadata validation passed');
+
+            // 3. Check quota (1600 cost for upload)
             error_log('[VideoHexagonal] Checking quota...');
             $this->quotaService->checkQuotaAvailability($message->getAccountId(), 'video.upload');
             error_log('[VideoHexagonal] Quota check passed');
 
-            // 2. Convert Message to Request
+            // 4. Convert Message to Request
             $request = new UploadVideoRequest(
                 multimediaObjectId: $message->getMultimediaObjectId(),
                 accountId: $message->getAccountId(),
                 playlists: $message->getPlaylists()
             );
 
-            // 3. Execute service
+            // 5. Execute service
             error_log('[VideoHexagonal] Calling UploadVideoService...');
             $response = $this->uploadVideoService->__invoke($request);
             error_log('[VideoHexagonal] Upload service completed. YouTube ID: ' . $response->getYoutubeId());
@@ -461,5 +519,66 @@ final class UploadVideoMessageHandler
             }
         }
         return false;
+    }
+
+    /**
+     * Validate video metadata before attempting upload to YouTube.
+     * This prevents wasting API quota on videos that will be rejected.
+     * 
+     * @return array{valid: bool, errors: array<string>, warnings: array<string>, fields: array<string>}
+     */
+    private function validateMetadataBeforeUpload(
+        MultimediaObject $multimediaObject,
+        UploadVideoMessage $message
+    ): array {
+        $errors = [];
+        $warnings = [];
+        $invalidFields = [];
+
+        // Get metadata using the same service that will be used for upload
+        $title = $this->videoDataValidationService->getTitleForYoutube($multimediaObject);
+        $description = $this->videoDataValidationService->getDescriptionForYoutube($multimediaObject);
+        $tags = $this->videoDataValidationService->getTagsForYoutube($multimediaObject);
+
+        $this->logger->debug('[VideoHexagonal] Validating metadata', [
+            'multimediaObjectId' => $message->getMultimediaObjectId(),
+            'title_length' => mb_strlen($title),
+            'description_bytes' => strlen($description),
+            'tags' => $tags,
+        ]);
+
+        // Use the metadata validator
+        $validation = $this->metadataValidator->validate($title, $description, $tags, '22');
+
+        if (!$validation['valid']) {
+            $errors = $validation['errors'];
+            
+            // Determine which fields are invalid based on error messages
+            foreach ($errors as $error) {
+                if (stripos($error, 'title') !== false || stripos($error, 'Title') !== false) {
+                    $invalidFields[] = 'title';
+                }
+                if (stripos($error, 'description') !== false || stripos($error, 'Description') !== false) {
+                    $invalidFields[] = 'description';
+                }
+                if (stripos($error, 'tag') !== false || stripos($error, 'Tag') !== false) {
+                    $invalidFields[] = 'tags';
+                }
+                if (stripos($error, 'category') !== false || stripos($error, 'Category') !== false) {
+                    $invalidFields[] = 'category';
+                }
+            }
+            
+            $invalidFields = array_unique($invalidFields);
+        }
+
+        $warnings = $validation['warnings'] ?? [];
+
+        return [
+            'valid' => empty($errors),
+            'errors' => $errors,
+            'warnings' => $warnings,
+            'fields' => $invalidFields,
+        ];
     }
 }
