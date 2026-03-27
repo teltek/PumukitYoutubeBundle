@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pumukit\YoutubeBundle\Services;
 
 use Doctrine\ODM\MongoDB\DocumentManager;
+use Google\Http\MediaFileUpload;
 use Google\Service\YouTube\Video;
 use Psr\Log\LoggerInterface;
 use Pumukit\SchemaBundle\Document\MediaType\Track;
@@ -15,6 +16,8 @@ use Pumukit\YoutubeBundle\Document\Youtube;
 
 class VideoInsertService extends GoogleVideoService
 {
+    private const CHUNK_SIZE_BYTES = 2 * 1024 * 1024; // 2 MB
+
     private $googleAccountService;
 
     private $documentManager;
@@ -99,16 +102,51 @@ class VideoInsertService extends GoogleVideoService
         $this->logger->info($infoLog);
 
         $service = $this->googleAccountService->googleServiceFromAccount($youtubeAccount);
+        $client = $service->getClient();
 
-        return $service->videos->insert(
-            'snippet,status',
-            $video,
-            [
-                'data' => file_get_contents($track->storage()->path()->path()),
-                'mimeType' => 'application/octet-stream',
-                'uploadType' => 'multipart',
-            ]
-        );
+        $client->setDefer(true);
+
+        try {
+            $request = $service->videos->insert('snippet,status', $video);
+
+            $filePath = $track->storage()->path()->path();
+            $fileSize = filesize($filePath);
+
+            $media = new MediaFileUpload(
+                $client,
+                $request,
+                'application/octet-stream',
+                null,
+                true,
+                self::CHUNK_SIZE_BYTES
+            );
+            $media->setFileSize($fileSize);
+
+            $handle = fopen($filePath, 'rb');
+            if (false === $handle) {
+                throw new \RuntimeException(sprintf('Cannot open file for reading: %s', $filePath));
+            }
+
+            $status = false;
+            $uploadedBytes = 0;
+
+            try {
+                while (!$status && !feof($handle)) {
+                    $chunk = fread($handle, self::CHUNK_SIZE_BYTES);
+                    $status = $media->nextChunk($chunk);
+
+                    $uploadedBytes += strlen($chunk);
+                    $percent = $fileSize > 0 ? round(($uploadedBytes / $fileSize) * 100, 1) : 0;
+                    $this->logger->debug(sprintf('[YouTube] Upload progress: %s%% (%s / %s bytes)', $percent, $uploadedBytes, $fileSize));
+                }
+            } finally {
+                fclose($handle);
+            }
+
+            return $status ?: null;
+        } finally {
+            $client->setDefer(false);
+        }
     }
 
     private function createVideo(
