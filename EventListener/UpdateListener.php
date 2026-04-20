@@ -131,7 +131,7 @@ class UpdateListener
             ]);
 
             if (!$prototype) {
-                throw new \Exception('Prototype for series '.$multimediaObject->getSeries().' not found');
+                return;
             }
 
             foreach ($prototype->getTags() as $tag) {
