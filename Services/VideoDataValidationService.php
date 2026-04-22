@@ -279,7 +279,15 @@ class VideoDataValidationService extends CommonDataValidationService
                 return $this->generateSbsTrack($multimediaObject);
             }
         } else {
-            $track = $multimediaObject->getTrackWithTag($this->youtubeConfigurationService->defaultTrackUpload());
+            foreach ($multimediaObject->getTracks() as $t) {
+                foreach ($t->getTags() as $tag) {
+                    if (preg_match('/youtube/i', $tag)) {
+                        $track = $t;
+
+                        break 2;
+                    }
+                }
+            }
         }
         if (!$track || $track->metadata()->isOnlyAudio()) {
             $track = $multimediaObject->getTrackWithTag('master');
