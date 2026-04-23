@@ -39,7 +39,24 @@ class VideoUpdateService extends GoogleVideoService
 
     public function updateVideoOnYoutube(MultimediaObject $multimediaObject): bool
     {
-        $account = $this->videoDataValidationService->validateMultimediaObjectAccount($multimediaObject);
+        // Use the account stored in the Youtube document as the primary source (most reliable),
+        // since validateMultimediaObjectAccount() may return a Tag without 'login' if the
+        // MultimediaObject has stale or inconsistent YouTube-child tags.
+        $existingYoutubeDocument = $this->documentManager->getRepository(Youtube::class)->findOneBy([
+            'multimediaObjectId' => $multimediaObject->getId(),
+        ]);
+
+        $account = null;
+        if ($existingYoutubeDocument && $existingYoutubeDocument->getYoutubeAccount()) {
+            $account = $this->documentManager->getRepository(Tag::class)->findOneBy([
+                'properties.login' => $existingYoutubeDocument->getYoutubeAccount(),
+            ]);
+        }
+
+        if (!$account) {
+            $account = $this->videoDataValidationService->validateMultimediaObjectAccount($multimediaObject);
+        }
+
         if (!$account) {
             $errorLog = sprintf('[YouTube] Video %s does not have account set.', $multimediaObject->getId());
             $this->logger->error($errorLog);

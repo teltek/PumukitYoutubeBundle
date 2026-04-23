@@ -83,10 +83,18 @@ EOT
         foreach ($multimediaObjects as $multimediaObject) {
             try {
                 $result = $this->videoInsertService->uploadVideoToYoutube($multimediaObject);
-            } catch (\Exception $exception) {
+            } catch (\Throwable $exception) {
                 $errorLog = '[YouTube] Multimedia object with ID ('.$multimediaObject->getId().') contains error to upload YouTube. '.$exception->getMessage();
                 $this->logger->error($errorLog);
                 $output->writeln($errorLog);
+
+                $youtube = $this->documentManager->getRepository(Youtube::class)->findOneBy([
+                    'multimediaObjectId' => $multimediaObject->getId(),
+                ]);
+                if ($youtube instanceof Youtube) {
+                    $youtube->setStatus(Youtube::STATUS_ERROR);
+                    $this->documentManager->flush();
+                }
             }
         }
     }

@@ -78,10 +78,24 @@ EOT
                 }
                 $deleteCaptionIds = $this->getDeleteCaptionIds($youtube, $multimediaObject);
                 if ($deleteCaptionIds) {
-                    $account = $this->captionsDataValidationService->validateMultimediaObjectAccount($multimediaObject);
+                    // Use the account stored in the Youtube document as the primary source (most reliable),
+                    // since validateMultimediaObjectAccount() may return a Tag without 'login' if the
+                    // MultimediaObject has stale or inconsistent YouTube-child tags.
+                    $account = null;
+                    if ($youtube->getYoutubeAccount()) {
+                        $account = $this->documentManager->getRepository(Tag::class)->findOneBy([
+                            'properties.login' => $youtube->getYoutubeAccount(),
+                        ]);
+                    }
+                    if (!$account) {
+                        $account = $this->captionsDataValidationService->validateMultimediaObjectAccount($multimediaObject);
+                    }
+                    if (!$account) {
+                        throw new \Exception('Account not found for multimedia object '.$multimediaObject->getId());
+                    }
                     $result = $this->captionsDeleteService->deleteCaption($account, $youtube, $deleteCaptionIds);
                 }
-            } catch (\Exception $exception) {
+            } catch (\Throwable $exception) {
                 $errorLog = sprintf('[YouTube] Remove captions for video %s failed. Error: %s', $multimediaObject->getId(), $exception->getMessage());
                 $this->logger->error($errorLog);
                 $this->output->writeln($errorLog);

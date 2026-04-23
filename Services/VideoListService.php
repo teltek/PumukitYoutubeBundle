@@ -52,7 +52,20 @@ class VideoListService extends GoogleVideoService
         );
         $this->logger->info($infoLog);
 
-        $account = $this->videoDataValidationService->validateMultimediaObjectAccount($multimediaObject);
+        // Use the account stored in the Youtube document as the primary source (most reliable),
+        // since validateMultimediaObjectAccount() may return a Tag without 'login' if the
+        // MultimediaObject has stale or inconsistent YouTube-child tags.
+        $account = null;
+        if ($youtube->getYoutubeAccount()) {
+            $account = $this->documentManager->getRepository(Tag::class)->findOneBy([
+                'properties.login' => $youtube->getYoutubeAccount(),
+            ]);
+        }
+
+        if (!$account) {
+            $account = $this->videoDataValidationService->validateMultimediaObjectAccount($multimediaObject);
+        }
+
         if (!$account) {
             $this->logger->error('Multimedia object with ID '.$multimediaObject->getId().' doesnt have Youtube account set.');
 

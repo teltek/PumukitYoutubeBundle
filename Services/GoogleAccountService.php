@@ -32,10 +32,29 @@ class GoogleAccountService
 
     public function googleServiceFromAccount(Tag $youtubeAccount): \Google_Service_YouTube
     {
-        $client = $this->createClientWithAccessToken(
-            $youtubeAccount->getProperty('login'),
-            $youtubeAccount->getProperty('access_token')
-        );
+        $login = $youtubeAccount->getProperty('login');
+        if (!is_string($login) || '' === $login) {
+            throw new \InvalidArgumentException(
+                sprintf(
+                    'YouTube account Tag "%s" (cod: %s) does not have a "login" property set.',
+                    $youtubeAccount->getId(),
+                    $youtubeAccount->getCod()
+                )
+            );
+        }
+
+        $accessToken = $youtubeAccount->getProperty('access_token');
+        if (!is_array($accessToken)) {
+            throw new \InvalidArgumentException(
+                sprintf(
+                    'YouTube account Tag "%s" (login: %s) does not have a valid "access_token" property set.',
+                    $youtubeAccount->getId(),
+                    $login
+                )
+            );
+        }
+
+        $client = $this->createClientWithAccessToken($login, $accessToken);
 
         return $this->createService($client);
     }

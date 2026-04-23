@@ -106,10 +106,18 @@ EOT
         foreach ($multimediaObjects as $multimediaObject) {
             try {
                 $result = $this->videoDeleteService->deleteVideoFromYouTubeByMultimediaObject($multimediaObject);
-            } catch (\Exception $e) {
+            } catch (\Throwable $e) {
                 $errorLog = sprintf('[YouTube] Remove video %s failed. Error: %s', $multimediaObject->getId(), $e->getMessage());
                 $this->logger->error($errorLog);
                 $output->writeln($errorLog);
+
+                $youtube = $this->documentManager->getRepository(Youtube::class)->findOneBy([
+                    'multimediaObjectId' => $multimediaObject->getId(),
+                ]);
+                if ($youtube instanceof Youtube) {
+                    $youtube->setStatus(Youtube::STATUS_ERROR);
+                    $this->documentManager->flush();
+                }
             }
         }
     }
@@ -134,10 +142,13 @@ EOT
                         }
                     }
                 }
-            } catch (\Exception $e) {
+            } catch (\Throwable $e) {
                 $errorLog = sprintf('[YouTube] Remove video assigned on YoutubeDocument %s failed. Error: %s', $youtube->getId(), $e->getMessage());
                 $this->logger->error($errorLog);
                 $output->writeln($errorLog);
+
+                $youtube->setStatus(Youtube::STATUS_ERROR);
+                $this->documentManager->flush();
             }
         }
     }

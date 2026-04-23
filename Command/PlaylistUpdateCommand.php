@@ -61,8 +61,8 @@ EOT
         foreach ($multimediaObjects as $multimediaObject) {
             try {
                 $response = $this->playlistItemInsertService->updatePlaylist($multimediaObject);
-            } catch (\Exception $e) {
-                $errorLog = sprintf("[YouTube] Could\\'t update playlist of video %s. Error: %s", $multimediaObject->getId(), $e->getMessage());
+            } catch (\Throwable $e) {
+                $errorLog = sprintf('[YouTube] Could\'t update playlist of video %s. Error: %s', $multimediaObject->getId(), $e->getMessage());
                 $this->logger->error($errorLog);
                 $output->writeln($errorLog);
             }

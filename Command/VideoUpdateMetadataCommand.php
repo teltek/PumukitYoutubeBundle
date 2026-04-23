@@ -68,10 +68,18 @@ EOT
         foreach ($multimediaObjects as $multimediaObject) {
             try {
                 $result = $this->videoUpdateService->updateVideoOnYoutube($multimediaObject);
-            } catch (\Exception $e) {
+            } catch (\Throwable $e) {
                 $errorLog = sprintf('[YouTube] Update metadata video for video %s failed: %s', $multimediaObject->getId(), $e->getMessage());
                 $this->logger->error($errorLog);
                 $output->writeln($errorLog);
+
+                $youtube = $this->documentManager->getRepository(Youtube::class)->findOneBy([
+                    'multimediaObjectId' => $multimediaObject->getId(),
+                ]);
+                if ($youtube instanceof Youtube) {
+                    $youtube->setStatus(Youtube::STATUS_ERROR);
+                    $this->documentManager->flush();
+                }
             }
         }
     }

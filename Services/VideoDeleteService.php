@@ -38,23 +38,27 @@ class VideoDeleteService extends GoogleVideoService
 
     public function deleteVideoFromYouTubeByMultimediaObject(MultimediaObject $multimediaObject): bool
     {
-        $account = $this->videoDataValidationService->validateMultimediaObjectAccount($multimediaObject);
         $youtube = $this->getYoutubeDocument($multimediaObject);
+
+        // Use the account stored in the Youtube document as the primary source (most reliable),
+        // since validateMultimediaObjectAccount() may return a Tag without 'login' if the
+        // MultimediaObject has stale or inconsistent YouTube-child tags.
+        $account = null;
+        if ($youtube && $youtube->getYoutubeAccount()) {
+            $account = $this->documentManager->getRepository(Tag::class)->findOneBy([
+                'properties.login' => $youtube->getYoutubeAccount(),
+            ]);
+        }
+
         if (!$account) {
-            $accountLogin = $youtube->getYoutubeAccount();
-            if (!$accountLogin) {
-                $errorLog = self::class.' ['.__FUNCTION__.'] Multimedia object '.$multimediaObject->getId().': doesnt have account';
-                $this->logger->error($errorLog);
+            $account = $this->videoDataValidationService->validateMultimediaObjectAccount($multimediaObject);
+        }
 
-                return false;
-            }
-            $account = $this->documentManager->getRepository(Tag::class)->findOneBy(['properties.login' => $accountLogin]);
-            if (!$account) {
-                $errorLog = self::class.' ['.__FUNCTION__.'] Youtube account '.$accountLogin.' doesnt exists';
-                $this->logger->error($errorLog);
+        if (!$account) {
+            $errorLog = self::class.' ['.__FUNCTION__.'] Multimedia object '.$multimediaObject->getId().': doesnt have account';
+            $this->logger->error($errorLog);
 
-                return false;
-            }
+            return false;
         }
 
         $video = $this->createVideo($youtube->getYoutubeId());

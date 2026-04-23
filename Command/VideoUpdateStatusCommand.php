@@ -118,10 +118,15 @@ EOT
                 if (false === $result['status'] && 'quotaExceeded' === $result['message']) {
                     break;
                 }
-            } catch (\Exception $e) {
+            } catch (\Throwable $e) {
                 $errorLog = sprintf('[YouTube] Update status of the video %s failed: %s', $multimediaObject->getId(), $e->getMessage());
                 $output->writeln($errorLog);
                 $this->logger->error($errorLog);
+
+                $youtube->setStatus(Youtube::STATUS_ERROR);
+                $error = Error::create('pumukit.updateStatusError', $e->getMessage(), new \DateTime(), '');
+                $youtube->setError($error);
+                $this->documentManager->flush();
             }
         }
     }

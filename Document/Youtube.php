@@ -296,7 +296,7 @@ class Youtube
         return $this->uploadDate;
     }
 
-    public function getYoutubeAccount(): string
+    public function getYoutubeAccount(): ?string
     {
         return $this->youtubeAccount;
     }

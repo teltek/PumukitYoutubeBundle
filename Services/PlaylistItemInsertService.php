@@ -41,7 +41,7 @@ class PlaylistItemInsertService extends GooglePlaylistItemService
             return false;
         }
 
-        $playlists = $this->getPlaylistFromMultimediaObject($multimediaObject);
+        $playlists = $this->getPlaylistFromMultimediaObject($multimediaObject, $youtube);
         if (empty($playlists)) {
             return false;
         }
@@ -77,9 +77,22 @@ class PlaylistItemInsertService extends GooglePlaylistItemService
         ]);
     }
 
-    private function getPlaylistFromMultimediaObject(MultimediaObject $multimediaObject): ?array
+    private function getPlaylistFromMultimediaObject(MultimediaObject $multimediaObject, Youtube $youtube): ?array
     {
-        $account = $this->validateMultimediaObjectAccount($multimediaObject);
+        // Use the account stored in the Youtube document as the primary source (most reliable),
+        // since validateMultimediaObjectAccount() may return a Tag without 'login' if the
+        // MultimediaObject has stale or inconsistent YouTube-child tags.
+        $account = null;
+        if ($youtube->getYoutubeAccount()) {
+            $account = $this->documentManager->getRepository(Tag::class)->findOneBy([
+                'properties.login' => $youtube->getYoutubeAccount(),
+            ]);
+        }
+
+        if (!$account) {
+            $account = $this->validateMultimediaObjectAccount($multimediaObject);
+        }
+
         if (!$account instanceof Tag) {
             $errorLog = sprintf('[YouTube] Video %s does not have account set.', $multimediaObject->getId());
             $this->logger->error($errorLog);
