@@ -58,6 +58,12 @@ EOT
         $authorizationCode = $this->requestAuthorization();
         $accessToken = $this->accessToken($authorizationCode);
 
+        if (!isset($accessToken['refresh_token'])) {
+            throw new \RuntimeException(
+                'Google did not return a refresh_token. Revoke app access at https://myaccount.google.com/permissions and run this command again.'
+            );
+        }
+
         $account->setProperty('access_token', $accessToken);
         if (null === $account->getProperty('refresh_token')) {
             $account->setProperty('refresh_token', $accessToken['refresh_token']);

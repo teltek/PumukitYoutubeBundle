@@ -25,7 +25,7 @@ class GoogleAccountService
         $this->setAccountScopes();
         $this->client->setAuthConfig($this->getClientSecret($login));
         $this->client->setAccessType('offline');
-        $this->client->setApprovalPrompt('force');
+        $this->client->setPrompt('consent');
 
         return $this->client;
     }
