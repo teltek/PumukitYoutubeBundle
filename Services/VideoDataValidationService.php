@@ -281,7 +281,7 @@ class VideoDataValidationService extends CommonDataValidationService
         } else {
             foreach ($multimediaObject->getTracks() as $t) {
                 foreach ($t->getTags() as $tag) {
-                    if (preg_match('/youtube/i', $tag)) {
+                    if ((false !== stripos($tag, 'youtube')) && !$t->metadata()->isOnlyAudio()) {
                         $track = $t;
 
                         break 2;
