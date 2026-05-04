@@ -39,7 +39,7 @@ class VideoDataValidationService extends CommonDataValidationService
         YoutubeConfigurationService $youtubeConfigurationService,
         JobCreator $jobCreator,
         TagService $tagService,
-        OpencastService $opencastService = null,
+        ?OpencastService $opencastService = null,
         RouterInterface $router,
         TranslatorInterface $translator,
         LoggerInterface $logger,
@@ -164,16 +164,16 @@ class VideoDataValidationService extends CommonDataValidationService
 
         $recDate = $multimediaObject->getRecordDate()->format('d-m-Y');
         if ($series->isHide()) {
-            $description = $multimediaObject->getTitle($this->locale)."\n".
-                $multimediaObject->getSubtitle($this->locale)."\n".
-                $recDateI18N.': '.$recDate."\n".
-                str_replace($break, "\n", $multimediaObject->getDescription($this->locale))."\n";
+            $description = $multimediaObject->getTitle($this->locale)."\n"
+                .$multimediaObject->getSubtitle($this->locale)."\n"
+                .$recDateI18N.': '.$recDate."\n"
+                .str_replace($break, "\n", $multimediaObject->getDescription($this->locale))."\n";
         } else {
-            $description = $multimediaObject->getTitle($this->locale)."\n".
-                $multimediaObject->getSubtitle($this->locale)."\n".
-                $this->translator->trans('i18n.one.Series', [], null, $this->locale).': '.$series->getTitle($this->locale)."\n".
-                $recDateI18N.': '.$recDate."\n".
-                str_replace($break, "\n", $multimediaObject->getDescription($this->locale))."\n";
+            $description = $multimediaObject->getTitle($this->locale)."\n"
+                .$multimediaObject->getSubtitle($this->locale)."\n"
+                .$this->translator->trans('i18n.one.Series', [], null, $this->locale).': '.$series->getTitle($this->locale)."\n"
+                .$recDateI18N.': '.$recDate."\n"
+                .str_replace($break, "\n", $multimediaObject->getDescription($this->locale))."\n";
         }
 
         if ($bPeople) {

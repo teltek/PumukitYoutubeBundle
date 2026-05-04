@@ -31,7 +31,7 @@ class NotificationService
         DocumentManager $documentManager,
         YoutubeConfigurationService $youtubeConfigurationService,
         TagService $tagService,
-        SenderService $senderService = null,
+        ?SenderService $senderService = null,
         LoggerInterface $logger,
         RouterInterface $router,
         TranslatorInterface $translator,
@@ -144,8 +144,8 @@ class NotificationService
                         'id' => $element->getMultimediaObjectId(),
                     ],
                     UrlGeneratorInterface::ABSOLUTE_URL
-                ).
-                    '">'.$element->getMultimediaObjectId().'</a></li>';
+                )
+                    .'">'.$element->getMultimediaObjectId().'</a></li>';
             }
             $body .= '</ul>';
         }

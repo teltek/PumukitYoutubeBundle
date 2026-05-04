@@ -105,7 +105,7 @@ EOT
         ];
 
         foreach ($youtubeDocuments as $youtubeDocument) {
-            /** @var Youtube $youtubeDocument */
+            // @var Youtube $youtubeDocument
             ++$totalChecked;
 
             $accountLogin = $youtubeDocument->getYoutubeAccount();

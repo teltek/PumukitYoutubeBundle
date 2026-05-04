@@ -52,8 +52,8 @@ EOT
             $this->documentManager->persist($youtubePublicationChannelTag);
             $this->documentManager->flush();
             $output->writeln(
-                'Tag persisted - new id: '.$youtubePublicationChannelTag->getId().
-                ' cod: '.$youtubePublicationChannelTag->getCod()
+                'Tag persisted - new id: '.$youtubePublicationChannelTag->getId()
+                .' cod: '.$youtubePublicationChannelTag->getCod()
             );
             $youtubePlaylistTag = $this->createTagWithCode(PumukitYoutubeBundle::YOUTUBE_TAG_CODE, 'YouTube', 'ROOT', true);
             $youtubePlaylistTag->setProperty(
