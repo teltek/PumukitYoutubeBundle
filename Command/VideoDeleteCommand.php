@@ -59,17 +59,11 @@ EOT
     {
         $this->usePumukit1 = $input->getOption('use-pmk1');
 
-        // Use case:
-        // Videos with YouTube document on PUBLISHED but status on PuMuKIT not allowed to be published
-        // Ex: sync_status false and status hidden or blocked.
         $notPublishedMms = $this->notPublishedMultimediaObjects();
         $infoLog = '[YouTube] Deleting not published videos  '.(is_countable($notPublishedMms) ? count($notPublishedMms) : 0).' on YouTube';
         $this->logger->info($infoLog);
         $this->deleteVideosFromYoutube($notPublishedMms, $output);
 
-        // Use case:
-        // Videos published on YouTube but without PUCHYOUTUBE ( or configured tags ) on PuMuKIT
-        // Ex: sync_status false and status hidden or blocked.
         $arrayPubTags = $this->youtubeConfigurationService->publicationChannelsTags();
         $youtubeMongoIds = $this->documentManager->getRepository(Youtube::class)->getDistinctFieldWithStatusAndForce(
             '_id',
@@ -82,15 +76,11 @@ EOT
         $this->logger->info($infoLog);
         $this->deleteVideosFromYoutube($notCorrectTagMms, $output);
 
-        // Use case:
-        // Videos published on YouTube but with EmbeddedBroadcast distinct of public
         $notPublicMms = $this->getMultimediaObjectsInYoutubeWithoutEmbeddedBroadcast($publishedYoutubeIds, 'public');
         $infoLog = '[YouTube] Deleting videos with EmbeddedBroadcast not public:  '.(is_countable($notPublicMms) ? count($notPublicMms) : 0);
         $this->logger->info($infoLog);
         $this->deleteVideosFromYoutube($notPublicMms, $output);
 
-        // Use case:
-        // Videos that was removed from PuMuKIT but have YouTube document.
         $orphanVideos = $this->documentManager->getRepository(Youtube::class)->findBy([
             'status' => Youtube::STATUS_TO_DELETE,
         ]);
