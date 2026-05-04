@@ -69,19 +69,21 @@ class PlaylistItemInsertService extends GooglePlaylistItemService
         return $account;
     }
 
-    private function getYoutubeDocument(MultimediaObject $multimediaObject)
+    private function getYoutubeDocument(MultimediaObject $multimediaObject): ?Youtube
     {
-        return $this->documentManager->getRepository(Youtube::class)->findOneBy([
+        $youtube = $this->documentManager->getRepository(Youtube::class)->findOneBy([
             'multimediaObjectId' => $multimediaObject->getId(),
-            'status' => Youtube::STATUS_PUBLISHED,
         ]);
+
+        if ($youtube instanceof Youtube && $youtube->getYoutubeId()) {
+            return $youtube;
+        }
+
+        return null;
     }
 
     private function getPlaylistFromMultimediaObject(MultimediaObject $multimediaObject, Youtube $youtube): ?array
     {
-        // Use the account stored in the Youtube document as the primary source (most reliable),
-        // since validateMultimediaObjectAccount() may return a Tag without 'login' if the
-        // MultimediaObject has stale or inconsistent YouTube-child tags.
         $account = null;
         if ($youtube->getYoutubeAccount()) {
             $account = $this->documentManager->getRepository(Tag::class)->findOneBy([

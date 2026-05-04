@@ -78,9 +78,6 @@ EOT
                 }
                 $deleteCaptionIds = $this->getDeleteCaptionIds($youtube, $multimediaObject);
                 if ($deleteCaptionIds) {
-                    // Use the account stored in the Youtube document as the primary source (most reliable),
-                    // since validateMultimediaObjectAccount() may return a Tag without 'login' if the
-                    // MultimediaObject has stale or inconsistent YouTube-child tags.
                     $account = null;
                     if ($youtube->getYoutubeAccount()) {
                         $account = $this->documentManager->getRepository(Tag::class)->findOneBy([

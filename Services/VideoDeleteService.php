@@ -40,9 +40,6 @@ class VideoDeleteService extends GoogleVideoService
     {
         $youtube = $this->getYoutubeDocument($multimediaObject);
 
-        // Use the account stored in the Youtube document as the primary source (most reliable),
-        // since validateMultimediaObjectAccount() may return a Tag without 'login' if the
-        // MultimediaObject has stale or inconsistent YouTube-child tags.
         $account = null;
         if ($youtube && $youtube->getYoutubeAccount()) {
             $account = $this->documentManager->getRepository(Tag::class)->findOneBy([
