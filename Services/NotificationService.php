@@ -31,11 +31,11 @@ class NotificationService
         DocumentManager $documentManager,
         YoutubeConfigurationService $youtubeConfigurationService,
         TagService $tagService,
-        ?SenderService $senderService = null,
         LoggerInterface $logger,
         RouterInterface $router,
         TranslatorInterface $translator,
-        array $pumukitLocales
+        array $pumukitLocales,
+        ?SenderService $senderService = null
     ) {
         $this->documentManager = $documentManager;
         $this->youtubeConfigurationService = $youtubeConfigurationService;
