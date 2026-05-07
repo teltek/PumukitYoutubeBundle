@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pumukit\YoutubeBundle\Services;
 
 use Doctrine\ODM\MongoDB\DocumentManager;
+use Google\Http\MediaFileUpload;
 use Google\Service\YouTube\Video;
 use Psr\Log\LoggerInterface;
 use Pumukit\SchemaBundle\Document\MediaType\Track;
@@ -15,6 +16,8 @@ use Pumukit\YoutubeBundle\Document\Youtube;
 
 class VideoInsertService extends GoogleVideoService
 {
+    private const CHUNK_SIZE_BYTES = 2 * 1024 * 1024;
+
     private $googleAccountService;
 
     private $documentManager;
@@ -95,20 +98,41 @@ class VideoInsertService extends GoogleVideoService
         \Google_Service_YouTube_Video $video,
         Track $track
     ): ?Video {
-        $infoLog = sprintf('[YouTube] Video insert ( %s ) with track %s', $video->getSnippet()->getTitle(), $track->id());
-        $this->logger->info($infoLog);
+        $filePath = $track->storage()->path()->path();
+        $this->logger->info(sprintf('[YouTube] Video insert ( %s ) with track %s', $video->getSnippet()->getTitle(), $track->id()));
+
+        $fileSize = filesize($filePath);
+        if (false === $fileSize) {
+            throw new \RuntimeException(sprintf('Cannot get file size: %s', $filePath));
+        }
+
+        $handle = fopen($filePath, 'rb');
+        if (false === $handle) {
+            throw new \RuntimeException(sprintf('Cannot open file: %s', $filePath));
+        }
 
         $service = $this->googleAccountService->googleServiceFromAccount($youtubeAccount);
+        $client = $service->getClient();
 
-        return $service->videos->insert(
-            'snippet,status',
-            $video,
-            [
-                'data' => file_get_contents($track->storage()->path()->path()),
-                'mimeType' => 'application/octet-stream',
-                'uploadType' => 'multipart',
-            ]
-        );
+        $client->setDefer(true);
+        try {
+            $request = $service->videos->insert('snippet,status', $video);
+            $media = new MediaFileUpload($client, $request, 'application/octet-stream', null, true, self::CHUNK_SIZE_BYTES);
+            $media->setFileSize($fileSize);
+
+            $result = false;
+            $chunkIndex = 0;
+            while (!$result && !feof($handle)) {
+                $chunk = fread($handle, self::CHUNK_SIZE_BYTES);
+                $result = $media->nextChunk($chunk);
+                $this->logger->debug(sprintf('[YouTube] Uploaded chunk %d (~%d MB sent)', ++$chunkIndex, intdiv($chunkIndex * self::CHUNK_SIZE_BYTES, 1024 * 1024)));
+            }
+        } finally {
+            fclose($handle);
+            $client->setDefer(false);
+        }
+
+        return $result instanceof Video ? $result : null;
     }
 
     private function createVideo(
