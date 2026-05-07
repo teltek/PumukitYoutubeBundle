@@ -42,7 +42,7 @@ class PlaylistItemInsertService extends GooglePlaylistItemService
         }
 
         $playlists = $this->getPlaylistFromMultimediaObject($multimediaObject, $youtube);
-        if (empty($playlists)) {
+        if (null === $playlists) {
             return false;
         }
 
