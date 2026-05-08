@@ -115,6 +115,7 @@ class VideoInsertService extends GoogleVideoService
         $client = $service->getClient();
 
         $client->setDefer(true);
+
         try {
             $request = $service->videos->insert('snippet,status', $video);
             $media = new MediaFileUpload($client, $request, 'application/octet-stream', null, true, self::CHUNK_SIZE_BYTES);
