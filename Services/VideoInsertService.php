@@ -209,9 +209,12 @@ class VideoInsertService extends GoogleVideoService
         $youtube = new Youtube();
         $youtube->setMultimediaObjectId($multimediaObject->getId());
         $youtube->setYoutubeAccount($account->getProperty('login'));
+        $youtube->setStatus(Youtube::STATUS_UPLOADING);
         $this->documentManager->persist($youtube);
 
         $multimediaObject->setProperty('youtube', $youtube->getId());
+
+        $this->documentManager->flush();
 
         return $youtube;
     }
