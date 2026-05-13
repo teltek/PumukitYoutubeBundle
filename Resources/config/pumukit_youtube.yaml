@@ -27,7 +27,7 @@ services:
   Pumukit\YoutubeBundle\EventListener\RemoveListener:
     class: Pumukit\YoutubeBundle\EventListener\RemoveListener
     tags:
-      - { name: "doctrine_mongodb.odm.event_listener", event: "preRemove.update" }
+      - { name: "doctrine_mongodb.odm.event_listener", event: "preRemove" }
 
   Pumukit\YoutubeBundle\EventListener\BackofficeListener:
     class: Pumukit\YoutubeBundle\EventListener\BackofficeListener
