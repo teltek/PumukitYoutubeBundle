@@ -16,7 +16,7 @@ use Pumukit\YoutubeBundle\Document\Youtube;
 
 class VideoInsertService extends GoogleVideoService
 {
-    private const CHUNK_SIZE_BYTES = 2 * 1024 * 1024;
+    private const CHUNK_SIZE_BYTES = 8 * 1024 * 1024;
 
     private $googleAccountService;
 
@@ -68,10 +68,10 @@ class VideoInsertService extends GoogleVideoService
 
         try {
             $video = $this->insert($account, $video, $track);
-        } catch (\Exception $exception) {
+        } catch (\Throwable $exception) {
             $this->updateVideoAndYoutubeDocumentByErrorResult(
                 $youtubeDocument,
-                json_decode($exception->getMessage(), true, 512, JSON_THROW_ON_ERROR)
+                $this->decodeYoutubeError($exception)
             );
 
             $errorLog = '[YouTube] Multimedia object with ID ('.$multimediaObject->getId().') failed uploading to YouTube. '.$exception->getMessage();
@@ -97,7 +97,7 @@ class VideoInsertService extends GoogleVideoService
         Tag $youtubeAccount,
         \Google_Service_YouTube_Video $video,
         Track $track
-    ): ?Video {
+    ): Video {
         $filePath = $track->storage()->path()->path();
         $this->logger->info(sprintf('[YouTube] Video insert ( %s ) with track %s', $video->getSnippet()->getTitle(), $track->id()));
 
@@ -116,24 +116,71 @@ class VideoInsertService extends GoogleVideoService
 
         $client->setDefer(true);
 
+        $result = false;
+        $bytesSent = 0;
+
         try {
             $request = $service->videos->insert('snippet,status', $video);
             $media = new MediaFileUpload($client, $request, 'application/octet-stream', null, true, self::CHUNK_SIZE_BYTES);
             $media->setFileSize($fileSize);
 
-            $result = false;
             $chunkIndex = 0;
-            while (!$result && !feof($handle)) {
+            while ($bytesSent < $fileSize) {
                 $chunk = fread($handle, self::CHUNK_SIZE_BYTES);
+                if (false === $chunk || '' === $chunk) {
+                    throw new \RuntimeException(sprintf(
+                        'Unexpected EOF reading %s at offset %d/%d',
+                        $filePath,
+                        $bytesSent,
+                        $fileSize
+                    ));
+                }
+
                 $result = $media->nextChunk($chunk);
-                $this->logger->debug(sprintf('[YouTube] Uploaded chunk %d (~%d MB sent)', ++$chunkIndex, intdiv($chunkIndex * self::CHUNK_SIZE_BYTES, 1024 * 1024)));
+                $bytesSent += strlen($chunk);
+                ++$chunkIndex;
+
+                $this->logger->debug(sprintf(
+                    '[YouTube] Uploaded chunk %d (%d/%d bytes, %d%%)',
+                    $chunkIndex,
+                    $bytesSent,
+                    $fileSize,
+                    intdiv($bytesSent * 100, $fileSize)
+                ));
             }
         } finally {
             fclose($handle);
             $client->setDefer(false);
         }
 
-        return $result instanceof Video ? $result : null;
+        if (!$result instanceof Video) {
+            throw new \RuntimeException(sprintf(
+                'Upload finished (%d/%d bytes sent) but YouTube did not return a Video resource',
+                $bytesSent,
+                $fileSize
+            ));
+        }
+
+        return $result;
+    }
+
+    private function decodeYoutubeError(\Throwable $exception): array
+    {
+        $message = $exception->getMessage();
+        $decoded = json_decode($message, true);
+
+        if (is_array($decoded) && isset($decoded['error']['errors'][0]['reason'], $decoded['error']['message'])) {
+            return $decoded;
+        }
+
+        return [
+            'error' => [
+                'errors' => [[
+                    'reason' => 'uploadFailed',
+                ]],
+                'message' => $message,
+            ],
+        ];
     }
 
     private function createVideo(

@@ -6,11 +6,15 @@ namespace Pumukit\YoutubeBundle\Services;
 
 use Google\Client;
 use Google\Service\YouTube;
+use GuzzleHttp\Client as GuzzleClient;
 use Pumukit\SchemaBundle\Document\Tag;
 use Symfony\Component\Filesystem\Filesystem;
 
 class GoogleAccountService
 {
+    private const HTTP_CONNECT_TIMEOUT_SECONDS = 30;
+    private const HTTP_REQUEST_TIMEOUT_SECONDS = 0;
+
     private $client;
     private $youtubeConfigurationService;
 
@@ -26,6 +30,10 @@ class GoogleAccountService
         $this->client->setAuthConfig($this->getClientSecret($login));
         $this->client->setAccessType('offline');
         $this->client->setPrompt('consent');
+        $this->client->setHttpClient(new GuzzleClient([
+            'connect_timeout' => self::HTTP_CONNECT_TIMEOUT_SECONDS,
+            'timeout' => self::HTTP_REQUEST_TIMEOUT_SECONDS,
+        ]));
 
         return $this->client;
     }
