@@ -24,6 +24,7 @@
         "php": "^8.2",
         "pumukit/pumukit": "^5.0",
         "google/apiclient" : "^2.0",
+        "guzzlehttp/guzzle": "^7.4",
         "athlon1600/youtube-downloader": "^4.0"
     },
     "autoload": {
