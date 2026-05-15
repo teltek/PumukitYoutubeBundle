@@ -66,6 +66,7 @@ EOT
             Youtube::STATUS_DUPLICATED,
             Youtube::STATUS_UPLOADING,
             Youtube::STATUS_PROCESSING,
+            Youtube::STATUS_TO_REVIEW,
         ];
         $youtubeDocuments = $this->documentManager->getRepository(Youtube::class)->getWithoutAnyStatus($statusArray);
 
@@ -81,7 +82,7 @@ EOT
         foreach ($youtubeDocuments as $youtube) {
             if (!$youtube->getYoutubeId()) {
                 $errorLog = sprintf('YouTube document %s does not have a Youtube ID variable set.', $youtube->getId());
-                $youtube->setStatus(Youtube::STATUS_ERROR);
+                $youtube->setStatus(Youtube::STATUS_TO_REVIEW);
                 $error = Error::create(
                     'pumukit.youtubeIdNotFound',
                     $errorLog,
@@ -91,7 +92,7 @@ EOT
                 $youtube->setError($error);
                 $this->documentManager->flush();
 
-                $this->logger->error($errorLog);
+                $this->logger->warning($errorLog);
 
                 continue;
             }

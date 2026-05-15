@@ -39,11 +39,11 @@ class VideoDataValidationService extends CommonDataValidationService
         YoutubeConfigurationService $youtubeConfigurationService,
         JobCreator $jobCreator,
         TagService $tagService,
-        ?OpencastService $opencastService = null,
         RouterInterface $router,
         TranslatorInterface $translator,
         LoggerInterface $logger,
-        array $pumukitLocales
+        array $pumukitLocales,
+        ?OpencastService $opencastService = null
     ) {
         $this->documentManager = $documentManager;
         $this->youtubeConfigurationService = $youtubeConfigurationService;

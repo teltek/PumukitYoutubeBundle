@@ -116,6 +116,25 @@ class VideoListService extends GoogleVideoService
         return ['status' => true];
     }
 
+    public function fetchVideoDetails(Tag $youtubeAccount, string $youtubeId, string $part = 'snippet,status'): ?Video
+    {
+        $service = $this->googleAccountService->googleServiceFromAccount($youtubeAccount);
+        $response = $service->videos->listVideos($part, ['id' => $youtubeId]);
+
+        foreach ($response['items'] as $item) {
+            if ($item instanceof Video && $item->getId() === $youtubeId) {
+                return $item;
+            }
+        }
+
+        return null;
+    }
+
+    public function mapYoutubeUploadStatus(string $uploadStatus): int
+    {
+        return self::YOUTUBE_STATUS_MAPPING[$uploadStatus] ?? Youtube::STATUS_TO_REVIEW;
+    }
+
     private function list(Tag $youtubeAccount, \Google_Service_YouTube_Video $video): VideoListResponse
     {
         $service = $this->googleAccountService->googleServiceFromAccount($youtubeAccount);
