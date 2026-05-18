@@ -33,12 +33,20 @@ class AccountCheckTagsCommand extends Command
     {
         $this
             ->setName('pumukit:youtube:account:check:tags')
-            ->setDescription('Detect MultimediaObjects with inconsistent YouTube account tags')
+            ->setDescription('Detect MultimediaObjects and Youtube documents with inconsistent YouTube account tags')
             ->addOption('account', null, InputOption::VALUE_REQUIRED, 'Limit the check to a specific account login')
             ->setHelp(
                 <<<'EOT'
-This command detects MultimediaObjects where the YouTube account tag embedded in
-the object does not match (or is missing) the account stored in the Youtube document.
+This command runs two consistency checks before any sync operation:
+
+1) Youtube documents vs MultimediaObject embedded tags:
+   detects Youtube documents whose stored "youtubeAccount" does not match
+   (or is missing in) the embedded YouTube child tag of the MultimediaObject.
+
+2) MultimediaObjects tagged for YouTube publication (PUCHYOUTUBE):
+   iterates every MultimediaObject marked with the YouTube publication
+   channel tag and checks that the YouTube account tag it carries exists
+   in the database and has a valid "login" property.
 
 This inconsistency causes errors like:
   GoogleAccountService::createClientWithAccessToken(): Argument #1 ($login) must be
@@ -76,6 +84,32 @@ EOT
 
             return Command::FAILURE;
         }
+
+        $youtubeDocsInconsistencies = $this->checkYoutubeDocuments($io, $youtubeRootTag, $filterAccount);
+        $multimediaObjectsInconsistencies = $this->checkMultimediaObjects($io, $youtubeRootTag, $filterAccount);
+
+        $totalInconsistencies = $youtubeDocsInconsistencies + $multimediaObjectsInconsistencies;
+
+        $io->section('Summary');
+        if (0 === $totalInconsistencies) {
+            $io->success('No inconsistencies found in either Youtube documents or MultimediaObjects.');
+
+            return Command::SUCCESS;
+        }
+
+        $io->warning(sprintf(
+            'Found %d inconsistency(ies): %d in Youtube documents, %d in MultimediaObjects.',
+            $totalInconsistencies,
+            $youtubeDocsInconsistencies,
+            $multimediaObjectsInconsistencies
+        ));
+
+        return Command::FAILURE;
+    }
+
+    private function checkYoutubeDocuments(SymfonyStyle $io, Tag $youtubeRootTag, ?string $filterAccount): int
+    {
+        $io->section('1) Youtube documents vs MultimediaObject embedded tags');
 
         $qb = $this->documentManager->getRepository(Youtube::class)->createQueryBuilder()
             ->field('youtubeAccount')->exists(true)
@@ -153,12 +187,10 @@ EOT
             ];
         }
 
-        $io->section('Results');
-
         if (empty($rows)) {
             $io->success(sprintf('Checked %d Youtube documents. No inconsistencies found.', $totalChecked));
 
-            return Command::SUCCESS;
+            return 0;
         }
 
         $io->table(
@@ -172,7 +204,97 @@ EOT
             $totalInconsistent
         ));
 
-        return Command::FAILURE;
+        return $totalInconsistent;
+    }
+
+    private function checkMultimediaObjects(SymfonyStyle $io, Tag $youtubeRootTag, ?string $filterAccount): int
+    {
+        $io->section('2) MultimediaObjects tagged for YouTube publication');
+
+        $multimediaObjects = $this->documentManager->getRepository(MultimediaObject::class)->createQueryBuilder()
+            ->field('tags.cod')->equals(PumukitYoutubeBundle::YOUTUBE_PUBLICATION_CHANNEL_CODE)
+            ->getQuery()
+            ->execute()
+        ;
+
+        $totalChecked = 0;
+        $totalInconsistent = 0;
+        $rows = [];
+
+        foreach ($multimediaObjects as $multimediaObject) {
+            // @var MultimediaObject $multimediaObject
+            ++$totalChecked;
+
+            $embeddedAccountTag = null;
+            foreach ($multimediaObject->getTags() as $embeddedTag) {
+                if ($embeddedTag->isChildOf($youtubeRootTag)) {
+                    $embeddedAccountTag = $embeddedTag;
+
+                    break;
+                }
+            }
+
+            if (null === $embeddedAccountTag) {
+                $rows[] = [
+                    $multimediaObject->getId(),
+                    '-',
+                    '<error>No YouTube account tag embedded in MultimediaObject</error>',
+                ];
+                ++$totalInconsistent;
+
+                continue;
+            }
+
+            $embeddedLogin = $embeddedAccountTag->getProperty('login');
+
+            if ($filterAccount && $embeddedLogin !== $filterAccount) {
+                continue;
+            }
+
+            $accountTag = $this->documentManager->getRepository(Tag::class)->findOneBy([
+                'cod' => $embeddedAccountTag->getCod(),
+            ]);
+
+            if (!$accountTag) {
+                $rows[] = [
+                    $multimediaObject->getId(),
+                    (string) $embeddedAccountTag->getCod(),
+                    sprintf('<error>Account Tag (cod: %s) does not exist in DB</error>', $embeddedAccountTag->getCod()),
+                ];
+                ++$totalInconsistent;
+
+                continue;
+            }
+
+            $tagLogin = $accountTag->getProperty('login');
+            if (!is_string($tagLogin) || '' === $tagLogin) {
+                $rows[] = [
+                    $multimediaObject->getId(),
+                    (string) $accountTag->getCod(),
+                    '<error>Account Tag has no "login" property → would cause TypeError on upload</error>',
+                ];
+                ++$totalInconsistent;
+            }
+        }
+
+        if (empty($rows)) {
+            $io->success(sprintf('Checked %d MultimediaObjects. No inconsistencies found.', $totalChecked));
+
+            return 0;
+        }
+
+        $io->table(
+            ['MultimediaObject ID', 'Account Tag cod', 'Problem'],
+            $rows
+        );
+
+        $io->writeln(sprintf(
+            '<comment>Checked: %d | Inconsistent: %d</comment>',
+            $totalChecked,
+            $totalInconsistent
+        ));
+
+        return $totalInconsistent;
     }
 
     private function renderConfiguration(SymfonyStyle $io): void

@@ -8,6 +8,7 @@ use Doctrine\ODM\MongoDB\DocumentManager;
 use Psr\Log\LoggerInterface;
 use Pumukit\YoutubeBundle\Document\Youtube;
 use Pumukit\YoutubeBundle\Services\VideoListService;
+use Pumukit\YoutubeBundle\Services\YoutubeConfigurationService;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -19,9 +20,10 @@ class VideoUpdatePendingStatusCommand extends VideoUpdateStatusCommand
     public function __construct(
         DocumentManager $documentManager,
         VideoListService $videoListService,
+        YoutubeConfigurationService $youtubeConfigurationService,
         LoggerInterface $logger
     ) {
-        parent::__construct($documentManager, $videoListService, $logger);
+        parent::__construct($documentManager, $videoListService, $youtubeConfigurationService, $logger);
     }
 
     protected function configure(): void

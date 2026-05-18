@@ -68,6 +68,8 @@ services:
       $uploadRemovedVideos: "%pumukit_youtube.upload_removed_videos%"
       $sbsProfileName: "%pumukit_youtube.sbs_profile_name%"
       $accountStorage: "%pumukit_youtube.account_storage%"
+      $uploadTimeoutHours: "%pumukit_youtube.upload_timeout_hours%"
+      $maxUploadSizeInBytes: "%pumukit_youtube.max_upload_size_in_bytes%"
 
   Pumukit\YoutubeBundle\Services\GoogleAccountService:
     class: Pumukit\YoutubeBundle\Services\GoogleAccountService

@@ -83,6 +83,16 @@ class Configuration implements ConfigurationInterface
             ->defaultValue('/srv/pumukit/config/youtube_accounts/')
             ->info('Account storage dir. Absolute path its necessary.')
             ->end()
+            ->integerNode('upload_timeout_hours')
+            ->defaultValue(3)
+            ->min(1)
+            ->info('Hours a Youtube document can remain in STATUS_UPLOADING without a youtubeId before being flagged as STATUS_TO_REVIEW. Default: 3.')
+            ->end()
+            ->integerNode('max_upload_size_in_bytes')
+            ->defaultValue(1073741824)
+            ->min(0)
+            ->info('Maximum file size (in bytes) allowed to be uploaded to YouTube. Files larger than this are flagged as STATUS_TO_REVIEW with a MAX_SIZE_UPLOAD error. Set to 0 to disable the check. Default: 1073741824 (1 GB).')
+            ->end()
             ->end()
         ;
 

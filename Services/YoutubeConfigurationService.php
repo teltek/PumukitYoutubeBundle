@@ -25,6 +25,8 @@ class YoutubeConfigurationService
     private $sbsProfileName;
     private $uploadRemovedVideos;
     private $accountStorage;
+    private $uploadTimeoutHours;
+    private $maxUploadSizeInBytes;
 
     public function __construct(
         string $playlistPrivateStatus,
@@ -39,7 +41,9 @@ class YoutubeConfigurationService
         bool $generateSbs,
         bool $uploadRemovedVideos,
         string $sbsProfileName,
-        string $accountStorage
+        string $accountStorage,
+        int $uploadTimeoutHours = 3,
+        int $maxUploadSizeInBytes = 1073741824
     ) {
         $this->playlistPrivateStatus = $playlistPrivateStatus;
         $this->playlistMaster = $playlistMaster;
@@ -54,6 +58,8 @@ class YoutubeConfigurationService
         $this->sbsProfileName = $sbsProfileName;
         $this->uploadRemovedVideos = $uploadRemovedVideos;
         $this->accountStorage = $accountStorage;
+        $this->uploadTimeoutHours = $uploadTimeoutHours;
+        $this->maxUploadSizeInBytes = $maxUploadSizeInBytes;
     }
 
     public function getBundleConfiguration(): array
@@ -143,5 +149,15 @@ class YoutubeConfigurationService
     public function accountStorage(): string
     {
         return $this->accountStorage;
+    }
+
+    public function uploadTimeoutHours(): int
+    {
+        return $this->uploadTimeoutHours;
+    }
+
+    public function maxUploadSizeInBytes(): int
+    {
+        return $this->maxUploadSizeInBytes;
     }
 }

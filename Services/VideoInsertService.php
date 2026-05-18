@@ -51,6 +51,10 @@ class VideoInsertService extends GoogleVideoService
             return false;
         }
 
+        if ($this->exceedsMaxUploadSize($multimediaObject, $track, $account)) {
+            return false;
+        }
+
         $title = $this->videoDataValidationService->getTitleForYoutube($multimediaObject);
         $description = $this->videoDataValidationService->getDescriptionForYoutube($multimediaObject);
         $tags = $this->videoDataValidationService->getTagsForYoutube($multimediaObject);
@@ -89,6 +93,51 @@ class VideoInsertService extends GoogleVideoService
         );
 
         $this->videoDataValidationService->addMultimediaObjectYouTubeTag($multimediaObject);
+
+        return true;
+    }
+
+    private function exceedsMaxUploadSize(MultimediaObject $multimediaObject, Track $track, Tag $account): bool
+    {
+        $maxUploadSize = $this->youtubeConfigurationService->maxUploadSizeInBytes();
+        if ($maxUploadSize <= 0) {
+            return false;
+        }
+
+        $filePath = $track->storage()->path()->path();
+        $fileSize = @filesize($filePath);
+        if (false === $fileSize || $fileSize <= $maxUploadSize) {
+            return false;
+        }
+
+        $youtubeDocument = $this->generateYoutubeDocument($multimediaObject, $account);
+        $youtubeDocument->setStatus(Youtube::STATUS_TO_REVIEW);
+        $message = sprintf(
+            'File "%s" size %d bytes exceeds configured max upload size %d bytes.',
+            basename($filePath),
+            $fileSize,
+            $maxUploadSize
+        );
+        $error = Error::create(
+            'MAX_SIZE_UPLOAD',
+            $message,
+            new \DateTime(),
+            [
+                'fileSize' => $fileSize,
+                'maxUploadSizeInBytes' => $maxUploadSize,
+                'filePath' => $filePath,
+            ]
+        );
+        $youtubeDocument->setError($error);
+        $this->documentManager->persist($youtubeDocument);
+        $this->documentManager->flush();
+
+        $this->logger->warning(sprintf(
+            '[YouTube] Multimedia object with ID %s exceeds max upload size (%d > %d bytes). Marked as STATUS_TO_REVIEW with MAX_SIZE_UPLOAD error.',
+            $multimediaObject->getId(),
+            $fileSize,
+            $maxUploadSize
+        ));
 
         return true;
     }

@@ -11,6 +11,7 @@ use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\YoutubeBundle\Document\Error;
 use Pumukit\YoutubeBundle\Document\Youtube;
 use Pumukit\YoutubeBundle\Services\VideoListService;
+use Pumukit\YoutubeBundle\Services\YoutubeConfigurationService;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -20,6 +21,7 @@ class VideoUpdateStatusCommand extends Command
 {
     protected $documentManager;
     protected $videoListService;
+    protected $youtubeConfigurationService;
 
     protected $logger;
     protected $usePumukit1 = false;
@@ -27,10 +29,12 @@ class VideoUpdateStatusCommand extends Command
     public function __construct(
         DocumentManager $documentManager,
         VideoListService $videoListService,
+        YoutubeConfigurationService $youtubeConfigurationService,
         LoggerInterface $logger
     ) {
         $this->documentManager = $documentManager;
         $this->videoListService = $videoListService;
+        $this->youtubeConfigurationService = $youtubeConfigurationService;
         $this->logger = $logger;
 
         parent::__construct();
@@ -81,7 +85,25 @@ EOT
     {
         foreach ($youtubeDocuments as $youtube) {
             if (!$youtube->getYoutubeId()) {
-                $errorLog = sprintf('YouTube document %s does not have a Youtube ID variable set.', $youtube->getId());
+                $ageSeconds = $this->getYoutubeDocumentAgeSeconds($youtube);
+                $thresholdSeconds = $this->youtubeConfigurationService->uploadTimeoutHours() * 3600;
+
+                if (null !== $ageSeconds && $ageSeconds < $thresholdSeconds) {
+                    $this->logger->debug(sprintf(
+                        '[YouTube] document %s has no Youtube ID yet but is still within the upload window (%ds < %ds). Skipping.',
+                        $youtube->getId(),
+                        $ageSeconds,
+                        $thresholdSeconds
+                    ));
+
+                    continue;
+                }
+
+                $errorLog = sprintf(
+                    'YouTube document %s does not have a Youtube ID variable set after %s.',
+                    $youtube->getId(),
+                    null !== $ageSeconds ? $ageSeconds.'s' : 'unknown age'
+                );
                 $youtube->setStatus(Youtube::STATUS_TO_REVIEW);
                 $error = Error::create(
                     'pumukit.youtubeIdNotFound',
@@ -160,6 +182,22 @@ EOT
             ->getQuery()
             ->getSingleResult()
         ;
+    }
+
+    private function getYoutubeDocumentAgeSeconds(Youtube $youtube): ?int
+    {
+        $id = $youtube->getId();
+        if (!$id) {
+            return null;
+        }
+
+        try {
+            $objectId = new ObjectId((string) $id);
+        } catch (\Throwable $e) {
+            return null;
+        }
+
+        return time() - $objectId->getTimestamp();
     }
 
     private function findMultimediaObjectByYoutubeDocument(Youtube $youtube)
