@@ -8,6 +8,7 @@ use Doctrine\ODM\MongoDB\DocumentManager;
 use MongoDB\BSON\ObjectId;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Tag;
+use Pumukit\SchemaBundle\Services\TagService;
 use Pumukit\YoutubeBundle\Document\Youtube;
 use Pumukit\YoutubeBundle\PumukitYoutubeBundle;
 use Symfony\Component\Console\Command\Command;
@@ -20,6 +21,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 class MigrationV5Command extends Command
 {
     private $documentManager;
+    private TagService $tagService;
     private $pubChannelProperties = [
         'modal_path' => 'pumukityoutube_modal_index',
         'advanced_configuration' => 'pumukityoutube_advance_configuration_index',
@@ -38,9 +40,10 @@ class MigrationV5Command extends Command
     private $step;
     private $results = [];
 
-    public function __construct(DocumentManager $documentManager, string $accountStorage)
+    public function __construct(DocumentManager $documentManager, TagService $tagService, string $accountStorage)
     {
         $this->documentManager = $documentManager;
+        $this->tagService = $tagService;
         $this->accountStorage = $accountStorage;
         parent::__construct();
     }
@@ -75,6 +78,7 @@ class MigrationV5Command extends Command
                 3. Migrate Youtube documents adding account
                 4. Move all playlist tags under Account tag
                 5. Update multimedia objects embedding tags
+                6. Resync playlist EmbeddedTag path/level in all multimedia objects
 
                 Example to check account:
 
@@ -145,8 +149,13 @@ EOT
         }
 
         if (5 === $this->step || 99 === $this->step) {
-            $output->writeln('<info>6. Update multimedia objects with account tag</info>');
+            $output->writeln('<info>5. Update multimedia objects with account tag</info>');
             $this->updateMultimediaObjectsWithAccountTag();
+        }
+
+        if (6 === $this->step || 99 === $this->step) {
+            $output->writeln('<info>6. Resync playlist EmbeddedTag path/level in all multimedia objects</info>');
+            $this->resyncPlaylistEmbeddedTags();
         }
 
         $this->createTable();
@@ -349,7 +358,10 @@ EOT
         $tagAccount = $this->checkAccountNameTag();
         foreach ($playlistTags as $playlistTag) {
             $progress->advance();
-            $this->refactorPlaylistTag($playlistTag, $tagAccount);
+            if (!$this->refactorPlaylistTag($playlistTag, $tagAccount)) {
+                continue;
+            }
+            $this->tagService->updateTag($playlistTag);
         }
 
         $this->documentManager->flush();
@@ -370,6 +382,71 @@ EOT
 
         $playlistTag->setParent($tagAccount);
         $playlistTag->setProperty('youtube_playlist', true);
+
+        return true;
+    }
+
+    private function resyncPlaylistEmbeddedTags(): bool
+    {
+        $this->results = array_merge($this->results, [
+            'step_6' => "\u{274C}",
+        ]);
+
+        $youtubeTag = $this->checkYouTubeTagCode();
+        if (!$youtubeTag) {
+            $this->output->writeln('<error>YOUTUBE root tag not found. Run step 1 first.</error>');
+
+            return false;
+        }
+
+        $accountTags = $this->documentManager->getRepository(Tag::class)->findBy([
+            'parent.$id' => new ObjectId($youtubeTag->getId()),
+            'properties.login' => ['$exists' => true],
+        ]);
+
+        if (!$accountTags) {
+            $this->output->writeln('Youtube STEP 6: No account tags found under YOUTUBE root.');
+            $this->results = array_merge($this->results, [
+                'step_6' => "\u{26A0}",
+            ]);
+
+            return true;
+        }
+
+        $playlistTags = [];
+        foreach ($accountTags as $accountTag) {
+            $children = $this->documentManager->getRepository(Tag::class)->findBy([
+                'parent.$id' => new ObjectId($accountTag->getId()),
+            ]);
+            foreach ($children as $child) {
+                $playlistTags[] = $child;
+            }
+        }
+
+        if (empty($playlistTags)) {
+            $this->output->writeln('Youtube STEP 6: No playlist tags found under any account.');
+            $this->results = array_merge($this->results, [
+                'step_6' => "\u{26A0}",
+            ]);
+
+            return true;
+        }
+
+        $progress = new ProgressBar($this->output, count($playlistTags));
+        $progress->setFormat('verbose');
+        $progress->start();
+
+        foreach ($playlistTags as $playlistTag) {
+            $progress->advance();
+            $this->tagService->updateTag($playlistTag);
+        }
+
+        $progress->finish();
+        $this->output->writeln('');
+
+        $this->results = array_merge($this->results, [
+            'step_6' => "\u{2705}",
+        ]);
 
         return true;
     }
