@@ -226,7 +226,7 @@ EOT
                 continue;
             }
 
-            $actions = $this->ensureYoutubeTags($multimediaObject, $youtubeDocument, $apply);
+            $actions = $this->ensureYoutubeTags($multimediaObject, $youtubeDocument, $puchYoutubeTag, $apply);
             if (null === $actions) {
                 ++$totals['unresolvable'];
                 $rows[] = [
@@ -302,7 +302,7 @@ EOT
     /**
      * @return string[]|null added tag cods, or null if the account tag cannot be resolved
      */
-    private function ensureYoutubeTags(MultimediaObject $multimediaObject, Youtube $youtubeDocument, bool $apply): ?array
+    private function ensureYoutubeTags(MultimediaObject $multimediaObject, Youtube $youtubeDocument, Tag $puchYoutubeTag, bool $apply): ?array
     {
         $accountLogin = $youtubeDocument->getYoutubeAccount();
         if (!is_string($accountLogin) || '' === $accountLogin) {
@@ -318,6 +318,10 @@ EOT
         }
 
         $tagsToAdd = [];
+
+        if (!$multimediaObject->containsTag($puchYoutubeTag)) {
+            $tagsToAdd[] = $puchYoutubeTag;
+        }
 
         if (!$multimediaObject->containsTag($accountTag)) {
             $tagsToAdd[] = $accountTag;
