@@ -245,17 +245,14 @@ EOT
                 continue;
             }
 
-            $embeddedLogin = $embeddedAccountTag->getProperty('login');
-
-            if ($filterAccount && $embeddedLogin !== $filterAccount) {
-                continue;
-            }
-
             $accountTag = $this->documentManager->getRepository(Tag::class)->findOneBy([
                 'cod' => $embeddedAccountTag->getCod(),
             ]);
 
             if (!$accountTag) {
+                if ($filterAccount) {
+                    continue;
+                }
                 $rows[] = [
                     $multimediaObject->getId(),
                     (string) $embeddedAccountTag->getCod(),
@@ -267,6 +264,11 @@ EOT
             }
 
             $tagLogin = $accountTag->getProperty('login');
+
+            if ($filterAccount && $tagLogin !== $filterAccount) {
+                continue;
+            }
+
             if (!is_string($tagLogin) || '' === $tagLogin) {
                 $rows[] = [
                     $multimediaObject->getId(),
