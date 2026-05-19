@@ -67,9 +67,12 @@ linked MultimediaObject's embedded tags are reconciled:
     and every playlist tag (descendant of the YOUTUBE root) from the MMO.
 
 - Otherwise:
-    Add the account tag (resolved by Youtube document's youtubeAccount login)
-    and every playlist tag listed in the Youtube document's playlists map to
-    the MMO when missing.
+    Add the YouTube publication channel tag (PUCHYOUTUBE), the account tag
+    (resolved by Youtube document's youtubeAccount login) and every playlist
+    tag listed in the Youtube document's playlists map when missing. Any
+    embedded tag descending from the YOUTUBE root that does not belong to the
+    expected account/playlist set is treated as orphan and removed (e.g. stale
+    account tag from a previous account, or playlist no longer in the doc).
 
 In parallel, an independent consistency check is run on every MultimediaObject
 tagged with PUCHYOUTUBE that surfaces broken account tags (no embedded YT
@@ -226,7 +229,7 @@ EOT
                 continue;
             }
 
-            $actions = $this->ensureYoutubeTags($multimediaObject, $youtubeDocument, $puchYoutubeTag, $apply);
+            $actions = $this->ensureYoutubeTags($multimediaObject, $youtubeDocument, $youtubeRootTag, $puchYoutubeTag, $apply);
             if (null === $actions) {
                 ++$totals['unresolvable'];
                 $rows[] = [
@@ -240,18 +243,28 @@ EOT
                 continue;
             }
 
-            if (empty($actions)) {
+            if (empty($actions['added']) && empty($actions['removed'])) {
                 ++$totals['noop'];
 
                 continue;
             }
-            $totals['added'] += count($actions);
+            $totals['added'] += count($actions['added']);
+            $totals['removed'] += count($actions['removed']);
+
+            $detail = [];
+            if (!empty($actions['added'])) {
+                $detail[] = '+'.implode(', +', $actions['added']);
+            }
+            if (!empty($actions['removed'])) {
+                $detail[] = '-'.implode(', -', $actions['removed']);
+            }
+
             $rows[] = [
                 $multimediaObject->getId(),
                 $youtubeDocument->getId(),
                 $statusLabel,
-                'add',
-                implode(', ', $actions),
+                empty($actions['removed']) ? 'add' : (empty($actions['added']) ? 'remove' : 'sync'),
+                implode(' | ', $detail),
             ];
         }
 
@@ -300,9 +313,9 @@ EOT
     }
 
     /**
-     * @return string[]|null added tag cods, or null if the account tag cannot be resolved
+     * @return array{added: string[], removed: string[]}|null Tag cods added/removed, or null if the account tag cannot be resolved
      */
-    private function ensureYoutubeTags(MultimediaObject $multimediaObject, Youtube $youtubeDocument, Tag $puchYoutubeTag, bool $apply): ?array
+    private function ensureYoutubeTags(MultimediaObject $multimediaObject, Youtube $youtubeDocument, Tag $youtubeRootTag, Tag $puchYoutubeTag, bool $apply): ?array
     {
         $accountLogin = $youtubeDocument->getYoutubeAccount();
         if (!is_string($accountLogin) || '' === $accountLogin) {
@@ -327,6 +340,8 @@ EOT
             $tagsToAdd[] = $accountTag;
         }
 
+        $expectedCods = [$accountTag->getCod()];
+
         foreach ($youtubeDocument->getPlaylists() as $playlistCod => $youtubePlaylistId) {
             $playlistTag = $this->documentManager->getRepository(Tag::class)->findOneBy([
                 'cod' => $playlistCod,
@@ -335,25 +350,48 @@ EOT
             if (!$playlistTag) {
                 continue;
             }
+            $expectedCods[] = $playlistTag->getCod();
             if ($multimediaObject->containsTag($playlistTag)) {
                 continue;
             }
             $tagsToAdd[] = $playlistTag;
         }
 
-        if (empty($tagsToAdd)) {
-            return [];
+        $tagsToRemove = [];
+        foreach ($multimediaObject->getTags() as $embeddedTag) {
+            if (!$embeddedTag->equalsOrDescendantOf($youtubeRootTag)) {
+                continue;
+            }
+            $cod = $embeddedTag->getCod();
+            if (in_array($cod, $expectedCods, true)) {
+                continue;
+            }
+            $realTag = $this->documentManager->getRepository(Tag::class)->findOneBy(['cod' => $cod]);
+            if (!$realTag) {
+                continue;
+            }
+            $tagsToRemove[$cod] = $realTag;
+        }
+
+        if (empty($tagsToAdd) && empty($tagsToRemove)) {
+            return ['added' => [], 'removed' => []];
         }
 
         if ($apply) {
-            $this->applyTagChanges($multimediaObject, $youtubeDocument, function () use ($multimediaObject, $tagsToAdd) {
+            $this->applyTagChanges($multimediaObject, $youtubeDocument, function () use ($multimediaObject, $tagsToAdd, $tagsToRemove) {
+                foreach ($tagsToRemove as $tag) {
+                    $this->tagService->removeOneTag($multimediaObject, $tag, false);
+                }
                 foreach ($tagsToAdd as $tag) {
                     $this->tagService->addTag($multimediaObject, $tag, false);
                 }
             });
         }
 
-        return array_map(static fn (Tag $tag) => $tag->getCod(), $tagsToAdd);
+        return [
+            'added' => array_map(static fn (Tag $tag) => $tag->getCod(), $tagsToAdd),
+            'removed' => array_keys($tagsToRemove),
+        ];
     }
 
     /**
