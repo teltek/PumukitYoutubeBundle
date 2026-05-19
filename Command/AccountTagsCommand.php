@@ -134,11 +134,12 @@ EOT
                 $puchYoutubeTag,
                 $filterAccount,
                 $apply,
-                $totals
+                $totals,
+                $io
             );
         }
 
-        $inconsistencyRows = $this->detectMmoInconsistencies($youtubeRootTag, $filterAccount);
+        $inconsistencyRows = $this->detectMmoInconsistencies($youtubeRootTag, $filterAccount, $io);
 
         if (!empty($syncRows)) {
             $io->section('Sync actions on Youtube documents');
@@ -176,13 +177,20 @@ EOT
         Tag $puchYoutubeTag,
         ?string $filterAccount,
         bool $apply,
-        array &$totals
+        array &$totals,
+        SymfonyStyle $io
     ): array {
         $qb = $this->documentManager->getRepository(Youtube::class)->createQueryBuilder();
         if ($filterAccount) {
             $qb->field('youtubeAccount')->equals($filterAccount);
         }
+        $total = (clone $qb)->count()->getQuery()->execute();
         $youtubeDocuments = $qb->getQuery()->execute();
+
+        $io->section(sprintf('Processing Youtube documents (%d)', $total));
+        $progress = $io->createProgressBar($total);
+        $progress->setFormat('verbose');
+        $progress->start();
 
         $stripStatuses = [Youtube::STATUS_REMOVED, Youtube::STATUS_TO_DELETE];
         $rows = [];
@@ -190,6 +198,7 @@ EOT
         foreach ($youtubeDocuments as $youtubeDocument) {
             // @var Youtube $youtubeDocument
             ++$totals['checked'];
+            $progress->advance();
 
             $multimediaObject = $this->documentManager->getRepository(MultimediaObject::class)->findOneBy([
                 '_id' => new ObjectId($youtubeDocument->getMultimediaObjectId()),
@@ -267,6 +276,9 @@ EOT
                 implode(' | ', $detail),
             ];
         }
+
+        $progress->finish();
+        $io->newLine(2);
 
         return $rows;
     }
@@ -410,18 +422,24 @@ EOT
         $this->documentManager->flush();
     }
 
-    private function detectMmoInconsistencies(Tag $youtubeRootTag, ?string $filterAccount): array
+    private function detectMmoInconsistencies(Tag $youtubeRootTag, ?string $filterAccount, SymfonyStyle $io): array
     {
-        $multimediaObjects = $this->documentManager->getRepository(MultimediaObject::class)->createQueryBuilder()
+        $qb = $this->documentManager->getRepository(MultimediaObject::class)->createQueryBuilder()
             ->field('tags.cod')->equals(PumukitYoutubeBundle::YOUTUBE_PUBLICATION_CHANNEL_CODE)
-            ->getQuery()
-            ->execute()
         ;
+        $total = (clone $qb)->count()->getQuery()->execute();
+        $multimediaObjects = $qb->getQuery()->execute();
+
+        $io->section(sprintf('Checking MultimediaObject consistency (%d)', $total));
+        $progress = $io->createProgressBar($total);
+        $progress->setFormat('verbose');
+        $progress->start();
 
         $rows = [];
 
         foreach ($multimediaObjects as $multimediaObject) {
             // @var MultimediaObject $multimediaObject
+            $progress->advance();
             $embeddedAccountTag = null;
             foreach ($multimediaObject->getTags() as $embeddedTag) {
                 if ($embeddedTag->isChildOf($youtubeRootTag)) {
@@ -475,6 +493,9 @@ EOT
                 ];
             }
         }
+
+        $progress->finish();
+        $io->newLine(2);
 
         return $rows;
     }
