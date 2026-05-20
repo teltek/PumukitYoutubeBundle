@@ -295,24 +295,30 @@ EOT
     }
 
     /**
-     * @return string[] cods removed
+     * @return string[] cods removed (annotated with x{N} when multiple copies were removed)
      */
     private function stripYoutubeTags(MultimediaObject $multimediaObject, ?Youtube $youtubeDocument, bool $apply): array
     {
         $tagsToRemove = [];
         foreach ($multimediaObject->getTags() as $embeddedTag) {
             $cod = $embeddedTag->getCod();
-            if ($cod === $this->puchYoutubeTag->getCod()) {
-                $tagsToRemove[$cod] = $this->puchYoutubeTag;
+            $reference = null;
 
+            if ($cod === $this->puchYoutubeTag->getCod()) {
+                $reference = $this->puchYoutubeTag;
+            } elseif ($embeddedTag->equalsOrDescendantOf($this->youtubeRootTag)) {
+                $reference = $tagsToRemove[$cod]['tag']
+                    ?? $this->documentManager->getRepository(Tag::class)->findOneBy(['cod' => $cod]);
+            }
+
+            if (null === $reference) {
                 continue;
             }
-            if ($embeddedTag->equalsOrDescendantOf($this->youtubeRootTag)) {
-                $realTag = $this->documentManager->getRepository(Tag::class)->findOneBy(['cod' => $cod]);
-                if ($realTag) {
-                    $tagsToRemove[$cod] = $realTag;
-                }
+
+            if (!isset($tagsToRemove[$cod])) {
+                $tagsToRemove[$cod] = ['tag' => $reference, 'count' => 0];
             }
+            ++$tagsToRemove[$cod]['count'];
         }
 
         if (empty($tagsToRemove)) {
@@ -321,8 +327,10 @@ EOT
 
         if ($apply) {
             $mutation = function () use ($multimediaObject, $tagsToRemove) {
-                foreach ($tagsToRemove as $tag) {
-                    $this->tagService->removeOneTag($multimediaObject, $tag, false);
+                foreach ($tagsToRemove as $entry) {
+                    for ($i = 0; $i < $entry['count']; ++$i) {
+                        $this->tagService->removeOneTag($multimediaObject, $entry['tag'], false);
+                    }
                 }
             };
 
@@ -334,7 +342,7 @@ EOT
             }
         }
 
-        return array_keys($tagsToRemove);
+        return $this->formatRemovedCods($tagsToRemove);
     }
 
     /**
@@ -364,8 +372,10 @@ EOT
 
         if ($apply) {
             $this->applyTagChanges($youtubeDocument, function () use ($multimediaObject, $tagsToAdd, $tagsToRemove) {
-                foreach ($tagsToRemove as $tag) {
-                    $this->tagService->removeOneTag($multimediaObject, $tag, false);
+                foreach ($tagsToRemove as $entry) {
+                    for ($i = 0; $i < $entry['count']; ++$i) {
+                        $this->tagService->removeOneTag($multimediaObject, $entry['tag'], false);
+                    }
                 }
                 foreach ($tagsToAdd as $tag) {
                     $this->tagService->addTag($multimediaObject, $tag, false);
@@ -375,7 +385,7 @@ EOT
 
         return [
             'added' => array_map(static fn (Tag $tag) => $tag->getCod(), $tagsToAdd),
-            'removed' => array_keys($tagsToRemove),
+            'removed' => $this->formatRemovedCods($tagsToRemove),
         ];
     }
 
@@ -405,51 +415,61 @@ EOT
     /**
      * @param array<string, Tag> $expected
      *
-     * @return array{0: Tag[], 1: array<string, Tag>} [$tagsToAdd, $tagsToRemove]
+     * @return array{0: Tag[], 1: array<string, array{tag: Tag, count: int}>} [$tagsToAdd, $tagsToRemove]
      */
     private function reconcileEmbeddedTags(MultimediaObject $multimediaObject, array $expected): array
     {
-        $freshlyEmbedded = [];
-        $tagsToRemove = [];
+        $stats = [];
 
         foreach ($multimediaObject->getTags() as $embeddedTag) {
             $cod = $embeddedTag->getCod();
+            $reference = null;
 
             if ($cod === $this->puchYoutubeTag->getCod()) {
-                if ($embeddedTag->getPath() === $this->puchYoutubeTag->getPath()) {
-                    $freshlyEmbedded[$cod] = true;
+                $reference = $this->puchYoutubeTag;
+            } elseif ($embeddedTag->equalsOrDescendantOf($this->youtubeRootTag)) {
+                if (isset($expected[$cod])) {
+                    $reference = $expected[$cod];
                 } else {
-                    $tagsToRemove[$cod] = $this->puchYoutubeTag;
+                    $reference = $stats[$cod]['tag']
+                        ?? $this->documentManager->getRepository(Tag::class)->findOneBy(['cod' => $cod]);
                 }
+            }
 
+            if (null === $reference) {
                 continue;
             }
 
-            if (!$embeddedTag->equalsOrDescendantOf($this->youtubeRootTag)) {
-                continue;
+            if (!isset($stats[$cod])) {
+                $stats[$cod] = ['tag' => $reference, 'fresh' => 0, 'stale' => 0];
             }
 
-            if (isset($expected[$cod])) {
-                if ($embeddedTag->getPath() === $expected[$cod]->getPath()) {
-                    $freshlyEmbedded[$cod] = true;
-                } else {
-                    $tagsToRemove[$cod] = $expected[$cod];
-                }
-
-                continue;
-            }
-
-            $realTag = $this->documentManager->getRepository(Tag::class)->findOneBy(['cod' => $cod]);
-            if ($realTag) {
-                $tagsToRemove[$cod] = $realTag;
+            if ($embeddedTag->getPath() === $reference->getPath()) {
+                ++$stats[$cod]['fresh'];
+            } else {
+                ++$stats[$cod]['stale'];
             }
         }
 
         $tagsToAdd = [];
-        foreach ($expected as $cod => $tag) {
-            if (!isset($freshlyEmbedded[$cod])) {
-                $tagsToAdd[] = $tag;
+        $tagsToRemove = [];
+
+        foreach ($expected as $cod => $expectedTag) {
+            $s = $stats[$cod] ?? ['fresh' => 0, 'stale' => 0];
+            if (0 === $s['fresh']) {
+                $tagsToAdd[] = $expectedTag;
             }
+            $extras = max(0, $s['fresh'] - 1) + $s['stale'];
+            if ($extras > 0) {
+                $tagsToRemove[$cod] = ['tag' => $expectedTag, 'count' => $extras];
+            }
+        }
+
+        foreach ($stats as $cod => $s) {
+            if (isset($expected[$cod])) {
+                continue;
+            }
+            $tagsToRemove[$cod] = ['tag' => $s['tag'], 'count' => $s['fresh'] + $s['stale']];
         }
 
         return [$tagsToAdd, $tagsToRemove];
@@ -562,6 +582,21 @@ EOT
         }
 
         return 'sync';
+    }
+
+    /**
+     * @param array<string, array{tag: Tag, count: int}> $tagsToRemove
+     *
+     * @return string[]
+     */
+    private function formatRemovedCods(array $tagsToRemove): array
+    {
+        $out = [];
+        foreach ($tagsToRemove as $cod => $entry) {
+            $out[] = $entry['count'] > 1 ? sprintf('%s x%d', $cod, $entry['count']) : $cod;
+        }
+
+        return $out;
     }
 
     private function formatActionDetail(array $actions): string
