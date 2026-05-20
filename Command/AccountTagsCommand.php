@@ -69,10 +69,16 @@ linked MultimediaObject's embedded tags are reconciled:
 - Otherwise:
     Add the YouTube publication channel tag (PUCHYOUTUBE), the account tag
     (resolved by Youtube document's youtubeAccount login) and every playlist
-    tag listed in the Youtube document's playlists map when missing. Any
-    embedded tag descending from the YOUTUBE root that does not belong to the
-    expected account/playlist set is treated as orphan and removed (e.g. stale
-    account tag from a previous account, or playlist no longer in the doc).
+    tag listed in the Youtube document's playlists map when missing.
+
+    Embedded tags are compared against their real Tag counterpart by path:
+      * Cod not in the expected set         -> orphan, removed
+        (e.g. stale account tag from a previous account, or playlist no
+        longer in the doc)
+      * Cod in the expected set but stale   -> removed + re-added to refresh
+        the denormalized fields (path/level/parent/properties) that drift
+        when the master Tag is reparented (e.g. playlist moved under an
+        account after creation).
 
 In parallel, an independent consistency check is run on every MultimediaObject
 tagged with PUCHYOUTUBE that surfaces broken account tags (no embedded YT
@@ -342,17 +348,10 @@ EOT
             return null;
         }
 
-        $tagsToAdd = [];
-
-        if (!$multimediaObject->containsTag($puchYoutubeTag)) {
-            $tagsToAdd[] = $puchYoutubeTag;
-        }
-
-        if (!$multimediaObject->containsTag($accountTag)) {
-            $tagsToAdd[] = $accountTag;
-        }
-
-        $expectedCods = [$accountTag->getCod()];
+        $expected = [
+            $puchYoutubeTag->getCod() => $puchYoutubeTag,
+            $accountTag->getCod() => $accountTag,
+        ];
 
         foreach ($youtubeDocument->getPlaylists() as $playlistCod => $youtubePlaylistId) {
             $playlistTag = $this->documentManager->getRepository(Tag::class)->findOneBy([
@@ -362,27 +361,51 @@ EOT
             if (!$playlistTag) {
                 continue;
             }
-            $expectedCods[] = $playlistTag->getCod();
-            if ($multimediaObject->containsTag($playlistTag)) {
-                continue;
-            }
-            $tagsToAdd[] = $playlistTag;
+            $expected[$playlistTag->getCod()] = $playlistTag;
         }
 
+        $freshlyEmbedded = [];
         $tagsToRemove = [];
+
         foreach ($multimediaObject->getTags() as $embeddedTag) {
+            $cod = $embeddedTag->getCod();
+
+            if ($cod === $puchYoutubeTag->getCod()) {
+                if ($embeddedTag->getPath() === $puchYoutubeTag->getPath()) {
+                    $freshlyEmbedded[$cod] = true;
+                } else {
+                    $tagsToRemove[$cod] = $puchYoutubeTag;
+                }
+
+                continue;
+            }
+
             if (!$embeddedTag->equalsOrDescendantOf($youtubeRootTag)) {
                 continue;
             }
-            $cod = $embeddedTag->getCod();
-            if (in_array($cod, $expectedCods, true)) {
+
+            if (isset($expected[$cod])) {
+                if ($embeddedTag->getPath() === $expected[$cod]->getPath()) {
+                    $freshlyEmbedded[$cod] = true;
+                } else {
+                    $tagsToRemove[$cod] = $expected[$cod];
+                }
+
                 continue;
             }
+
             $realTag = $this->documentManager->getRepository(Tag::class)->findOneBy(['cod' => $cod]);
             if (!$realTag) {
                 continue;
             }
             $tagsToRemove[$cod] = $realTag;
+        }
+
+        $tagsToAdd = [];
+        foreach ($expected as $cod => $tag) {
+            if (!isset($freshlyEmbedded[$cod])) {
+                $tagsToAdd[] = $tag;
+            }
         }
 
         if (empty($tagsToAdd) && empty($tagsToRemove)) {
