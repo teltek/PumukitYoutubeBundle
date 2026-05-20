@@ -11,8 +11,8 @@ use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\SchemaBundle\Services\TagService;
 use Pumukit\YoutubeBundle\Document\Youtube;
 use Pumukit\YoutubeBundle\PumukitYoutubeBundle;
-use Pumukit\YoutubeBundle\Services\YoutubeConfigurationService;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -34,68 +34,41 @@ class AccountTagsCommand extends Command
         Youtube::STATUS_TO_REVIEW => 'To review',
     ];
 
+    private const STRIP_STATUSES = [Youtube::STATUS_REMOVED, Youtube::STATUS_TO_DELETE];
+
     private DocumentManager $documentManager;
     private TagService $tagService;
-    private YoutubeConfigurationService $youtubeConfigurationService;
 
-    public function __construct(
-        DocumentManager $documentManager,
-        TagService $tagService,
-        YoutubeConfigurationService $youtubeConfigurationService
-    ) {
+    private Tag $youtubeRootTag;
+    private Tag $puchYoutubeTag;
+
+    public function __construct(DocumentManager $documentManager, TagService $tagService)
+    {
+        parent::__construct();
         $this->documentManager = $documentManager;
         $this->tagService = $tagService;
-        $this->youtubeConfigurationService = $youtubeConfigurationService;
-        parent::__construct();
     }
 
     protected function configure(): void
     {
         $this
             ->setName('pumukit:youtube:account:tags')
-            ->setDescription('Inspect and reconcile YouTube account/playlist tags between Youtube documents and their MultimediaObjects')
+            ->setDescription('Reconcile YouTube account/playlist tags between Youtube documents and MultimediaObjects')
             ->addOption('account', null, InputOption::VALUE_REQUIRED, 'Limit to a specific account login')
-            ->addOption('force', null, InputOption::VALUE_NONE, 'Apply the proposed actions (otherwise dry-run)')
-            ->addOption('report-only', null, InputOption::VALUE_NONE, 'Only run the consistency report on MultimediaObjects, skip sync proposals/actions')
+            ->addOption('force', null, InputOption::VALUE_NONE, 'Apply changes (otherwise dry-run)')
+            ->addOption('report-only', null, InputOption::VALUE_NONE, 'Only run the consistency report')
             ->setHelp(
                 <<<'EOT'
-Unified consistency + sync command for YouTube account/playlist tags.
+The Youtube document is the source of truth. For each YT doc, the linked MMO's
+embedded YT tags are reconciled (add missing, refresh stale, remove orphans).
+REMOVED/TO_DELETE docs are stripped of all YT tags. MMOs tagged with PUCHYOUTUBE
+but without a Youtube document are stripped as orphans. A final report lists
+MMOs still flagged as inconsistent.
 
-The Youtube document is the source of truth. For each Youtube document, the
-linked MultimediaObject's embedded tags are reconciled:
-
-- If status is REMOVED or TO_DELETE:
-    Strip the YouTube publication channel tag (PUCHYOUTUBE), the account tag
-    and every playlist tag (descendant of the YOUTUBE root) from the MMO.
-
-- Otherwise:
-    Add the YouTube publication channel tag (PUCHYOUTUBE), the account tag
-    (resolved by Youtube document's youtubeAccount login) and every playlist
-    tag listed in the Youtube document's playlists map when missing.
-
-    Embedded tags are compared against their real Tag counterpart by path:
-      * Cod not in the expected set         -> orphan, removed
-        (e.g. stale account tag from a previous account, or playlist no
-        longer in the doc)
-      * Cod in the expected set but stale   -> removed + re-added to refresh
-        the denormalized fields (path/level/parent/properties) that drift
-        when the master Tag is reparented (e.g. playlist moved under an
-        account after creation).
-
-In parallel, an independent consistency check is run on every MultimediaObject
-tagged with PUCHYOUTUBE that surfaces broken account tags (no embedded YT
-child, account tag missing in DB, or missing "login" property). Those will
-cause TypeErrors on upload (GoogleAccountService::createClientWithAccessToken).
-
-Side-effect note: applying tag changes triggers the multimediaobject.update
-event, which UpdateListener uses to mark the Youtube document dirty for the
-metadata-sync cron. This command restores multimediaObjectUpdateDate to its
-previous value after each apply so the cron is not falsely triggered.
-
-  php bin/console pumukit:youtube:account:tags
-  php bin/console pumukit:youtube:account:tags --account=myaccount
-  php bin/console pumukit:youtube:account:tags --force
-  php bin/console pumukit:youtube:account:tags --report-only
+  pumukit:youtube:account:tags                  Dry-run
+  pumukit:youtube:account:tags --force          Apply
+  pumukit:youtube:account:tags --account=login  Limit to one account
+  pumukit:youtube:account:tags --report-only    Skip sync, only inconsistency report
 EOT
             )
         ;
@@ -108,86 +81,71 @@ EOT
         $apply = (bool) $input->getOption('force');
         $reportOnly = (bool) $input->getOption('report-only');
 
-        $mode = $apply ? 'APPLY' : ($reportOnly ? 'report-only' : 'dry-run');
-        $io->title(sprintf('YouTube Account Tags — %s', $mode));
+        $io->title(sprintf('YouTube Account Tags — %s', $this->modeLabel($apply, $reportOnly)));
 
-        $this->renderConfiguration($io);
-
-        $youtubeRootTag = $this->documentManager->getRepository(Tag::class)->findOneBy([
-            'cod' => PumukitYoutubeBundle::YOUTUBE_TAG_CODE,
-        ]);
-        $puchYoutubeTag = $this->documentManager->getRepository(Tag::class)->findOneBy([
-            'cod' => PumukitYoutubeBundle::YOUTUBE_PUBLICATION_CHANNEL_CODE,
-        ]);
-
-        if (!$youtubeRootTag || !$puchYoutubeTag) {
+        if (!$this->loadRootTags()) {
             $io->error('YOUTUBE or PUCHYOUTUBE tag missing. Run pumukit:youtube:init:tags first.');
 
             return Command::FAILURE;
         }
 
-        $totals = [
+        $totals = $this->initTotals();
+        $syncRows = $orphanRows = [];
+
+        if (!$reportOnly) {
+            $syncRows = $this->processYoutubeDocuments($filterAccount, $apply, $totals, $io);
+            if (null === $filterAccount) {
+                $orphanRows = $this->processOrphanMmos($apply, $totals, $io);
+            }
+        }
+
+        $inconsistencyRows = $this->detectMmoInconsistencies($filterAccount, $io);
+
+        $this->renderReport($io, $syncRows, $orphanRows, $inconsistencyRows, $totals, $apply, $reportOnly);
+
+        return Command::SUCCESS;
+    }
+
+    private function modeLabel(bool $apply, bool $reportOnly): string
+    {
+        if ($apply) {
+            return 'APPLY';
+        }
+
+        return $reportOnly ? 'report-only' : 'dry-run';
+    }
+
+    private function loadRootTags(): bool
+    {
+        $repo = $this->documentManager->getRepository(Tag::class);
+        $root = $repo->findOneBy(['cod' => PumukitYoutubeBundle::YOUTUBE_TAG_CODE]);
+        $puch = $repo->findOneBy(['cod' => PumukitYoutubeBundle::YOUTUBE_PUBLICATION_CHANNEL_CODE]);
+
+        if (!$root || !$puch) {
+            return false;
+        }
+
+        $this->youtubeRootTag = $root;
+        $this->puchYoutubeTag = $puch;
+
+        return true;
+    }
+
+    private function initTotals(): array
+    {
+        return [
             'checked' => 0,
             'added' => 0,
             'removed' => 0,
             'noop' => 0,
             'mmo_missing' => 0,
             'unresolvable' => 0,
+            'orphans' => 0,
         ];
-
-        $syncRows = [];
-        if (!$reportOnly) {
-            $syncRows = $this->processYoutubeDocuments(
-                $youtubeRootTag,
-                $puchYoutubeTag,
-                $filterAccount,
-                $apply,
-                $totals,
-                $io
-            );
-        }
-
-        $inconsistencyRows = $this->detectMmoInconsistencies($youtubeRootTag, $filterAccount, $io);
-
-        if (!empty($syncRows)) {
-            $io->section('Sync actions on Youtube documents');
-            $io->table(['MMO ID', 'Youtube Doc ID', 'Doc status', 'Action', 'Tags'], $syncRows);
-        }
-
-        if (!empty($inconsistencyRows)) {
-            $io->section('MultimediaObjects with PUCHYOUTUBE — broken account tag');
-            $io->table(['MMO ID', 'Account Tag cod', 'Problem'], $inconsistencyRows);
-        }
-
-        $io->section('Summary');
-        $io->writeln(sprintf(
-            'Checked: %d | Added: %d | Removed: %d | No-op: %d | MMO missing: %d | Unresolvable account: %d | MMO inconsistencies: %d',
-            $totals['checked'],
-            $totals['added'],
-            $totals['removed'],
-            $totals['noop'],
-            $totals['mmo_missing'],
-            $totals['unresolvable'],
-            count($inconsistencyRows)
-        ));
-
-        if (!$apply && !$reportOnly) {
-            $io->note('Dry-run mode. Re-run with --force to apply the changes above.');
-        } elseif ($apply) {
-            $io->success('Sync applied.');
-        }
-
-        return Command::SUCCESS;
     }
 
-    private function processYoutubeDocuments(
-        Tag $youtubeRootTag,
-        Tag $puchYoutubeTag,
-        ?string $filterAccount,
-        bool $apply,
-        array &$totals,
-        SymfonyStyle $io
-    ): array {
+    private function processYoutubeDocuments(?string $filterAccount, bool $apply, array &$totals, SymfonyStyle $io): array
+    {
         $qb = $this->documentManager->getRepository(Youtube::class)->createQueryBuilder();
         if ($filterAccount) {
             $qb->field('youtubeAccount')->equals($filterAccount);
@@ -195,132 +153,161 @@ EOT
         $total = (clone $qb)->count()->getQuery()->execute();
         $youtubeDocuments = $qb->getQuery()->execute();
 
-        $io->section(sprintf('Processing Youtube documents (%d)', $total));
-        $progress = $io->createProgressBar($total);
-        $progress->setFormat('verbose');
-        $progress->start();
+        $progress = $this->startProgress($io, sprintf('Processing Youtube documents (%d)', $total), $total);
 
-        $stripStatuses = [Youtube::STATUS_REMOVED, Youtube::STATUS_TO_DELETE];
         $rows = [];
         $iteration = 0;
 
         foreach ($youtubeDocuments as $youtubeDocument) {
             // @var Youtube $youtubeDocument
-            if ($iteration > 0 && 0 === $iteration % self::BATCH_SIZE) {
-                $this->documentManager->clear();
-                $youtubeRootTag = $this->documentManager->getRepository(Tag::class)->findOneBy([
-                    'cod' => PumukitYoutubeBundle::YOUTUBE_TAG_CODE,
-                ]);
-                $puchYoutubeTag = $this->documentManager->getRepository(Tag::class)->findOneBy([
-                    'cod' => PumukitYoutubeBundle::YOUTUBE_PUBLICATION_CHANNEL_CODE,
-                ]);
-            }
+            $this->maybeClearBatch($iteration);
             ++$iteration;
             ++$totals['checked'];
             $progress->advance();
 
-            $multimediaObject = $this->documentManager->getRepository(MultimediaObject::class)->findOneBy([
-                '_id' => new ObjectId($youtubeDocument->getMultimediaObjectId()),
-            ]);
-
-            $statusLabel = self::STATUS_LABELS[$youtubeDocument->getStatus()] ?? (string) $youtubeDocument->getStatus();
-
-            if (!$multimediaObject) {
-                ++$totals['mmo_missing'];
-                $rows[] = [
-                    $youtubeDocument->getMultimediaObjectId(),
-                    $youtubeDocument->getId(),
-                    $statusLabel,
-                    '-',
-                    'MMO not found — skip',
-                ];
-
-                continue;
+            $row = $this->reconcileYoutubeDocument($youtubeDocument, $apply, $totals);
+            if (null !== $row) {
+                $rows[] = $row;
             }
+        }
 
-            if (in_array($youtubeDocument->getStatus(), $stripStatuses, true)) {
-                $actions = $this->stripYoutubeTags($multimediaObject, $youtubeDocument, $youtubeRootTag, $puchYoutubeTag, $apply);
-                if (empty($actions)) {
-                    ++$totals['noop'];
+        $this->finishBatch($io, $progress);
 
-                    continue;
-                }
-                $totals['removed'] += count($actions);
-                $rows[] = [
-                    $multimediaObject->getId(),
-                    $youtubeDocument->getId(),
-                    $statusLabel,
-                    'strip',
-                    implode(', ', $actions),
-                ];
+        return $rows;
+    }
 
-                continue;
-            }
+    private function reconcileYoutubeDocument(Youtube $youtubeDocument, bool $apply, array &$totals): ?array
+    {
+        $multimediaObject = $this->documentManager->getRepository(MultimediaObject::class)->findOneBy([
+            '_id' => new ObjectId($youtubeDocument->getMultimediaObjectId()),
+        ]);
 
-            $actions = $this->ensureYoutubeTags($multimediaObject, $youtubeDocument, $youtubeRootTag, $puchYoutubeTag, $apply);
-            if (null === $actions) {
-                ++$totals['unresolvable'];
-                $rows[] = [
-                    $multimediaObject->getId(),
-                    $youtubeDocument->getId(),
-                    $statusLabel,
-                    '-',
-                    sprintf('Account tag not resolvable for login "%s"', (string) $youtubeDocument->getYoutubeAccount()),
-                ];
+        $statusLabel = self::STATUS_LABELS[$youtubeDocument->getStatus()] ?? (string) $youtubeDocument->getStatus();
 
-                continue;
-            }
+        if (!$multimediaObject) {
+            ++$totals['mmo_missing'];
 
-            if (empty($actions['added']) && empty($actions['removed'])) {
+            return [$youtubeDocument->getMultimediaObjectId(), $youtubeDocument->getId(), $statusLabel, '-', 'MMO not found — skip'];
+        }
+
+        if (in_array($youtubeDocument->getStatus(), self::STRIP_STATUSES, true)) {
+            $removed = $this->stripYoutubeTags($multimediaObject, $youtubeDocument, $apply);
+            if (empty($removed)) {
                 ++$totals['noop'];
 
-                continue;
+                return null;
             }
-            $totals['added'] += count($actions['added']);
-            $totals['removed'] += count($actions['removed']);
+            $totals['removed'] += count($removed);
 
-            $detail = [];
-            if (!empty($actions['added'])) {
-                $detail[] = '+'.implode(', +', $actions['added']);
-            }
-            if (!empty($actions['removed'])) {
-                $detail[] = '-'.implode(', -', $actions['removed']);
-            }
+            return [$multimediaObject->getId(), $youtubeDocument->getId(), $statusLabel, 'strip', implode(', ', $removed)];
+        }
 
-            $rows[] = [
+        $actions = $this->ensureYoutubeTags($multimediaObject, $youtubeDocument, $apply);
+        if (null === $actions) {
+            ++$totals['unresolvable'];
+
+            return [
                 $multimediaObject->getId(),
                 $youtubeDocument->getId(),
                 $statusLabel,
-                empty($actions['removed']) ? 'add' : (empty($actions['added']) ? 'remove' : 'sync'),
-                implode(' | ', $detail),
+                '-',
+                sprintf('Account tag not resolvable for login "%s"', $youtubeDocument->getYoutubeAccount()),
             ];
         }
 
-        $progress->finish();
-        $io->newLine(2);
+        if (empty($actions['added']) && empty($actions['removed'])) {
+            ++$totals['noop'];
+
+            return null;
+        }
+
+        $totals['added'] += count($actions['added']);
+        $totals['removed'] += count($actions['removed']);
+
+        return [
+            $multimediaObject->getId(),
+            $youtubeDocument->getId(),
+            $statusLabel,
+            $this->actionLabel($actions),
+            $this->formatActionDetail($actions),
+        ];
+    }
+
+    private function processOrphanMmos(bool $apply, array &$totals, SymfonyStyle $io): array
+    {
+        $assignedIds = $this->collectAssignedMmoIds();
+
+        $qb = $this->documentManager->getRepository(MultimediaObject::class)->createQueryBuilder()
+            ->field('tags.cod')->equals(PumukitYoutubeBundle::YOUTUBE_PUBLICATION_CHANNEL_CODE)
+        ;
+        $total = (clone $qb)->count()->getQuery()->execute();
+        $multimediaObjects = $qb->getQuery()->execute();
+
+        $progress = $this->startProgress($io, sprintf('Scanning for orphan MMOs (%d candidates)', $total), $total);
+
+        $rows = [];
+        $iteration = 0;
+
+        foreach ($multimediaObjects as $multimediaObject) {
+            // @var MultimediaObject $multimediaObject
+            $this->maybeClearBatch($iteration);
+            ++$iteration;
+            $progress->advance();
+
+            if (isset($assignedIds[(string) $multimediaObject->getId()])) {
+                continue;
+            }
+
+            $removed = $this->stripYoutubeTags($multimediaObject, null, $apply);
+            if (empty($removed)) {
+                continue;
+            }
+
+            ++$totals['orphans'];
+            $totals['removed'] += count($removed);
+            $rows[] = [$multimediaObject->getId(), 'strip', implode(', ', $removed)];
+        }
+
+        $this->finishBatch($io, $progress);
 
         return $rows;
     }
 
     /**
-     * @return string[] List of removed tag cods. Empty if nothing to do.
+     * @return array<string, true>
      */
-    private function stripYoutubeTags(
-        MultimediaObject $multimediaObject,
-        Youtube $youtubeDocument,
-        Tag $youtubeRootTag,
-        Tag $puchYoutubeTag,
-        bool $apply
-    ): array {
+    private function collectAssignedMmoIds(): array
+    {
+        $assigned = [];
+        $cursor = $this->documentManager->getRepository(Youtube::class)->createQueryBuilder()
+            ->select('multimediaObjectId')
+            ->hydrate(false)
+            ->getQuery()
+            ->execute()
+        ;
+        foreach ($cursor as $row) {
+            if (!empty($row['multimediaObjectId'])) {
+                $assigned[(string) $row['multimediaObjectId']] = true;
+            }
+        }
+
+        return $assigned;
+    }
+
+    /**
+     * @return string[] cods removed
+     */
+    private function stripYoutubeTags(MultimediaObject $multimediaObject, ?Youtube $youtubeDocument, bool $apply): array
+    {
         $tagsToRemove = [];
         foreach ($multimediaObject->getTags() as $embeddedTag) {
             $cod = $embeddedTag->getCod();
-            if ($cod === $puchYoutubeTag->getCod()) {
-                $tagsToRemove[$cod] = $puchYoutubeTag;
+            if ($cod === $this->puchYoutubeTag->getCod()) {
+                $tagsToRemove[$cod] = $this->puchYoutubeTag;
 
                 continue;
             }
-            if ($embeddedTag->equalsOrDescendantOf($youtubeRootTag)) {
+            if ($embeddedTag->equalsOrDescendantOf($this->youtubeRootTag)) {
                 $realTag = $this->documentManager->getRepository(Tag::class)->findOneBy(['cod' => $cod]);
                 if ($realTag) {
                     $tagsToRemove[$cod] = $realTag;
@@ -333,11 +320,18 @@ EOT
         }
 
         if ($apply) {
-            $this->applyTagChanges($multimediaObject, $youtubeDocument, function () use ($multimediaObject, $tagsToRemove) {
+            $mutation = function () use ($multimediaObject, $tagsToRemove) {
                 foreach ($tagsToRemove as $tag) {
                     $this->tagService->removeOneTag($multimediaObject, $tag, false);
                 }
-            });
+            };
+
+            if (null !== $youtubeDocument) {
+                $this->applyTagChanges($youtubeDocument, $mutation);
+            } else {
+                $mutation();
+                $this->documentManager->flush();
+            }
         }
 
         return array_keys($tagsToRemove);
@@ -346,7 +340,7 @@ EOT
     /**
      * @return array{added: string[], removed: string[]}|null Tag cods added/removed, or null if the account tag cannot be resolved
      */
-    private function ensureYoutubeTags(MultimediaObject $multimediaObject, Youtube $youtubeDocument, Tag $youtubeRootTag, Tag $puchYoutubeTag, bool $apply): ?array
+    private function ensureYoutubeTags(MultimediaObject $multimediaObject, Youtube $youtubeDocument, bool $apply): ?array
     {
         $accountLogin = $youtubeDocument->getYoutubeAccount();
         if (!is_string($accountLogin) || '' === $accountLogin) {
@@ -361,72 +355,15 @@ EOT
             return null;
         }
 
-        $expected = [
-            $puchYoutubeTag->getCod() => $puchYoutubeTag,
-            $accountTag->getCod() => $accountTag,
-        ];
-
-        foreach ($youtubeDocument->getPlaylists() as $playlistCod => $youtubePlaylistId) {
-            $playlistTag = $this->documentManager->getRepository(Tag::class)->findOneBy([
-                'cod' => $playlistCod,
-                'parent.$id' => new ObjectId($accountTag->getId()),
-            ]);
-            if (!$playlistTag) {
-                continue;
-            }
-            $expected[$playlistTag->getCod()] = $playlistTag;
-        }
-
-        $freshlyEmbedded = [];
-        $tagsToRemove = [];
-
-        foreach ($multimediaObject->getTags() as $embeddedTag) {
-            $cod = $embeddedTag->getCod();
-
-            if ($cod === $puchYoutubeTag->getCod()) {
-                if ($embeddedTag->getPath() === $puchYoutubeTag->getPath()) {
-                    $freshlyEmbedded[$cod] = true;
-                } else {
-                    $tagsToRemove[$cod] = $puchYoutubeTag;
-                }
-
-                continue;
-            }
-
-            if (!$embeddedTag->equalsOrDescendantOf($youtubeRootTag)) {
-                continue;
-            }
-
-            if (isset($expected[$cod])) {
-                if ($embeddedTag->getPath() === $expected[$cod]->getPath()) {
-                    $freshlyEmbedded[$cod] = true;
-                } else {
-                    $tagsToRemove[$cod] = $expected[$cod];
-                }
-
-                continue;
-            }
-
-            $realTag = $this->documentManager->getRepository(Tag::class)->findOneBy(['cod' => $cod]);
-            if (!$realTag) {
-                continue;
-            }
-            $tagsToRemove[$cod] = $realTag;
-        }
-
-        $tagsToAdd = [];
-        foreach ($expected as $cod => $tag) {
-            if (!isset($freshlyEmbedded[$cod])) {
-                $tagsToAdd[] = $tag;
-            }
-        }
+        $expected = $this->buildExpectedTags($accountTag, $youtubeDocument);
+        [$tagsToAdd, $tagsToRemove] = $this->reconcileEmbeddedTags($multimediaObject, $expected);
 
         if (empty($tagsToAdd) && empty($tagsToRemove)) {
             return ['added' => [], 'removed' => []];
         }
 
         if ($apply) {
-            $this->applyTagChanges($multimediaObject, $youtubeDocument, function () use ($multimediaObject, $tagsToAdd, $tagsToRemove) {
+            $this->applyTagChanges($youtubeDocument, function () use ($multimediaObject, $tagsToAdd, $tagsToRemove) {
                 foreach ($tagsToRemove as $tag) {
                     $this->tagService->removeOneTag($multimediaObject, $tag, false);
                 }
@@ -443,11 +380,86 @@ EOT
     }
 
     /**
-     * Apply a TagService mutation and neutralize the multimediaObjectUpdateDate
-     * side-effect from UpdateListener so the metadata-sync cron is not falsely
-     * triggered for a change we initiated ourselves.
+     * @return array<string, Tag>
      */
-    private function applyTagChanges(MultimediaObject $multimediaObject, Youtube $youtubeDocument, callable $mutate): void
+    private function buildExpectedTags(Tag $accountTag, Youtube $youtubeDocument): array
+    {
+        $expected = [
+            $this->puchYoutubeTag->getCod() => $this->puchYoutubeTag,
+            $accountTag->getCod() => $accountTag,
+        ];
+
+        foreach ($youtubeDocument->getPlaylists() as $playlistCod => $youtubePlaylistId) {
+            $playlistTag = $this->documentManager->getRepository(Tag::class)->findOneBy([
+                'cod' => $playlistCod,
+                'parent.$id' => new ObjectId($accountTag->getId()),
+            ]);
+            if ($playlistTag) {
+                $expected[$playlistTag->getCod()] = $playlistTag;
+            }
+        }
+
+        return $expected;
+    }
+
+    /**
+     * @param array<string, Tag> $expected
+     *
+     * @return array{0: Tag[], 1: array<string, Tag>} [$tagsToAdd, $tagsToRemove]
+     */
+    private function reconcileEmbeddedTags(MultimediaObject $multimediaObject, array $expected): array
+    {
+        $freshlyEmbedded = [];
+        $tagsToRemove = [];
+
+        foreach ($multimediaObject->getTags() as $embeddedTag) {
+            $cod = $embeddedTag->getCod();
+
+            if ($cod === $this->puchYoutubeTag->getCod()) {
+                if ($embeddedTag->getPath() === $this->puchYoutubeTag->getPath()) {
+                    $freshlyEmbedded[$cod] = true;
+                } else {
+                    $tagsToRemove[$cod] = $this->puchYoutubeTag;
+                }
+
+                continue;
+            }
+
+            if (!$embeddedTag->equalsOrDescendantOf($this->youtubeRootTag)) {
+                continue;
+            }
+
+            if (isset($expected[$cod])) {
+                if ($embeddedTag->getPath() === $expected[$cod]->getPath()) {
+                    $freshlyEmbedded[$cod] = true;
+                } else {
+                    $tagsToRemove[$cod] = $expected[$cod];
+                }
+
+                continue;
+            }
+
+            $realTag = $this->documentManager->getRepository(Tag::class)->findOneBy(['cod' => $cod]);
+            if ($realTag) {
+                $tagsToRemove[$cod] = $realTag;
+            }
+        }
+
+        $tagsToAdd = [];
+        foreach ($expected as $cod => $tag) {
+            if (!isset($freshlyEmbedded[$cod])) {
+                $tagsToAdd[] = $tag;
+            }
+        }
+
+        return [$tagsToAdd, $tagsToRemove];
+    }
+
+    /**
+     * Apply a mutation and neutralize the multimediaObjectUpdateDate side effect
+     * from UpdateListener so the metadata-sync cron is not falsely triggered.
+     */
+    private function applyTagChanges(Youtube $youtubeDocument, callable $mutate): void
     {
         $previousUpdateDate = $youtubeDocument->getMultimediaObjectUpdateDate();
 
@@ -458,7 +470,7 @@ EOT
         $this->documentManager->flush();
     }
 
-    private function detectMmoInconsistencies(Tag $youtubeRootTag, ?string $filterAccount, SymfonyStyle $io): array
+    private function detectMmoInconsistencies(?string $filterAccount, SymfonyStyle $io): array
     {
         $qb = $this->documentManager->getRepository(MultimediaObject::class)->createQueryBuilder()
             ->field('tags.cod')->equals(PumukitYoutubeBundle::YOUTUBE_PUBLICATION_CHANNEL_CODE)
@@ -466,100 +478,174 @@ EOT
         $total = (clone $qb)->count()->getQuery()->execute();
         $multimediaObjects = $qb->getQuery()->execute();
 
-        $io->section(sprintf('Checking MultimediaObject consistency (%d)', $total));
-        $progress = $io->createProgressBar($total);
-        $progress->setFormat('verbose');
-        $progress->start();
+        $progress = $this->startProgress($io, sprintf('Checking MultimediaObject consistency (%d)', $total), $total);
 
         $rows = [];
         $iteration = 0;
 
         foreach ($multimediaObjects as $multimediaObject) {
             // @var MultimediaObject $multimediaObject
-            if ($iteration > 0 && 0 === $iteration % self::BATCH_SIZE) {
-                $this->documentManager->clear();
-                $youtubeRootTag = $this->documentManager->getRepository(Tag::class)->findOneBy([
-                    'cod' => PumukitYoutubeBundle::YOUTUBE_TAG_CODE,
-                ]);
-            }
+            $this->maybeClearBatch($iteration);
             ++$iteration;
             $progress->advance();
-            $embeddedAccountTag = null;
-            foreach ($multimediaObject->getTags() as $embeddedTag) {
-                if ($embeddedTag->isChildOf($youtubeRootTag)) {
-                    $embeddedAccountTag = $embeddedTag;
 
-                    break;
-                }
-            }
-
-            if (null === $embeddedAccountTag) {
-                if ($filterAccount) {
-                    continue;
-                }
-                $rows[] = [
-                    $multimediaObject->getId(),
-                    '-',
-                    'No YouTube account tag embedded in MultimediaObject',
-                ];
-
-                continue;
-            }
-
-            $accountTag = $this->documentManager->getRepository(Tag::class)->findOneBy([
-                'cod' => $embeddedAccountTag->getCod(),
-            ]);
-
-            if (!$accountTag) {
-                if ($filterAccount) {
-                    continue;
-                }
-                $rows[] = [
-                    $multimediaObject->getId(),
-                    (string) $embeddedAccountTag->getCod(),
-                    sprintf('Account Tag (cod: %s) does not exist in DB', $embeddedAccountTag->getCod()),
-                ];
-
-                continue;
-            }
-
-            $tagLogin = $accountTag->getProperty('login');
-
-            if ($filterAccount && $tagLogin !== $filterAccount) {
-                continue;
-            }
-
-            if (!is_string($tagLogin) || '' === $tagLogin) {
-                $rows[] = [
-                    $multimediaObject->getId(),
-                    (string) $accountTag->getCod(),
-                    'Account Tag has no "login" property — would cause TypeError on upload',
-                ];
+            $row = $this->inspectMmo($multimediaObject, $filterAccount);
+            if (null !== $row) {
+                $rows[] = $row;
             }
         }
 
-        $progress->finish();
-        $io->newLine(2);
+        $this->finishBatch($io, $progress);
 
         return $rows;
     }
 
-    private function renderConfiguration(SymfonyStyle $io): void
+    private function inspectMmo(MultimediaObject $multimediaObject, ?string $filterAccount): ?array
     {
-        $io->section('Bundle configuration');
+        $embeddedAccountTag = null;
+        foreach ($multimediaObject->getTags() as $embeddedTag) {
+            if ($embeddedTag->isChildOf($this->youtubeRootTag)) {
+                $embeddedAccountTag = $embeddedTag;
 
-        $config = $this->youtubeConfigurationService->getBundleConfiguration();
-
-        $rows = [];
-        foreach ($config as $key => $value) {
-            if (is_array($value)) {
-                $value = implode(', ', $value) ?: '(empty)';
-            } elseif (is_bool($value)) {
-                $value = $value ? 'true' : 'false';
+                break;
             }
-            $rows[] = [$key, (string) $value];
         }
 
-        $io->table(['Parameter', 'Value'], $rows);
+        if (null === $embeddedAccountTag) {
+            if ($filterAccount) {
+                return null;
+            }
+
+            return [$multimediaObject->getId(), '-', 'No YouTube account tag embedded in MultimediaObject'];
+        }
+
+        $accountTag = $this->documentManager->getRepository(Tag::class)->findOneBy([
+            'cod' => $embeddedAccountTag->getCod(),
+        ]);
+
+        if (!$accountTag) {
+            if ($filterAccount) {
+                return null;
+            }
+
+            return [
+                $multimediaObject->getId(),
+                (string) $embeddedAccountTag->getCod(),
+                sprintf('Account Tag (cod: %s) does not exist in DB', $embeddedAccountTag->getCod()),
+            ];
+        }
+
+        $tagLogin = $accountTag->getProperty('login');
+
+        if ($filterAccount && $tagLogin !== $filterAccount) {
+            return null;
+        }
+
+        if (!is_string($tagLogin) || '' === $tagLogin) {
+            return [
+                $multimediaObject->getId(),
+                (string) $accountTag->getCod(),
+                'Account Tag has no "login" property — would cause TypeError on upload',
+            ];
+        }
+
+        return null;
+    }
+
+    private function actionLabel(array $actions): string
+    {
+        if (empty($actions['removed'])) {
+            return 'add';
+        }
+        if (empty($actions['added'])) {
+            return 'remove';
+        }
+
+        return 'sync';
+    }
+
+    private function formatActionDetail(array $actions): string
+    {
+        $parts = [];
+        if (!empty($actions['added'])) {
+            $parts[] = '+'.implode(', +', $actions['added']);
+        }
+        if (!empty($actions['removed'])) {
+            $parts[] = '-'.implode(', -', $actions['removed']);
+        }
+
+        return implode(' | ', $parts);
+    }
+
+    private function startProgress(SymfonyStyle $io, string $sectionTitle, int $total): ProgressBar
+    {
+        $io->section($sectionTitle);
+        $progress = $io->createProgressBar($total);
+        $progress->setFormat('verbose');
+        $progress->start();
+
+        return $progress;
+    }
+
+    private function maybeClearBatch(int $iteration): void
+    {
+        if ($iteration > 0 && 0 === $iteration % self::BATCH_SIZE) {
+            $this->documentManager->clear();
+            $this->loadRootTags();
+        }
+    }
+
+    private function finishBatch(SymfonyStyle $io, ProgressBar $progress): void
+    {
+        $this->documentManager->flush();
+        $this->documentManager->clear();
+        $this->loadRootTags();
+
+        $progress->finish();
+        $io->newLine(2);
+    }
+
+    private function renderReport(
+        SymfonyStyle $io,
+        array $syncRows,
+        array $orphanRows,
+        array $inconsistencyRows,
+        array $totals,
+        bool $apply,
+        bool $reportOnly
+    ): void {
+        if (!empty($syncRows)) {
+            $io->section('Sync actions on Youtube documents');
+            $io->table(['MMO ID', 'Youtube Doc ID', 'Doc status', 'Action', 'Tags'], $syncRows);
+        }
+
+        if (!empty($orphanRows)) {
+            $io->section('Stripped orphan MultimediaObjects (PUCHYOUTUBE without Youtube doc)');
+            $io->table(['MMO ID', 'Action', 'Tags'], $orphanRows);
+        }
+
+        if (!empty($inconsistencyRows)) {
+            $io->section('MultimediaObjects with PUCHYOUTUBE — broken account tag');
+            $io->table(['MMO ID', 'Account Tag cod', 'Problem'], $inconsistencyRows);
+        }
+
+        $io->section('Summary');
+        $io->writeln(sprintf(
+            'Checked: %d | Added: %d | Removed: %d | Orphans stripped: %d | No-op: %d | MMO missing: %d | Unresolvable: %d | Inconsistencies: %d',
+            $totals['checked'],
+            $totals['added'],
+            $totals['removed'],
+            $totals['orphans'],
+            $totals['noop'],
+            $totals['mmo_missing'],
+            $totals['unresolvable'],
+            count($inconsistencyRows)
+        ));
+
+        if (!$apply && !$reportOnly) {
+            $io->note('Dry-run mode. Re-run with --force to apply the changes above.');
+        } elseif ($apply) {
+            $io->success('Sync applied.');
+        }
     }
 }
