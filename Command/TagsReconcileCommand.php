@@ -18,7 +18,7 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
-class AccountTagsCommand extends Command
+class TagsReconcileCommand extends Command
 {
     private const BATCH_SIZE = 50;
 
@@ -52,7 +52,7 @@ class AccountTagsCommand extends Command
     protected function configure(): void
     {
         $this
-            ->setName('pumukit:youtube:account:tags')
+            ->setName('pumukit:youtube:tags:reconcile')
             ->setDescription('Reconcile YouTube account/playlist tags between Youtube documents and MultimediaObjects')
             ->addOption('account', null, InputOption::VALUE_REQUIRED, 'Limit to a specific account login')
             ->addOption('force', null, InputOption::VALUE_NONE, 'Apply changes (otherwise dry-run)')
@@ -65,10 +65,10 @@ REMOVED/TO_DELETE docs are stripped of all YT tags. MMOs tagged with PUCHYOUTUBE
 but without a Youtube document are stripped as orphans. A final report lists
 MMOs still flagged as inconsistent.
 
-  pumukit:youtube:account:tags                  Dry-run
-  pumukit:youtube:account:tags --force          Apply
-  pumukit:youtube:account:tags --account=login  Limit to one account
-  pumukit:youtube:account:tags --report-only    Skip sync, only inconsistency report
+  pumukit:youtube:tags:reconcile                  Dry-run
+  pumukit:youtube:tags:reconcile --force          Apply
+  pumukit:youtube:tags:reconcile --account=login  Limit to one account
+  pumukit:youtube:tags:reconcile --report-only    Skip sync, only inconsistency report
 EOT
             )
         ;
