@@ -20,6 +20,8 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 
 class AccountTagsCommand extends Command
 {
+    private const BATCH_SIZE = 50;
+
     private const STATUS_LABELS = [
         Youtube::STATUS_DEFAULT => 'Default',
         Youtube::STATUS_UPLOADING => 'Uploading',
@@ -200,9 +202,20 @@ EOT
 
         $stripStatuses = [Youtube::STATUS_REMOVED, Youtube::STATUS_TO_DELETE];
         $rows = [];
+        $iteration = 0;
 
         foreach ($youtubeDocuments as $youtubeDocument) {
             // @var Youtube $youtubeDocument
+            if ($iteration > 0 && 0 === $iteration % self::BATCH_SIZE) {
+                $this->documentManager->clear();
+                $youtubeRootTag = $this->documentManager->getRepository(Tag::class)->findOneBy([
+                    'cod' => PumukitYoutubeBundle::YOUTUBE_TAG_CODE,
+                ]);
+                $puchYoutubeTag = $this->documentManager->getRepository(Tag::class)->findOneBy([
+                    'cod' => PumukitYoutubeBundle::YOUTUBE_PUBLICATION_CHANNEL_CODE,
+                ]);
+            }
+            ++$iteration;
             ++$totals['checked'];
             $progress->advance();
 
@@ -459,9 +472,17 @@ EOT
         $progress->start();
 
         $rows = [];
+        $iteration = 0;
 
         foreach ($multimediaObjects as $multimediaObject) {
             // @var MultimediaObject $multimediaObject
+            if ($iteration > 0 && 0 === $iteration % self::BATCH_SIZE) {
+                $this->documentManager->clear();
+                $youtubeRootTag = $this->documentManager->getRepository(Tag::class)->findOneBy([
+                    'cod' => PumukitYoutubeBundle::YOUTUBE_TAG_CODE,
+                ]);
+            }
+            ++$iteration;
             $progress->advance();
             $embeddedAccountTag = null;
             foreach ($multimediaObject->getTags() as $embeddedTag) {
