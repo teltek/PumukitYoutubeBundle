@@ -20,6 +20,8 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 class MigrationV5Command extends Command
 {
+    private const BATCH_SIZE = 50;
+
     private $documentManager;
     private TagService $tagService;
     private $pubChannelProperties = [
@@ -78,7 +80,7 @@ class MigrationV5Command extends Command
                 3. Migrate Youtube documents adding account
                 4. Move all playlist tags under Account tag
                 5. Update multimedia objects embedding tags
-                6. Resync playlist EmbeddedTag path/level in all multimedia objects
+                6. Resync account and playlist EmbeddedTag path/level in all multimedia objects
 
                 Example to check account:
 
@@ -118,6 +120,8 @@ EOT
             return 1;
         }
 
+        $this->initializeResults();
+
         if (1 === $this->step || 99 === $this->step) {
             $this->output->writeln('<info>1. Migrate Youtube tag publication channel</info>');
             $this->migratePubChannelYoutube();
@@ -154,7 +158,7 @@ EOT
         }
 
         if (6 === $this->step || 99 === $this->step) {
-            $output->writeln('<info>6. Resync playlist EmbeddedTag path/level in all multimedia objects</info>');
+            $output->writeln('<info>6. Resync account and playlist EmbeddedTag path/level in all multimedia objects</info>');
             $this->resyncPlaylistEmbeddedTags();
         }
 
@@ -238,9 +242,9 @@ EOT
 
     private function migratePubChannelYoutube(): bool
     {
-        $this->results = [
+        $this->results = array_merge($this->results, [
             'step_1' => "\u{274C}",
-        ];
+        ]);
 
         $tag = $this->checkPubChannelYouTubeTagCode();
 
@@ -249,18 +253,18 @@ EOT
         }
         $this->documentManager->flush();
 
-        $this->results = [
+        $this->results = array_merge($this->results, [
             'step_1' => "\u{2705}",
-        ];
+        ]);
 
         return true;
     }
 
     private function migrateYoutubeTag(): bool
     {
-        $this->results = [
+        $this->results = array_merge($this->results, [
             'step_2' => "\u{274C}",
-        ];
+        ]);
 
         $tag = $this->checkYouTubeTagCode();
 
@@ -271,66 +275,70 @@ EOT
         $this->documentManager->flush();
         $this->documentManager->clear();
 
-        $this->results = [
+        $this->results = array_merge($this->results, [
             'step_2' => "\u{2705}",
-        ];
+        ]);
 
         return true;
     }
 
     private function migrateYoutubeDocuments(): bool
     {
-        $this->results = [
+        $this->results = array_merge($this->results, [
             'step_3' => "\u{274C}",
-        ];
+        ]);
 
-        $youtubeDocuments = $this->documentManager->getRepository(Youtube::class)->findBy(['youtubeAccount' => ['$exists' => false]]);
-        if (!$youtubeDocuments) {
+        $qb = $this->documentManager->getRepository(Youtube::class)->createQueryBuilder()
+            ->field('youtubeAccount')->exists(false)
+        ;
+        $total = (clone $qb)->count()->getQuery()->execute();
+
+        if (0 === $total) {
             $this->output->writeln('YouTube STEP 3: No documents to update');
-            $this->results = [
+            $this->results = array_merge($this->results, [
                 'step_3' => "\u{26A0}",
-            ];
+            ]);
 
             return true;
         }
 
-        $progress = new ProgressBar($this->output, count($youtubeDocuments));
-        $progress->setFormat('verbose');
+        // Cache the account login as a plain string so the cached value survives clear()
+        // (Tag references become detached, but a string is immune).
+        $account = $this->checkAccountNameTag();
+        $accountLogin = $account->getProperty('login');
 
+        $progress = new ProgressBar($this->output, $total);
+        $progress->setFormat('verbose');
         $progress->start();
 
-        $account = $this->checkAccountNameTag();
-
         $i = 0;
-        foreach ($youtubeDocuments as $youtubeDocument) {
+        foreach ($qb->getQuery()->execute() as $youtubeDocument) {
             ++$i;
             $progress->advance();
-            $this->addYoutubeAccount($youtubeDocument, $account);
-            if (0 === $i % 50) {
+            $youtubeDocument->setYoutubeAccount($accountLogin);
+            if (0 === $i % self::BATCH_SIZE) {
                 $this->documentManager->flush();
+                $this->documentManager->clear();
             }
         }
 
+        // Final flush for the last partial batch (and for the case where total < BATCH_SIZE).
         $this->documentManager->flush();
         $progress->finish();
+        $this->output->writeln('');
 
-        $this->results = [
+        $this->results = array_merge($this->results, [
             'step_3' => "\u{2705}",
-        ];
+        ]);
 
         return true;
     }
 
-    private function addYoutubeAccount(Youtube $youtube, Tag $tagAccount): void
-    {
-        $youtube->setYoutubeAccount($tagAccount->getProperty('login'));
-    }
-
     private function moveAllPlaylistTags(): bool
     {
-        $this->results = [
+        $this->results = array_merge($this->results, [
             'step_4' => "\u{274C}",
-        ];
+        ]);
 
         $youtubeTag = $this->checkYouTubeTagCode();
 
@@ -343,33 +351,63 @@ EOT
 
         if (!$playlistTags) {
             $this->output->writeln('Youtube STEP 4: No playlist tags to update');
-            $this->results = [
+            $this->results = array_merge($this->results, [
                 'step_4' => "\u{26A0}",
-            ];
+            ]);
 
             return true;
         }
 
+        $tagAccount = $this->checkAccountNameTag();
+
+        // Pass 1: change parent + property on eligible playlist tags (in-memory only)
+        $this->output->writeln('Youtube STEP 4: Pass 1/2 — re-parenting playlist tags');
         $progress = new ProgressBar($this->output, count($playlistTags));
         $progress->setFormat('verbose');
-
         $progress->start();
 
-        $tagAccount = $this->checkAccountNameTag();
+        $modifiedPlaylists = [];
         foreach ($playlistTags as $playlistTag) {
             $progress->advance();
             if (!$this->refactorPlaylistTag($playlistTag, $tagAccount)) {
                 continue;
             }
+            $modifiedPlaylists[] = $playlistTag;
+        }
+
+        // Persist the parent/property changes so path/level get recomputed by lifecycle callbacks
+        // BEFORE updateTag propagates them to EmbeddedTags in MultimediaObjects.
+        $this->documentManager->flush();
+        $progress->finish();
+        $this->output->writeln('');
+
+        if (empty($modifiedPlaylists)) {
+            $this->output->writeln('Youtube STEP 4: No playlist tags needed re-parenting');
+            $this->results = array_merge($this->results, [
+                'step_4' => "\u{2705}",
+            ]);
+
+            return true;
+        }
+
+        // Pass 2: propagate the new path/level to EmbeddedTags in MultimediaObjects.
+        $this->output->writeln(sprintf('Youtube STEP 4: Pass 2/2 — propagating path/level to EmbeddedTags (%d tags)', count($modifiedPlaylists)));
+        $progress = new ProgressBar($this->output, count($modifiedPlaylists));
+        $progress->setFormat('verbose');
+        $progress->start();
+
+        foreach ($modifiedPlaylists as $playlistTag) {
+            $progress->advance();
             $this->tagService->updateTag($playlistTag);
         }
 
         $this->documentManager->flush();
         $progress->finish();
+        $this->output->writeln('');
 
-        $this->results = [
+        $this->results = array_merge($this->results, [
             'step_4' => "\u{2705}",
-        ];
+        ]);
 
         return true;
     }
@@ -413,18 +451,21 @@ EOT
             return true;
         }
 
-        $playlistTags = [];
+        // Resync both account tags and their playlist children — both can have stale
+        // EmbeddedTag path/level in MultimediaObjects after tree reorganizations.
+        $tagsToResync = [];
         foreach ($accountTags as $accountTag) {
+            $tagsToResync[] = $accountTag;
             $children = $this->documentManager->getRepository(Tag::class)->findBy([
                 'parent.$id' => new ObjectId($accountTag->getId()),
             ]);
             foreach ($children as $child) {
-                $playlistTags[] = $child;
+                $tagsToResync[] = $child;
             }
         }
 
-        if (empty($playlistTags)) {
-            $this->output->writeln('Youtube STEP 6: No playlist tags found under any account.');
+        if (empty($tagsToResync)) {
+            $this->output->writeln('Youtube STEP 6: No tags to resync.');
             $this->results = array_merge($this->results, [
                 'step_6' => "\u{26A0}",
             ]);
@@ -432,15 +473,16 @@ EOT
             return true;
         }
 
-        $progress = new ProgressBar($this->output, count($playlistTags));
+        $progress = new ProgressBar($this->output, count($tagsToResync));
         $progress->setFormat('verbose');
         $progress->start();
 
-        foreach ($playlistTags as $playlistTag) {
+        foreach ($tagsToResync as $tag) {
             $progress->advance();
-            $this->tagService->updateTag($playlistTag);
+            $this->tagService->updateTag($tag);
         }
 
+        $this->documentManager->flush();
         $progress->finish();
         $this->output->writeln('');
 
@@ -453,60 +495,194 @@ EOT
 
     private function updateMultimediaObjectsWithAccountTag(): bool
     {
-        $this->results = [
+        $this->results = array_merge($this->results, [
             'step_5' => "\u{274C}",
-        ];
+        ]);
 
-        $multimediaObjects = $this->documentManager->getRepository(MultimediaObject::class)->findBy(
-            [
-                'tags.cod' => [
-                    '$all' => [
-                        PumukitYoutubeBundle::YOUTUBE_PUBLICATION_CHANNEL_CODE,
-                        PumukitYoutubeBundle::YOUTUBE_TAG_CODE,
-                    ],
-                ],
-            ]
-        );
-
-        if (!$multimediaObjects) {
-            $this->output->writeln('Youtube STEP 5: No multimedia objects to add tag account');
-            $this->results = [
-                'step_5' => "\u{26A0}",
-            ];
+        $puchTag = $this->checkPubChannelYouTubeTagCode();
+        if (!$puchTag instanceof Tag) {
+            $this->output->writeln('<error>Youtube STEP 5: PUCHYOUTUBE tag not found</error>');
 
             return false;
         }
 
-        $tagAccount = $this->documentManager->getRepository(Tag::class)->findOneBy(['properties.login' => $this->accountName]);
+        $qb = $this->documentManager->getRepository(Youtube::class)->createQueryBuilder();
+        $total = (clone $qb)->count()->getQuery()->execute();
 
-        $progress = new ProgressBar($this->output, count($multimediaObjects));
-        $progress->setFormat('verbose');
+        if (0 === $total) {
+            $this->output->writeln('Youtube STEP 5: No Youtube documents to process');
+            $this->results = array_merge($this->results, [
+                'step_5' => "\u{26A0}",
+            ]);
 
-        $progress->start();
-
-        $i = 0;
-        foreach ($multimediaObjects as $multimediaObject) {
-            ++$i;
-            $progress->advance();
-            $this->addTagAccountOnMultimediaObject($multimediaObject, $tagAccount);
-            if (0 === $i % 50) {
-                $this->documentManager->flush();
-            }
+            return true;
         }
 
+        $progress = new ProgressBar($this->output, $total);
+        $progress->setFormat('verbose');
+        $progress->start();
+
+        $stripStatuses = [Youtube::STATUS_REMOVED, Youtube::STATUS_TO_DELETE];
+        $updated = 0;
+        $skippedStatus = 0;
+        $skippedNoAccount = 0;
+        $skippedUnresolvable = 0;
+        $skippedMmoMissing = 0;
+        $iteration = 0;
+
+        foreach ($qb->getQuery()->execute() as $youtubeDocument) {
+            // Boundary check at the START of the iteration: flush pending writes from
+            // the previous batch, clear the UoW to release memory, and re-resolve the
+            // cached PUCHYOUTUBE Tag (it became detached after clear).
+            if ($iteration > 0 && 0 === $iteration % self::BATCH_SIZE) {
+                $this->documentManager->flush();
+                $this->documentManager->clear();
+                $puchTag = $this->checkPubChannelYouTubeTagCode();
+            }
+            ++$iteration;
+            $progress->advance();
+
+            if (in_array($youtubeDocument->getStatus(), $stripStatuses, true)) {
+                ++$skippedStatus;
+
+                continue;
+            }
+
+            $accountLogin = $youtubeDocument->getYoutubeAccount();
+            if (!is_string($accountLogin) || '' === $accountLogin) {
+                ++$skippedNoAccount;
+
+                continue;
+            }
+
+            $accountTag = $this->documentManager->getRepository(Tag::class)->findOneBy([
+                'properties.login' => $accountLogin,
+            ]);
+            if (!$accountTag instanceof Tag) {
+                ++$skippedUnresolvable;
+
+                continue;
+            }
+
+            $multimediaObject = $this->documentManager->getRepository(MultimediaObject::class)->findOneBy([
+                '_id' => new ObjectId($youtubeDocument->getMultimediaObjectId()),
+            ]);
+            if (!$multimediaObject instanceof MultimediaObject) {
+                ++$skippedMmoMissing;
+
+                continue;
+            }
+
+            $this->ensureAccountAndPlaylistTags($multimediaObject, $accountTag, $youtubeDocument, $puchTag);
+            ++$updated;
+        }
+
+        // Final flush for the last partial batch (covers iterations since the last clear).
         $this->documentManager->flush();
         $progress->finish();
+        $this->output->writeln('');
+        $this->output->writeln(sprintf(
+            'Youtube STEP 5: updated=%d, skipped(REMOVED/TO_DELETE)=%d, skipped(no account)=%d, skipped(unresolvable account)=%d, skipped(MMO missing)=%d',
+            $updated,
+            $skippedStatus,
+            $skippedNoAccount,
+            $skippedUnresolvable,
+            $skippedMmoMissing
+        ));
 
-        $this->results = [
+        $this->reportOrphanMmos();
+
+        $this->results = array_merge($this->results, [
             'step_5' => "\u{2705}",
-        ];
+        ]);
 
         return true;
     }
 
-    private function addTagAccountOnMultimediaObject(MultimediaObject $multimediaObject, Tag $tagAccount): void
+    private function ensureAccountAndPlaylistTags(MultimediaObject $multimediaObject, Tag $accountTag, Youtube $youtubeDocument, Tag $puchTag): void
     {
-        $multimediaObject->addTag($tagAccount);
+        if (!$multimediaObject->containsTagWithCod($puchTag->getCod())) {
+            $this->tagService->addTag($multimediaObject, $puchTag, false);
+        }
+
+        if (!$multimediaObject->containsTagWithCod($accountTag->getCod())) {
+            $this->tagService->addTag($multimediaObject, $accountTag, false);
+        }
+
+        foreach ($youtubeDocument->getPlaylists() as $playlistCod => $youtubePlaylistId) {
+            $playlistTag = $this->documentManager->getRepository(Tag::class)->findOneBy([
+                'cod' => $playlistCod,
+                'parent.$id' => new ObjectId($accountTag->getId()),
+            ]);
+            if (!$playlistTag instanceof Tag) {
+                continue;
+            }
+            if (!$multimediaObject->containsTagWithCod($playlistTag->getCod())) {
+                $this->tagService->addTag($multimediaObject, $playlistTag, false);
+            }
+        }
+    }
+
+    private function reportOrphanMmos(): void
+    {
+        $assignedIds = [];
+        $cursor = $this->documentManager->getRepository(Youtube::class)->createQueryBuilder()
+            ->select('multimediaObjectId')
+            ->hydrate(false)
+            ->getQuery()
+            ->execute()
+        ;
+        foreach ($cursor as $row) {
+            if (!empty($row['multimediaObjectId'])) {
+                $assignedIds[(string) $row['multimediaObjectId']] = true;
+            }
+        }
+
+        $candidates = $this->documentManager->getRepository(MultimediaObject::class)->createQueryBuilder()
+            ->field('tags.cod')->equals(PumukitYoutubeBundle::YOUTUBE_PUBLICATION_CHANNEL_CODE)
+            ->getQuery()
+            ->execute()
+        ;
+
+        $orphans = [];
+        foreach ($candidates as $multimediaObject) {
+            if (!isset($assignedIds[(string) $multimediaObject->getId()])) {
+                $orphans[] = (string) $multimediaObject->getId();
+            }
+        }
+
+        if (empty($orphans)) {
+            $this->output->writeln('Youtube STEP 5: no orphan MultimediaObjects detected');
+
+            return;
+        }
+
+        $this->output->writeln(sprintf(
+            '<comment>Youtube STEP 5: %d orphan MultimediaObjects detected (PUCHYOUTUBE without Youtube document). Run pumukit:youtube:tags:reconcile --force to clean.</comment>',
+            count($orphans)
+        ));
+
+        $preview = array_slice($orphans, 0, 10);
+        foreach ($preview as $id) {
+            $this->output->writeln('  - '.$id);
+        }
+        if (count($orphans) > 10) {
+            $this->output->writeln(sprintf('  ... and %d more', count($orphans) - 10));
+        }
+    }
+
+    private function initializeResults(): void
+    {
+        // "\u{2014}" = em dash, displayed for steps not selected by --step or not yet run.
+        // Distinct from "\u{274C}" (failed/in-progress), "\u{2705}" (success), "\u{26A0}" (warning).
+        $this->results = [
+            'step_1' => "\u{2014}",
+            'step_2' => "\u{2014}",
+            'step_3' => "\u{2014}",
+            'step_4' => "\u{2014}",
+            'step_5' => "\u{2014}",
+            'step_6' => "\u{2014}",
+        ];
     }
 
     private function createTable(): void
