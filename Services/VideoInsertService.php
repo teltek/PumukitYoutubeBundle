@@ -97,7 +97,40 @@ class VideoInsertService extends GoogleVideoService
         return true;
     }
 
-    private function exceedsMaxUploadSize(MultimediaObject $multimediaObject, Track $track, Tag $account): bool
+    /**
+     * Validates whether a multimedia object can be force-uploaded without exceeding the
+     * configured max upload size. It is a read-only check: it never mutates the Youtube
+     * document. Returns true when the upload may proceed, false otherwise (and logs why).
+     */
+    public function validateForceUploadSize(MultimediaObject $multimediaObject): bool
+    {
+        $track = $this->videoDataValidationService->validateMultimediaObjectTrack($multimediaObject);
+        if (!$track) {
+            $this->logger->error(sprintf(
+                '[YouTube] Force upload aborted: Multimedia object with ID %s has no valid track to upload.',
+                $multimediaObject->getId()
+            ));
+
+            return false;
+        }
+
+        if ($this->trackExceedsMaxUploadSize($track)) {
+            $filePath = $track->storage()->path()->path();
+            $this->logger->warning(sprintf(
+                '[YouTube] Force upload attempted for Multimedia object with ID %s but file "%s" size %d bytes exceeds configured max upload size %d bytes. Upload skipped, document left unchanged.',
+                $multimediaObject->getId(),
+                basename($filePath),
+                (int) @filesize($filePath),
+                $this->youtubeConfigurationService->maxUploadSizeInBytes()
+            ));
+
+            return false;
+        }
+
+        return true;
+    }
+
+    private function trackExceedsMaxUploadSize(Track $track): bool
     {
         $maxUploadSize = $this->youtubeConfigurationService->maxUploadSizeInBytes();
         if ($maxUploadSize <= 0) {
@@ -106,9 +139,22 @@ class VideoInsertService extends GoogleVideoService
 
         $filePath = $track->storage()->path()->path();
         $fileSize = @filesize($filePath);
-        if (false === $fileSize || $fileSize <= $maxUploadSize) {
+        if (false === $fileSize) {
             return false;
         }
+
+        return $fileSize > $maxUploadSize;
+    }
+
+    private function exceedsMaxUploadSize(MultimediaObject $multimediaObject, Track $track, Tag $account): bool
+    {
+        if (!$this->trackExceedsMaxUploadSize($track)) {
+            return false;
+        }
+
+        $maxUploadSize = $this->youtubeConfigurationService->maxUploadSizeInBytes();
+        $filePath = $track->storage()->path()->path();
+        $fileSize = (int) @filesize($filePath);
 
         $youtubeDocument = $this->generateYoutubeDocument($multimediaObject, $account);
         $youtubeDocument->setStatus(Youtube::STATUS_TO_REVIEW);
