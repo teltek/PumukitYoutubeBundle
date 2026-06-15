@@ -42,6 +42,9 @@ class TagsReconcileCommand extends Command
     private Tag $youtubeRootTag;
     private Tag $puchYoutubeTag;
 
+    /** @var array<int, array{0: string, 1: string, 2: string}> */
+    private array $errorRows = [];
+
     public function __construct(DocumentManager $documentManager, TagService $tagService)
     {
         parent::__construct();
@@ -141,7 +144,32 @@ EOT
             'mmo_missing' => 0,
             'unresolvable' => 0,
             'orphans' => 0,
+            'errors' => 0,
         ];
+    }
+
+    private function recordApplyError(MultimediaObject $multimediaObject, \Throwable $exception, array &$totals): void
+    {
+        $parts = explode('\\', get_class($exception));
+        $this->errorRows[] = [
+            $multimediaObject->getId(),
+            (string) end($parts),
+            $this->truncate($exception->getMessage(), 200),
+        ];
+        ++$totals['errors'];
+
+        // Discard the poisoned UnitOfWork state so the next MMO starts clean.
+        $this->documentManager->clear();
+        $this->loadRootTags();
+    }
+
+    private function truncate(string $value, int $max): string
+    {
+        if (strlen($value) <= $max) {
+            return $value;
+        }
+
+        return substr($value, 0, $max - 1).'…';
     }
 
     private function processYoutubeDocuments(?string $filterAccount, bool $apply, array &$totals, SymfonyStyle $io): array
@@ -191,7 +219,13 @@ EOT
         }
 
         if (in_array($youtubeDocument->getStatus(), self::STRIP_STATUSES, true)) {
-            $removed = $this->stripYoutubeTags($multimediaObject, $youtubeDocument, $apply);
+            try {
+                $removed = $this->stripYoutubeTags($multimediaObject, $youtubeDocument, $apply);
+            } catch (\Throwable $exception) {
+                $this->recordApplyError($multimediaObject, $exception, $totals);
+
+                return [$multimediaObject->getId(), $youtubeDocument->getId(), $statusLabel, 'ERROR', $this->truncate($exception->getMessage(), 120)];
+            }
             if (empty($removed)) {
                 ++$totals['noop'];
 
@@ -202,7 +236,13 @@ EOT
             return [$multimediaObject->getId(), $youtubeDocument->getId(), $statusLabel, 'strip', implode(', ', $removed)];
         }
 
-        $actions = $this->ensureYoutubeTags($multimediaObject, $youtubeDocument, $apply);
+        try {
+            $actions = $this->ensureYoutubeTags($multimediaObject, $youtubeDocument, $apply);
+        } catch (\Throwable $exception) {
+            $this->recordApplyError($multimediaObject, $exception, $totals);
+
+            return [$multimediaObject->getId(), $youtubeDocument->getId(), $statusLabel, 'ERROR', $this->truncate($exception->getMessage(), 120)];
+        }
         if (null === $actions) {
             ++$totals['unresolvable'];
 
@@ -258,7 +298,14 @@ EOT
                 continue;
             }
 
-            $removed = $this->stripYoutubeTags($multimediaObject, null, $apply);
+            try {
+                $removed = $this->stripYoutubeTags($multimediaObject, null, $apply);
+            } catch (\Throwable $exception) {
+                $this->recordApplyError($multimediaObject, $exception, $totals);
+                $rows[] = [$multimediaObject->getId(), 'ERROR', $this->truncate($exception->getMessage(), 120)];
+
+                continue;
+            }
             if (empty($removed)) {
                 continue;
             }
@@ -659,6 +706,11 @@ EOT
             $io->table(['MMO ID', 'Action', 'Tags'], $orphanRows);
         }
 
+        if (!empty($this->errorRows)) {
+            $io->section('Errors during apply — MMOs skipped (manual repair required)');
+            $io->table(['MMO ID', 'Exception', 'Message'], $this->errorRows);
+        }
+
         if (!empty($inconsistencyRows)) {
             $io->section('MultimediaObjects with PUCHYOUTUBE — broken account tag');
             $io->table(['MMO ID', 'Account Tag cod', 'Problem'], $inconsistencyRows);
@@ -666,7 +718,7 @@ EOT
 
         $io->section('Summary');
         $io->writeln(sprintf(
-            'Checked: %d | Added: %d | Removed: %d | Orphans stripped: %d | No-op: %d | MMO missing: %d | Unresolvable: %d | Inconsistencies: %d',
+            'Checked: %d | Added: %d | Removed: %d | Orphans stripped: %d | No-op: %d | MMO missing: %d | Unresolvable: %d | Errors: %d | Inconsistencies: %d',
             $totals['checked'],
             $totals['added'],
             $totals['removed'],
@@ -674,13 +726,21 @@ EOT
             $totals['noop'],
             $totals['mmo_missing'],
             $totals['unresolvable'],
+            $totals['errors'],
             count($inconsistencyRows)
         ));
 
         if (!$apply && !$reportOnly) {
             $io->note('Dry-run mode. Re-run with --force to apply the changes above.');
         } elseif ($apply) {
-            $io->success('Sync applied.');
+            if ($totals['errors'] > 0) {
+                $io->warning(sprintf(
+                    'Applied with %d error(s). Skipped MMOs need manual repair — see Errors section above.',
+                    $totals['errors']
+                ));
+            } else {
+                $io->success('Sync applied.');
+            }
         }
     }
 }
