@@ -50,6 +50,7 @@ class VideoLinkCommand extends Command
             ->addOption('youtube-id', null, InputOption::VALUE_REQUIRED, 'YouTube video ID')
             ->addOption('mmobj-id', null, InputOption::VALUE_REQUIRED, 'MultimediaObject ID to link the video to')
             ->addOption('account', null, InputOption::VALUE_REQUIRED, 'YouTube account login (matches the account Tag properties.login)')
+            ->addOption('skip-fetch', null, InputOption::VALUE_NONE, 'Skip YouTube API verification (assume PUBLISHED, uploadDate=now). Useful when account credentials are unavailable or when bulk-normalizing.')
             ->setDescription('Link an externally uploaded YouTube video to an existing MultimediaObject')
             ->setHelp(
                 <<<'EOT'
@@ -71,6 +72,7 @@ EOT
         $youtubeId = $input->getOption('youtube-id');
         $mmObjId = $input->getOption('mmobj-id');
         $accountLogin = $input->getOption('account');
+        $skipFetch = (bool) $input->getOption('skip-fetch');
 
         if (!$youtubeId || !$mmObjId || !$accountLogin) {
             $output->writeln('<error>--youtube-id, --mmobj-id and --account are required.</error>');
@@ -123,35 +125,44 @@ EOT
             return 1;
         }
 
-        try {
-            $video = $this->videoListService->fetchVideoDetails($accountTag, $youtubeId);
-        } catch (\Throwable $e) {
-            $output->writeln(sprintf('<error>YouTube API error fetching video %s: %s</error>', $youtubeId, $e->getMessage()));
-            $this->logger->error(sprintf('[YouTube] video:link API error for %s: %s', $youtubeId, $e->getMessage()));
+        $video = null;
+        if (!$skipFetch) {
+            try {
+                $video = $this->videoListService->fetchVideoDetails($accountTag, $youtubeId);
+            } catch (\Throwable $e) {
+                $output->writeln(sprintf('<error>YouTube API error fetching video %s: %s</error>', $youtubeId, $e->getMessage()));
+                $output->writeln('<comment>Re-run with --skip-fetch to bypass the YouTube API verification.</comment>');
+                $this->logger->error(sprintf('[YouTube] video:link API error for %s: %s', $youtubeId, $e->getMessage()));
 
-            return 1;
+                return 1;
+            }
+
+            if (null === $video) {
+                $output->writeln(sprintf('<error>YouTube video %s not found on account "%s".</error>', $youtubeId, $accountLogin));
+
+                return 1;
+            }
+
+            $expectedTitle = $this->videoDataValidationService->getTitleForYoutube($multimediaObject);
+            $actualTitle = $video->getSnippet() ? (string) $video->getSnippet()->getTitle() : '';
+            if ('' !== $actualTitle && $expectedTitle !== $actualTitle) {
+                $output->writeln(sprintf(
+                    '<comment>Note: title differs.</comment> MultimediaObject: "%s" / YouTube: "%s"',
+                    $expectedTitle,
+                    $actualTitle
+                ));
+            }
+        } else {
+            $output->writeln('<comment>--skip-fetch: skipping YouTube API verification. Assuming status=PUBLISHED, uploadDate=now.</comment>');
         }
 
-        if (null === $video) {
-            $output->writeln(sprintf('<error>YouTube video %s not found on account "%s".</error>', $youtubeId, $accountLogin));
-
-            return 1;
+        $mappedStatus = Youtube::STATUS_PUBLISHED;
+        if (null !== $video && $video->getStatus()) {
+            $uploadStatus = (string) $video->getStatus()->getUploadStatus();
+            if ('' !== $uploadStatus) {
+                $mappedStatus = $this->videoListService->mapYoutubeUploadStatus($uploadStatus);
+            }
         }
-
-        $expectedTitle = $this->videoDataValidationService->getTitleForYoutube($multimediaObject);
-        $actualTitle = $video->getSnippet() ? (string) $video->getSnippet()->getTitle() : '';
-        if ('' !== $actualTitle && $expectedTitle !== $actualTitle) {
-            $output->writeln(sprintf(
-                '<comment>Note: title differs.</comment> MultimediaObject: "%s" / YouTube: "%s"',
-                $expectedTitle,
-                $actualTitle
-            ));
-        }
-
-        $uploadStatus = $video->getStatus() ? (string) $video->getStatus()->getUploadStatus() : '';
-        $mappedStatus = $uploadStatus
-            ? $this->videoListService->mapYoutubeUploadStatus($uploadStatus)
-            : Youtube::STATUS_PUBLISHED;
 
         $youtube = new Youtube();
         $youtube->setMultimediaObjectId($mmObjId);
@@ -162,7 +173,7 @@ EOT
         $youtube->setStatus($mappedStatus);
         $youtube->setSyncMetadataDate(new \DateTime('now'));
 
-        if ($video->getSnippet() && $video->getSnippet()->getPublishedAt()) {
+        if (null !== $video && $video->getSnippet() && $video->getSnippet()->getPublishedAt()) {
             try {
                 $youtube->setUploadDate(new \DateTime($video->getSnippet()->getPublishedAt()));
             } catch (\Exception $e) {
