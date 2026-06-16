@@ -27,6 +27,11 @@ class OperationsPreviewCommand extends Command
 {
     private const SAMPLE_LIMIT = 20;
 
+    private const KIND_WILL_ACTION = 'will-action';
+    private const KIND_WILL_UPDATE = 'will-update';
+    private const KIND_INSPECT_ONLY = 'inspect-only';
+    private const KIND_INFORMATIONAL = 'informational';
+
     private const CATEGORIES = [
         'upload',
         'delete',
@@ -39,6 +44,25 @@ class OperationsPreviewCommand extends Command
         'caption-delete',
         'orphans',
         'errors',
+    ];
+
+    /**
+     * Maps each category to the nature of its count. See --help for the meaning
+     * of each kind. If a category contains rows with mixed kinds, this map cannot
+     * express that — currently no category does.
+     */
+    private const CATEGORY_KIND = [
+        'upload' => self::KIND_WILL_ACTION,
+        'delete' => self::KIND_WILL_ACTION,
+        'metadata' => self::KIND_WILL_UPDATE,
+        'status' => self::KIND_INSPECT_ONLY,
+        'pending' => self::KIND_INSPECT_ONLY,
+        'playlist-sync' => self::KIND_INFORMATIONAL,
+        'playlist-update' => self::KIND_INSPECT_ONLY,
+        'caption-upload' => self::KIND_INSPECT_ONLY,
+        'caption-delete' => self::KIND_INSPECT_ONLY,
+        'orphans' => self::KIND_INFORMATIONAL,
+        'errors' => self::KIND_INFORMATIONAL,
     ];
 
     private DocumentManager $documentManager;
@@ -70,18 +94,24 @@ Useful before triggering crons (or after a normalization) to see the queue.
   pumukit:youtube:operations:preview --account=urjc-p-youtube
   pumukit:youtube:operations:preview --category=upload,delete --detail
 
-Categories:
-  upload          MMOs awaiting upload (new + retry from ERROR + REMOVED re-upload)
-  delete          Youtube docs queued for deletion (STATUS_TO_DELETE)
-  metadata        Youtube docs with multimediaObjectUpdateDate > syncMetadataDate
-  status          Youtube docs subject to status polling
-  pending         Youtube docs in UPLOADING/PROCESSING (pending status poll)
-  playlist-sync   Local playlist Tags per account (no YouTube API call)
-  playlist-update MMOs eligible for playlist membership sync
-  caption-upload  Eligible MMOs for caption sync (no YouTube API call)
-  caption-delete  Eligible MMOs for caption cleanup (no YouTube API call)
-  orphans         Youtube docs pointing to a non-existent MMO
-  errors          Youtube docs blocked by stored errors
+Categories (the kind tells you what the count actually means):
+  upload          [will-action]    MMOs that will be uploaded (new + retry from ERROR + REMOVED re-upload)
+  delete          [will-action]    Youtube docs that will be deleted (STATUS_TO_DELETE)
+  metadata        [will-update]    Youtube docs with date drift — metadata will be pushed
+  status          [inspect-only]   Youtube docs the cron will poll; mutates only on real status change
+  pending         [inspect-only]   Youtube docs in UPLOADING/PROCESSING — polled until terminal state
+  playlist-sync   [informational]  Local playlist Tags per account; remote diff requires YouTube API
+  playlist-update [inspect-only]   MMOs inspected for playlist membership; mutates only if diff exists
+  caption-upload  [inspect-only]   Eligible MMOs; mutates only if local captions absent from YouTube
+  caption-delete  [inspect-only]   Eligible MMOs; mutates only if remote captions absent locally
+  orphans         [informational]  Youtube docs pointing to a non-existent MMO
+  errors          [informational]  Youtube docs with stored error blobs
+
+Kinds:
+  will-action     Cron will definitely act on every counted item.
+  will-update     Cron will almost certainly mutate (drift detected locally).
+  inspect-only    Cron will inspect each item via YouTube API; mutates only on diff.
+  informational   Context, not action. Not part of the actionable queue.
 EOT
             )
         ;
@@ -576,11 +606,12 @@ EOT
 
         foreach ($sections as $category => $rows) {
             $io->section($headings[$category] ?? strtoupper($category));
+            $kind = self::CATEGORY_KIND[$category] ?? self::KIND_INFORMATIONAL;
             $tableRows = [];
             foreach ($rows as $row) {
-                $tableRows[] = [$row['label'], $row['count']];
+                $tableRows[] = [$row['label'], $row['count'], $this->decorateKind($kind)];
             }
-            $io->table(['Operation', 'Count'], $tableRows);
+            $io->table(['Operation', 'Count', 'Kind'], $tableRows);
 
             if ($showDetail) {
                 foreach ($rows as $row) {
@@ -605,25 +636,44 @@ EOT
      */
     private function renderTotals(SymfonyStyle $io, array $sections): void
     {
-        $informationalCategories = ['playlist-sync', 'orphans', 'errors'];
-        $actionable = 0;
-        $informational = 0;
+        $buckets = [
+            self::KIND_WILL_ACTION => 0,
+            self::KIND_WILL_UPDATE => 0,
+            self::KIND_INSPECT_ONLY => 0,
+            self::KIND_INFORMATIONAL => 0,
+        ];
 
         foreach ($sections as $category => $rows) {
-            $sum = 0;
+            $kind = self::CATEGORY_KIND[$category] ?? self::KIND_INFORMATIONAL;
             foreach ($rows as $row) {
-                $sum += $row['count'];
-            }
-            if (in_array($category, $informationalCategories, true)) {
-                $informational += $sum;
-            } else {
-                $actionable += $sum;
+                $buckets[$kind] += $row['count'];
             }
         }
 
         $io->section('Summary');
-        $io->writeln(sprintf('Actionable operations queued: <info>%d</info>', $actionable));
-        $io->writeln(sprintf('Informational entries (orphans/errors/local playlists): <comment>%d</comment>', $informational));
+        $io->table(
+            ['Kind', 'Total', 'Meaning'],
+            [
+                ['<info>will-action</info>', $buckets[self::KIND_WILL_ACTION], 'Cron will act on every item'],
+                ['<info>will-update</info>', $buckets[self::KIND_WILL_UPDATE], 'Cron will almost certainly mutate (local drift)'],
+                ['<comment>inspect-only</comment>', $buckets[self::KIND_INSPECT_ONLY], 'Cron will inspect via API; mutates only on diff'],
+                ['<comment>informational</comment>', $buckets[self::KIND_INFORMATIONAL], 'Context only, not part of the actionable queue'],
+            ]
+        );
         $io->note('This is a read-only preview. No data was modified.');
+    }
+
+    private function decorateKind(string $kind): string
+    {
+        switch ($kind) {
+            case self::KIND_WILL_ACTION:
+            case self::KIND_WILL_UPDATE:
+                return sprintf('<info>%s</info>', $kind);
+            case self::KIND_INSPECT_ONLY:
+            case self::KIND_INFORMATIONAL:
+                return sprintf('<comment>%s</comment>', $kind);
+        }
+
+        return $kind;
     }
 }
