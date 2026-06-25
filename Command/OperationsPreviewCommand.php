@@ -165,24 +165,34 @@ EOT
         switch ($category) {
             case 'upload':
                 return $this->collectUpload($filterAccount);
+
             case 'delete':
                 return $this->collectDelete($filterAccount);
+
             case 'metadata':
                 return $this->collectMetadata($filterAccount);
+
             case 'status':
                 return $this->collectStatus($filterAccount);
+
             case 'pending':
                 return $this->collectPending($filterAccount);
+
             case 'playlist-sync':
                 return $this->collectPlaylistSync($filterAccount);
+
             case 'playlist-update':
                 return $this->collectPlaylistUpdate($filterAccount);
+
             case 'caption-upload':
                 return $this->collectCaptionEligible($filterAccount, 'upload');
+
             case 'caption-delete':
                 return $this->collectCaptionEligible($filterAccount, 'delete');
+
             case 'orphans':
                 return $this->collectOrphans($filterAccount);
+
             case 'errors':
                 return $this->collectErrors($filterAccount);
         }
@@ -512,6 +522,8 @@ EOT
     }
 
     /**
+     * @param mixed $qb
+     *
      * @return array{label: string, count: int, samples: string[]}
      */
     private function summarize(string $label, $qb): array
@@ -535,6 +547,8 @@ EOT
     }
 
     /**
+     * @param mixed $qb
+     *
      * @return array{label: string, count: int, samples: string[]}
      */
     private function summarizeYoutubeDocs(string $label, $qb): array
@@ -560,6 +574,8 @@ EOT
     /**
      * For upload paths: restrict an already-computed row set to MMOs whose YT doc lives on the
      * requested account. The "New uploads" path has no YT doc yet, so cannot be filtered.
+     *
+     * @param mixed $candidateQbTemplate
      */
     private function filterRowsByAccount(array $rows, string $filterAccount, $candidateQbTemplate): array
     {
@@ -669,6 +685,7 @@ EOT
             case self::KIND_WILL_ACTION:
             case self::KIND_WILL_UPDATE:
                 return sprintf('<info>%s</info>', $kind);
+
             case self::KIND_INSPECT_ONLY:
             case self::KIND_INFORMATIONAL:
                 return sprintf('<comment>%s</comment>', $kind);
