@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pumukit\YoutubeBundle\Command;
 
 use Doctrine\ODM\MongoDB\DocumentManager;
+use MongoDB\Collection;
 use Pumukit\YoutubeBundle\Document\Youtube;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -228,7 +229,7 @@ EOT
         ];
     }
 
-    private function fetchUnreconcilable(\MongoDB\Collection $collection): array
+    private function fetchUnreconcilable(Collection $collection): array
     {
         $cursor = $collection->find(
             [
