@@ -81,28 +81,28 @@ class YoutubeStatsService
     public function getByError(): array
     {
         return $this->documentManager->getRepository(Youtube::class)->findBy([
-            'error' => ['$exists' => true],
+            'error' => ['$exists' => true, '$ne' => null],
         ]);
     }
 
     public function getByMetadataUpdateError(): array
     {
         return $this->documentManager->getRepository(Youtube::class)->findBy([
-            'metadataUpdateError' => ['$exists' => true],
+            'metadataUpdateError' => ['$exists' => true, '$ne' => null],
         ]);
     }
 
     public function getByPlaylistUpdateError(): array
     {
         return $this->documentManager->getRepository(Youtube::class)->findBy([
-            'playlistUpdateError' => ['$exists' => true],
+            'playlistUpdateError' => ['$exists' => true, '$ne' => null],
         ]);
     }
 
     public function getByCaptionUpdateError(): array
     {
         return $this->documentManager->getRepository(Youtube::class)->findBy([
-            'captionUpdateError' => ['$exists' => true],
+            'captionUpdateError' => ['$exists' => true, '$ne' => null],
         ]);
     }
 

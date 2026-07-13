@@ -78,18 +78,24 @@ class VideoListService extends GoogleVideoService
             $response = $this->list($account, $video);
             $status = $this->getStatusFromYouTubeResponse($response, $video);
         } catch (\Exception $exception) {
-            $error = json_decode($exception->getMessage(), true, 512, JSON_THROW_ON_ERROR);
-            $error = Error::create(
-                $error['error']['errors'][0]['reason'],
-                $error['error']['errors'][0]['message'] ?? 'No message received',
-                new \DateTime(),
-                $error['error']
-            );
+            $rawMessage = $exception->getMessage();
+            $decoded = json_decode($rawMessage, true);
 
+            if (is_array($decoded) && isset($decoded['error']['errors'][0]['reason'])) {
+                $reason = $decoded['error']['errors'][0]['reason'];
+                $message = $decoded['error']['errors'][0]['message'] ?? 'No message received';
+                $raw = $decoded['error'];
+            } else {
+                $reason = 'pumukit.apiError';
+                $message = '' !== $rawMessage ? $rawMessage : get_class($exception);
+                $raw = ['message' => $message, 'exception' => get_class($exception)];
+            }
+
+            $error = Error::create($reason, $message, new \DateTime(), $raw);
             $youtube->setError($error);
             $this->documentManager->flush();
 
-            return ['status' => false, 'message' => $error['error']['errors'][0]['reason']];
+            return ['status' => false, 'message' => $reason];
         }
 
         $youtube->setStatus($status);
