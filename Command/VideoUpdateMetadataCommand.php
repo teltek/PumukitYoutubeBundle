@@ -8,6 +8,7 @@ use Doctrine\ODM\MongoDB\DocumentManager;
 use Psr\Log\LoggerInterface;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\YoutubeBundle\Document\Youtube;
+use Pumukit\YoutubeBundle\Exception\YoutubeQuotaExceededException;
 use Pumukit\YoutubeBundle\Services\VideoUpdateService;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -67,19 +68,19 @@ EOT
     {
         foreach ($multimediaObjects as $multimediaObject) {
             try {
-                $result = $this->videoUpdateService->updateVideoOnYoutube($multimediaObject);
+                $this->videoUpdateService->updateVideoOnYoutube($multimediaObject);
+            } catch (YoutubeQuotaExceededException $e) {
+                $this->logger->warning(sprintf(
+                    '[YouTube] Quota exceeded (reason=%s) while updating video metadata. Stopping this run.',
+                    $e->getReason()
+                ));
+                $output->writeln('<comment>YouTube API quota exceeded. Stopping this run.</comment>');
+
+                break;
             } catch (\Throwable $e) {
                 $errorLog = sprintf('[YouTube] Update metadata video for video %s failed: %s', $multimediaObject->getId(), $e->getMessage());
                 $this->logger->error($errorLog);
                 $output->writeln($errorLog);
-
-                $youtube = $this->documentManager->getRepository(Youtube::class)->findOneBy([
-                    'multimediaObjectId' => $multimediaObject->getId(),
-                ]);
-                if ($youtube instanceof Youtube) {
-                    $youtube->setStatus(Youtube::STATUS_ERROR);
-                    $this->documentManager->flush();
-                }
             }
         }
     }

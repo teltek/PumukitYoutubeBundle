@@ -21,6 +21,8 @@ class VideoUpdateService extends GoogleVideoService
     private $youtubeConfigurationService;
     private $videoDataValidationService;
 
+    private $googleApiErrorParser;
+
     private $logger;
 
     public function __construct(
@@ -28,12 +30,14 @@ class VideoUpdateService extends GoogleVideoService
         DocumentManager $documentManager,
         YoutubeConfigurationService $youtubeConfigurationService,
         VideoDataValidationService $videoDataValidationService,
+        GoogleApiErrorParser $googleApiErrorParser,
         LoggerInterface $logger
     ) {
         $this->googleAccountService = $googleAccountService;
         $this->documentManager = $documentManager;
         $this->youtubeConfigurationService = $youtubeConfigurationService;
         $this->videoDataValidationService = $videoDataValidationService;
+        $this->googleApiErrorParser = $googleApiErrorParser;
         $this->logger = $logger;
     }
 
@@ -83,12 +87,13 @@ class VideoUpdateService extends GoogleVideoService
         try {
             $response = $this->update($account, $video);
         } catch (\Exception $exception) {
-            $error = json_decode($exception->getMessage(), true, 512, JSON_THROW_ON_ERROR);
+            $parsed = $this->googleApiErrorParser->parse($exception);
+
             $error = Error::create(
-                $error['error']['errors'][0]['reason'],
-                $error['error']['errors'][0]['message'] ?? 'No message received',
+                $parsed->reason(),
+                $parsed->message(),
                 new \DateTime(),
-                $error['error']
+                $parsed->raw()
             );
             $youtubeDocument->setMetadataUpdateError($error);
             $this->documentManager->flush();

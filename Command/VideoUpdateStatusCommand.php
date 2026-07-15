@@ -10,6 +10,7 @@ use Psr\Log\LoggerInterface;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\YoutubeBundle\Document\Error;
 use Pumukit\YoutubeBundle\Document\Youtube;
+use Pumukit\YoutubeBundle\Exception\YoutubeQuotaExceededException;
 use Pumukit\YoutubeBundle\Services\VideoListService;
 use Pumukit\YoutubeBundle\Services\YoutubeConfigurationService;
 use Symfony\Component\Console\Command\Command;
@@ -137,10 +138,15 @@ EOT
             }
 
             try {
-                $result = $this->videoListService->updateVideoStatus($youtube, $multimediaObject);
-                if (false === $result['status'] && 'quotaExceeded' === $result['message']) {
-                    break;
-                }
+                $this->videoListService->updateVideoStatus($youtube, $multimediaObject);
+            } catch (YoutubeQuotaExceededException $e) {
+                $this->logger->warning(sprintf(
+                    '[YouTube] Quota exceeded (reason=%s) while updating video statuses. Stopping this run.',
+                    $e->getReason()
+                ));
+                $output->writeln('<comment>YouTube API quota exceeded. Stopping this run.</comment>');
+
+                break;
             } catch (\Throwable $e) {
                 $errorLog = sprintf('[YouTube] Update status of the video %s failed: %s', $multimediaObject->getId(), $e->getMessage());
                 $output->writeln($errorLog);

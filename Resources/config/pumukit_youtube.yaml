@@ -144,3 +144,8 @@ services:
   Pumukit\YoutubeBundle\Services\CommonDataValidationService:
     class: Pumukit\YoutubeBundle\Services\CommonDataValidationService
 
+  Pumukit\YoutubeBundle\Services\GoogleApiErrorParser:
+    class: Pumukit\YoutubeBundle\Services\GoogleApiErrorParser
+    tags:
+      - { name: 'monolog.logger', channel: 'youtube' }
+

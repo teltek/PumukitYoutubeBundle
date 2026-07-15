@@ -28,17 +28,21 @@ class VideoListService extends GoogleVideoService
     private $documentManager;
     private $videoDataValidationService;
 
+    private $googleApiErrorParser;
+
     private $logger;
 
     public function __construct(
         GoogleAccountService $googleAccountService,
         DocumentManager $documentManager,
         VideoDataValidationService $videoDataValidationService,
+        GoogleApiErrorParser $googleApiErrorParser,
         LoggerInterface $logger
     ) {
         $this->googleAccountService = $googleAccountService;
         $this->documentManager = $documentManager;
         $this->videoDataValidationService = $videoDataValidationService;
+        $this->googleApiErrorParser = $googleApiErrorParser;
         $this->logger = $logger;
     }
 
@@ -78,24 +82,13 @@ class VideoListService extends GoogleVideoService
             $response = $this->list($account, $video);
             $status = $this->getStatusFromYouTubeResponse($response, $video);
         } catch (\Exception $exception) {
-            $rawMessage = $exception->getMessage();
-            $decoded = json_decode($rawMessage, true);
+            $parsed = $this->googleApiErrorParser->parse($exception);
 
-            if (is_array($decoded) && isset($decoded['error']['errors'][0]['reason'])) {
-                $reason = $decoded['error']['errors'][0]['reason'];
-                $message = $decoded['error']['errors'][0]['message'] ?? 'No message received';
-                $raw = $decoded['error'];
-            } else {
-                $reason = 'pumukit.apiError';
-                $message = '' !== $rawMessage ? $rawMessage : get_class($exception);
-                $raw = ['message' => $message, 'exception' => get_class($exception)];
-            }
-
-            $error = Error::create($reason, $message, new \DateTime(), $raw);
+            $error = Error::create($parsed->reason(), $parsed->message(), new \DateTime(), $parsed->raw());
             $youtube->setError($error);
             $this->documentManager->flush();
 
-            return ['status' => false, 'message' => $reason];
+            return ['status' => false, 'message' => $parsed->reason()];
         }
 
         $youtube->setStatus($status);
