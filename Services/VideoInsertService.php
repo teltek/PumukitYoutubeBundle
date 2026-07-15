@@ -13,6 +13,7 @@ use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\YoutubeBundle\Document\Error;
 use Pumukit\YoutubeBundle\Document\Youtube;
+use Pumukit\YoutubeBundle\Exception\YoutubeQuotaExceededException;
 
 class VideoInsertService extends GoogleVideoService
 {
@@ -24,6 +25,8 @@ class VideoInsertService extends GoogleVideoService
     private $youtubeConfigurationService;
     private $videoDataValidationService;
 
+    private $googleApiErrorParser;
+
     private $logger;
 
     public function __construct(
@@ -31,12 +34,14 @@ class VideoInsertService extends GoogleVideoService
         DocumentManager $documentManager,
         YoutubeConfigurationService $youtubeConfigurationService,
         VideoDataValidationService $videoDataValidationService,
+        GoogleApiErrorParser $googleApiErrorParser,
         LoggerInterface $logger
     ) {
         $this->googleAccountService = $googleAccountService;
         $this->documentManager = $documentManager;
         $this->youtubeConfigurationService = $youtubeConfigurationService;
         $this->videoDataValidationService = $videoDataValidationService;
+        $this->googleApiErrorParser = $googleApiErrorParser;
         $this->logger = $logger;
     }
 
@@ -73,10 +78,19 @@ class VideoInsertService extends GoogleVideoService
         try {
             $video = $this->insert($account, $video, $track);
         } catch (\Throwable $exception) {
-            $this->updateVideoAndYoutubeDocumentByErrorResult(
-                $youtubeDocument,
-                $this->decodeYoutubeError($exception)
-            );
+            try {
+                $parsed = $this->googleApiErrorParser->parse($exception);
+            } catch (YoutubeQuotaExceededException $quotaException) {
+                $this->rollbackUploadDocument($youtubeDocument, $multimediaObject);
+
+                throw $quotaException;
+            }
+
+            $youtubeDocument->setStatus(Youtube::STATUS_ERROR);
+            $error = Error::create($parsed->reason(), $parsed->message(), new \DateTime(), $parsed->raw());
+            $youtubeDocument->setError($error);
+            $this->documentManager->persist($youtubeDocument);
+            $this->documentManager->flush();
 
             $errorLog = '[YouTube] Multimedia object with ID ('.$multimediaObject->getId().') failed uploading to YouTube. '.$exception->getMessage();
             $this->logger->error($errorLog);
@@ -259,23 +273,12 @@ class VideoInsertService extends GoogleVideoService
         return $result;
     }
 
-    private function decodeYoutubeError(\Throwable $exception): array
+    private function rollbackUploadDocument(Youtube $youtube, MultimediaObject $multimediaObject): void
     {
-        $message = $exception->getMessage();
-        $decoded = json_decode($message, true);
-
-        if (is_array($decoded) && isset($decoded['error']['errors'][0]['reason'], $decoded['error']['message'])) {
-            return $decoded;
-        }
-
-        return [
-            'error' => [
-                'errors' => [[
-                    'reason' => 'uploadFailed',
-                ]],
-                'message' => $message,
-            ],
-        ];
+        $this->documentManager->remove($youtube);
+        $multimediaObject->removeProperty('youtube');
+        $multimediaObject->removeProperty('youtubeurl');
+        $this->documentManager->flush();
     }
 
     private function createVideo(
@@ -337,23 +340,6 @@ class VideoInsertService extends GoogleVideoService
             $youtube->setSyncMetadataDate($now);
             $youtube->setUploadDate($now);
         }
-
-        $this->documentManager->persist($youtube);
-        $this->documentManager->flush();
-    }
-
-    private function updateVideoAndYoutubeDocumentByErrorResult(
-        Youtube $youtube,
-        array $exception
-    ): void {
-        $youtube->setStatus(Youtube::STATUS_ERROR);
-        $error = Error::create(
-            $exception['error']['errors'][0]['reason'],
-            $exception['error']['message'],
-            new \DateTime(),
-            $exception['error']
-        );
-        $youtube->setError($error);
 
         $this->documentManager->persist($youtube);
         $this->documentManager->flush();

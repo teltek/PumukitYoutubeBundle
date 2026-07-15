@@ -11,6 +11,7 @@ use Pumukit\SchemaBundle\Document\EmbeddedBroadcast;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\YoutubeBundle\Document\Youtube;
+use Pumukit\YoutubeBundle\Exception\YoutubeQuotaExceededException;
 use Pumukit\YoutubeBundle\PumukitYoutubeBundle;
 use Pumukit\YoutubeBundle\Services\VideoDeleteService;
 use Pumukit\YoutubeBundle\Services\YoutubeConfigurationService;
@@ -95,19 +96,19 @@ EOT
     {
         foreach ($multimediaObjects as $multimediaObject) {
             try {
-                $result = $this->videoDeleteService->deleteVideoFromYouTubeByMultimediaObject($multimediaObject);
+                $this->videoDeleteService->deleteVideoFromYouTubeByMultimediaObject($multimediaObject);
+            } catch (YoutubeQuotaExceededException $e) {
+                $this->logger->warning(sprintf(
+                    '[YouTube] Quota exceeded (reason=%s) while deleting videos. Stopping this run.',
+                    $e->getReason()
+                ));
+                $output->writeln('<comment>YouTube API quota exceeded. Stopping this run.</comment>');
+
+                break;
             } catch (\Throwable $e) {
                 $errorLog = sprintf('[YouTube] Remove video %s failed. Error: %s', $multimediaObject->getId(), $e->getMessage());
                 $this->logger->error($errorLog);
                 $output->writeln($errorLog);
-
-                $youtube = $this->documentManager->getRepository(Youtube::class)->findOneBy([
-                    'multimediaObjectId' => $multimediaObject->getId(),
-                ]);
-                if ($youtube instanceof Youtube) {
-                    $youtube->setStatus(Youtube::STATUS_ERROR);
-                    $this->documentManager->flush();
-                }
             }
         }
     }
@@ -116,7 +117,7 @@ EOT
     {
         foreach ($youtubeDocuments as $youtube) {
             try {
-                $result = $this->videoDeleteService->deleteVideoFromYouTubeByYouTubeDocument($youtube);
+                $this->videoDeleteService->deleteVideoFromYouTubeByYouTubeDocument($youtube);
 
                 $youtubeTag = $this->documentManager->getRepository(Tag::class)->findOneBy(['cod' => PumukitYoutubeBundle::YOUTUBE_TAG_CODE]);
                 $multimediaObject = $this->documentManager->getRepository(MultimediaObject::class)->findOneBy(['_id' => new ObjectId($youtube->getMultimediaObjectId())]);
@@ -132,13 +133,18 @@ EOT
                         }
                     }
                 }
+            } catch (YoutubeQuotaExceededException $e) {
+                $this->logger->warning(sprintf(
+                    '[YouTube] Quota exceeded (reason=%s) while deleting orphan videos. Stopping this run.',
+                    $e->getReason()
+                ));
+                $output->writeln('<comment>YouTube API quota exceeded. Stopping this run.</comment>');
+
+                break;
             } catch (\Throwable $e) {
                 $errorLog = sprintf('[YouTube] Remove video assigned on YoutubeDocument %s failed. Error: %s', $youtube->getId(), $e->getMessage());
                 $this->logger->error($errorLog);
                 $output->writeln($errorLog);
-
-                $youtube->setStatus(Youtube::STATUS_ERROR);
-                $this->documentManager->flush();
             }
         }
     }

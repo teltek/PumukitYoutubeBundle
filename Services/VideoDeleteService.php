@@ -10,6 +10,7 @@ use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\YoutubeBundle\Document\Error;
 use Pumukit\YoutubeBundle\Document\Youtube;
+use Pumukit\YoutubeBundle\Exception\YoutubeQuotaExceededException;
 
 class VideoDeleteService extends GoogleVideoService
 {
@@ -20,6 +21,8 @@ class VideoDeleteService extends GoogleVideoService
 
     private $playlistItemDeleteService;
 
+    private $googleApiErrorParser;
+
     private $logger;
 
     public function __construct(
@@ -27,12 +30,14 @@ class VideoDeleteService extends GoogleVideoService
         DocumentManager $documentManager,
         VideoDataValidationService $videoDataValidationService,
         PlaylistItemDeleteService $playlistItemDeleteService,
+        GoogleApiErrorParser $googleApiErrorParser,
         LoggerInterface $logger
     ) {
         $this->googleAccountService = $googleAccountService;
         $this->documentManager = $documentManager;
         $this->videoDataValidationService = $videoDataValidationService;
         $this->playlistItemDeleteService = $playlistItemDeleteService;
+        $this->googleApiErrorParser = $googleApiErrorParser;
         $this->logger = $logger;
     }
 
@@ -81,13 +86,9 @@ class VideoDeleteService extends GoogleVideoService
                 return false;
             }
         } catch (\Exception $exception) {
-            $error = json_decode($exception->getMessage(), true, 512, JSON_THROW_ON_ERROR);
-            $error = Error::create(
-                $error['error']['errors'][0]['reason'],
-                $error['error']['errors'][0]['message'] ?? 'No message received',
-                new \DateTime(),
-                $error['error']
-            );
+            $parsed = $this->googleApiErrorParser->parse($exception);
+
+            $error = Error::create($parsed->reason(), $parsed->message(), new \DateTime(), $parsed->raw());
             $youtube->setError($error);
             $this->documentManager->flush();
 
@@ -135,13 +136,9 @@ class VideoDeleteService extends GoogleVideoService
                 return false;
             }
         } catch (\Exception $exception) {
-            $error = json_decode($exception->getMessage(), true, 512, JSON_THROW_ON_ERROR);
-            $error = Error::create(
-                $error['error']['errors'][0]['reason'],
-                $error['error']['errors'][0]['message'] ?? 'No message received',
-                new \DateTime(),
-                $error['error']
-            );
+            $parsed = $this->googleApiErrorParser->parse($exception);
+
+            $error = Error::create($parsed->reason(), $parsed->message(), new \DateTime(), $parsed->raw());
             $youtube->setError($error);
             $this->documentManager->flush();
 
