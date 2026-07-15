@@ -43,14 +43,23 @@ class VideoUpdateService extends GoogleVideoService
 
     public function updateVideoOnYoutube(MultimediaObject $multimediaObject): bool
     {
-        $existingYoutubeDocument = $this->documentManager->getRepository(Youtube::class)->findOneBy([
+        $youtubeDocument = $this->documentManager->getRepository(Youtube::class)->findOneBy([
             'multimediaObjectId' => $multimediaObject->getId(),
         ]);
 
+        if (!$youtubeDocument instanceof Youtube) {
+            $this->logger->info(sprintf(
+                '[YouTube] Multimedia object %s has no Youtube document; skipping metadata update.',
+                $multimediaObject->getId()
+            ));
+
+            return false;
+        }
+
         $account = null;
-        if ($existingYoutubeDocument && $existingYoutubeDocument->getYoutubeAccount()) {
+        if ($youtubeDocument->getYoutubeAccount()) {
             $account = $this->documentManager->getRepository(Tag::class)->findOneBy([
-                'properties.login' => $existingYoutubeDocument->getYoutubeAccount(),
+                'properties.login' => $youtubeDocument->getYoutubeAccount(),
             ]);
         }
 
@@ -64,8 +73,6 @@ class VideoUpdateService extends GoogleVideoService
 
             return false;
         }
-
-        $youtubeDocument = $this->generateYoutubeDocument($multimediaObject, $account);
 
         if (Youtube::STATUS_PUBLISHED !== $youtubeDocument->getStatus()) {
             return false;
@@ -135,23 +142,4 @@ class VideoUpdateService extends GoogleVideoService
         return $video;
     }
 
-    private function generateYoutubeDocument(MultimediaObject $multimediaObject, Tag $account): Youtube
-    {
-        $youtube = $this->documentManager->getRepository(Youtube::class)->findOneBy([
-            'multimediaObjectId' => $multimediaObject->getId(),
-        ]);
-
-        if ($youtube) {
-            return $youtube;
-        }
-
-        $youtube = new Youtube();
-        $youtube->setMultimediaObjectId($multimediaObject->getId());
-        $youtube->setYoutubeAccount($account->getProperty('login'));
-        $this->documentManager->persist($youtube);
-
-        $multimediaObject->setProperty('youtube', $youtube->getId());
-
-        return $youtube;
-    }
 }

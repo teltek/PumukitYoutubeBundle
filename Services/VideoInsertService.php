@@ -74,6 +74,9 @@ class VideoInsertService extends GoogleVideoService
         $video = $this->createVideo($videoSnippet, $videoStatus);
 
         $youtubeDocument = $this->generateYoutubeDocument($multimediaObject, $account);
+        if (!$youtubeDocument instanceof Youtube) {
+            return false;
+        }
 
         try {
             $video = $this->insert($account, $video, $track);
@@ -171,6 +174,9 @@ class VideoInsertService extends GoogleVideoService
         $fileSize = (int) @filesize($filePath);
 
         $youtubeDocument = $this->generateYoutubeDocument($multimediaObject, $account);
+        if (!$youtubeDocument instanceof Youtube) {
+            return true;
+        }
         $youtubeDocument->setStatus(Youtube::STATUS_TO_REVIEW);
         $message = sprintf(
             'File "%s" size %d bytes exceeds configured max upload size %d bytes.',
@@ -292,14 +298,24 @@ class VideoInsertService extends GoogleVideoService
         return $video;
     }
 
-    private function generateYoutubeDocument(MultimediaObject $multimediaObject, Tag $account): Youtube
+    private function generateYoutubeDocument(MultimediaObject $multimediaObject, Tag $account): ?Youtube
     {
-        $youtube = $this->documentManager->getRepository(Youtube::class)->findOneBy([
+        $existingDocuments = $this->documentManager->getRepository(Youtube::class)->findBy([
             'multimediaObjectId' => $multimediaObject->getId(),
         ]);
 
-        if ($youtube) {
-            $this->documentManager->remove($youtube);
+        if (count($existingDocuments) > 1) {
+            $this->logger->warning(sprintf(
+                '[YouTube] Multimedia object %s has %d Youtube documents. Removing all before creating a fresh one.',
+                $multimediaObject->getId(),
+                count($existingDocuments)
+            ));
+        }
+
+        if ($existingDocuments) {
+            foreach ($existingDocuments as $existing) {
+                $this->documentManager->remove($existing);
+            }
             $multimediaObject->removeProperty('youtubeurl');
             $this->documentManager->flush();
         }
@@ -309,12 +325,36 @@ class VideoInsertService extends GoogleVideoService
         $youtube->setYoutubeAccount($account->getProperty('login'));
         $youtube->setStatus(Youtube::STATUS_UPLOADING);
         $this->documentManager->persist($youtube);
-
         $multimediaObject->setProperty('youtube', $youtube->getId());
 
-        $this->documentManager->flush();
+        try {
+            $this->documentManager->flush();
+        } catch (\Throwable $flushError) {
+            if (!$this->isDuplicateKeyException($flushError)) {
+                throw $flushError;
+            }
+
+            $this->logger->warning(sprintf(
+                '[YouTube] Duplicate key while creating Youtube document for MO %s (another process may be uploading). Skipping.',
+                $multimediaObject->getId()
+            ));
+
+            return null;
+        }
 
         return $youtube;
+    }
+
+    private function isDuplicateKeyException(\Throwable $e): bool
+    {
+        if (11000 === $e->getCode()) {
+            return true;
+        }
+        if ($e instanceof \MongoDB\Driver\Exception\BulkWriteException) {
+            return true;
+        }
+
+        return str_contains($e->getMessage(), 'E11000');
     }
 
     private function updateVideoAndYoutubeDocumentByResult(
