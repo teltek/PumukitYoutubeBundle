@@ -91,6 +91,16 @@ class VideoListService extends GoogleVideoService
             return ['status' => false, 'message' => $parsed->reason()];
         }
 
+        if (null === $status) {
+            $this->logger->info(sprintf(
+                '[YouTube] Video %s not present in YouTube API response. Silent retry, keeping current status (%d).',
+                $youtube->getYoutubeId(),
+                $youtube->getStatus()
+            ));
+
+            return ['status' => false, 'message' => 'pumukit.videoNotInResponse'];
+        }
+
         $youtube->setStatus($status);
         if (Youtube::STATUS_ERROR === $status || Youtube::STATUS_TO_REVIEW === $status) {
             $reason = $this->getReasonStatusFromYoutubeResponse($response, $video);
@@ -149,7 +159,13 @@ class VideoListService extends GoogleVideoService
         return $video;
     }
 
-    private function getStatusFromYouTubeResponse(VideoListResponse $response, Video $video): int
+    /**
+     * Returns the mapped Youtube status for the requested video, or null when
+     * the video is not present in the API response (empty items array or
+     * missing id). Callers must treat null as a transient miss and retry on
+     * the next cron run instead of persisting any status change.
+     */
+    private function getStatusFromYouTubeResponse(VideoListResponse $response, Video $video): ?int
     {
         foreach ($response['items'] as $item) {
             if ($item instanceof Video && $item->getId() === $video->getId()) {
@@ -157,7 +173,7 @@ class VideoListService extends GoogleVideoService
             }
         }
 
-        return Youtube::STATUS_TO_REVIEW;
+        return null;
     }
 
     private function getReasonStatusFromYoutubeResponse(VideoListResponse $response, Video $video): string
