@@ -10,7 +10,6 @@ use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\YoutubeBundle\Document\Error;
 use Pumukit\YoutubeBundle\Document\Youtube;
-use Pumukit\YoutubeBundle\Exception\YoutubeQuotaExceededException;
 
 class VideoDeleteService extends GoogleVideoService
 {

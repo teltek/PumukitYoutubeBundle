@@ -7,6 +7,7 @@ namespace Pumukit\YoutubeBundle\Services;
 use Doctrine\ODM\MongoDB\DocumentManager;
 use Google\Http\MediaFileUpload;
 use Google\Service\YouTube\Video;
+use MongoDB\Driver\Exception\BulkWriteException;
 use Psr\Log\LoggerInterface;
 use Pumukit\SchemaBundle\Document\MediaType\Track;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
@@ -350,7 +351,7 @@ class VideoInsertService extends GoogleVideoService
         if (11000 === $e->getCode()) {
             return true;
         }
-        if ($e instanceof \MongoDB\Driver\Exception\BulkWriteException) {
+        if ($e instanceof BulkWriteException) {
             return true;
         }
 

@@ -141,5 +141,4 @@ class VideoUpdateService extends GoogleVideoService
 
         return $video;
     }
-
 }
