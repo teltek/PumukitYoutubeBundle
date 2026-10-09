@@ -55,7 +55,7 @@ class UpdateListener
             return;
         }
 
-        if ($multimediaObject->getTrackWithTag('profile:'.$this->youtubeConfig->defaultTrackUpload())) {
+        if ($multimediaObject->getTrackWithTag('youtube')) {
             return;
         }
 
