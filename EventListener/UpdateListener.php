@@ -59,6 +59,10 @@ class UpdateListener
             return;
         }
 
+        if ($multimediaObject->getTrackWithTag('youtube')) {
+            return;
+        }
+
         $track = $this->getTrackForYoutube($multimediaObject);
         if (!$track) {
             return;
