@@ -98,6 +98,7 @@ EOT
 
         return $queryBuilder
             ->field('properties.youtube')->exists(true)
+            ->sort('_id', 'desc')
             ->getQuery()
             ->execute()
         ;
