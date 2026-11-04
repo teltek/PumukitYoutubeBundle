@@ -1,4 +1,3 @@
 pumukit_youtube_bundle:
     resource: "@PumukitYoutubeBundle/Controller/"
     type:     pumukit_youtube
-    prefix:   /admin/youtube

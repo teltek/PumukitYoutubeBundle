@@ -19,7 +19,7 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class AdminPagesTest extends YoutubeTestCase
 {
-    private const BASE = '/admin/youtube/admin/youtube';
+    private const BASE = '/admin/youtube';
 
     #[DataProvider('pagesOfTheRole')]
     public function testThePageNeedsTheRoleAndThenShows(string $path): void

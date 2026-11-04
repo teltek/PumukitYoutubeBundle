@@ -45,7 +45,7 @@ class RoutesTest extends KernelTestCase
 
         foreach (self::ROUTES as $name => $path) {
             $this->assertNotNull($routes->get($name), $name);
-            $this->assertSame('/admin/youtube/admin/youtube'.$path, $routes->get($name)->getPath(), $name);
+            $this->assertSame('/admin/youtube'.$path, $routes->get($name)->getPath(), $name);
         }
     }
 }
