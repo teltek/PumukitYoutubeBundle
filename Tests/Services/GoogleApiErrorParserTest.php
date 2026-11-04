@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pumukit\YoutubeBundle\Tests\Services;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use Pumukit\YoutubeBundle\Exception\YoutubeQuotaExceededException;
@@ -67,9 +68,7 @@ class GoogleApiErrorParserTest extends TestCase
         $this->assertSame('pumukit.apiError', $parsed->reason());
     }
 
-    /**
-     * @dataProvider quotaReasonsProvider
-     */
+    #[DataProvider('quotaReasonsProvider')]
     public function testThrowsQuotaExceptionForQuotaReasons(string $reason): void
     {
         $exception = new \RuntimeException($this->googleErrorJson($reason, 'quota message'));

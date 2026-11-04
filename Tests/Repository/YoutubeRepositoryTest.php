@@ -90,9 +90,13 @@ class YoutubeRepositoryTest extends PumukitTestCase
     public function testGetDistinctMultimediaObjectIdsWithAnyStatus()
     {
         $mm1 = new MultimediaObject();
+        $mm1->setNumericalID(1);
         $mm2 = new MultimediaObject();
+        $mm2->setNumericalID(2);
         $mm3 = new MultimediaObject();
+        $mm3->setNumericalID(3);
         $mm4 = new MultimediaObject();
+        $mm4->setNumericalID(4);
 
         $this->dm->persist($mm1);
         $this->dm->persist($mm2);
@@ -191,9 +195,13 @@ class YoutubeRepositoryTest extends PumukitTestCase
     public function testGetDistinctMultimediaObjectIdsWithStatusAndForce()
     {
         $mm1 = new MultimediaObject();
+        $mm1->setNumericalID(1);
         $mm2 = new MultimediaObject();
+        $mm2->setNumericalID(2);
         $mm3 = new MultimediaObject();
+        $mm3->setNumericalID(3);
         $mm4 = new MultimediaObject();
+        $mm4->setNumericalID(4);
 
         $this->dm->persist($mm1);
         $this->dm->persist($mm2);
