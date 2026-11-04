@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Pumukit\YoutubeBundle\Tests\EventListener;
 
-use PHPUnit\Framework\Attributes\Group;
+use Pumukit\EncoderBundle\Document\Job;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Event\MultimediaObjectEvent;
 use Pumukit\YoutubeBundle\Document\Youtube;
@@ -58,17 +58,36 @@ class UpdateAndRemoveListenerTest extends YoutubeTestCase
         $this->assertTrue($this->reload(MultimediaObject::class, $multimediaObject->getId())->containsTagWithCod('account_channel'));
     }
 
-    #[Group('to-change')]
-    public function testWithTheDefaultConfigurationAnAudioForYoutubeFailsOnUpdate(): void
+    public function testAnAudioForYoutubeGeneratesTheVideoTrackOnce(): void
     {
-        $multimediaObject = $this->video([$this->publicationChannel, $this->youtubeTag, $this->account], $this->track(null, ['master'], self::AUDIO_STREAMS));
-        $multimediaObject->setType(MultimediaObject::TYPE_AUDIO);
-        $this->dm->flush();
-
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Profile youtube does not exist');
+        $multimediaObject = $this->audioForYoutube();
 
         $this->update($multimediaObject);
+        $this->update($multimediaObject);
+
+        $jobs = $this->dm->getRepository(Job::class)->findBy(['mm_id' => $multimediaObject->getId()]);
+        $this->assertCount(1, $jobs);
+        $this->assertSame('video_youtube', $jobs[0]->getProfile());
+    }
+
+    public function testAnAudioWithItsVideoTrackDoesNotGenerateItAgain(): void
+    {
+        $multimediaObject = $this->audioForYoutube();
+        $multimediaObject->addTrack($this->track(null, ['youtube', 'html5', 'profile:video_youtube']));
+        $this->dm->flush();
+
+        $this->update($multimediaObject);
+
+        $this->assertSame([], $this->dm->getRepository(Job::class)->findBy(['mm_id' => $multimediaObject->getId()]));
+    }
+
+    public function testAVideoDoesNotGenerateTheTrackForAudios(): void
+    {
+        $multimediaObject = $this->videoForYoutube();
+
+        $this->update($multimediaObject);
+
+        $this->assertSame([], $this->dm->getRepository(Job::class)->findBy(['mm_id' => $multimediaObject->getId()]));
     }
 
     public function testRemovingAVideoMarksItsDocumentToDelete(): void
@@ -91,6 +110,15 @@ class UpdateAndRemoveListenerTest extends YoutubeTestCase
         $this->dm->flush();
 
         $this->assertSame([], $this->youtubeDocuments());
+    }
+
+    private function audioForYoutube(): MultimediaObject
+    {
+        $multimediaObject = $this->video([$this->publicationChannel, $this->youtubeTag, $this->account], $this->track($this->audioFile(), ['master'], self::AUDIO_STREAMS));
+        $multimediaObject->setType(MultimediaObject::TYPE_AUDIO);
+        $this->dm->flush();
+
+        return $multimediaObject;
     }
 
     private function update(MultimediaObject $multimediaObject): void

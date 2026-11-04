@@ -157,6 +157,20 @@ class VideoInsertServiceTest extends YoutubeTestCase
         $this->assertSame(basename($tagged->storage()->path()->path()), $this->youtubeOf($multimediaObject)->getFileUploaded());
     }
 
+    public function testAnAudioGoesUpWithItsVideoTrack(): void
+    {
+        $multimediaObject = $this->videoForYoutube($this->track(null, ['master'], self::AUDIO_STREAMS));
+        $video = $this->track(null, ['youtube', 'html5', 'profile:video_youtube']);
+        $multimediaObject->addTrack($video);
+        $this->dm->flush();
+        $this->api->willStartAnUpload();
+        $this->api->willFinishAnUpload('newid');
+
+        $this->assertTrue($this->service()->uploadVideoToYoutube($multimediaObject));
+
+        $this->assertSame(basename($video->storage()->path()->path()), $this->youtubeOf($multimediaObject)->getFileUploaded());
+    }
+
     public function testAM4vTrackIsNotUploaded(): void
     {
         $multimediaObject = $this->videoForYoutube($this->track($this->file('video', 'm4v')));

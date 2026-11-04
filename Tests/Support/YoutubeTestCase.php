@@ -114,6 +114,15 @@ abstract class YoutubeTestCase extends PumukitTestCase
         return $file;
     }
 
+    protected function audioFile(): string
+    {
+        $samples = str_repeat("\0\0", 8000);
+        $format = pack('vvVVvv', 1, 1, 8000, 16000, 2, 16);
+        $body = 'WAVEfmt '.pack('V', strlen($format)).$format.'data'.pack('V', strlen($samples)).$samples;
+
+        return $this->file('RIFF'.pack('V', strlen($body)).$body, 'wav');
+    }
+
     protected function sparseFile(int $bytes): string
     {
         $file = $this->file('');

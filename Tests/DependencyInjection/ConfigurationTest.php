@@ -77,6 +77,34 @@ class ConfigurationTest extends TestCase
         $this->assertSame('%pumukit.downloads_dir%', $profile['streamserver']['dir_out']);
     }
 
+    public function testByDefaultAnAudioUsesTheProfileOfTheBundle(): void
+    {
+        $container = $this->container();
+
+        (new PumukitYoutubeExtension())->load([], $container);
+
+        $this->assertSame('video_youtube', $container->getParameter('pumukit_youtube.default_track_upload'));
+    }
+
+    public function testAConfiguredProfileThatDoesNotExistFallsBackToTheOneOfTheBundle(): void
+    {
+        $container = $this->container();
+
+        (new PumukitYoutubeExtension())->load([['default_track_upload' => 'youtube']], $container);
+
+        $this->assertSame('video_youtube', $container->getParameter('pumukit_youtube.default_track_upload'));
+    }
+
+    public function testAConfiguredProfileThatExistsIsKept(): void
+    {
+        $container = $this->container();
+        $container->setParameter('pumukitencode.profilelist', ['audio_youtube_video' => ['bat' => 'mine']]);
+
+        (new PumukitYoutubeExtension())->load([['default_track_upload' => 'audio_youtube_video']], $container);
+
+        $this->assertSame('audio_youtube_video', $container->getParameter('pumukit_youtube.default_track_upload'));
+    }
+
     public function testAProfileOfTheInstallationWinsOverTheOneOfTheBundle(): void
     {
         $container = $this->container();

@@ -17,7 +17,7 @@ pumukit_youtube:
    pub_channels_tags:
       - PUCHYOUTUBE
    sync_status: false
-   default_track_upload: youtube
+   default_track_upload: video_youtube
    default_image_for_audio: /SchemaBundle/Resources/public/images/playlist_folder.png
    allowed_caption_mimetypes:
       - vtt
@@ -34,7 +34,7 @@ pumukit_youtube:
 - `locale` Locale for PuMuKIT metadata uploaded to YouTube
 - `pub_channels_tags` Tags necessary as a condition to be published on YouTube.
 - `sync_status` Sync video status and upload video public, hidden or blocked
-- `default_track_upload` Default track to YouTube upload
+- `default_track_upload` Encoder profile that generates the video track uploaded for an audio. If it does not exist, the profile of the bundle is used. Default value: video_youtube
 - `default_image_for_audio` Default image for audio to YouTube upload
 - `allowed_caption_mimetypes` Determines allowed caption mimetypes to upload to YouTube. Default value: [vtt, dfxp]
 - `generate_sbs` Variable that generates a SBS track of a multi-stream multimedia object. Set to true to use.

@@ -19,6 +19,8 @@ use Symfony\Component\Yaml\Yaml;
 
 class PumukitYoutubeExtension extends Extension implements PrependExtensionInterface
 {
+    public const AUDIO_TRACK_PROFILE = 'video_youtube';
+
     private const COMMAND_NAMESPACE = 'Pumukit\YoutubeBundle\Command\\';
     private const SERVICES_OF_AN_ENABLED_BUNDLE = [
         UpdateListener::class,
@@ -114,6 +116,10 @@ class PumukitYoutubeExtension extends Extension implements PrependExtensionInter
 
         $container->setParameter('pumukit_youtube.profilelist', $profiles);
         $container->setParameter('pumukitencode.profilelist', $encoderProfiles);
+        $container->setParameter(
+            'pumukit_youtube.default_track_upload',
+            isset($encoderProfiles[$config['default_track_upload']]) ? $config['default_track_upload'] : self::AUDIO_TRACK_PROFILE
+        );
     }
 
     public function getConfiguration(array $config, ContainerBuilder $container): Configuration
