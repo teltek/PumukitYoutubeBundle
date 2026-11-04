@@ -60,7 +60,7 @@ class StatsController extends AbstractController
             'status' => (int) $status,
         ]);
 
-        $page = (int) $request->get('page', 1);
+        $page = $request->query->getInt('page', 1);
         $youtubeDocuments = $this->paginationService->createArrayAdapter($youtubeDocuments, $page, 20);
 
         return $this->render('@PumukitYoutube/Stats/template_list.html.twig', [
@@ -80,7 +80,7 @@ class StatsController extends AbstractController
             'youtubeAccount' => $account,
         ]);
 
-        $page = (int) $request->get('page', 1);
+        $page = $request->query->getInt('page', 1);
         $youtubeDocuments = $this->paginationService->createArrayAdapter($youtubeDocuments, $page, 20);
 
         return $this->render('@PumukitYoutube/Stats/template_list.html.twig', [
@@ -94,7 +94,7 @@ class StatsController extends AbstractController
     {
         $youtubeDocuments = $this->youtubeStatsService->getByError();
 
-        $page = (int) $request->get('page', 1);
+        $page = $request->query->getInt('page', 1);
         $youtubeDocuments = $this->paginationService->createArrayAdapter($youtubeDocuments, $page, 20);
 
         return $this->render('@PumukitYoutube/Stats/template_list.html.twig', [
@@ -108,7 +108,7 @@ class StatsController extends AbstractController
     {
         $youtubeDocuments = $this->youtubeStatsService->getByMetadataUpdateError();
 
-        $page = (int) $request->get('page', 1);
+        $page = $request->query->getInt('page', 1);
         $youtubeDocuments = $this->paginationService->createArrayAdapter($youtubeDocuments, $page, 20);
 
         return $this->render('@PumukitYoutube/Stats/template_list.html.twig', [
@@ -122,7 +122,7 @@ class StatsController extends AbstractController
     {
         $youtubeDocuments = $this->youtubeStatsService->getByPlaylistUpdateError();
 
-        $page = (int) $request->get('page', 1);
+        $page = $request->query->getInt('page', 1);
         $youtubeDocuments = $this->paginationService->createArrayAdapter($youtubeDocuments, $page, 20);
 
         return $this->render('@PumukitYoutube/Stats/template_list.html.twig', [
@@ -136,7 +136,7 @@ class StatsController extends AbstractController
     {
         $youtubeDocuments = $this->youtubeStatsService->getByCaptionUpdateError();
 
-        $page = (int) $request->get('page', 1);
+        $page = $request->query->getInt('page', 1);
         $youtubeDocuments = $this->paginationService->createArrayAdapter($youtubeDocuments, $page, 20);
 
         return $this->render('@PumukitYoutube/Stats/template_list.html.twig', [
