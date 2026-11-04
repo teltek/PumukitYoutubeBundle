@@ -8,6 +8,13 @@ services:
       $tempDir: "%pumukit.tmp%"
       $picDir: "%pumukit.uploads_pic_dir%"
       $accountStorage: "%pumukit_youtube.account_storage%"
+      Psr\Log\LoggerInterface $logger: '@monolog.logger.youtube'
+
+  Pumukit\YoutubeBundle\Routing\RouteLoader:
+    arguments:
+      $enabled: '%pumukit_youtube.enable%'
+      $env: '%kernel.environment%'
+    tags: ['routing.loader']
 
   Pumukit\YoutubeBundle\Controller\:
     resource: '../../Controller'
@@ -15,9 +22,7 @@ services:
 
   Pumukit\YoutubeBundle\Command\:
     resource: '../../Command/'
-    tags:
-      - { name: 'console.command' }
-      - { name: 'monolog.logger', channel: 'youtube' }
+    tags: ['console.command']
 
   Pumukit\YoutubeBundle\EventListener\UpdateListener:
     class: Pumukit\YoutubeBundle\EventListener\UpdateListener
@@ -146,6 +151,4 @@ services:
 
   Pumukit\YoutubeBundle\Services\GoogleApiErrorParser:
     class: Pumukit\YoutubeBundle\Services\GoogleApiErrorParser
-    tags:
-      - { name: 'monolog.logger', channel: 'youtube' }
 

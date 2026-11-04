@@ -9,6 +9,7 @@ Add your YouTube configuration to your `config/pumukit_youtube.yaml` file:
 
 ```
 pumukit_youtube:
+   enable: true
    playlist_privacy_status: public
    playlists_master: pumukit
    delete_playlists: false
@@ -26,6 +27,7 @@ pumukit_youtube:
    account_storage: '/srv/pumukit/config/youtube_accounts/'
 ```
 
+- `enable` If false, nothing of the bundle is loaded, and no other option is needed. Default value: true
 - `playlist_privacy_status` Playlist privacy status. Default value: public
 - `playlists_master` Determines from where playlists are created. Default value: pumukit
 - `delete_playlists` Variable that configures whether playlists that are not on the master(pumukit) are deleted on the slave(youtube) or not.  - default:false

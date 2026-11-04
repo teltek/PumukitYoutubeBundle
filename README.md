@@ -1,34 +1,65 @@
 PuMuKIT Youtube Bundle
 =======================
 
-This bundle requires PuMuKIT version 4 or higher
+This bundle requires PuMuKIT 6.0 and PHP 8.5.
 
 ```bash
-composer require teltek/pumukit-oai-bundle
+composer require teltek/pumukit-youtube-bundle
 ```
 
-if not, add this to config/bundles.php
+If not added automatically, add this to `config/bundles.php`:
 
-```
+```php
 Pumukit\YoutubeBundle\PumukitYoutubeBundle::class => ['all' => true]
 ```
 
-Initialize bundle tags
+Import the routes:
 
-```bash
-php bin/console youtube:init:tags --force
+```yaml
+pumukit_youtube:
+    resource: "@PumukitYoutubeBundle/Resources/config/routing.yml"
 ```
 
-Then execute the following commands
+Initialize the bundle tags:
+
+```bash
+php bin/console pumukit:youtube:init:pubchannel --force
+```
+
+Then execute the following commands:
 
 ```bash
 php bin/console cache:clear
-php bin/console cache:clear --env=prod
 php bin/console assets:install
 ```
 
-Configure the bundle using documentation [Configuration Guide](Resources/doc/ConfigurationGuide.md).
+Configure the bundle using the [Configuration Guide](Resources/doc/ConfigurationGuide.md). With `enable: false` the
+routes, commands, listeners, menu entries, encoder profiles and the permission of the bundle are not loaded.
 
+The Google client brings every Google service (about 200 MB). To keep only YouTube, add this to the `composer.json` of
+the installation and run `composer install`:
+
+```json
+{
+    "scripts": {
+        "pre-autoload-dump": "Google\\Task\\Composer::cleanup"
+    },
+    "extra": {
+        "google/apiclient-services": ["YouTube"]
+    }
+}
+```
+
+The bundle logs to its own `youtube` channel, in `var/log/youtube_<environment>-YYYY-MM-DD.log` (30 files kept).
+
+## Tests
+
+They run inside a PuMuKIT 6.0 with the bundle installed and never call YouTube: the real Google client talks to
+simulated answers.
+
+```bash
+vendor/bin/phpunit vendor/teltek/pumukit-youtube-bundle/Tests/
+```
 
 With thanks to
 --------------

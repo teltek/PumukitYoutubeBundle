@@ -4,16 +4,32 @@ declare(strict_types=1);
 
 namespace Pumukit\YoutubeBundle\DependencyInjection;
 
+use Pumukit\YoutubeBundle\EventListener\BackofficeListener;
+use Pumukit\YoutubeBundle\EventListener\RemoveListener;
+use Pumukit\YoutubeBundle\EventListener\UpdateListener;
+use Pumukit\YoutubeBundle\Services\MenuService;
+use Pumukit\YoutubeBundle\Services\MenuStatService;
+use Pumukit\YoutubeBundle\Services\MultimediaObjectMenuService;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Extension\Extension;
 use Symfony\Component\DependencyInjection\Extension\PrependExtensionInterface;
-use Symfony\Component\DependencyInjection\Loader;
-use Symfony\Component\HttpKernel\DependencyInjection\Extension;
+use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 use Symfony\Component\Yaml\Yaml;
 
 class PumukitYoutubeExtension extends Extension implements PrependExtensionInterface
 {
-    public function prepend(ContainerBuilder $container)
+    private const COMMAND_NAMESPACE = 'Pumukit\YoutubeBundle\Command\\';
+    private const SERVICES_OF_AN_ENABLED_BUNDLE = [
+        UpdateListener::class,
+        RemoveListener::class,
+        BackofficeListener::class,
+        MenuService::class,
+        MenuStatService::class,
+        MultimediaObjectMenuService::class,
+    ];
+
+    public function prepend(ContainerBuilder $container): void
     {
         $container->prependExtensionConfig('monolog', [
             'channels' => ['youtube'],
@@ -29,6 +45,23 @@ class PumukitYoutubeExtension extends Extension implements PrependExtensionInter
                 ],
             ],
         ]);
+
+        if (!$this->processConfiguration(new Configuration(), $container->getExtensionConfig($this->getAlias()))['enable']) {
+            return;
+        }
+
+        $container->prependExtensionConfig('pumukit_schema', [
+            'external_permissions' => [
+                [
+                    'role' => 'ROLE_ACCESS_YOUTUBE',
+                    'description' => 'Access youtube CRUD',
+                    'dependencies' => [
+                        'global' => [],
+                        'personal' => [],
+                    ],
+                ],
+            ],
+        ]);
     }
 
     public function load(array $configs, ContainerBuilder $container): void
@@ -36,6 +69,7 @@ class PumukitYoutubeExtension extends Extension implements PrependExtensionInter
         $configuration = new Configuration($container->getParameter('kernel.default_locale'));
         $config = $this->processConfiguration($configuration, $configs);
 
+        $container->setParameter('pumukit_youtube.enable', $config['enable']);
         $container->setParameter('pumukit_youtube.playlist_privacy_status', $config['playlist_privacy_status']);
         $container->setParameter('pumukit_youtube.playlists_master', $config['playlists_master']);
         $container->setParameter('pumukit_youtube.delete_playlists', $config['delete_playlists']);
@@ -52,37 +86,51 @@ class PumukitYoutubeExtension extends Extension implements PrependExtensionInter
         $container->setParameter('pumukit_youtube.upload_timeout_hours', $config['upload_timeout_hours']);
         $container->setParameter('pumukit_youtube.max_upload_size_in_bytes', $config['max_upload_size_in_bytes']);
 
-        $bundleConfiguration = Yaml::parse(file_get_contents(__DIR__.'/../Resources/config/encoders.yml'));
-        if (!$config['profiles'] && $bundleConfiguration['pumukit_youtube']['profiles']) {
-            $config['profiles'] = $bundleConfiguration['pumukit_youtube']['profiles'];
-        }
-        $container->setParameter('pumukit_youtube.profilelist', $config['profiles']);
-
-        $encoderBundleProfiles = $container->getParameter('pumukitencode.profilelist');
-        $profilesToMerge = [];
-        foreach ($config['profiles'] as $name => $profile) {
-            $image = '"'.$container->getParameter('pumukit_youtube.default_image_for_audio').'"';
-            $profile['bat'] = str_replace('__IMAGE__', $image, $profile['bat']);
-            $config['profiles'][$name] = $profile;
-
-            if (!isset($encoderBundleProfiles[$name])) {
-                $profilesToMerge[$name] = $profile;
-            }
-        }
-        $newProfiles = array_merge($encoderBundleProfiles, $profilesToMerge);
-
-        $container->setParameter('pumukitencode.profilelist', $newProfiles);
-
-        $loader = new Loader\YamlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
+        $loader = new YamlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
         $loader->load('pumukit_youtube.yaml');
 
-        $permissions = [['role' => 'ROLE_ACCESS_YOUTUBE', 'description' => 'Access youtube CRUD']];
-        $newPermissions = array_merge($container->getParameter('pumukitschema.external_permissions'), $permissions);
-        $container->setParameter('pumukitschema.external_permissions', $newPermissions);
+        if (!$config['enable']) {
+            $this->removeWhatAnEnabledBundleLoads($container);
+            $container->setParameter('pumukit_youtube.profilelist', []);
+
+            return;
+        }
+
+        $profiles = $config['profiles'] ?: $this->processConfiguration(
+            $configuration,
+            [Yaml::parseFile(__DIR__.'/../Resources/config/encoders.yml')['pumukit_youtube']]
+        )['profiles'];
+
+        $encoderProfiles = $container->getParameter('pumukitencode.profilelist');
+        $image = '"'.$config['default_image_for_audio'].'"';
+        foreach ($profiles as $name => $profile) {
+            $profile['bat'] = str_replace('__IMAGE__', $image, $profile['bat']);
+            $profiles[$name] = $profile;
+
+            if (!isset($encoderProfiles[$name])) {
+                $encoderProfiles[$name] = $profile;
+            }
+        }
+
+        $container->setParameter('pumukit_youtube.profilelist', $profiles);
+        $container->setParameter('pumukitencode.profilelist', $encoderProfiles);
     }
 
     public function getConfiguration(array $config, ContainerBuilder $container): Configuration
     {
         return new Configuration($container->getParameter('kernel.default_locale'));
+    }
+
+    private function removeWhatAnEnabledBundleLoads(ContainerBuilder $container): void
+    {
+        foreach (self::SERVICES_OF_AN_ENABLED_BUNDLE as $service) {
+            $container->removeDefinition($service);
+        }
+
+        foreach (array_keys($container->getDefinitions()) as $service) {
+            if (str_starts_with($service, self::COMMAND_NAMESPACE)) {
+                $container->removeDefinition($service);
+            }
+        }
     }
 }
