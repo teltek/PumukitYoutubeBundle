@@ -125,7 +125,7 @@ class UpdateListener
         ]);
 
         if (!$youtubeTag) {
-            throw new \Exception(PumukitYoutubeBundle::YOUTUBE_TAG_CODE.' tag not found');
+            return;
         }
 
         if (!$multimediaObject->isPrototype() && !$multimediaObject->containsTag($youtubeTag)) {

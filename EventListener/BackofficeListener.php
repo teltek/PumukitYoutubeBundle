@@ -43,7 +43,7 @@ class BackofficeListener
             return false;
         }
 
-        $pubChannels = array_keys($request->request->get('pub_channels'));
+        $pubChannels = array_keys($request->request->all('pub_channels'));
         if (!in_array(PumukitYoutubeBundle::YOUTUBE_PUBLICATION_CHANNEL_CODE, $pubChannels, true)) {
             return false;
         }
@@ -54,7 +54,7 @@ class BackofficeListener
 
         $this->tagService->addTagToMultimediaObject($multimediaObject, $youtubeTag->getId());
         $this->tagService->addTagToMultimediaObject($multimediaObject, new ObjectId($request->request->get('youtube_label')));
-        $this->addPlaylistToMultimediaObject($multimediaObject, $request->request->get('youtube_playlist_label'));
+        $this->addPlaylistToMultimediaObject($multimediaObject, $request->request->all('youtube_playlist_label'));
 
         $youtubeDocument = $this->documentManager->getRepository(Youtube::class)->findOneBy(['multimediaObjectId' => $multimediaObject->getId()]);
         if ($youtubeDocument) {
