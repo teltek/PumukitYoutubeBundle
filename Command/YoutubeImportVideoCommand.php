@@ -59,7 +59,7 @@ class YoutubeImportVideoCommand extends Command
         parent::__construct();
     }
 
-    protected function configure()
+    protected function configure(): void
     {
         $this->setName('pumukit:youtube:import:video')->setDescription('Create a multimedia object from Youtube')->addArgument(
             'login',
@@ -241,7 +241,7 @@ EOT
         return 0;
     }
 
-    protected function initialize(InputInterface $input, OutputInterface $output)
+    protected function initialize(InputInterface $input, OutputInterface $output): void
     {
         /* $this->tagRepo = $this->documentManager->getRepository(Tag::class);
          $this->mmobjRepo = $this->documentManager->getRepository(MultimediaObject::class);

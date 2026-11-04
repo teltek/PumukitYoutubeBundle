@@ -108,7 +108,7 @@ class CaptionsInsertService extends GoogleCaptionService
         );
     }
 
-    private function createCaptionItem(Material $material, string $videoId): \Google_Service_YouTube_Caption
+    private function createCaptionItem(Material $material, string $videoId): \Google\Service\YouTube\Caption
     {
         $captionSnippet = $this->createCaptionSnippet($material, $videoId);
 

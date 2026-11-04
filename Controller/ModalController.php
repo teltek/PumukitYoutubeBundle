@@ -13,11 +13,9 @@ use Pumukit\YoutubeBundle\Services\VideoInsertService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 
-/**
- * @Route ("/admin/youtube")
- */
+#[Route('/admin/youtube')]
 class ModalController extends AbstractController
 {
     private $documentManager;
@@ -39,9 +37,7 @@ class ModalController extends AbstractController
         $this->videoInsertService = $videoInsertService;
     }
 
-    /**
-     * @Route ("/modal/mm/{id}", name="pumukityoutube_modal_index")
-     */
+    #[Route('/modal/mm/{id}', name: 'pumukityoutube_modal_index')]
     public function indexAction(MultimediaObject $mm): Response
     {
         $youtube = $this->documentManager->getRepository(Youtube::class)->find($mm->getProperty('youtube'));
@@ -56,9 +52,7 @@ class ModalController extends AbstractController
         ]);
     }
 
-    /**
-     * @Route ("/updateplaylist/mm/{id}", name="pumukityoutube_updateplaylist")
-     */
+    #[Route('/updateplaylist/mm/{id}', name: 'pumukityoutube_updateplaylist')]
     public function updatePlaylistAction(MultimediaObject $multimediaObject): JsonResponse
     {
         $out = $this->playlistItemInsertService->updatePlaylist($multimediaObject);
@@ -66,9 +60,7 @@ class ModalController extends AbstractController
         return new JsonResponse($out);
     }
 
-    /**
-     * @Route ("/forceuploads/mm/{id}", name="pumukityoutube_force_upload")
-     */
+    #[Route('/forceuploads/mm/{id}', name: 'pumukityoutube_force_upload')]
     public function forceUploadAction(MultimediaObject $multimediaObject): JsonResponse
     {
         // Validate the track that would be uploaded against the max upload size before

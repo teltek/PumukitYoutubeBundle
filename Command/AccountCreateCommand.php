@@ -25,7 +25,7 @@ class AccountCreateCommand extends Command
         parent::__construct();
     }
 
-    protected function configure()
+    protected function configure(): void
     {
         $this
             ->setName('pumukit:youtube:account:create')

@@ -6,10 +6,9 @@ namespace Pumukit\YoutubeBundle\Document;
 
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ODM\MongoDB\Mapping\Annotations as MongoDB;
+use Pumukit\YoutubeBundle\Repository\YoutubeRepository;
 
-/**
- * @MongoDB\Document(repositoryClass="Pumukit\YoutubeBundle\Repository\YoutubeRepository")
- */
+#[MongoDB\Document(repositoryClass: YoutubeRepository::class)]
 class Youtube
 {
     public const STATUS_DEFAULT = 0;
@@ -34,104 +33,64 @@ class Youtube
         self::STATUS_TO_REVIEW => 'To review',
     ];
 
-    /**
-     * @MongoDB\Id
-     */
+    #[MongoDB\Id]
     private $id;
 
-    /**
-     * @MongoDB\Field(type="string")
-     */
+    #[MongoDB\Field(type: 'string')]
     private $multimediaObjectId;
 
-    /**
-     * @MongoDB\Field(type="string")
-     */
+    #[MongoDB\Field(type: 'string')]
     private $youtubeId;
 
-    /**
-     * @MongoDB\Field(type="string")
-     */
+    #[MongoDB\Field(type: 'string')]
     private $youtubeAccount;
 
-    /**
-     * @MongoDB\Field(type="string")
-     */
+    #[MongoDB\Field(type: 'string')]
     private $link = '';
 
-    /**
-     * @MongoDB\Field(type="string")
-     */
+    #[MongoDB\Field(type: 'string')]
     private $embed = '';
 
-    /**
-     * @MongoDB\Field(type="int")
-     */
+    #[MongoDB\Field(type: 'int')]
     private $status = self::STATUS_DEFAULT;
 
-    /**
-     * @MongoDB\Field(type="raw")
-     */
+    #[MongoDB\Field(type: 'raw')]
     private $playlists = [];
 
-    /**
-     * @MongoDB\Field(type="bool")
-     */
+    #[MongoDB\Field(type: 'bool')]
     private $force = false;
 
-    /**
-     * @MongoDB\Field(type="bool")
-     */
+    #[MongoDB\Field(type: 'bool')]
     private $updatePlaylist = false;
 
-    /**
-     * @MongoDB\Field(type="date")
-     */
+    #[MongoDB\Field(type: 'date')]
     private $multimediaObjectUpdateDate;
 
-    /**
-     * @MongoDB\Field(type="date")
-     */
+    #[MongoDB\Field(type: 'date')]
     private $syncMetadataDate;
 
-    /**
-     * @MongoDB\Field(type="date")
-     */
+    #[MongoDB\Field(type: 'date')]
     private $syncCaptionsDate;
 
-    /**
-     * @MongoDB\Field(type="date")
-     */
+    #[MongoDB\Field(type: 'date')]
     private $uploadDate;
 
-    /**
-     * @MongoDB\EmbedMany(targetDocument=Caption::class)
-     */
+    #[MongoDB\EmbedMany(targetDocument: Caption::class)]
     private $captions;
 
-    /**
-     * @MongoDB\Field(type="string")
-     */
+    #[MongoDB\Field(type: 'string')]
     private $fileUploaded;
 
-    /**
-     * @MongoDB\EmbedOne(targetDocument=Error::class)
-     */
+    #[MongoDB\EmbedOne(targetDocument: Error::class)]
     private $error;
 
-    /**
-     * @MongoDB\EmbedOne(targetDocument=Error::class)
-     */
+    #[MongoDB\EmbedOne(targetDocument: Error::class)]
     private $metadataUpdateError;
 
-    /**
-     * @MongoDB\EmbedOne(targetDocument=Error::class)
-     */
+    #[MongoDB\EmbedOne(targetDocument: Error::class)]
     private $playlistUpdateError;
 
-    /**
-     * @MongoDB\EmbedOne(targetDocument=Error::class)
-     */
+    #[MongoDB\EmbedOne(targetDocument: Error::class)]
     private $captionUpdateError;
 
     public function __construct()

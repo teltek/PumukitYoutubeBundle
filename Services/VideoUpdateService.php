@@ -119,7 +119,7 @@ class VideoUpdateService extends GoogleVideoService
 
     private function update(
         Tag $youtubeAccount,
-        \Google_Service_YouTube_Video $video,
+        \Google\Service\YouTube\Video $video,
     ): Video {
         $infoLog = sprintf('[YouTube] Video update: %s ', $video->getId());
         $this->logger->info($infoLog);
@@ -130,10 +130,10 @@ class VideoUpdateService extends GoogleVideoService
     }
 
     private function createVideo(
-        \Google_Service_YouTube_VideoSnippet $snippet,
-        \Google_Service_YouTube_VideoStatus $status,
+        \Google\Service\YouTube\VideoSnippet $snippet,
+        \Google\Service\YouTube\VideoStatus $status,
         string $videoId
-    ): \Google_Service_YouTube_Video {
+    ): \Google\Service\YouTube\Video {
         $video = $this->createGoogleServiceYoutubeVideo();
         $video->setId($videoId);
         $video->setSnippet($snippet);

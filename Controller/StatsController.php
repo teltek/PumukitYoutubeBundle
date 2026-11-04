@@ -6,21 +6,17 @@ namespace Pumukit\YoutubeBundle\Controller;
 
 use MongoDB\BSON\ObjectId;
 use Pumukit\CoreBundle\Services\PaginationService;
-use Pumukit\YoutubeBundle\Document\Youtube;
 use Pumukit\YoutubeBundle\Services\YoutubeConfigurationService;
 use Pumukit\YoutubeBundle\Services\YoutubeStatsService;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
-/**
- * @Security("is_granted('ROLE_ACCESS_YOUTUBE')")
- *
- * @Route("/admin/youtube/stats")
- */
+#[IsGranted('ROLE_ACCESS_YOUTUBE')]
+#[Route('/admin/youtube/stats')]
 class StatsController extends AbstractController
 {
     private $youtubeStatsService;
@@ -37,9 +33,7 @@ class StatsController extends AbstractController
         $this->paginationService = $paginationService;
     }
 
-    /**
-     * @Route("/", name="pumukit_youtube_stat_index")
-     */
+    #[Route('/', name: 'pumukit_youtube_stat_index')]
     public function indexAction(): Response
     {
         if (!$this->youtubeStatsService) {
@@ -55,9 +49,7 @@ class StatsController extends AbstractController
         ]);
     }
 
-    /**
-     * @Route("/status/list/{status}", name="pumukit_youtube_stat_list")
-     */
+    #[Route('/status/list/{status}', name: 'pumukit_youtube_stat_list')]
     public function listByStatusAction(Request $request, string $status): Response
     {
         if (!$this->youtubeStatsService) {
@@ -77,9 +69,7 @@ class StatsController extends AbstractController
         ]);
     }
 
-    /**
-     * @Route("/account/list/{account}", name="pumukit_youtube_stat_account_list")
-     */
+    #[Route('/account/list/{account}', name: 'pumukit_youtube_stat_account_list')]
     public function listByAccountAction(Request $request, string $account): Response
     {
         if (!$this->youtubeStatsService) {
@@ -99,9 +89,7 @@ class StatsController extends AbstractController
         ]);
     }
 
-    /**
-     * @Route("/list/error/upload", name="pumukit_youtube_stat_by_error")
-     */
+    #[Route('/list/error/upload', name: 'pumukit_youtube_stat_by_error')]
     public function listByErrorAction(Request $request): Response
     {
         $youtubeDocuments = $this->youtubeStatsService->getByError();
@@ -115,9 +103,7 @@ class StatsController extends AbstractController
         ]);
     }
 
-    /**
-     * @Route("/list/error/metadata", name="pumukit_youtube_stat_by_metadata_error")
-     */
+    #[Route('/list/error/metadata', name: 'pumukit_youtube_stat_by_metadata_error')]
     public function listByMetadataErrorAction(Request $request): Response
     {
         $youtubeDocuments = $this->youtubeStatsService->getByMetadataUpdateError();
@@ -131,9 +117,7 @@ class StatsController extends AbstractController
         ]);
     }
 
-    /**
-     * @Route("/list/error/playlists", name="pumukit_youtube_stat_by_playlists_error")
-     */
+    #[Route('/list/error/playlists', name: 'pumukit_youtube_stat_by_playlists_error')]
     public function listByPlaylistsErrorAction(Request $request): Response
     {
         $youtubeDocuments = $this->youtubeStatsService->getByPlaylistUpdateError();
@@ -147,9 +131,7 @@ class StatsController extends AbstractController
         ]);
     }
 
-    /**
-     * @Route("/list/error/caption", name="pumukit_youtube_stat_by_caption_error")
-     */
+    #[Route('/list/error/caption', name: 'pumukit_youtube_stat_by_caption_error')]
     public function listByCaptionErrorAction(Request $request): Response
     {
         $youtubeDocuments = $this->youtubeStatsService->getByCaptionUpdateError();
@@ -163,9 +145,7 @@ class StatsController extends AbstractController
         ]);
     }
 
-    /**
-     * @Route("/configuration/", name="pumukit_youtube_configuration")
-     */
+    #[Route('/configuration/', name: 'pumukit_youtube_configuration')]
     public function modalConfigurationAction(): Response
     {
         if (!$this->youtubeConfigurationService) {
@@ -177,9 +157,7 @@ class StatsController extends AbstractController
         ]);
     }
 
-    /**
-     * @Route("/modal/error/{id}", name="pumukit_youtube_errors")
-     */
+    #[Route('/modal/error/{id}', name: 'pumukit_youtube_errors')]
     public function infoJobAction(string $id): Response
     {
         $youtube = $this->youtubeStatsService->getYoutubeDocumentByCriteria([

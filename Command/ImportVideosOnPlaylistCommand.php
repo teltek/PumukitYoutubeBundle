@@ -143,14 +143,14 @@ EOT
         return $youtubeAccount;
     }
 
-    private function channelId(string $channel, \Google_Service_YouTube $service): string
+    private function channelId(string $channel, \Google\Service\YouTube $service): string
     {
         $channels = $this->channelInfo($channel, $service);
 
         return $channels->getItems()[0]->getId();
     }
 
-    private function channelInfo(string $channel, \Google_Service_YouTube $service): ChannelListResponse
+    private function channelInfo(string $channel, \Google\Service\YouTube $service): ChannelListResponse
     {
         $queryParams = ['id' => $channel];
 

@@ -38,7 +38,7 @@ class GoogleAccountService
         return $this->client;
     }
 
-    public function googleServiceFromAccount(Tag $youtubeAccount): \Google_Service_YouTube
+    public function googleServiceFromAccount(Tag $youtubeAccount): \Google\Service\YouTube
     {
         $login = $youtubeAccount->getProperty('login');
         if (!is_string($login) || '' === $login) {
@@ -82,9 +82,9 @@ class GoogleAccountService
         return $this->client;
     }
 
-    private function createService(Client $client): \Google_Service_YouTube
+    private function createService(Client $client): \Google\Service\YouTube
     {
-        return new \Google_Service_YouTube($client);
+        return new \Google\Service\YouTube($client);
     }
 
     private function setAccountScopes(): void

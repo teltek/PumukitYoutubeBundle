@@ -211,7 +211,7 @@ class VideoInsertService extends GoogleVideoService
 
     private function insert(
         Tag $youtubeAccount,
-        \Google_Service_YouTube_Video $video,
+        \Google\Service\YouTube\Video $video,
         Track $track
     ): Video {
         $filePath = $track->storage()->path()->path();
@@ -289,9 +289,9 @@ class VideoInsertService extends GoogleVideoService
     }
 
     private function createVideo(
-        \Google_Service_YouTube_VideoSnippet $snippet,
-        \Google_Service_YouTube_VideoStatus $status
-    ): \Google_Service_YouTube_Video {
+        \Google\Service\YouTube\VideoSnippet $snippet,
+        \Google\Service\YouTube\VideoStatus $status
+    ): \Google\Service\YouTube\Video {
         $video = $this->createGoogleServiceYoutubeVideo();
         $video->setSnippet($snippet);
         $video->setStatus($status);

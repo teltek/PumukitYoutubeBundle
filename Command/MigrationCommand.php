@@ -85,7 +85,7 @@ EOT
         $this->force = (true === $input->getOption('force'));
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         if (!$this->force) {
             $output->writeln(
@@ -110,7 +110,7 @@ EOT
             );
             $this->checkAccountExists($output);
 
-            return true;
+            return 0;
         }
 
         $output->writeln(
@@ -161,7 +161,7 @@ EOT
         );
         $this->updateMultimediaObjectsWithAccountTag($output);
 
-        return true;
+        return 0;
     }
 
     private function migratePubChannelYoutube(OutputInterface $output): void

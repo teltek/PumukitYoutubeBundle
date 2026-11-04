@@ -9,23 +9,19 @@ use MongoDB\BSON\ObjectId;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\SchemaBundle\Services\TagService;
-use Pumukit\YoutubeBundle\Document\Youtube;
 use Pumukit\YoutubeBundle\Form\Type\AccountType;
 use Pumukit\YoutubeBundle\Form\Type\YoutubePlaylistType;
 use Pumukit\YoutubeBundle\PumukitYoutubeBundle;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
-/**
- * @Route ("/admin/youtube")
- */
+#[Route('/admin/youtube')]
 class AdminController extends AbstractController
 {
     private $documentManager;
@@ -42,21 +38,15 @@ class AdminController extends AbstractController
         $this->tagService = $tagService;
     }
 
-    /**
-     * @Security("is_granted('ROLE_ACCESS_YOUTUBE')")
-     *
-     * @Route("/", name="pumukit_youtube_admin_index")
-     */
+    #[IsGranted('ROLE_ACCESS_YOUTUBE')]
+    #[Route('/', name: 'pumukit_youtube_admin_index')]
     public function indexAction(): Response
     {
         return $this->render('@PumukitYoutube/Admin/index.html.twig', []);
     }
 
-    /**
-     * @Security("is_granted('ROLE_ACCESS_YOUTUBE')")
-     *
-     * @Route("/list", name="pumukit_youtube_admin_list")
-     */
+    #[IsGranted('ROLE_ACCESS_YOUTUBE')]
+    #[Route('/list', name: 'pumukit_youtube_admin_list')]
     public function listAction(): Response
     {
         $youtubeAccounts = $this->documentManager->getRepository(Tag::class)->findOneBy(['cod' => PumukitYoutubeBundle::YOUTUBE_TAG_CODE]);
@@ -67,11 +57,8 @@ class AdminController extends AbstractController
         return $this->render('@PumukitYoutube/Admin/list.html.twig', ['youtubeAccounts' => $youtubeAccounts->getChildren()]);
     }
 
-    /**
-     * @Security("is_granted('ROLE_ACCESS_YOUTUBE')")
-     *
-     * @Route ("/create", name="pumukit_youtube_create_account")
-     */
+    #[IsGranted('ROLE_ACCESS_YOUTUBE')]
+    #[Route('/create', name: 'pumukit_youtube_create_account')]
     public function createAction(Request $request)
     {
         $locale = $request->getLocale();
@@ -107,11 +94,8 @@ class AdminController extends AbstractController
         return $this->render('@PumukitYoutube/Admin/create.html.twig', ['form' => $form->createView()]);
     }
 
-    /**
-     * @Security("is_granted('ROLE_ACCESS_YOUTUBE')")
-     *
-     * @Route ("/edit/{id}", name="pumukit_youtube_edit_account")
-     */
+    #[IsGranted('ROLE_ACCESS_YOUTUBE')]
+    #[Route('/edit/{id}', name: 'pumukit_youtube_edit_account')]
     public function editAction(Request $request, string $id)
     {
         $youtubeAccount = $this->documentManager->getRepository(Tag::class)->findOneBy(['_id' => new ObjectId($id)]);
@@ -148,11 +132,8 @@ class AdminController extends AbstractController
         ]);
     }
 
-    /**
-     * @Security("is_granted('ROLE_ACCESS_YOUTUBE')")
-     *
-     * @Route ("/delete/{id}", name="pumukit_youtube_delete_tag")
-     */
+    #[IsGranted('ROLE_ACCESS_YOUTUBE')]
+    #[Route('/delete/{id}', name: 'pumukit_youtube_delete_tag')]
     public function deleteAction(string $id): ?JsonResponse
     {
         try {
@@ -172,11 +153,8 @@ class AdminController extends AbstractController
         }
     }
 
-    /**
-     * @Security("is_granted('ROLE_ACCESS_YOUTUBE')")
-     *
-     * @route("/children/{id}", name="pumukit_youtube_children_tag")
-     */
+    #[IsGranted('ROLE_ACCESS_YOUTUBE')]
+    #[Route('/children/{id}', name: 'pumukit_youtube_children_tag')]
     public function childrenAction(Tag $tag): Response
     {
         return $this->render('@PumukitYoutube/Admin/children.html.twig', [
@@ -186,11 +164,8 @@ class AdminController extends AbstractController
         ]);
     }
 
-    /**
-     * @Security("is_granted('ROLE_ACCESS_YOUTUBE')")
-     *
-     * @Route ("/create/playlist/{id}", name="pumukit_youtube_create_playlist")
-     */
+    #[IsGranted('ROLE_ACCESS_YOUTUBE')]
+    #[Route('/create/playlist/{id}', name: 'pumukit_youtube_create_playlist')]
     public function createPlaylistAction(Request $request, string $id)
     {
         $locale = $request->getLocale();
@@ -225,11 +200,8 @@ class AdminController extends AbstractController
         ]);
     }
 
-    /**
-     * @Security("is_granted('ROLE_ACCESS_YOUTUBE')")
-     *
-     * @Route ("/edit/playlist/{id}", name="pumukit_youtube_edit_playlist")
-     */
+    #[IsGranted('ROLE_ACCESS_YOUTUBE')]
+    #[Route('/edit/playlist/{id}', name: 'pumukit_youtube_edit_playlist')]
     public function editPlaylistAction(Request $request, string $id)
     {
         $locale = $request->getLocale();
@@ -259,11 +231,7 @@ class AdminController extends AbstractController
         ]);
     }
 
-    /**
-     * @Route ("/update/config/{id}", name="pumukityoutube_advance_configuration_index")
-     *
-     * @ParamConverter("multimediaObject", options={"id" = "id"})
-     */
+    #[Route('/update/config/{id}', name: 'pumukityoutube_advance_configuration_index')]
     public function updateYTAction(MultimediaObject $multimediaObject): Response
     {
         $youtubeAccounts = $this->documentManager->getRepository(Tag::class)->findOneBy([
@@ -289,9 +257,7 @@ class AdminController extends AbstractController
         ]);
     }
 
-    /**
-     * @Route ("/playlist/list/{id}", name="pumukityoutube_playlist_select")
-     */
+    #[Route('/playlist/list/{id}', name: 'pumukityoutube_playlist_select')]
     public function playlistAccountAction(string $id): JsonResponse
     {
         if (!$id) {

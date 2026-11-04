@@ -106,7 +106,7 @@ EOT
         $this->output = $output;
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         if (!$this->force) {
             return (int) $this->check();

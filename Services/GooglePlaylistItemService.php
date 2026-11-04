@@ -6,7 +6,7 @@ namespace Pumukit\YoutubeBundle\Services;
 
 class GooglePlaylistItemService extends GoogleResourceService
 {
-    public function createPlaylistItemSnippet(string $playlistId, string $videoId): \Google_Service_YouTube_PlaylistItemSnippet
+    public function createPlaylistItemSnippet(string $playlistId, string $videoId): \Google\Service\YouTube\PlaylistItemSnippet
     {
         $playlistItemSnippet = $this->createGoogleServiceYoutubePlaylistItemSnippet();
         $playlistItemSnippet->setPlaylistId($playlistId);
@@ -15,16 +15,16 @@ class GooglePlaylistItemService extends GoogleResourceService
         return $playlistItemSnippet;
     }
 
-    public function createPlaylistItem(\Google_Service_YouTube_PlaylistItemSnippet $playlistItemSnippet): \Google_Service_YouTube_PlaylistItem
+    public function createPlaylistItem(\Google\Service\YouTube\PlaylistItemSnippet $playlistItemSnippet): \Google\Service\YouTube\PlaylistItem
     {
-        $playlistItem = new \Google_Service_YouTube_PlaylistItem();
+        $playlistItem = new \Google\Service\YouTube\PlaylistItem();
         $playlistItem->setSnippet($playlistItemSnippet);
 
         return $playlistItem;
     }
 
-    protected function createGoogleServiceYoutubePlaylistItemSnippet(): \Google_Service_YouTube_PlaylistItemSnippet
+    protected function createGoogleServiceYoutubePlaylistItemSnippet(): \Google\Service\YouTube\PlaylistItemSnippet
     {
-        return new \Google_Service_YouTube_PlaylistItemSnippet();
+        return new \Google\Service\YouTube\PlaylistItemSnippet();
     }
 }

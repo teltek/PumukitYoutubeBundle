@@ -152,7 +152,7 @@ class VideoDeleteService extends GoogleVideoService
         return true;
     }
 
-    private function delete(Tag $youtubeAccount, \Google_Service_YouTube_Video $video)
+    private function delete(Tag $youtubeAccount, \Google\Service\YouTube\Video $video)
     {
         $infoLog = sprintf('[YouTube] Video delete: %s ', $video->getId());
         $this->logger->info($infoLog);
@@ -162,7 +162,7 @@ class VideoDeleteService extends GoogleVideoService
         return $service->videos->delete($video->getId());
     }
 
-    private function createVideo(string $videoId): \Google_Service_YouTube_Video
+    private function createVideo(string $videoId): \Google\Service\YouTube\Video
     {
         $video = $this->createGoogleServiceYoutubeVideo();
         $video->setId($videoId);

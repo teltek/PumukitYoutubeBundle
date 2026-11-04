@@ -144,14 +144,14 @@ class VideoListService extends GoogleVideoService
         return self::YOUTUBE_STATUS_MAPPING[$uploadStatus] ?? Youtube::STATUS_TO_REVIEW;
     }
 
-    private function list(Tag $youtubeAccount, \Google_Service_YouTube_Video $video): VideoListResponse
+    private function list(Tag $youtubeAccount, \Google\Service\YouTube\Video $video): VideoListResponse
     {
         $service = $this->googleAccountService->googleServiceFromAccount($youtubeAccount);
 
         return $service->videos->listVideos('status', ['id' => $video->getId()]);
     }
 
-    private function createVideo(string $videoId): \Google_Service_YouTube_Video
+    private function createVideo(string $videoId): \Google\Service\YouTube\Video
     {
         $video = $this->createGoogleServiceYoutubeVideo();
         $video->setId($videoId);
