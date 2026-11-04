@@ -24,6 +24,8 @@ class PumukitYoutubeExtension extends Extension implements PrependExtensionInter
                     'level' => 'info',
                     'max_files' => 30,
                     'channels' => ['youtube'],
+                    'bubble' => false,
+                    'priority' => 100,
                 ],
             ],
         ]);
