@@ -16,6 +16,7 @@ class VideoDeleteService extends GoogleVideoService
 {
     private const VIDEO_NOT_FOUND = 'videoNotFound';
     private const PLAYLIST_ITEM_NOT_FOUND = 'playlistItemNotFound';
+    private const ACCOUNT_NOT_FOUND = 'pumukit.accountNotFound';
 
     private $googleAccountService;
 
@@ -47,9 +48,14 @@ class VideoDeleteService extends GoogleVideoService
     public function deleteVideoFromYouTubeByMultimediaObject(MultimediaObject $multimediaObject): bool
     {
         $youtube = $this->getYoutubeDocument($multimediaObject);
+        if (!$youtube instanceof Youtube) {
+            $this->logger->error(self::class.' ['.__FUNCTION__.'] Multimedia object '.$multimediaObject->getId().': doesnt have a Youtube document.');
+
+            return false;
+        }
 
         $account = null;
-        if ($youtube && $youtube->getYoutubeAccount()) {
+        if ($youtube->getYoutubeAccount()) {
             $account = $this->documentManager->getRepository(Tag::class)->findOneBy([
                 'properties.login' => $youtube->getYoutubeAccount(),
             ]);
@@ -59,42 +65,7 @@ class VideoDeleteService extends GoogleVideoService
             $account = $this->videoDataValidationService->validateMultimediaObjectAccount($multimediaObject);
         }
 
-        if (!$account) {
-            $errorLog = self::class.' ['.__FUNCTION__.'] Multimedia object '.$multimediaObject->getId().': doesnt have account';
-            $this->logger->error($errorLog);
-
-            return false;
-        }
-
-        $video = $this->createVideo($youtube->getYoutubeId());
-
-        try {
-            if ($youtube->getPlaylists()) {
-                foreach ($youtube->getPlaylists() as $playlistId => $playlistRel) {
-                    $this->playlistItemDeleteService->deleteOnePlaylist($account, $playlistRel);
-                    $youtube->removePlaylist($playlistId);
-                }
-            }
-            $response = $this->delete($account, $video);
-            if (204 !== $response->getStatusCode()) {
-                $error = Error::create(
-                    $response->getReasonPhrase(),
-                    $response->getReasonPhrase(),
-                    new \DateTime(),
-                    $response
-                );
-                $youtube->setError($error);
-                $this->documentManager->flush();
-
-                return false;
-            }
-        } catch (\Exception $exception) {
-            $parsed = $this->googleApiErrorParser->parse($exception);
-
-            $error = Error::create($parsed->reason(), $parsed->message(), new \DateTime(), $parsed->raw());
-            $youtube->setError($error);
-            $this->documentManager->flush();
-
+        if (!$this->deleteFromYoutube($account, $youtube)) {
             return false;
         }
 
@@ -115,6 +86,33 @@ class VideoDeleteService extends GoogleVideoService
                 'properties.login' => $youtube->getYoutubeAccount()]
         );
 
+        if (!$this->deleteFromYoutube($account, $youtube)) {
+            return false;
+        }
+
+        $youtube->setStatus(Youtube::STATUS_REMOVED);
+        $youtube->removeError();
+
+        $this->documentManager->flush();
+
+        return true;
+    }
+
+    private function deleteFromYoutube(?Tag $account, Youtube $youtube): bool
+    {
+        if (!$youtube->getYoutubeId()) {
+            return true;
+        }
+
+        if (!$account) {
+            $message = sprintf('Youtube document %s does not have an account to delete its video.', $youtube->getId());
+            $this->logger->error($message);
+            $youtube->setError(Error::create(self::ACCOUNT_NOT_FOUND, $message, new \DateTime(), ['message' => $message]));
+            $this->documentManager->flush();
+
+            return false;
+        }
+
         $video = $this->createVideo($youtube->getYoutubeId());
 
         try {
@@ -130,7 +128,7 @@ class VideoDeleteService extends GoogleVideoService
                     $response->getReasonPhrase(),
                     $response->getReasonPhrase(),
                     new \DateTime(),
-                    $response
+                    ['status' => $response->getStatusCode()]
                 );
                 $youtube->setError($error);
 
@@ -149,11 +147,6 @@ class VideoDeleteService extends GoogleVideoService
                 return false;
             }
         }
-
-        $youtube->setStatus(Youtube::STATUS_REMOVED);
-        $youtube->removeError();
-
-        $this->documentManager->flush();
 
         return true;
     }

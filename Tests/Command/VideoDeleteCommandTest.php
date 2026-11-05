@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Pumukit\YoutubeBundle\Tests\Command;
 
-use PHPUnit\Framework\Attributes\Group;
 use Pumukit\SchemaBundle\Document\EmbeddedBroadcast;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\YoutubeBundle\Document\Youtube;
@@ -126,8 +125,7 @@ class VideoDeleteCommandTest extends YoutubeTestCase
         $this->assertSame(1, $this->api->calls());
     }
 
-    #[Group('to-change')]
-    public function testAVideoAlreadyGoneFromYoutubeIsRetriedForever(): void
+    public function testAVideoAlreadyGoneFromYoutubeCountsAsRemoved(): void
     {
         $multimediaObject = $this->video([$this->youtubeTag, $this->account]);
         $this->youtubeDocument($multimediaObject);
@@ -135,9 +133,8 @@ class VideoDeleteCommandTest extends YoutubeTestCase
 
         $this->runCommand('pumukit:youtube:video:delete');
 
-        $youtube = $this->youtubeOf($multimediaObject);
-        $this->assertSame(Youtube::STATUS_PUBLISHED, $youtube->getStatus());
-        $this->assertSame('videoNotFound', $youtube->getError()->id());
+        $this->assertRemoved($multimediaObject);
+        $this->assertNull($this->youtubeOf($multimediaObject)->getError());
     }
 
     public function testAFailedDeleteOnAChangeOfAccountKeepsItPendingWithTheError(): void
@@ -233,15 +230,29 @@ class VideoDeleteCommandTest extends YoutubeTestCase
         $this->assertSame('forbidden', $stored->getError()->id());
     }
 
-    #[Group('to-change')]
-    public function testADocumentToDeleteWithoutVideoGetsStuck(): void
+    public function testADocumentToDeleteWithoutVideoPreparesTheNextUpload(): void
     {
         $multimediaObject = $this->videoForYoutube();
         $this->youtubeDocument($multimediaObject, Youtube::STATUS_TO_DELETE, null);
 
         $this->runCommand('pumukit:youtube:video:delete');
 
-        $this->assertSame(Youtube::STATUS_TO_DELETE, $this->youtubeOf($multimediaObject)->getStatus());
+        $this->assertSame(Youtube::STATUS_UPLOADING, $this->youtubeOf($multimediaObject)->getStatus());
+        $this->assertSame(0, $this->api->calls());
+    }
+
+    public function testADocumentToDeleteWithoutItsAccountStaysPendingWithTheError(): void
+    {
+        $multimediaObject = $this->videoForYoutube();
+        $youtube = $this->youtubeDocument($multimediaObject, Youtube::STATUS_TO_DELETE);
+        $youtube->setYoutubeAccount('gone');
+        $this->dm->flush();
+
+        $this->runCommand('pumukit:youtube:video:delete');
+
+        $stored = $this->youtubeOf($multimediaObject);
+        $this->assertSame(Youtube::STATUS_TO_DELETE, $stored->getStatus());
+        $this->assertSame('pumukit.accountNotFound', $stored->getError()->id());
         $this->assertSame(0, $this->api->calls());
     }
 
