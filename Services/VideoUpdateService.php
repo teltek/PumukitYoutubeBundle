@@ -6,6 +6,8 @@ namespace Pumukit\YoutubeBundle\Services;
 
 use Doctrine\ODM\MongoDB\DocumentManager;
 use Google\Service\YouTube\Video;
+use Google\Service\YouTube\VideoSnippet;
+use Google\Service\YouTube\VideoStatus;
 use Psr\Log\LoggerInterface;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Tag;
@@ -119,7 +121,7 @@ class VideoUpdateService extends GoogleVideoService
 
     private function update(
         Tag $youtubeAccount,
-        \Google\Service\YouTube\Video $video,
+        Video $video,
     ): Video {
         $infoLog = sprintf('[YouTube] Video update: %s ', $video->getId());
         $this->logger->info($infoLog);
@@ -130,10 +132,10 @@ class VideoUpdateService extends GoogleVideoService
     }
 
     private function createVideo(
-        \Google\Service\YouTube\VideoSnippet $snippet,
-        \Google\Service\YouTube\VideoStatus $status,
+        VideoSnippet $snippet,
+        VideoStatus $status,
         string $videoId
-    ): \Google\Service\YouTube\Video {
+    ): Video {
         $video = $this->createGoogleServiceYoutubeVideo();
         $video->setId($videoId);
         $video->setSnippet($snippet);

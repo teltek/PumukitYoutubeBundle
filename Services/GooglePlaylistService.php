@@ -4,9 +4,13 @@ declare(strict_types=1);
 
 namespace Pumukit\YoutubeBundle\Services;
 
+use Google\Service\YouTube\Playlist;
+use Google\Service\YouTube\PlaylistSnippet;
+use Google\Service\YouTube\PlaylistStatus;
+
 class GooglePlaylistService
 {
-    public function createPlaylistSnippet(string $title, string $description): \Google\Service\YouTube\PlaylistSnippet
+    public function createPlaylistSnippet(string $title, string $description): PlaylistSnippet
     {
         $playlistSnippet = $this->createGoogleServiceYoutubePlaylistSnippet();
         $playlistSnippet->setTitle($title);
@@ -15,7 +19,7 @@ class GooglePlaylistService
         return $playlistSnippet;
     }
 
-    public function createPlaylistStatus(string $status): \Google\Service\YouTube\PlaylistStatus
+    public function createPlaylistStatus(string $status): PlaylistStatus
     {
         $playlistStatus = $this->createGoogleServiceYoutubePlaylistStatus();
         $playlistStatus->setPrivacyStatus($status);
@@ -23,18 +27,18 @@ class GooglePlaylistService
         return $playlistStatus;
     }
 
-    protected function createGoogleServiceYoutubePlaylist(): \Google\Service\YouTube\Playlist
+    protected function createGoogleServiceYoutubePlaylist(): Playlist
     {
-        return new \Google\Service\YouTube\Playlist();
+        return new Playlist();
     }
 
-    protected function createGoogleServiceYoutubePlaylistSnippet(): \Google\Service\YouTube\PlaylistSnippet
+    protected function createGoogleServiceYoutubePlaylistSnippet(): PlaylistSnippet
     {
-        return new \Google\Service\YouTube\PlaylistSnippet();
+        return new PlaylistSnippet();
     }
 
-    protected function createGoogleServiceYoutubePlaylistStatus(): \Google\Service\YouTube\PlaylistStatus
+    protected function createGoogleServiceYoutubePlaylistStatus(): PlaylistStatus
     {
-        return new \Google\Service\YouTube\PlaylistStatus();
+        return new PlaylistStatus();
     }
 }

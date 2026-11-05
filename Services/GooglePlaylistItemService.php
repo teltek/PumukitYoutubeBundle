@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace Pumukit\YoutubeBundle\Services;
 
+use Google\Service\YouTube\PlaylistItem;
+use Google\Service\YouTube\PlaylistItemSnippet;
+
 class GooglePlaylistItemService extends GoogleResourceService
 {
-    public function createPlaylistItemSnippet(string $playlistId, string $videoId): \Google\Service\YouTube\PlaylistItemSnippet
+    public function createPlaylistItemSnippet(string $playlistId, string $videoId): PlaylistItemSnippet
     {
         $playlistItemSnippet = $this->createGoogleServiceYoutubePlaylistItemSnippet();
         $playlistItemSnippet->setPlaylistId($playlistId);
@@ -15,16 +18,16 @@ class GooglePlaylistItemService extends GoogleResourceService
         return $playlistItemSnippet;
     }
 
-    public function createPlaylistItem(\Google\Service\YouTube\PlaylistItemSnippet $playlistItemSnippet): \Google\Service\YouTube\PlaylistItem
+    public function createPlaylistItem(PlaylistItemSnippet $playlistItemSnippet): PlaylistItem
     {
-        $playlistItem = new \Google\Service\YouTube\PlaylistItem();
+        $playlistItem = new PlaylistItem();
         $playlistItem->setSnippet($playlistItemSnippet);
 
         return $playlistItem;
     }
 
-    protected function createGoogleServiceYoutubePlaylistItemSnippet(): \Google\Service\YouTube\PlaylistItemSnippet
+    protected function createGoogleServiceYoutubePlaylistItemSnippet(): PlaylistItemSnippet
     {
-        return new \Google\Service\YouTube\PlaylistItemSnippet();
+        return new PlaylistItemSnippet();
     }
 }

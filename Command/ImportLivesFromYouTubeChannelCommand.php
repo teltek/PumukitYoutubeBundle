@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pumukit\YoutubeBundle\Command;
 
 use Doctrine\ODM\MongoDB\DocumentManager;
+use Google\Service\YouTube;
 use Google\Service\YouTube\Video;
 use Google\Service\YouTube\VideoListResponse;
 use Pumukit\CoreBundle\Services\i18nService;
@@ -178,7 +179,7 @@ EOT
         return $youtubeAccount;
     }
 
-    private function channelId(string $channel, \Google\Service\YouTube $service): string
+    private function channelId(string $channel, YouTube $service): string
     {
         $queryParams = [
             'id' => $channel,
@@ -255,7 +256,7 @@ EOT
         return $multimediaObject;
     }
 
-    private function videoInfo(\Google\Service\YouTube $service, string $videoId): VideoListResponse
+    private function videoInfo(YouTube $service, string $videoId): VideoListResponse
     {
         return $service->videos->listVideos('snippet, status', ['id' => $videoId]);
     }
@@ -299,7 +300,7 @@ EOT
         return $path;
     }
 
-    private function obtainSeriesToSave(\Google\Service\YouTube $service, string $videoId): Series
+    private function obtainSeriesToSave(YouTube $service, string $videoId): Series
     {
         return $this->defaultSeries();
     }

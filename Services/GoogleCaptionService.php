@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace Pumukit\YoutubeBundle\Services;
 
+use Google\Service\YouTube\Caption;
+use Google\Service\YouTube\CaptionSnippet;
 use Pumukit\SchemaBundle\Document\Material;
 
 class GoogleCaptionService
 {
-    public function createCaption(Material $material, string $videoId): \Google\Service\YouTube\Caption
+    public function createCaption(Material $material, string $videoId): Caption
     {
         $captionSnippet = $this->createCaptionSnippet($material, $videoId);
 
@@ -18,7 +20,7 @@ class GoogleCaptionService
         return $caption;
     }
 
-    public function createCaptionSnippet(Material $material, string $videoId): \Google\Service\YouTube\CaptionSnippet
+    public function createCaptionSnippet(Material $material, string $videoId): CaptionSnippet
     {
         $captionSnippet = $this->createGoogleServiceYoutubeCaptionSnippet();
         // $captionSnippet->setIsDraft(false);
@@ -29,13 +31,13 @@ class GoogleCaptionService
         return $captionSnippet;
     }
 
-    protected function createGoogleServiceYoutubeCaption(): \Google\Service\YouTube\Caption
+    protected function createGoogleServiceYoutubeCaption(): Caption
     {
-        return new \Google\Service\YouTube\Caption();
+        return new Caption();
     }
 
-    protected function createGoogleServiceYoutubeCaptionSnippet(): \Google\Service\YouTube\CaptionSnippet
+    protected function createGoogleServiceYoutubeCaptionSnippet(): CaptionSnippet
     {
-        return new \Google\Service\YouTube\CaptionSnippet();
+        return new CaptionSnippet();
     }
 }

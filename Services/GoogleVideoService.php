@@ -4,9 +4,13 @@ declare(strict_types=1);
 
 namespace Pumukit\YoutubeBundle\Services;
 
+use Google\Service\YouTube\Video;
+use Google\Service\YouTube\VideoSnippet;
+use Google\Service\YouTube\VideoStatus;
+
 class GoogleVideoService
 {
-    public function createVideoSnippet(string $title, string $description, string $tags, string $category = '27'): \Google\Service\YouTube\VideoSnippet
+    public function createVideoSnippet(string $title, string $description, string $tags, string $category = '27'): VideoSnippet
     {
         $videoSnippet = $this->createGoogleServiceYoutubeVideoSnippet();
         $videoSnippet->setCategoryId($category);
@@ -17,7 +21,7 @@ class GoogleVideoService
         return $videoSnippet;
     }
 
-    public function createVideoStatus(string $status): \Google\Service\YouTube\VideoStatus
+    public function createVideoStatus(string $status): VideoStatus
     {
         $videoStatus = $this->createGoogleServiceYoutubeVideoStatus();
         $videoStatus->setPrivacyStatus($status);
@@ -25,18 +29,18 @@ class GoogleVideoService
         return $videoStatus;
     }
 
-    protected function createGoogleServiceYoutubeVideo(): \Google\Service\YouTube\Video
+    protected function createGoogleServiceYoutubeVideo(): Video
     {
-        return new \Google\Service\YouTube\Video();
+        return new Video();
     }
 
-    protected function createGoogleServiceYoutubeVideoSnippet(): \Google\Service\YouTube\VideoSnippet
+    protected function createGoogleServiceYoutubeVideoSnippet(): VideoSnippet
     {
-        return new \Google\Service\YouTube\VideoSnippet();
+        return new VideoSnippet();
     }
 
-    protected function createGoogleServiceYoutubeVideoStatus(): \Google\Service\YouTube\VideoStatus
+    protected function createGoogleServiceYoutubeVideoStatus(): VideoStatus
     {
-        return new \Google\Service\YouTube\VideoStatus();
+        return new VideoStatus();
     }
 }

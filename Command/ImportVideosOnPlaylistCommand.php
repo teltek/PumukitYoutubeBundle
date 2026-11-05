@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pumukit\YoutubeBundle\Command;
 
 use Doctrine\ODM\MongoDB\DocumentManager;
+use Google\Service\YouTube;
 use Google\Service\YouTube\ChannelListResponse;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Series;
@@ -143,14 +144,14 @@ EOT
         return $youtubeAccount;
     }
 
-    private function channelId(string $channel, \Google\Service\YouTube $service): string
+    private function channelId(string $channel, YouTube $service): string
     {
         $channels = $this->channelInfo($channel, $service);
 
         return $channels->getItems()[0]->getId();
     }
 
-    private function channelInfo(string $channel, \Google\Service\YouTube $service): ChannelListResponse
+    private function channelInfo(string $channel, YouTube $service): ChannelListResponse
     {
         $queryParams = ['id' => $channel];
 
