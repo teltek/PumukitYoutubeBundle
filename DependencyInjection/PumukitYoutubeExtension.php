@@ -44,7 +44,7 @@ class PumukitYoutubeExtension extends Extension implements PrependExtensionInter
                     'type' => 'rotating_file',
                     'path' => '%kernel.logs_dir%/youtube_%kernel.environment%.log',
                     'level' => 'info',
-                    'max_files' => 30,
+                    'max_files' => '%env(int:PUMUKIT_LOG_MAX_FILES)%',
                     'channels' => ['youtube'],
                     'bubble' => false,
                     'priority' => 100,

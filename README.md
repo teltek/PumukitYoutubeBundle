@@ -50,7 +50,7 @@ the installation and run `composer install`:
 }
 ```
 
-The bundle logs to its own `youtube` channel, in `var/log/youtube_<environment>-YYYY-MM-DD.log` (30 files kept).
+The bundle logs to its own `youtube` channel, in `var/log/youtube_<environment>-YYYY-MM-DD.log` (`PUMUKIT_LOG_MAX_FILES` files kept, 15 by default).
 
 ## Tests
 
