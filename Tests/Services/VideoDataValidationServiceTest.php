@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Pumukit\YoutubeBundle\Tests\Services;
 
-use PHPUnit\Framework\Attributes\Group;
 use Pumukit\YoutubeBundle\Services\VideoDataValidationService;
 use Pumukit\YoutubeBundle\Tests\Support\YoutubeTestCase;
 
@@ -52,24 +51,55 @@ class VideoDataValidationServiceTest extends YoutubeTestCase
         $this->assertStringContainsString("First\nsecond bold", $description);
     }
 
-    #[Group('to-change')]
-    public function testALongTitleWithoutSpacesFails(): void
+    public function testALongTitleWithoutSpacesIsCut(): void
     {
         $multimediaObject = $this->video();
         $multimediaObject->setTitle(str_repeat('a', 120));
 
-        $this->expectException(\TypeError::class);
-
-        $this->service()->getTitleForYoutube($multimediaObject);
+        $this->assertSame(str_repeat('a', 95).'(...)', $this->service()->getTitleForYoutube($multimediaObject));
     }
 
-    #[Group('to-change')]
-    public function testADescriptionOverTheLimitOfYoutubeIsNotCut(): void
+    public function testATitleIsCutByCharactersAndKeepsThemWhole(): void
     {
         $multimediaObject = $this->video();
+        $multimediaObject->setTitle(str_repeat('ñ', 120));
+
+        $title = $this->service()->getTitleForYoutube($multimediaObject);
+
+        $this->assertSame(100, mb_strlen($title));
+        $this->assertTrue(mb_check_encoding($title, 'UTF-8'));
+    }
+
+    public function testTheTitleAndTheDescriptionHaveNoAngleBrackets(): void
+    {
+        $multimediaObject = $this->video();
+        $multimediaObject->setTitle('1 < 2 > 0');
+        $multimediaObject->setDescription('3 < 4');
+
+        $this->assertSame('1  2  0', $this->service()->getTitleForYoutube($multimediaObject));
+        $this->assertStringNotContainsString('<', $this->service()->getDescriptionForYoutube($multimediaObject));
+    }
+
+    public function testADescriptionOverTheLimitOfYoutubeIsCut(): void
+    {
+        $multimediaObject = $this->video();
+        $multimediaObject->setDescription(str_repeat('ñ', 6000));
+
+        $description = $this->service()->getDescriptionForYoutube($multimediaObject);
+
+        $this->assertLessThanOrEqual(5000, strlen($description));
+        $this->assertTrue(mb_check_encoding($description, 'UTF-8'));
+    }
+
+    public function testACutDescriptionKeepsTheLinkToTheVideo(): void
+    {
+        $multimediaObject = $this->video([$this->tag('PUCHWEBTV')]);
         $multimediaObject->setDescription(str_repeat('a', 6000));
 
-        $this->assertGreaterThan(5000, strlen($this->service()->getDescriptionForYoutube($multimediaObject)));
+        $description = $this->service()->getDescriptionForYoutube($multimediaObject);
+
+        $this->assertLessThanOrEqual(5000, strlen($description));
+        $this->assertStringContainsString('/video/'.$multimediaObject->getId(), $description);
     }
 
     private function service(): VideoDataValidationService

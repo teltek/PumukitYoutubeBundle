@@ -24,6 +24,8 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 
 class VideoDataValidationService extends CommonDataValidationService
 {
+    private const DESCRIPTION_MAX_BYTES = 5000;
+
     private $documentManager;
     private $youtubeConfigurationService;
     private $jobCreator;
@@ -111,26 +113,20 @@ class VideoDataValidationService extends CommonDataValidationService
 
     public function getTitleForYoutube(MultimediaObject $multimediaObject, int $limit = 100): string
     {
-        $title = $multimediaObject->getTitle($this->locale);
+        $title = $this->filterSpecialCharacters($multimediaObject->getTitle($this->locale));
+        $maxLength = $limit - 5;
 
-        if (strlen($title) > $limit) {
-            while (strlen($title) > ($limit - 5)) {
-                $pos = strrpos($title, ' ', $limit + 1);
-                if (false !== $pos) {
-                    $title = substr($title, 0, $pos);
-                } else {
-                    break;
-                }
-            }
-        }
-        while (strlen($title) > ($limit - 5)) {
-            $title = substr($title, 0, strrpos($title, ' '));
-        }
-        if (strlen($multimediaObject->getTitle($this->locale)) > ($limit - 5)) {
-            $title .= '(...)';
+        if (mb_strlen($title) <= $maxLength) {
+            return $title;
         }
 
-        return $title;
+        $cut = mb_substr($title, 0, $maxLength);
+        $lastSpace = mb_strrpos($cut, ' ');
+        if ($lastSpace) {
+            $cut = mb_substr($cut, 0, $lastSpace);
+        }
+
+        return $cut.'(...)';
     }
 
     public function getDescriptionForYoutube(MultimediaObject $multimediaObject): string
@@ -180,16 +176,17 @@ class VideoDataValidationService extends CommonDataValidationService
             $description .= $addPeople."\n";
         }
 
+        $link = '';
         if (MultimediaObject::STATUS_PUBLISHED == $multimediaObject->getStatus() && $multimediaObject->containsTagWithCod('PUCHWEBTV')) {
             $appInfoLink = $this->router->generate(
                 'pumukit_webtv_multimediaobject_index',
                 ['id' => $multimediaObject->getId()],
                 UrlGeneratorInterface::ABSOLUTE_URL
             );
-            $description .= '<br /> '.$linkLabelI18n.' '.$appInfoLink;
+            $link = ' '.$linkLabelI18n.' '.$appInfoLink;
         }
 
-        return strip_tags($description);
+        return mb_strcut($this->filterSpecialCharacters(strip_tags($description)), 0, self::DESCRIPTION_MAX_BYTES - strlen($link)).$link;
     }
 
     public function getTagsForYoutube(MultimediaObject $multimediaObject): string
