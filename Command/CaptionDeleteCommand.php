@@ -10,6 +10,7 @@ use Pumukit\SchemaBundle\Document\Material;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\YoutubeBundle\Document\Youtube;
+use Pumukit\YoutubeBundle\Exception\YoutubeQuotaExceededException;
 use Pumukit\YoutubeBundle\Services\CaptionsDataValidationService;
 use Pumukit\YoutubeBundle\Services\CaptionsDeleteService;
 use Pumukit\YoutubeBundle\Services\YoutubeConfigurationService;
@@ -94,6 +95,11 @@ EOT
                     }
                     $result = $this->captionsDeleteService->deleteCaption($account, $youtube, $deleteCaptionIds);
                 }
+            } catch (YoutubeQuotaExceededException $exception) {
+                $this->logger->warning(sprintf('[YouTube] Quota exceeded (reason=%s) while deleting captions. Stopping this run.', $exception->getReason()));
+                $this->output->writeln('<comment>YouTube API quota exceeded. Stopping this run.</comment>');
+
+                break;
             } catch (\Throwable $exception) {
                 $errorLog = sprintf('[YouTube] Remove captions for video %s failed. Error: %s', $multimediaObject->getId(), $exception->getMessage());
                 $this->logger->error($errorLog);

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Pumukit\YoutubeBundle\Tests\Command;
 
-use PHPUnit\Framework\Attributes\Group;
 use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\YoutubeBundle\Tests\Support\YoutubeTestCase;
 
@@ -67,8 +66,7 @@ class PlaylistCommandsTest extends YoutubeTestCase
         $this->assertSame('playlistNotFound', $this->youtubeOf($multimediaObject)->getPlaylistUpdateError()->id());
     }
 
-    #[Group('to-change')]
-    public function testAFailedDeleteIsForgotten(): void
+    public function testAFailedDeleteKeepsThePlaylistAndTheError(): void
     {
         $multimediaObject = $this->videoForYoutube();
         $youtube = $this->youtubeDocument($multimediaObject);
@@ -79,27 +77,41 @@ class PlaylistCommandsTest extends YoutubeTestCase
         $this->runCommand('pumukit:youtube:playlist:update');
 
         $stored = $this->youtubeOf($multimediaObject);
+        $this->assertSame(['list1' => 'item1'], $stored->getPlaylists());
+        $this->assertSame('forbidden', $stored->getPlaylistUpdateError()->id());
+    }
+
+    public function testAnEntryAlreadyGoneFromThePlaylistIsForgotten(): void
+    {
+        $multimediaObject = $this->videoForYoutube();
+        $youtube = $this->youtubeDocument($multimediaObject);
+        $youtube->setPlaylist('list1', 'item1');
+        $this->dm->flush();
+        $this->api->willFail('playlistItemNotFound', 404);
+
+        $this->runCommand('pumukit:youtube:playlist:update');
+
+        $stored = $this->youtubeOf($multimediaObject);
         $this->assertSame([], $stored->getPlaylists());
         $this->assertNull($stored->getPlaylistUpdateError());
     }
 
-    #[Group('to-change')]
-    public function testTheQuotaDoesNotStopTheRun(): void
+    public function testTheQuotaStopsTheRun(): void
     {
         $playlist = $this->playlist('playlist1', 'list1');
         foreach ([1, 2] as $ignored) {
             $multimediaObject = $this->video([$this->publicationChannel, $this->youtubeTag, $this->account, $playlist]);
             $this->youtubeDocument($multimediaObject);
-            $this->api->willFail('quotaExceeded', 403);
         }
+        $this->api->willFail('quotaExceeded', 403);
 
-        $this->runCommand('pumukit:youtube:playlist:update');
+        $tester = $this->runCommand('pumukit:youtube:playlist:update');
 
-        $this->assertSame(2, $this->api->calls());
+        $this->assertSame(1, $this->api->calls());
+        $this->assertStringContainsString('quota exceeded', $tester->getDisplay());
     }
 
-    #[Group('to-change')]
-    public function testAnErrorWithoutJsonLosesWhatWasAlreadyDone(): void
+    public function testAnErrorWithoutJsonKeepsWhatWasAlreadyDone(): void
     {
         $first = $this->playlist('playlist1', 'list1');
         $second = $this->playlist('playlist2', 'list2');
@@ -108,10 +120,11 @@ class PlaylistCommandsTest extends YoutubeTestCase
         $this->api->willAnswer(['kind' => 'youtube#playlistItem', 'id' => 'item1']);
         $this->api->willFailWithoutJson();
 
-        $tester = $this->runCommand('pumukit:youtube:playlist:update');
+        $this->runCommand('pumukit:youtube:playlist:update');
 
-        $this->assertSame([], $this->youtubeOf($multimediaObject)->getPlaylists());
-        $this->assertStringContainsString('update playlist of video', $tester->getDisplay());
+        $stored = $this->youtubeOf($multimediaObject);
+        $this->assertCount(1, $stored->getPlaylists());
+        $this->assertSame('pumukit.apiError', $stored->getPlaylistUpdateError()->id());
     }
 
     public function testANewPlaylistIsCreatedOnYoutube(): void

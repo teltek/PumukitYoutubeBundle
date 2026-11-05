@@ -15,17 +15,22 @@ use Pumukit\YoutubeBundle\PumukitYoutubeBundle;
 
 class PlaylistItemInsertService extends GooglePlaylistItemService
 {
+    private const PLAYLIST_ITEM_NOT_FOUND = 'playlistItemNotFound';
+
     private $documentManager;
     private $googleAccountService;
     private $playlistItemDeleteService;
+    private $googleApiErrorParser;
     private $logger;
 
     public function __construct(
         DocumentManager $documentManager,
         GoogleAccountService $googleAccountService,
         PlaylistItemDeleteService $playlistItemDeleteService,
+        GoogleApiErrorParser $googleApiErrorParser,
         LoggerInterface $logger
     ) {
+        $this->googleApiErrorParser = $googleApiErrorParser;
         $this->documentManager = $documentManager;
         $this->googleAccountService = $googleAccountService;
         $this->playlistItemDeleteService = $playlistItemDeleteService;
@@ -120,50 +125,50 @@ class PlaylistItemInsertService extends GooglePlaylistItemService
 
         $account = $this->documentManager->getRepository(Tag::class)->findOneBy(['properties.login' => $youtubeDocument->getYoutubeAccount()]);
 
-        $playlistToDoNothing = [];
-        foreach ($youtubeDocument->getPlaylists() as $playlistId => $playlistRel) {
-            if (!in_array($playlistId, $assignedPlaylists)) {
-                try {
-                    $response = $this->playlistItemDeleteService->deleteOnePlaylist($account, $playlistRel);
-                } catch (\Exception $exception) {
-                    $error = json_decode($exception->getMessage(), true, 512, JSON_THROW_ON_ERROR);
-                    $error = Error::create(
-                        $error['error']['errors'][0]['reason'],
-                        $error['error']['errors'][0]['message'] ?? 'No message received',
-                        new \DateTime(),
-                        $error['error']
-                    );
-                    $youtubeDocument->setPlaylistUpdateError($error);
+        $failed = false;
+
+        try {
+            foreach ($youtubeDocument->getPlaylists() as $playlistId => $playlistRel) {
+                if (in_array($playlistId, $assignedPlaylists)) {
+                    continue;
                 }
 
-                $youtubeDocument->removePlaylistUpdateError();
+                try {
+                    $this->playlistItemDeleteService->deleteOnePlaylist($account, $playlistRel);
+                } catch (\Exception $exception) {
+                    $parsed = $this->googleApiErrorParser->parse($exception);
+                    if (self::PLAYLIST_ITEM_NOT_FOUND !== $parsed->reason()) {
+                        $youtubeDocument->setPlaylistUpdateError(Error::create($parsed->reason(), $parsed->message(), new \DateTime(), $parsed->raw()));
+                        $failed = true;
+
+                        continue;
+                    }
+                }
+
                 $youtubeDocument->removePlaylist($playlistId);
-            } else {
-                $playlistToDoNothing[] = $playlistId;
-            }
-        }
-
-        foreach ($assignedPlaylists as $playlist) {
-            if (in_array($playlist, $playlistToDoNothing)) {
-                continue;
             }
 
-            try {
-                $response = $this->insert($account, $playlist, $youtubeDocument->getYoutubeId());
-                $youtubeDocument->setPlaylist($playlist, $response->getId());
+            foreach ($assignedPlaylists as $playlist) {
+                if (array_key_exists($playlist, $youtubeDocument->getPlaylists())) {
+                    continue;
+                }
+
+                try {
+                    $response = $this->insert($account, $playlist, $youtubeDocument->getYoutubeId());
+                    $youtubeDocument->setPlaylist($playlist, $response->getId());
+                } catch (\Exception $exception) {
+                    $parsed = $this->googleApiErrorParser->parse($exception);
+                    $youtubeDocument->setPlaylistUpdateError(Error::create($parsed->reason(), $parsed->message(), new \DateTime(), $parsed->raw()));
+                    $failed = true;
+                }
+            }
+
+            if (!$failed) {
                 $youtubeDocument->removePlaylistUpdateError();
-            } catch (\Exception $exception) {
-                $error = json_decode($exception->getMessage(), true, 512, JSON_THROW_ON_ERROR);
-                $error = Error::create(
-                    $error['error']['errors'][0]['reason'],
-                    $error['error']['errors'][0]['message'] ?? 'No message received',
-                    new \DateTime(),
-                    $error['error']
-                );
-                $youtubeDocument->setPlaylistUpdateError($error);
             }
+        } finally {
+            $this->documentManager->flush();
         }
-        $this->documentManager->flush();
     }
 
     private function insert(Tag $account, string $playlist, string $videoId): PlaylistItem

@@ -5,6 +5,7 @@ namespace Pumukit\YoutubeBundle\Command;
 use Doctrine\ODM\MongoDB\DocumentManager;
 use Psr\Log\LoggerInterface;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
+use Pumukit\YoutubeBundle\Exception\YoutubeQuotaExceededException;
 use Pumukit\YoutubeBundle\Services\PlaylistItemInsertService;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -61,6 +62,11 @@ EOT
         foreach ($multimediaObjects as $multimediaObject) {
             try {
                 $response = $this->playlistItemInsertService->updatePlaylist($multimediaObject);
+            } catch (YoutubeQuotaExceededException $exception) {
+                $this->logger->warning(sprintf('[YouTube] Quota exceeded (reason=%s) while updating playlists. Stopping this run.', $exception->getReason()));
+                $output->writeln('<comment>YouTube API quota exceeded. Stopping this run.</comment>');
+
+                break;
             } catch (\Throwable $e) {
                 $errorLog = sprintf('[YouTube] Could\'t update playlist of video %s. Error: %s', $multimediaObject->getId(), $e->getMessage());
                 $this->logger->error($errorLog);

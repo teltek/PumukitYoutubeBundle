@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Pumukit\YoutubeBundle\Tests\Command;
 
-use PHPUnit\Framework\Attributes\Group;
 use Pumukit\YoutubeBundle\Document\Caption;
 use Pumukit\YoutubeBundle\Document\Error;
 use Pumukit\YoutubeBundle\Document\Youtube;
@@ -102,8 +101,7 @@ class CaptionCommandsTest extends YoutubeTestCase
         $this->assertSame('caption2', $stored->getCaptions()[0]->getCaptionId());
     }
 
-    #[Group('to-change')]
-    public function testAnErrorWithoutJsonLosesWhatWasAlreadyUploaded(): void
+    public function testAnErrorWithoutJsonKeepsWhatWasAlreadyUploaded(): void
     {
         $multimediaObject = $this->videoForYoutube();
         $this->youtubeDocument($multimediaObject);
@@ -112,27 +110,57 @@ class CaptionCommandsTest extends YoutubeTestCase
         $this->willAcceptACaption('caption1');
         $this->api->willFailWithoutJson();
 
-        $tester = $this->runCommand('pumukit:youtube:caption:upload');
+        $this->runCommand('pumukit:youtube:caption:upload');
 
         $this->assertSame(2, $this->api->callsTo('POST', '/captions'));
-        $this->assertCount(0, $this->youtubeOf($multimediaObject)->getCaptions());
-        $this->assertStringContainsString('Upload caption of video', $tester->getDisplay());
+        $stored = $this->youtubeOf($multimediaObject);
+        $this->assertCount(1, $stored->getCaptions());
+        $this->assertSame('pumukit.apiError', $stored->getCaptionUpdateError()->id());
     }
 
-    #[Group('to-change')]
-    public function testTheQuotaDoesNotStopTheRun(): void
+    public function testTheQuotaStopsTheUploadOfCaptions(): void
     {
         foreach ([1, 2] as $ignored) {
             $multimediaObject = $this->videoForYoutube();
             $this->youtubeDocument($multimediaObject);
             $this->material($multimediaObject);
-            $this->api->willFail('quotaExceeded', 403);
         }
+        $this->api->willFail('quotaExceeded', 403);
+
+        $tester = $this->runCommand('pumukit:youtube:caption:upload');
+
+        $this->assertSame(1, $this->api->calls());
+        $this->assertStringContainsString('quota exceeded', $tester->getDisplay());
+    }
+
+    public function testTheQuotaStopsTheDeleteOfCaptions(): void
+    {
+        foreach ([1, 2] as $ignored) {
+            $multimediaObject = $this->videoForYoutube();
+            $youtube = $this->youtubeDocument($multimediaObject);
+            $youtube->addCaption($this->caption('aaaaaaaaaaaaaaaaaaaaaaaa', 'caption1'));
+        }
+        $this->dm->flush();
+        $this->api->willFail('quotaExceeded', 403);
+
+        $this->runCommand('pumukit:youtube:caption:delete');
+
+        $this->assertSame(1, $this->api->calls());
+    }
+
+    public function testTheQuotaWhileReplacingACaptionKeepsItAndStops(): void
+    {
+        $multimediaObject = $this->videoForYoutube();
+        $youtube = $this->youtubeDocument($multimediaObject);
+        $youtube->addCaption($this->caption($this->material($multimediaObject)->getId(), 'caption1', 'es'));
+        $this->material($multimediaObject);
+        $this->dm->flush();
+        $this->api->willFail('quotaExceeded', 403);
 
         $this->runCommand('pumukit:youtube:caption:upload');
 
-        $this->assertSame(2, $this->api->calls());
-        $this->assertSame('quotaExceeded', $this->youtubeOf($multimediaObject)->getCaptionUpdateError()->id());
+        $this->assertSame(0, $this->api->callsTo('POST', '/captions'));
+        $this->assertSame('caption1', $this->youtubeOf($multimediaObject)->getCaptions()[0]->getCaptionId());
     }
 
     public function testACaptionWithoutItsMaterialIsDeleted(): void

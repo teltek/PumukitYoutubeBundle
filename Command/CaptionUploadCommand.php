@@ -8,6 +8,7 @@ use Doctrine\ODM\MongoDB\DocumentManager;
 use Psr\Log\LoggerInterface;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\YoutubeBundle\Document\Youtube;
+use Pumukit\YoutubeBundle\Exception\YoutubeQuotaExceededException;
 use Pumukit\YoutubeBundle\Services\CaptionsDataValidationService;
 use Pumukit\YoutubeBundle\Services\CaptionsInsertService;
 use Pumukit\YoutubeBundle\Services\YoutubeConfigurationService;
@@ -83,6 +84,11 @@ EOT
                 }
 
                 $result = $this->captionsInsertService->uploadCaption($youtube, $multimediaObject, $newMaterialIds);
+            } catch (YoutubeQuotaExceededException $exception) {
+                $this->logger->warning(sprintf('[YouTube] Quota exceeded (reason=%s) while uploading captions. Stopping this run.', $exception->getReason()));
+                $output->writeln('<comment>YouTube API quota exceeded. Stopping this run.</comment>');
+
+                break;
             } catch (\Exception $exception) {
                 $errorLog = sprintf(
                     '[YouTube] Upload caption of video %s failed. Error: %s',

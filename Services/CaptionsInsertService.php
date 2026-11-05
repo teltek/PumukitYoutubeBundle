@@ -12,6 +12,7 @@ use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\YoutubeBundle\Document\Caption;
 use Pumukit\YoutubeBundle\Document\Error;
 use Pumukit\YoutubeBundle\Document\Youtube;
+use Pumukit\YoutubeBundle\Exception\YoutubeQuotaExceededException;
 
 class CaptionsInsertService extends GoogleCaptionService
 {
@@ -19,6 +20,7 @@ class CaptionsInsertService extends GoogleCaptionService
     private $googleAccountService;
     private $captionsDeleteService;
     private $captionsListService;
+    private $googleApiErrorParser;
     private $logger;
 
     public function __construct(
@@ -26,8 +28,10 @@ class CaptionsInsertService extends GoogleCaptionService
         GoogleAccountService $googleAccountService,
         CaptionsDeleteService $captionsDeleteService,
         CaptionsListService $captionsListService,
+        GoogleApiErrorParser $googleApiErrorParser,
         LoggerInterface $logger
     ) {
+        $this->googleApiErrorParser = $googleApiErrorParser;
         $this->documentManager = $documentManager;
         $this->googleAccountService = $googleAccountService;
         $this->captionsDeleteService = $captionsDeleteService;
@@ -73,15 +77,20 @@ class CaptionsInsertService extends GoogleCaptionService
                 $caption = $this->createCaptionDocument($material, $result);
                 $youtube->addCaption($caption);
                 $youtube->removeCaptionUpdateError();
+            } catch (YoutubeQuotaExceededException $exception) {
+                $this->documentManager->flush();
+
+                throw $exception;
             } catch (\Exception $exception) {
-                $error = json_decode($exception->getMessage(), true, 512, JSON_THROW_ON_ERROR);
-                $error = Error::create(
-                    $error['error']['errors'][0]['reason'],
-                    $error['error']['errors'][0]['message'] ?? 'No message received',
-                    new \DateTime(),
-                    $error['error']
-                );
-                $youtube->setCaptionUpdateError($error);
+                try {
+                    $parsed = $this->googleApiErrorParser->parse($exception);
+                } catch (YoutubeQuotaExceededException $quotaException) {
+                    $this->documentManager->flush();
+
+                    throw $quotaException;
+                }
+
+                $youtube->setCaptionUpdateError(Error::create($parsed->reason(), $parsed->message(), new \DateTime(), $parsed->raw()));
                 $errorLog = sprintf('[YouTube] Video %s and material %s could\'t upload. Error: %s', $multimediaObject->getId(), $material->getId(), $exception->getMessage());
                 $this->logger->error($errorLog);
             }

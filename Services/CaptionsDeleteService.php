@@ -9,6 +9,7 @@ use Psr\Log\LoggerInterface;
 use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\YoutubeBundle\Document\Error;
 use Pumukit\YoutubeBundle\Document\Youtube;
+use Pumukit\YoutubeBundle\Exception\YoutubeQuotaExceededException;
 
 class CaptionsDeleteService extends GoogleCaptionService
 {
@@ -16,14 +17,17 @@ class CaptionsDeleteService extends GoogleCaptionService
 
     private $documentManager;
     private $googleAccountService;
+    private $googleApiErrorParser;
 
     private $logger;
 
     public function __construct(
         DocumentManager $documentManager,
         GoogleAccountService $googleAccountService,
+        GoogleApiErrorParser $googleApiErrorParser,
         LoggerInterface $logger
     ) {
+        $this->googleApiErrorParser = $googleApiErrorParser;
         $this->documentManager = $documentManager;
         $this->googleAccountService = $googleAccountService;
         $this->logger = $logger;
@@ -38,21 +42,23 @@ class CaptionsDeleteService extends GoogleCaptionService
             } catch (\Exception $exception) {
                 $errorLog = sprintf('[YouTube] Remove caption for Youtube document %s failed. Error: %s', $youtube->getId(), $exception->getMessage());
                 $this->logger->error($errorLog);
-                $error = json_decode($exception->getMessage(), true, 512, JSON_THROW_ON_ERROR);
-                if (self::CAPTION_NOT_FOUND === ($error['error']['errors'][0]['reason'] ?? null)) {
+
+                try {
+                    $parsed = $this->googleApiErrorParser->parse($exception);
+                } catch (YoutubeQuotaExceededException $quotaException) {
+                    $this->documentManager->flush();
+
+                    throw $quotaException;
+                }
+
+                if (self::CAPTION_NOT_FOUND === $parsed->reason()) {
                     $youtube->removeCaptionByCaptionId($captionId);
 
                     continue;
                 }
 
                 $failed = true;
-                $error = Error::create(
-                    $error['error']['errors'][0]['reason'],
-                    $error['error']['errors'][0]['message'] ?? 'No message received',
-                    new \DateTime(),
-                    $error['error']
-                );
-                $youtube->setCaptionUpdateError($error);
+                $youtube->setCaptionUpdateError(Error::create($parsed->reason(), $parsed->message(), new \DateTime(), $parsed->raw()));
 
                 continue;
             }
