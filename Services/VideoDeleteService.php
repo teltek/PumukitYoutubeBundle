@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pumukit\YoutubeBundle\Services;
 
 use Doctrine\ODM\MongoDB\DocumentManager;
+use Google\Service\YouTube\Video;
 use Psr\Log\LoggerInterface;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Tag;
@@ -13,6 +14,9 @@ use Pumukit\YoutubeBundle\Document\Youtube;
 
 class VideoDeleteService extends GoogleVideoService
 {
+    private const VIDEO_NOT_FOUND = 'videoNotFound';
+    private const PLAYLIST_ITEM_NOT_FOUND = 'playlistItemNotFound';
+
     private $googleAccountService;
 
     private $documentManager;
@@ -116,7 +120,7 @@ class VideoDeleteService extends GoogleVideoService
         try {
             if ($youtube->getPlaylists()) {
                 foreach ($youtube->getPlaylists() as $playlistId => $playlistRel) {
-                    $this->playlistItemDeleteService->deleteOnePlaylist($account, $playlistRel);
+                    $this->deletePlaylistItemIfItExists($account, $playlistRel);
                     $youtube->removePlaylist($playlistId);
                 }
             }
@@ -137,11 +141,13 @@ class VideoDeleteService extends GoogleVideoService
         } catch (\Exception $exception) {
             $parsed = $this->googleApiErrorParser->parse($exception);
 
-            $error = Error::create($parsed->reason(), $parsed->message(), new \DateTime(), $parsed->raw());
-            $youtube->setError($error);
-            $this->documentManager->flush();
+            if (self::VIDEO_NOT_FOUND !== $parsed->reason()) {
+                $error = Error::create($parsed->reason(), $parsed->message(), new \DateTime(), $parsed->raw());
+                $youtube->setError($error);
+                $this->documentManager->flush();
 
-            return false;
+                return false;
+            }
         }
 
         $youtube->setStatus(Youtube::STATUS_REMOVED);
@@ -152,7 +158,19 @@ class VideoDeleteService extends GoogleVideoService
         return true;
     }
 
-    private function delete(Tag $youtubeAccount, \Google\Service\YouTube\Video $video)
+    private function deletePlaylistItemIfItExists(Tag $youtubeAccount, string $playlistItemId): void
+    {
+        try {
+            $this->playlistItemDeleteService->deleteOnePlaylist($youtubeAccount, $playlistItemId);
+        } catch (\Exception $exception) {
+            $error = json_decode($exception->getMessage(), true);
+            if (self::PLAYLIST_ITEM_NOT_FOUND !== ($error['error']['errors'][0]['reason'] ?? null)) {
+                throw $exception;
+            }
+        }
+    }
+
+    private function delete(Tag $youtubeAccount, Video $video)
     {
         $infoLog = sprintf('[YouTube] Video delete: %s ', $video->getId());
         $this->logger->info($infoLog);
@@ -162,7 +180,7 @@ class VideoDeleteService extends GoogleVideoService
         return $service->videos->delete($video->getId());
     }
 
-    private function createVideo(string $videoId): \Google\Service\YouTube\Video
+    private function createVideo(string $videoId): Video
     {
         $video = $this->createGoogleServiceYoutubeVideo();
         $video->setId($videoId);

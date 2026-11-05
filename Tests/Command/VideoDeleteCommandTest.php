@@ -140,17 +140,97 @@ class VideoDeleteCommandTest extends YoutubeTestCase
         $this->assertSame('videoNotFound', $youtube->getError()->id());
     }
 
-    #[Group('to-change')]
-    public function testAFailedDeleteOnAChangeOfAccountStillPreparesTheUpload(): void
+    public function testAFailedDeleteOnAChangeOfAccountKeepsItPendingWithTheError(): void
     {
         $multimediaObject = $this->videoForYoutube();
-        $this->youtubeDocument($multimediaObject, Youtube::STATUS_TO_DELETE);
+        $youtube = $this->youtubeDocument($multimediaObject, Youtube::STATUS_TO_DELETE);
+        $account = $youtube->getYoutubeAccount();
         $this->api->willFail('forbidden', 403);
 
         $this->runCommand('pumukit:youtube:video:delete');
 
-        $this->assertSame(Youtube::STATUS_UPLOADING, $this->youtubeOf($multimediaObject)->getStatus());
+        $stored = $this->youtubeOf($multimediaObject);
+        $this->assertSame(Youtube::STATUS_TO_DELETE, $stored->getStatus());
+        $this->assertSame($account, $stored->getYoutubeAccount());
+        $this->assertSame('forbidden', $stored->getError()->id());
+        $this->assertNotNull($this->reload(MultimediaObject::class, $multimediaObject->getId())->getProperty('youtube'));
+    }
+
+    public function testAFailedDeleteOnAChangeOfAccountIsRetriedOnTheNextRun(): void
+    {
+        $multimediaObject = $this->videoForYoutube();
+        $this->youtubeDocument($multimediaObject, Youtube::STATUS_TO_DELETE);
+        $this->api->willFail('backendError', 500);
+        $this->runCommand('pumukit:youtube:video:delete');
+        $this->api->willAnswerEmpty();
+
+        $this->runCommand('pumukit:youtube:video:delete');
+
+        $this->assertSame(2, $this->api->callsTo('DELETE', '/youtube/v3/videos'));
+        $stored = $this->youtubeOf($multimediaObject);
+        $this->assertSame(Youtube::STATUS_UPLOADING, $stored->getStatus());
+        $this->assertNull($stored->getError());
         $this->assertNull($this->reload(MultimediaObject::class, $multimediaObject->getId())->getProperty('youtube'));
+    }
+
+    public function testTheQuotaOnAChangeOfAccountKeepsItPending(): void
+    {
+        $multimediaObject = $this->videoForYoutube();
+        $this->youtubeDocument($multimediaObject, Youtube::STATUS_TO_DELETE);
+        $this->api->willFail('quotaExceeded', 403);
+
+        $this->runCommand('pumukit:youtube:video:delete');
+
+        $this->assertSame(Youtube::STATUS_TO_DELETE, $this->youtubeOf($multimediaObject)->getStatus());
+        $this->assertNotNull($this->reload(MultimediaObject::class, $multimediaObject->getId())->getProperty('youtube'));
+    }
+
+    public function testAVideoAlreadyGoneOnAChangeOfAccountPreparesTheNextUpload(): void
+    {
+        $multimediaObject = $this->videoForYoutube();
+        $this->youtubeDocument($multimediaObject, Youtube::STATUS_TO_DELETE);
+        $this->api->willFail('videoNotFound', 404);
+
+        $this->runCommand('pumukit:youtube:video:delete');
+
+        $stored = $this->youtubeOf($multimediaObject);
+        $this->assertSame(Youtube::STATUS_UPLOADING, $stored->getStatus());
+        $this->assertNull($stored->getError());
+        $this->assertNull($this->reload(MultimediaObject::class, $multimediaObject->getId())->getProperty('youtube'));
+    }
+
+    public function testAPlaylistEntryAlreadyGoneOnAChangeOfAccountStillDeletesTheVideo(): void
+    {
+        $multimediaObject = $this->videoForYoutube();
+        $youtube = $this->youtubeDocument($multimediaObject, Youtube::STATUS_TO_DELETE);
+        $youtube->setPlaylist('list1', 'item1');
+        $this->dm->flush();
+        $this->api->willFail('playlistItemNotFound', 404);
+        $this->api->willAnswerEmpty();
+
+        $this->runCommand('pumukit:youtube:video:delete');
+
+        $this->assertSame(1, $this->api->callsTo('DELETE', '/youtube/v3/videos'));
+        $stored = $this->youtubeOf($multimediaObject);
+        $this->assertSame(Youtube::STATUS_UPLOADING, $stored->getStatus());
+        $this->assertSame([], $stored->getPlaylists());
+    }
+
+    public function testAPlaylistEntryThatCannotBeDeletedKeepsItPending(): void
+    {
+        $multimediaObject = $this->videoForYoutube();
+        $youtube = $this->youtubeDocument($multimediaObject, Youtube::STATUS_TO_DELETE);
+        $youtube->setPlaylist('list1', 'item1');
+        $this->dm->flush();
+        $this->api->willFail('forbidden', 403);
+
+        $this->runCommand('pumukit:youtube:video:delete');
+
+        $this->assertSame(0, $this->api->callsTo('DELETE', '/youtube/v3/videos'));
+        $stored = $this->youtubeOf($multimediaObject);
+        $this->assertSame(Youtube::STATUS_TO_DELETE, $stored->getStatus());
+        $this->assertSame(['list1' => 'item1'], $stored->getPlaylists());
+        $this->assertSame('forbidden', $stored->getError()->id());
     }
 
     #[Group('to-change')]

@@ -117,7 +117,13 @@ EOT
     {
         foreach ($youtubeDocuments as $youtube) {
             try {
-                $this->videoDeleteService->deleteVideoFromYouTubeByYouTubeDocument($youtube);
+                if (!$this->videoDeleteService->deleteVideoFromYouTubeByYouTubeDocument($youtube)) {
+                    $errorLog = sprintf('[YouTube] Remove video assigned on YoutubeDocument %s failed. It stays pending. Error: %s', $youtube->getId(), $youtube->getError()?->message());
+                    $this->logger->error($errorLog);
+                    $output->writeln($errorLog);
+
+                    continue;
+                }
 
                 $youtubeTag = $this->documentManager->getRepository(Tag::class)->findOneBy(['cod' => PumukitYoutubeBundle::YOUTUBE_TAG_CODE]);
                 $multimediaObject = $this->documentManager->getRepository(MultimediaObject::class)->findOneBy(['_id' => new ObjectId($youtube->getMultimediaObjectId())]);
