@@ -9,6 +9,8 @@ use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Validator\Constraints\NotBlank;
+use Symfony\Component\Validator\Constraints\Regex;
 
 class AccountType extends AbstractType
 {
@@ -36,6 +38,7 @@ class AccountType extends AbstractType
                     'label' => $this->translator->trans('login', [], null, $this->locale),
                     'attr' => ['class' => 'form-control'],
                     'required' => true,
+                    'constraints' => [new NotBlank(), new Regex('/^[^\/\\\]+$/')],
                 ]
             )
         ;

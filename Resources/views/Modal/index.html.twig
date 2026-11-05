@@ -124,12 +124,13 @@
             </div>
         </div>
 
-        {% if status == 'published' %}
+        {% if status == 'published' and is_granted('ROLE_ACCESS_YOUTUBE') %}
             <div class="row">
                 <div class="col-md-12 text-center">
                     <a href="#" class="btn btn-pumukit mb-2" title="{{ "Manual playlist update"|trans }}"
                        data-action="click->youtube--video#run"
                        data-youtube--video-url-param="{{ path('pumukityoutube_updateplaylist', {'id': mm.id}) }}"
+                       data-youtube--video-token-param="{{ csrf_token(constant('Pumukit\\YoutubeBundle\\Controller\\ModalController::CSRF_TOKEN')) }}"
                        data-youtube--video-success-param="{{ 'Update playlist successfully'|trans }}"
                        data-youtube--video-error-param="{{ 'The video could not be updated on YouTube.'|trans }}">
                        {{ "Update playlist"|trans }}
@@ -137,11 +138,13 @@
                 </div>
             </div>
         {% endif %}
+        {% if is_granted('ROLE_ACCESS_YOUTUBE') %}
         <div class="row">
             <div class="col-md-12 text-center">
                 <a href="#" class="btn btn-pumukit mb-2" title="{{ "Force upload video"|trans }}"
                    data-action="click->youtube--video#run"
                    data-youtube--video-url-param="{{ path('pumukityoutube_force_upload', {'id': mm.id}) }}"
+                   data-youtube--video-token-param="{{ csrf_token(constant('Pumukit\\YoutubeBundle\\Controller\\ModalController::CSRF_TOKEN')) }}"
                    data-youtube--video-confirm-param="{{ 'Do you want force upload this video? This action will delete old video causing lose all views on Youtube'|trans }}"
                    data-youtube--video-success-param="{{ 'Update video successfully'|trans }}"
                    data-youtube--video-error-param="{{ 'The video could not be updated on YouTube.'|trans }}">
@@ -149,6 +152,7 @@
                 </a>
             </div>
         </div>
+        {% endif %}
     </div>
 
     </div>

@@ -6,18 +6,24 @@ namespace Pumukit\YoutubeBundle\Controller;
 
 use Doctrine\ODM\MongoDB\DocumentManager;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
+use Pumukit\SchemaBundle\Security\Permission;
+use Pumukit\SchemaBundle\Services\MultimediaObjectVoter;
 use Pumukit\YoutubeBundle\Document\Youtube;
 use Pumukit\YoutubeBundle\Services\PlaylistItemInsertService;
 use Pumukit\YoutubeBundle\Services\VideoDeleteService;
 use Pumukit\YoutubeBundle\Services\VideoInsertService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[Route('/admin/youtube')]
 class ModalController extends AbstractController
 {
+    public const CSRF_TOKEN = 'youtube_video';
+
     private $documentManager;
 
     private $playlistItemInsertService;
@@ -38,6 +44,7 @@ class ModalController extends AbstractController
     }
 
     #[Route('/modal/mm/{id}', name: 'pumukityoutube_modal_index')]
+    #[IsGranted(Permission::ACCESS_MULTIMEDIA_SERIES)]
     public function indexAction(MultimediaObject $mm): Response
     {
         $youtube = $this->documentManager->getRepository(Youtube::class)->find($mm->getProperty('youtube'));
@@ -52,17 +59,23 @@ class ModalController extends AbstractController
         ]);
     }
 
-    #[Route('/updateplaylist/mm/{id}', name: 'pumukityoutube_updateplaylist')]
-    public function updatePlaylistAction(MultimediaObject $multimediaObject): JsonResponse
+    #[Route('/updateplaylist/mm/{id}', name: 'pumukityoutube_updateplaylist', methods: ['POST'])]
+    #[IsGranted('ROLE_ACCESS_YOUTUBE')]
+    public function updatePlaylistAction(Request $request, MultimediaObject $multimediaObject): JsonResponse
     {
+        $this->denyUnlessAllowed($request, $multimediaObject);
+
         $out = $this->playlistItemInsertService->updatePlaylist($multimediaObject);
 
         return new JsonResponse($out);
     }
 
-    #[Route('/forceuploads/mm/{id}', name: 'pumukityoutube_force_upload')]
-    public function forceUploadAction(MultimediaObject $multimediaObject): JsonResponse
+    #[Route('/forceuploads/mm/{id}', name: 'pumukityoutube_force_upload', methods: ['POST'])]
+    #[IsGranted('ROLE_ACCESS_YOUTUBE')]
+    public function forceUploadAction(Request $request, MultimediaObject $multimediaObject): JsonResponse
     {
+        $this->denyUnlessAllowed($request, $multimediaObject);
+
         // Validate the track that would be uploaded against the max upload size before
         // touching anything. If it does not fit, leave the Youtube document untouched
         // (the service already logged the attempt in youtube.log).
@@ -86,5 +99,14 @@ class ModalController extends AbstractController
         $out = $this->videoInsertService->uploadVideoToYoutube($multimediaObject);
 
         return new JsonResponse($out);
+    }
+
+    private function denyUnlessAllowed(Request $request, MultimediaObject $multimediaObject): void
+    {
+        if (!$this->isCsrfTokenValid(self::CSRF_TOKEN, $request->request->getString('_token'))) {
+            throw $this->createAccessDeniedException('Invalid CSRF token');
+        }
+
+        $this->denyAccessUnlessGranted(MultimediaObjectVoter::EDIT, $multimediaObject);
     }
 }

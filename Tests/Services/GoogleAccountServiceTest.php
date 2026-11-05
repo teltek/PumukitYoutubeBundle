@@ -46,6 +46,13 @@ class GoogleAccountServiceTest extends TestCase
         $this->service()->googleServiceFromAccount($this->account());
     }
 
+    public function testALoginCannotPointOutsideTheFolder(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+
+        $this->service()->createClient('../outside');
+    }
+
     public function testAnAccountWithoutItsFileIsRejected(): void
     {
         $account = $this->account();

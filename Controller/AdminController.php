@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Pumukit\YoutubeBundle\Controller;
 
 use Doctrine\ODM\MongoDB\DocumentManager;
-use MongoDB\BSON\ObjectId;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Tag;
+use Pumukit\SchemaBundle\Security\Permission;
 use Pumukit\SchemaBundle\Services\TagService;
 use Pumukit\YoutubeBundle\Form\Type\AccountType;
 use Pumukit\YoutubeBundle\Form\Type\YoutubePlaylistType;
@@ -93,10 +93,7 @@ class AdminController extends AbstractController
     #[Route('/edit/{id}', name: 'pumukit_youtube_edit_account')]
     public function editAction(Request $request, string $id)
     {
-        $youtubeAccount = $this->documentManager->getRepository(Tag::class)->findOneBy(['_id' => new ObjectId($id)]);
-        if (!$youtubeAccount) {
-            throw new \Exception('Youtube account not found');
-        }
+        $youtubeAccount = $this->youtubeTagOr404($id);
         $locale = $request->getLocale();
         $form = $this->createForm(AccountType::class, null, ['translator' => $this->translator, 'locale' => $locale]);
         $form->get('i18n_title')->setData($youtubeAccount->getI18nTitle());
@@ -123,13 +120,12 @@ class AdminController extends AbstractController
     }
 
     #[IsGranted('ROLE_ACCESS_YOUTUBE')]
-    #[Route('/delete/{id}', name: 'pumukit_youtube_delete_tag')]
-    public function deleteAction(string $id): ?JsonResponse
+    #[Route('/delete/{id}', name: 'pumukit_youtube_delete_tag', methods: ['DELETE'])]
+    public function deleteAction(string $id): JsonResponse
     {
+        $youtubeAccount = $this->youtubeTagOr404($id);
+
         try {
-            $youtubeAccount = $this->documentManager->getRepository(Tag::class)->findOneBy(
-                ['_id' => new ObjectId($id)]
-            );
             $this->tagService->deleteTag($youtubeAccount);
 
             return new JsonResponse(['success']);
@@ -140,8 +136,10 @@ class AdminController extends AbstractController
 
     #[IsGranted('ROLE_ACCESS_YOUTUBE')]
     #[Route('/children/{id}', name: 'pumukit_youtube_children_tag')]
-    public function childrenAction(Tag $tag): Response
+    public function childrenAction(string $id): Response
     {
+        $tag = $this->youtubeTagOr404($id);
+
         return $this->render('@PumukitYoutube/Admin/children.html.twig', [
             'tag' => $tag,
             'youtubeAccounts' => $tag->getChildren(),
@@ -153,6 +151,7 @@ class AdminController extends AbstractController
     #[Route('/create/playlist/{id}', name: 'pumukit_youtube_create_playlist')]
     public function createPlaylistAction(Request $request, string $id)
     {
+        $account = $this->youtubeTagOr404($id);
         $locale = $request->getLocale();
         $form = $this->createForm(YoutubePlaylistType::class, null, ['translator' => $this->translator, 'locale' => $locale]);
         $form->handleRequest($request);
@@ -164,7 +163,6 @@ class AdminController extends AbstractController
                 $playlist->setProperty('youtube_playlist', true);
                 $this->documentManager->persist($playlist);
                 $playlist->setCod($playlist->getId());
-                $account = $this->documentManager->getRepository(Tag::class)->findOneBy(['_id' => new ObjectId($id)]);
                 $playlist->setParent($account);
                 $this->documentManager->flush();
 
@@ -185,7 +183,7 @@ class AdminController extends AbstractController
     public function editPlaylistAction(Request $request, string $id)
     {
         $locale = $request->getLocale();
-        $playlist = $this->documentManager->getRepository(Tag::class)->findOneBy(['_id' => new ObjectId($id)]);
+        $playlist = $this->youtubeTagOr404($id);
         $form = $this->createForm(YoutubePlaylistType::class, $playlist, ['translator' => $this->translator, 'locale' => $locale]);
         $form->handleRequest($request);
         if ('POST' === $request->getMethod() && $form->isValid()) {
@@ -207,6 +205,7 @@ class AdminController extends AbstractController
     }
 
     #[Route('/update/config/{id}', name: 'pumukityoutube_advance_configuration_index')]
+    #[IsGranted(Permission::ACCESS_MULTIMEDIA_SERIES)]
     public function updateYTAction(MultimediaObject $multimediaObject): Response
     {
         $youtubeAccounts = $this->documentManager->getRepository(Tag::class)->findOneBy([
@@ -233,6 +232,7 @@ class AdminController extends AbstractController
     }
 
     #[Route('/playlist/list/{id}', name: 'pumukityoutube_playlist_select')]
+    #[IsGranted(Permission::ACCESS_MULTIMEDIA_SERIES)]
     public function playlistAccountAction(string $id): JsonResponse
     {
         if (!$id) {
@@ -256,6 +256,18 @@ class AdminController extends AbstractController
         array_unshift($children, $defaultOption);
 
         return new JsonResponse($children);
+    }
+
+    private function youtubeTagOr404(string $id): Tag
+    {
+        $repository = $this->documentManager->getRepository(Tag::class);
+        $tag = preg_match('/^[a-f\d]{24}$/i', $id) ? $repository->find($id) : null;
+        $youtubeTag = $repository->findOneBy(['cod' => PumukitYoutubeBundle::YOUTUBE_TAG_CODE]);
+        if (!$tag instanceof Tag || !$youtubeTag instanceof Tag || !$tag->isDescendantOf($youtubeTag)) {
+            throw new NotFoundHttpException('Youtube tag not found');
+        }
+
+        return $tag;
     }
 
     private function errorResponse(\Exception $exception): JsonResponse

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Pumukit\YoutubeBundle\Tests\Controller;
 
 use PHPUnit\Framework\Attributes\DataProvider;
-use PHPUnit\Framework\Attributes\Group;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\YoutubeBundle\Document\Error;
@@ -364,7 +363,7 @@ class AdminPagesTest extends YoutubeTestCase
         $this->youtubeDocument($multimediaObject);
         $this->login();
 
-        $this->client->request('GET', self::BASE.'/updateplaylist/mm/'.$multimediaObject->getId());
+        $this->client->request('POST', self::BASE.'/updateplaylist/mm/'.$multimediaObject->getId(), ['_token' => $this->actionToken($multimediaObject)]);
 
         $this->assertSame('true', $this->client->getResponse()->getContent());
     }
@@ -378,7 +377,7 @@ class AdminPagesTest extends YoutubeTestCase
         $this->api->willStartAnUpload();
         $this->api->willFinishAnUpload('newid');
 
-        $this->client->request('GET', self::BASE.'/forceuploads/mm/'.$multimediaObject->getId());
+        $this->client->request('POST', self::BASE.'/forceuploads/mm/'.$multimediaObject->getId(), ['_token' => $this->actionToken($multimediaObject)]);
 
         $this->assertSame('true', $this->client->getResponse()->getContent());
         $this->assertSame(1, $this->api->callsTo('DELETE', '/youtube/v3/videos'));
@@ -392,7 +391,7 @@ class AdminPagesTest extends YoutubeTestCase
         $this->login();
         $this->api->willFail('forbidden', 403);
 
-        $this->client->request('GET', self::BASE.'/forceuploads/mm/'.$multimediaObject->getId());
+        $this->client->request('POST', self::BASE.'/forceuploads/mm/'.$multimediaObject->getId(), ['_token' => $this->actionToken($multimediaObject)]);
 
         $this->assertStringContainsString('Cannot remove', $this->client->getResponse()->getContent());
         $this->assertSame('ytid', $this->youtubeOf($multimediaObject)->getYoutubeId());
@@ -404,42 +403,179 @@ class AdminPagesTest extends YoutubeTestCase
         $this->youtubeDocument($multimediaObject);
         $this->login();
 
-        $this->client->request('GET', self::BASE.'/forceuploads/mm/'.$multimediaObject->getId());
+        $this->client->request('POST', self::BASE.'/forceuploads/mm/'.$multimediaObject->getId(), ['_token' => $this->actionToken($multimediaObject)]);
 
         $this->assertStringContainsString('maximum allowed', $this->client->getResponse()->getContent());
         $this->assertSame(0, $this->api->calls());
     }
 
-    #[Group('to-change')]
-    public function testAnyScopeCanForceAnUploadWithoutTheRole(): void
+    public function testTheActionsOfAVideoNeedTheRole(): void
     {
         $multimediaObject = $this->videoForYoutube();
         $this->youtubeDocument($multimediaObject);
-        $this->client->loginUser($this->user(['ROLE_SCOPE_PERSONAL'], 'personal'), 'pumukit');
-        $this->api->willAnswerEmpty();
-        $this->api->willStartAnUpload();
-        $this->api->willFinishAnUpload('newid');
+        $this->login();
+        $token = $this->actionToken($multimediaObject);
+        $this->client->loginUser($this->user(['ROLE_SCOPE_GLOBAL', 'ROLE_ACCESS_MULTIMEDIA_SERIES'], 'norole'), 'pumukit');
 
-        $this->client->request('GET', self::BASE.'/forceuploads/mm/'.$multimediaObject->getId());
-
-        $this->assertSame('newid', $this->youtubeOf($multimediaObject)->getYoutubeId());
+        foreach (['forceuploads', 'updateplaylist'] as $action) {
+            $this->client->request('POST', self::BASE.'/'.$action.'/mm/'.$multimediaObject->getId(), ['_token' => $token]);
+            $this->assertResponseStatusCodeSame(Response::HTTP_FORBIDDEN);
+        }
+        $this->assertSame(0, $this->api->calls());
     }
 
-    #[Group('to-change')]
-    public function testAGetDeletesAnyTag(): void
+    public function testTheActionsOfAVideoOnlyAcceptAPostWithTheToken(): void
     {
-        $tag = $this->tag('unrelated');
-        $id = (string) $tag->getId();
+        $multimediaObject = $this->videoForYoutube();
+        $this->youtubeDocument($multimediaObject);
+        $this->login();
+
+        foreach (['forceuploads', 'updateplaylist'] as $action) {
+            $this->client->request('GET', self::BASE.'/'.$action.'/mm/'.$multimediaObject->getId());
+            $this->assertResponseStatusCodeSame(Response::HTTP_METHOD_NOT_ALLOWED);
+
+            $this->client->request('POST', self::BASE.'/'.$action.'/mm/'.$multimediaObject->getId(), ['_token' => 'wrong']);
+            $this->assertResponseStatusCodeSame(Response::HTTP_FORBIDDEN);
+        }
+        $this->assertSame(0, $this->api->calls());
+    }
+
+    public function testAPersonalUserCannotActOnTheVideoOfOtherUser(): void
+    {
+        $multimediaObject = $this->videoForYoutube();
+        $this->youtubeDocument($multimediaObject);
+        $this->login();
+        $token = $this->actionToken($multimediaObject);
+        $this->client->loginUser($this->user(['ROLE_SCOPE_PERSONAL', 'ROLE_ACCESS_YOUTUBE', 'ROLE_ACCESS_MULTIMEDIA_SERIES'], 'personal'), 'pumukit');
+
+        $this->client->request('POST', self::BASE.'/forceuploads/mm/'.$multimediaObject->getId(), ['_token' => $token]);
+
+        $this->assertResponseStatusCodeSame(Response::HTTP_FORBIDDEN);
+        $this->assertSame(0, $this->api->calls());
+    }
+
+    public function testTheVideoModalWithoutTheRoleShowsNoActions(): void
+    {
+        $multimediaObject = $this->videoForYoutube();
+        $this->youtubeDocument($multimediaObject);
+        $this->client->loginUser($this->user(['ROLE_SCOPE_GLOBAL', 'ROLE_ACCESS_MULTIMEDIA_SERIES'], 'norole'), 'pumukit');
+
+        $crawler = $this->client->request('GET', self::BASE.'/modal/mm/'.$multimediaObject->getId());
+
+        $this->assertResponseIsSuccessful();
+        $this->assertCount(0, $crawler->filter('[data-action="click->youtube--video#run"]'));
+    }
+
+    #[DataProvider('pagesOfThePublicationTab')]
+    public function testThePagesOfThePublicationTabNeedAccessToTheVideos(string $path): void
+    {
+        $multimediaObject = $this->videoForYoutube();
+        $url = self::BASE.strtr($path, ['{mm}' => $multimediaObject->getId(), '{account}' => (string) $this->account->getId()]);
+        $this->client->loginUser($this->user(['ROLE_SCOPE_GLOBAL'], 'nobody'), 'pumukit');
+        $this->client->request('GET', $url);
+        $this->assertResponseStatusCodeSame(Response::HTTP_FORBIDDEN);
+
+        $this->client->loginUser($this->user(['ROLE_SCOPE_GLOBAL', 'ROLE_ACCESS_MULTIMEDIA_SERIES'], 'videos'), 'pumukit');
+        $this->client->request('GET', $url);
+        $this->assertResponseIsSuccessful();
+    }
+
+    public static function pagesOfThePublicationTab(): iterable
+    {
+        yield 'configuration of the channel' => ['/update/config/{mm}'];
+
+        yield 'playlists of an account' => ['/playlist/list/{account}'];
+
+        yield 'info of the video' => ['/modal/mm/{mm}'];
+    }
+
+    public function testATagIsNotDeletedWithAGet(): void
+    {
+        $playlist = $this->playlist('playlist1', 'list1');
+        $id = (string) $playlist->getId();
         $this->login();
 
         $this->client->request('GET', self::BASE.'/delete/'.$id);
 
+        $this->assertResponseStatusCodeSame(Response::HTTP_METHOD_NOT_ALLOWED);
+        $this->dm->clear();
+        $this->assertNotNull($this->dm->getRepository(Tag::class)->find($id));
+    }
+
+    public function testAPlaylistIsDeleted(): void
+    {
+        $id = (string) $this->playlist('playlist1', 'list1')->getId();
+        $this->login();
+
+        $this->client->request('DELETE', self::BASE.'/delete/'.$id);
+
+        $this->assertResponseIsSuccessful();
         $this->dm->clear();
         $this->assertNull($this->dm->getRepository(Tag::class)->find($id));
     }
 
+    public function testATagOutsideYoutubeIsNotDeleted(): void
+    {
+        $id = (string) $this->tag('unrelated')->getId();
+        $this->login();
+
+        $this->client->request('DELETE', self::BASE.'/delete/'.$id);
+
+        $this->assertResponseStatusCodeSame(Response::HTTP_NOT_FOUND);
+        $this->dm->clear();
+        $this->assertNotNull($this->dm->getRepository(Tag::class)->find($id));
+    }
+
+    #[DataProvider('pagesOfAYoutubeTag')]
+    public function testThePagesOfAYoutubeTagDoNotAcceptOtherTags(string $path): void
+    {
+        $id = (string) $this->tag('unrelated')->getId();
+        $this->login();
+
+        $this->client->request('GET', self::BASE.$path.$id);
+
+        $this->assertResponseStatusCodeSame(Response::HTTP_NOT_FOUND);
+    }
+
+    public static function pagesOfAYoutubeTag(): iterable
+    {
+        yield 'edit account' => ['/edit/'];
+
+        yield 'children' => ['/children/'];
+
+        yield 'new playlist' => ['/create/playlist/'];
+
+        yield 'edit playlist' => ['/edit/playlist/'];
+    }
+
+    public function testALoginCannotPointOutsideTheFolderOfTheAccounts(): void
+    {
+        $this->login();
+        $crawler = $this->client->request('GET', self::BASE.'/create');
+        $form = $crawler->filter('form')->form();
+        $form['pumukit_youtube_account[login]'] = '../../config/secrets';
+        foreach (array_keys($form->getValues()) as $field) {
+            if (str_contains($field, 'i18n_title')) {
+                $form[$field] = 'Bad';
+            }
+        }
+
+        $this->client->submit($form);
+
+        $this->assertStringContainsString('modal-header', $this->client->getResponse()->getContent());
+        $this->dm->clear();
+        $this->assertNull($this->dm->getRepository(Tag::class)->findOneBy(['properties.login' => '../../config/secrets']));
+    }
+
+    private function actionToken(MultimediaObject $multimediaObject): string
+    {
+        $crawler = $this->client->request('GET', self::BASE.'/modal/mm/'.$multimediaObject->getId());
+
+        return (string) $crawler->filter('[data-action="click->youtube--video#run"]')->last()->attr('data-youtube--video-token-param');
+    }
+
     private function login(): void
     {
-        $this->client->loginUser($this->user(['ROLE_SCOPE_GLOBAL', 'ROLE_ACCESS_YOUTUBE'], 'admin'.uniqid()), 'pumukit');
+        $this->client->loginUser($this->user(['ROLE_SCOPE_GLOBAL', 'ROLE_ACCESS_YOUTUBE', 'ROLE_ACCESS_MULTIMEDIA_SERIES'], 'admin'.uniqid()), 'pumukit');
     }
 }

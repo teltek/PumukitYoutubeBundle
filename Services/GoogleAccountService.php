@@ -38,7 +38,7 @@ class GoogleAccountService
         return $this->client;
     }
 
-    public function googleServiceFromAccount(Tag $youtubeAccount): \Google\Service\YouTube
+    public function googleServiceFromAccount(Tag $youtubeAccount): YouTube
     {
         $login = $youtubeAccount->getProperty('login');
         if (!is_string($login) || '' === $login) {
@@ -82,9 +82,9 @@ class GoogleAccountService
         return $this->client;
     }
 
-    private function createService(Client $client): \Google\Service\YouTube
+    private function createService(Client $client): YouTube
     {
-        return new \Google\Service\YouTube($client);
+        return new YouTube($client);
     }
 
     private function setAccountScopes(): void
@@ -97,7 +97,11 @@ class GoogleAccountService
 
     private function getClientSecret(string $login): string
     {
-        $pathFile = $this->youtubeConfigurationService->accountStorage().$login.'.json';
+        if ('' === $login || $login !== basename($login)) {
+            throw new \InvalidArgumentException(sprintf('The login "%s" is not valid.', $login));
+        }
+
+        $pathFile = rtrim($this->youtubeConfigurationService->accountStorage(), '/').'/'.$login.'.json';
 
         return $this->findFile($pathFile);
     }
