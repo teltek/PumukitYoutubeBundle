@@ -22,6 +22,8 @@ class Youtube
     public const STATUS_TO_DELETE = 10;
     public const STATUS_TO_REVIEW = 99;
 
+    public const TEMPORARY_ERRORS = ['pumukit.apiError', 'authError', 'backendError', 'internalError', 'internalServerError', 'serviceUnavailable'];
+
     public static $statusTexts = [
         self::STATUS_DEFAULT => 'Processing',
         self::STATUS_UPLOADING => 'Uploading',
@@ -157,6 +159,16 @@ class Youtube
     public function getStatus(): int
     {
         return $this->status;
+    }
+
+    public function willBeRetried(): bool
+    {
+        return self::STATUS_ERROR === $this->status && $this->error && in_array($this->error->id(), self::TEMPORARY_ERRORS, true);
+    }
+
+    public function needsAction(): bool
+    {
+        return in_array($this->status, [self::STATUS_ERROR, self::STATUS_TO_REVIEW], true) && $this->error && !in_array($this->error->id(), self::TEMPORARY_ERRORS, true);
     }
 
     public function getStatusText(): string

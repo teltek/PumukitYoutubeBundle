@@ -11,8 +11,6 @@ use Pumukit\YoutubeBundle\Document\Youtube;
 
 class YoutubeRepository extends DocumentRepository
 {
-    public const TEMPORARY_ERRORS = ['pumukit.apiError', 'authError', 'backendError', 'internalError', 'internalServerError', 'serviceUnavailable'];
-
     public function getWithAnyStatusQueryBuilder(array $statusArray = []): Builder
     {
         return $this->createQueryBuilder()
@@ -42,7 +40,7 @@ class YoutubeRepository extends DocumentRepository
     public function getDistinctMultimediaObjectIdsToRetry()
     {
         $qb = $this->createQueryBuilder()->field('status')->equals(Youtube::STATUS_ERROR);
-        $qb->addOr($qb->expr()->field('error.id')->in(self::TEMPORARY_ERRORS));
+        $qb->addOr($qb->expr()->field('error.id')->in(Youtube::TEMPORARY_ERRORS));
         $qb->addOr($qb->expr()->field('error')->equals(null));
 
         return $qb->distinct('multimediaObjectId')->getQuery()->execute();

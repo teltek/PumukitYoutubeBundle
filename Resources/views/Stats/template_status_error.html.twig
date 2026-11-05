@@ -10,6 +10,26 @@
     <div class="col-md-12">
         <div class="row">
             <div class="col-md-3 col-sm-6 col-12">
+                <a class="youtube_status_link_list" href="{{ path('pumukit_youtube_stat_by_error', {type: constant('Pumukit\\YoutubeBundle\\Services\\YoutubeStatsService::NEEDS_ACTION')}) }}">
+                    <div class="info-box">
+                        <span class="info-box-icon text-bg-danger">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                        </span>
+                        <div class="info-box-content">
+                            <span class="info-box-number">
+                                <span class="info-box-text"> {{ "Needs action"|trans }}</span>
+                                {% set number = needing_action_count() %}
+                                {{ number }}
+                                <small>
+                                    {{ "{0} videos|{1} video|]1,Inf] videos"|trans({'%count%': number }) }}
+                                </small>
+                            </span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col-md-3 col-sm-6 col-12">
                 <a class="youtube_status_link_list" href="{{ path('pumukit_youtube_stat_by_error') }}">
                     <div class="info-box">
                         <span class="info-box-icon text-bg-info">
@@ -37,7 +57,7 @@
                         </span>
                         <div class="info-box-content">
                             <span class="info-box-number">
-                                <span class="info-box-text"> {{ "Metadata Update Error" }}</span>
+                                <span class="info-box-text"> {{ "Metadata Update Error"|trans }}</span>
                                 {% set number = metadata_update_errors_count() %}
                                 {{ number }}
                                 <small>

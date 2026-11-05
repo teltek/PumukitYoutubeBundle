@@ -11,7 +11,7 @@
     <div class="col-md-12">
         <div class="row">
             <div class="col-md-3 col-sm-6 col-12">
-                <a class="youtube_status_link_list" href="{{ path('pumukit_youtube_stat_list', {'status': 1 }) }}">
+                <a class="youtube_status_link_list" href="{{ path('pumukit_youtube_stat_list', {'status': constant('Pumukit\\YoutubeBundle\\Document\\Youtube::STATUS_PROCESSING') }) }}">
                     <div class="info-box">
                         <span class="info-box-icon text-bg-info">
                             {{ "Processing"|trans|first|upper }}
@@ -19,7 +19,7 @@
                         <div class="info-box-content">
                             <span class="info-box-number">
                                 <span class="info-box-text"> {{ "Processing"|trans }}</span>
-                                {% set number = processing_videos()|length %}
+                                {% set number = processing_videos_count() %}
                                 {{ number }}
                                 <small>
                                     {{ "{0} videos|{1} video|]1,Inf] videos"|trans({'%count%': number }) }}
@@ -38,7 +38,7 @@
                         <div class="info-box-content">
                             <span class="info-box-number">
                                 <span class="info-box-text"> {{ "Published"|trans }}</span>
-                                {% set number = published_videos()|length %}
+                                {% set number = published_videos_count() %}
                                 {{ number }}
                                 <small>
                                     {{ "{0} videos|{1} video|]1,Inf] videos"|trans({'%count%': number }) }}
@@ -57,7 +57,7 @@
                         <div class="info-box-content">
                             <span class="info-box-number">
                                 <span class="info-box-text"> {{ "Removed"|trans }}</span>
-                                {% set number = removed_videos()|length %}
+                                {% set number = removed_videos_count() %}
                                 {{ number }}
                                 <small>
                                     {{ "{0} videos|{1} video|]1,Inf] videos"|trans({'%count%': number }) }}
@@ -76,7 +76,7 @@
                         <div class="info-box-content">
                             <span class="info-box-number">
                                 <span class="info-box-text"> {{ "To delete"|trans }}</span>
-                                {% set number = to_delete_videos()|length %}
+                                {% set number = to_delete_videos_count() %}
                                 {{ number }}
                                 <small>
                                     {{ "{0} videos|{1} video|]1,Inf] videos"|trans({'%count%': number }) }}

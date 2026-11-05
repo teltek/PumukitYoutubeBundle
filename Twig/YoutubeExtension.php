@@ -8,6 +8,7 @@ use Doctrine\ODM\MongoDB\DocumentManager;
 use MongoDB\BSON\ObjectId;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Tag;
+use Pumukit\YoutubeBundle\Document\Youtube;
 use Pumukit\YoutubeBundle\Services\YoutubeStatsService;
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFunction;
@@ -30,13 +31,14 @@ class YoutubeExtension extends AbstractExtension
             new TwigFunction('status_text', [$this, 'getStatusText']),
             new TwigFunction('multimedia_object_title', [$this, 'getMultimediaObjectTitle']),
             new TwigFunction('upload_errors_count', [$this, 'getErrorsCount']),
+            new TwigFunction('needing_action_count', [$this, 'getNeedingActionCount']),
             new TwigFunction('metadata_update_errors_count', [$this, 'getMetadataUpdateErrorsCount']),
             new TwigFunction('playlists_update_errors_count', [$this, 'getPlaylistsUpdateErrorsCount']),
             new TwigFunction('captions_update_errors_count', [$this, 'getCaptionsUpdateErrorsCount']),
-            new TwigFunction('published_videos', [$this, 'getPublishedVideos']),
-            new TwigFunction('processing_videos', [$this, 'getProcessingVideos']),
-            new TwigFunction('removed_videos', [$this, 'getRemovedVideos']),
-            new TwigFunction('to_delete_videos', [$this, 'getToDeleteVideos']),
+            new TwigFunction('published_videos_count', [$this, 'getPublishedVideosCount']),
+            new TwigFunction('processing_videos_count', [$this, 'getProcessingVideosCount']),
+            new TwigFunction('removed_videos_count', [$this, 'getRemovedVideosCount']),
+            new TwigFunction('to_delete_videos_count', [$this, 'getToDeleteVideosCount']),
         ];
     }
 
@@ -70,41 +72,46 @@ class YoutubeExtension extends AbstractExtension
 
     public function getErrorsCount(): int
     {
-        return count($this->youtubeStatsService->getByError());
+        return $this->youtubeStatsService->countWithError('error');
+    }
+
+    public function getNeedingActionCount(): int
+    {
+        return $this->youtubeStatsService->countNeedingAction();
     }
 
     public function getMetadataUpdateErrorsCount(): int
     {
-        return count($this->youtubeStatsService->getByMetadataUpdateError());
+        return $this->youtubeStatsService->countWithError('metadataUpdateError');
     }
 
     public function getPlaylistsUpdateErrorsCount(): int
     {
-        return count($this->youtubeStatsService->getByPlaylistUpdateError());
+        return $this->youtubeStatsService->countWithError('playlistUpdateError');
     }
 
     public function getCaptionsUpdateErrorsCount(): int
     {
-        return count($this->youtubeStatsService->getByCaptionUpdateError());
+        return $this->youtubeStatsService->countWithError('captionUpdateError');
     }
 
-    public function getPublishedVideos(): array
+    public function getPublishedVideosCount(): int
     {
-        return $this->youtubeStatsService->getPublishedVideos();
+        return $this->youtubeStatsService->countByStatus([Youtube::STATUS_PUBLISHED]);
     }
 
-    public function getProcessingVideos(): array
+    public function getProcessingVideosCount(): int
     {
-        return $this->youtubeStatsService->getProcessingVideos();
+        return $this->youtubeStatsService->countByStatus([Youtube::STATUS_DEFAULT, Youtube::STATUS_UPLOADING, Youtube::STATUS_PROCESSING]);
     }
 
-    public function getRemovedVideos(): array
+    public function getRemovedVideosCount(): int
     {
-        return $this->youtubeStatsService->getRemovedVideos();
+        return $this->youtubeStatsService->countByStatus([Youtube::STATUS_REMOVED]);
     }
 
-    public function getToDeleteVideos(): array
+    public function getToDeleteVideosCount(): int
     {
-        return $this->youtubeStatsService->getToDeleteVideos();
+        return $this->youtubeStatsService->countByStatus([Youtube::STATUS_TO_DELETE]);
     }
 }

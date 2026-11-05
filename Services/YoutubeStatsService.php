@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pumukit\YoutubeBundle\Services;
 
 use Doctrine\ODM\MongoDB\DocumentManager;
+use Doctrine\ODM\MongoDB\Query\Builder;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\YoutubeBundle\Document\Youtube;
@@ -12,6 +13,9 @@ use Pumukit\YoutubeBundle\PumukitYoutubeBundle;
 
 class YoutubeStatsService
 {
+    public const NEEDS_ACTION = 'needs-action';
+    public const WILL_BE_RETRIED = 'will-be-retried';
+
     private $documentManager;
 
     public function __construct(DocumentManager $documentManager)
@@ -42,11 +46,6 @@ class YoutubeStatsService
         ]);
     }
 
-    public function getYoutubeDocumentsByCriteria(array $criteria = []): array
-    {
-        return $this->documentManager->getRepository(Youtube::class)->findBy($criteria, ['uploadDate' => -1]);
-    }
-
     public function getYoutubeDocumentByCriteria(array $criteria = [])
     {
         return $this->documentManager->getRepository(Youtube::class)->findOneBy($criteria, ['uploadDate' => -1]);
@@ -54,83 +53,79 @@ class YoutubeStatsService
 
     public function getAccountsStats(): array
     {
-        $youtubeAccounts = $this->getYoutubeAccounts();
-
         $stats = [];
-        foreach ($youtubeAccounts as $account) {
-            $stats[$account->getProperty('login')] = $this->getStatsByAccount($account);
+        foreach ($this->getYoutubeAccounts() as $account) {
+            $login = $account->getProperty('login');
+            $stats[$login] = $this->queryBuilder()->field('youtubeAccount')->equals($login)->count()->getQuery()->execute();
         }
 
         return $stats;
     }
 
-    public function getStatsByAccount(Tag $account): array
+    public function countByStatus(array $status): int
     {
-        $youtubeDocuments = $this->documentManager->getRepository(Youtube::class)->findBy([
-            'youtubeAccount' => $account->getProperty('login'),
-        ]);
-
-        $stats = [];
-        foreach ($youtubeDocuments as $document) {
-            $stats[] = $document->getMultimediaObjectId();
-        }
-
-        return $stats;
+        return $this->queryBuilder()->field('status')->in($status)->count()->getQuery()->execute();
     }
 
-    public function getByError(): array
+    public function countWithError(string $errorField): int
     {
-        return $this->documentManager->getRepository(Youtube::class)->findBy([
-            'error' => ['$exists' => true, '$ne' => null],
-        ]);
+        return $this->withError($errorField)->count()->getQuery()->execute();
     }
 
-    public function getByMetadataUpdateError(): array
+    public function countNeedingAction(): int
     {
-        return $this->documentManager->getRepository(Youtube::class)->findBy([
-            'metadataUpdateError' => ['$exists' => true, '$ne' => null],
-        ]);
+        return $this->withUploadError(self::NEEDS_ACTION)->count()->getQuery()->execute();
     }
 
-    public function getByPlaylistUpdateError(): array
+    public function documentsWithStatus(int $status): Builder
     {
-        return $this->documentManager->getRepository(Youtube::class)->findBy([
-            'playlistUpdateError' => ['$exists' => true, '$ne' => null],
-        ]);
+        $statuses = Youtube::STATUS_PROCESSING === $status ? [Youtube::STATUS_DEFAULT, Youtube::STATUS_UPLOADING, Youtube::STATUS_PROCESSING] : [$status];
+
+        return $this->sorted($this->queryBuilder()->field('status')->in($statuses));
     }
 
-    public function getByCaptionUpdateError(): array
+    public function documentsOfAccount(string $account): Builder
     {
-        return $this->documentManager->getRepository(Youtube::class)->findBy([
-            'captionUpdateError' => ['$exists' => true, '$ne' => null],
-        ]);
+        return $this->sorted($this->queryBuilder()->field('youtubeAccount')->equals($account));
     }
 
-    public function getProcessingVideos(): array
+    public function documentsWithError(string $errorField): Builder
     {
-        return $this->documentManager->getRepository(Youtube::class)->findBy([
-            'status' => ['$in' => [Youtube::STATUS_DEFAULT, Youtube::STATUS_UPLOADING, Youtube::STATUS_PROCESSING]],
-        ]);
+        return $this->sorted($this->withError($errorField));
     }
 
-    public function getPublishedVideos(): array
+    public function documentsWithUploadError(?string $type): Builder
     {
-        return $this->documentManager->getRepository(Youtube::class)->findBy([
-            'status' => Youtube::STATUS_PUBLISHED,
-        ]);
+        return $this->sorted($this->withUploadError($type));
     }
 
-    public function getRemovedVideos(): array
+    private function withUploadError(?string $type): Builder
     {
-        return $this->documentManager->getRepository(Youtube::class)->findBy([
-            'status' => Youtube::STATUS_REMOVED,
-        ]);
+        $builder = $this->withError('error');
+
+        return match ($type) {
+            self::NEEDS_ACTION => $builder
+                ->field('status')->in([Youtube::STATUS_ERROR, Youtube::STATUS_TO_REVIEW])
+                ->field('error.id')->notIn(Youtube::TEMPORARY_ERRORS),
+            self::WILL_BE_RETRIED => $builder
+                ->field('status')->equals(Youtube::STATUS_ERROR)
+                ->field('error.id')->in(Youtube::TEMPORARY_ERRORS),
+            default => $builder,
+        };
     }
 
-    public function getToDeleteVideos(): array
+    private function withError(string $errorField): Builder
     {
-        return $this->documentManager->getRepository(Youtube::class)->findBy([
-            'status' => Youtube::STATUS_TO_DELETE,
-        ]);
+        return $this->queryBuilder()->field($errorField)->exists(true)->notEqual(null);
+    }
+
+    private function sorted(Builder $builder): Builder
+    {
+        return $builder->sort('uploadDate', 'desc');
+    }
+
+    private function queryBuilder(): Builder
+    {
+        return $this->documentManager->getRepository(Youtube::class)->createQueryBuilder();
     }
 }

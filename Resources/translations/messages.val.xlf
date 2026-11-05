@@ -389,6 +389,30 @@
         <source>The video could not be updated on YouTube.</source>
         <target>No s'ha pogut actualitzar el vídeo a YouTube.</target>
       </trans-unit>
+      <trans-unit id="ytd063c5" resname="Needs action">
+        <source>Needs action</source>
+        <target>Requereix acció</target>
+      </trans-unit>
+      <trans-unit id="yt39f0ac" resname="Will be retried">
+        <source>Will be retried</source>
+        <target>Es reintentarà</target>
+      </trans-unit>
+      <trans-unit id="ytb1c94c" resname="All">
+        <source>All</source>
+        <target>Tots</target>
+      </trans-unit>
+      <trans-unit id="yt2e775a" resname="Metadata Update Error">
+        <source>Metadata Update Error</source>
+        <target>Error en actualitzar metadades</target>
+      </trans-unit>
+      <trans-unit id="yt27d440" resname="Playlists Update Error">
+        <source>Playlists Update Error</source>
+        <target>Error en actualitzar llistes</target>
+      </trans-unit>
+      <trans-unit id="yt442f39" resname="Captions Update Error">
+        <source>Captions Update Error</source>
+        <target>Error en actualitzar subtítols</target>
+      </trans-unit>
     </body>
   </file>
 </xliff>

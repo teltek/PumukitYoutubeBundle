@@ -12,6 +12,16 @@
     </h3>
 
     <div class="pmk-well">
+        {% if filters is defined %}
+            {% set filterLabels = {'needs-action': 'Needs action', 'will-be-retried': 'Will be retried'} %}
+            <div class="btn-group btn-group-sm mb-3" role="group">
+                {% for option in filters %}
+                    <a class="btn {{ option == filter ? 'btn-pumukit' : 'btn-secondary' }}" href="{{ path('pumukit_youtube_stat_by_error', option ? {type: option} : {}) }}">
+                        {{ (option ? filterLabels[option] : 'All')|trans }}
+                    </a>
+                {% endfor %}
+            </div>
+        {% endif %}
         {% if youtubeDocuments|length > 0 %}
             <table class="table table-striped">
                 <thead>

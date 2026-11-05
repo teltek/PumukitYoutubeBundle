@@ -57,7 +57,7 @@
                         <span class="info-box-number">
                             {% set videosNumber = 0 %}
                             {% for account in accountsStats %}
-                                {% set videosNumber = videosNumber + account|length %}
+                                {% set videosNumber = videosNumber + account %}
                             {% endfor %}
                             {{ videosNumber }}
                         </span>

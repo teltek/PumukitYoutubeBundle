@@ -9,6 +9,7 @@ use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\YoutubeBundle\Document\Error;
 use Pumukit\YoutubeBundle\Document\Youtube;
+use Pumukit\YoutubeBundle\Services\NotificationService;
 use Pumukit\YoutubeBundle\Tests\Support\YoutubeTestCase;
 use Symfony\Component\AssetMapper\AssetMapperInterface;
 use Symfony\Component\DomCrawler\Crawler;
@@ -112,6 +113,98 @@ class AdminPagesTest extends YoutubeTestCase
         $this->assertResponseIsSuccessful();
         $this->client->request('GET', self::BASE.'/edit/playlist/'.$playlist->getId());
         $this->assertResponseIsSuccessful();
+    }
+
+    public function testTheStatsPageCountsTheDocuments(): void
+    {
+        $this->youtubeDocument($this->videoForYoutube(), Youtube::STATUS_PUBLISHED);
+        $this->youtubeDocument($this->videoForYoutube(), Youtube::STATUS_PUBLISHED);
+        $this->youtubeDocument($this->videoForYoutube(), Youtube::STATUS_PROCESSING);
+        $this->uploadError('invalidTitle');
+        $this->login();
+
+        $crawler = $this->client->request('GET', self::BASE.'/stats/');
+
+        $this->assertResponseIsSuccessful();
+        $number = static fn (string $href): string => trim($crawler->filter('a[href$="'.$href.'"] .info-box-number')->text());
+        $this->assertStringContainsString('2', $number('/stats/status/list/3'));
+        $this->assertStringContainsString('1', $number('/stats/status/list/'.Youtube::STATUS_PROCESSING));
+        $this->assertStringContainsString('1', $number('/stats/list/error/upload?type=needs-action'));
+        $this->assertStringContainsString('4', $crawler->filter('a[href$="/stats/account/list/channel"] .info-box-number')->text());
+    }
+
+    public function testTheListOfVideosInProcessIncludesEveryOneTheStatsPageCounts(): void
+    {
+        $this->youtubeDocument($this->videoForYoutube(), Youtube::STATUS_DEFAULT);
+        $this->youtubeDocument($this->videoForYoutube(), Youtube::STATUS_UPLOADING);
+        $this->youtubeDocument($this->videoForYoutube(), Youtube::STATUS_PROCESSING);
+        $this->login();
+
+        $crawler = $this->client->request('GET', self::BASE.'/stats/status/list/'.Youtube::STATUS_PROCESSING);
+
+        $this->assertCount(3, $crawler->filter('tbody tr'));
+    }
+
+    public function testAListIsPaginated(): void
+    {
+        for ($index = 0; $index < 25; ++$index) {
+            $this->youtubeDocument($this->videoForYoutube(), Youtube::STATUS_PUBLISHED);
+        }
+        $this->login();
+
+        $crawler = $this->client->request('GET', self::BASE.'/stats/status/list/3');
+        $this->assertCount(20, $crawler->filter('tbody tr'));
+        $this->assertGreaterThan(0, $crawler->filter('.pagination a[href]')->count());
+
+        $crawler = $this->client->request('GET', self::BASE.'/stats/status/list/3?page=2');
+        $this->assertCount(5, $crawler->filter('tbody tr'));
+
+        $crawler = $this->client->request('GET', self::BASE.'/stats/account/list/channel');
+        $this->assertCount(20, $crawler->filter('tbody tr'));
+    }
+
+    public function testEachListOfErrorsHasItsTitle(): void
+    {
+        $this->login();
+
+        foreach (['metadata' => 'Metadata update error', 'playlists' => 'Playlists update error', 'caption' => 'Captions update error', 'upload' => 'Upload error'] as $list => $title) {
+            $crawler = $this->client->request('GET', self::BASE.'/stats/list/error/'.$list);
+            $this->assertStringContainsString($title, $crawler->filter('.breadcrumb')->text());
+        }
+    }
+
+    public function testTheListOfUploadErrorsSeparatesWhatNeedsAction(): void
+    {
+        $permanent = $this->uploadError('invalidTitle');
+        $review = $this->uploadError('MAX_SIZE_UPLOAD', Youtube::STATUS_TO_REVIEW);
+        $temporary = $this->uploadError('backendError');
+        $this->uploadError('pumukit.apiError', Youtube::STATUS_PUBLISHED);
+        $this->login();
+
+        $crawler = $this->client->request('GET', self::BASE.'/stats/list/error/upload');
+        $this->assertCount(4, $crawler->filter('tbody tr'));
+        $this->assertCount(2, $crawler->filter('tbody .badge.text-bg-danger'));
+        $this->assertCount(1, $crawler->filter('tbody .badge.text-bg-warning'));
+
+        $crawler = $this->client->request('GET', self::BASE.'/stats/list/error/upload?type=needs-action');
+        $this->assertCount(2, $crawler->filter('tbody tr'));
+        $this->assertCount(1, $crawler->filter('a.btn-pumukit[href$="type=needs-action"]'));
+        $this->assertCount(1, $crawler->filter('td[headers="th-error"] a[href$="/modal/mm/'.$permanent->getMultimediaObjectId().'"]'));
+        $this->assertCount(1, $crawler->filter('td[headers="th-error"] a[href$="/modal/mm/'.$review->getMultimediaObjectId().'"]'));
+
+        $crawler = $this->client->request('GET', self::BASE.'/stats/list/error/upload?type=will-be-retried');
+        $this->assertCount(1, $crawler->filter('tbody tr'));
+        $this->assertCount(0, $crawler->filter('td[headers="th-error"] a[href$="/modal/mm/'.$temporary->getMultimediaObjectId().'"]'));
+    }
+
+    public function testAPermanentErrorIsStillNotifiedAlthoughItIsNotRetried(): void
+    {
+        $this->uploadError('invalidTitle');
+        $notification = $this->createMock(NotificationService::class);
+        $notification->expects($this->once())->method('notificationVideoErrorResult')->with($this->callback(static fn (array $result): bool => isset($result['invalidTitle'])))->willReturn(true);
+        static::getContainer()->set(NotificationService::class, $notification);
+
+        $this->runCommand('pumukit:youtube:video:error:notification');
     }
 
     public function testTheAccountListOpensItsFormsInTheModal(): void
@@ -309,7 +402,7 @@ class AdminPagesTest extends YoutubeTestCase
         $this->assertStringNotContainsString('<img src=x', $this->client->getResponse()->getContent());
         $this->assertStringContainsString('<img src=x onerror=alert(1)>', $crawler->filter('td[headers="th-file"]')->text());
         $this->assertCount(1, $crawler->filter('td[headers="th-youtube-id"] i.fa-xmark'));
-        $this->assertCount(1, $crawler->filter('td[headers="th-error"] a[data-bs-toggle="modal"][data-bs-target="#myModal"]'));
+        $this->assertCount(1, $crawler->filter('td[headers="th-error"] a[data-bs-toggle="modal"][data-bs-target="#myModal"][href*="/stats/modal/error/"]'));
     }
 
     public function testThePlaylistSelectorAnswersWithTheOptionWithoutPlaylist(): void
@@ -565,6 +658,15 @@ class AdminPagesTest extends YoutubeTestCase
         $this->assertStringContainsString('modal-header', $this->client->getResponse()->getContent());
         $this->dm->clear();
         $this->assertNull($this->dm->getRepository(Tag::class)->findOneBy(['properties.login' => '../../config/secrets']));
+    }
+
+    private function uploadError(string $reason, int $status = Youtube::STATUS_ERROR): Youtube
+    {
+        $youtube = $this->youtubeDocument($this->videoForYoutube(), $status);
+        $youtube->setError(Error::create($reason, $reason, new \DateTime(), []));
+        $this->dm->flush();
+
+        return $youtube;
     }
 
     private function actionToken(MultimediaObject $multimediaObject): string

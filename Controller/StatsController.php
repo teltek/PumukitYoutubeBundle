@@ -53,12 +53,10 @@ class StatsController extends AbstractController
             throw new ServiceNotFoundException('YoutubeService not found');
         }
 
-        $youtubeDocuments = $this->youtubeStatsService->getYoutubeDocumentsByCriteria([
-            'status' => (int) $status,
-        ]);
+        $youtubeDocuments = $this->youtubeStatsService->documentsWithStatus((int) $status);
 
         $page = $request->query->getInt('page', 1);
-        $youtubeDocuments = $this->paginationService->createArrayAdapter($youtubeDocuments, $page, 20);
+        $youtubeDocuments = $this->paginationService->createDoctrineODMMongoDBAdapter($youtubeDocuments, $page, 20);
 
         return $this->render('@PumukitYoutube/Stats/template_list.html.twig', [
             'youtubeDocuments' => $youtubeDocuments,
@@ -73,12 +71,10 @@ class StatsController extends AbstractController
             throw new ServiceNotFoundException('YoutubeService not found');
         }
 
-        $youtubeDocuments = $this->youtubeStatsService->getYoutubeDocumentsByCriteria([
-            'youtubeAccount' => $account,
-        ]);
+        $youtubeDocuments = $this->youtubeStatsService->documentsOfAccount($account);
 
         $page = $request->query->getInt('page', 1);
-        $youtubeDocuments = $this->paginationService->createArrayAdapter($youtubeDocuments, $page, 20);
+        $youtubeDocuments = $this->paginationService->createDoctrineODMMongoDBAdapter($youtubeDocuments, $page, 20);
 
         return $this->render('@PumukitYoutube/Stats/template_list.html.twig', [
             'youtubeDocuments' => $youtubeDocuments,
@@ -89,56 +85,59 @@ class StatsController extends AbstractController
     #[Route('/list/error/upload', name: 'pumukit_youtube_stat_by_error')]
     public function listByErrorAction(Request $request): Response
     {
-        $youtubeDocuments = $this->youtubeStatsService->getByError();
+        $type = $request->query->getString('type') ?: null;
+        $youtubeDocuments = $this->youtubeStatsService->documentsWithUploadError($type);
 
         $page = $request->query->getInt('page', 1);
-        $youtubeDocuments = $this->paginationService->createArrayAdapter($youtubeDocuments, $page, 20);
+        $youtubeDocuments = $this->paginationService->createDoctrineODMMongoDBAdapter($youtubeDocuments, $page, 20);
 
         return $this->render('@PumukitYoutube/Stats/template_list.html.twig', [
             'youtubeDocuments' => $youtubeDocuments,
             'title' => 'Upload error',
+            'filters' => [null, YoutubeStatsService::NEEDS_ACTION, YoutubeStatsService::WILL_BE_RETRIED],
+            'filter' => $type,
         ]);
     }
 
     #[Route('/list/error/metadata', name: 'pumukit_youtube_stat_by_metadata_error')]
     public function listByMetadataErrorAction(Request $request): Response
     {
-        $youtubeDocuments = $this->youtubeStatsService->getByMetadataUpdateError();
+        $youtubeDocuments = $this->youtubeStatsService->documentsWithError('metadataUpdateError');
 
         $page = $request->query->getInt('page', 1);
-        $youtubeDocuments = $this->paginationService->createArrayAdapter($youtubeDocuments, $page, 20);
+        $youtubeDocuments = $this->paginationService->createDoctrineODMMongoDBAdapter($youtubeDocuments, $page, 20);
 
         return $this->render('@PumukitYoutube/Stats/template_list.html.twig', [
             'youtubeDocuments' => $youtubeDocuments,
-            'title' => 'Metadata update error',
+            'title' => 'Metadata Update Error',
         ]);
     }
 
     #[Route('/list/error/playlists', name: 'pumukit_youtube_stat_by_playlists_error')]
     public function listByPlaylistsErrorAction(Request $request): Response
     {
-        $youtubeDocuments = $this->youtubeStatsService->getByPlaylistUpdateError();
+        $youtubeDocuments = $this->youtubeStatsService->documentsWithError('playlistUpdateError');
 
         $page = $request->query->getInt('page', 1);
-        $youtubeDocuments = $this->paginationService->createArrayAdapter($youtubeDocuments, $page, 20);
+        $youtubeDocuments = $this->paginationService->createDoctrineODMMongoDBAdapter($youtubeDocuments, $page, 20);
 
         return $this->render('@PumukitYoutube/Stats/template_list.html.twig', [
             'youtubeDocuments' => $youtubeDocuments,
-            'title' => 'Metadata update error',
+            'title' => 'Playlists Update Error',
         ]);
     }
 
     #[Route('/list/error/caption', name: 'pumukit_youtube_stat_by_caption_error')]
     public function listByCaptionErrorAction(Request $request): Response
     {
-        $youtubeDocuments = $this->youtubeStatsService->getByCaptionUpdateError();
+        $youtubeDocuments = $this->youtubeStatsService->documentsWithError('captionUpdateError');
 
         $page = $request->query->getInt('page', 1);
-        $youtubeDocuments = $this->paginationService->createArrayAdapter($youtubeDocuments, $page, 20);
+        $youtubeDocuments = $this->paginationService->createDoctrineODMMongoDBAdapter($youtubeDocuments, $page, 20);
 
         return $this->render('@PumukitYoutube/Stats/template_list.html.twig', [
             'youtubeDocuments' => $youtubeDocuments,
-            'title' => 'Metadata update error',
+            'title' => 'Captions Update Error',
         ]);
     }
 
