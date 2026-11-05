@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pumukit\YoutubeBundle\Services;
 
+use Doctrine\ODM\MongoDB\DocumentManager;
 use Google\Client;
 use Google\Service\YouTube;
 use GuzzleHttp\Client as GuzzleClient;
@@ -17,10 +18,12 @@ class GoogleAccountService
 
     private $client;
     private $youtubeConfigurationService;
+    private $documentManager;
 
-    public function __construct(YoutubeConfigurationService $youtubeConfigurationService)
+    public function __construct(YoutubeConfigurationService $youtubeConfigurationService, DocumentManager $documentManager)
     {
         $this->youtubeConfigurationService = $youtubeConfigurationService;
+        $this->documentManager = $documentManager;
     }
 
     public function createClient(string $login): Client
@@ -30,10 +33,7 @@ class GoogleAccountService
         $this->client->setAuthConfig($this->getClientSecret($login));
         $this->client->setAccessType('offline');
         $this->client->setPrompt('consent');
-        $this->client->setHttpClient(new GuzzleClient([
-            'connect_timeout' => self::HTTP_CONNECT_TIMEOUT_SECONDS,
-            'timeout' => self::HTTP_REQUEST_TIMEOUT_SECONDS,
-        ]));
+        $this->client->setHttpClient($this->createHttpClient());
 
         return $this->client;
     }
@@ -64,6 +64,11 @@ class GoogleAccountService
 
         $client = $this->createClientWithAccessToken($login, $accessToken);
 
+        if ($client->getAccessToken()['access_token'] !== ($accessToken['access_token'] ?? null)) {
+            $youtubeAccount->setProperty('access_token', $client->getAccessToken());
+            $this->documentManager->flush();
+        }
+
         return $this->createService($client);
     }
 
@@ -77,9 +82,25 @@ class GoogleAccountService
             return $this->client;
         }
 
-        $this->client->refreshToken($this->client->getRefreshToken());
+        try {
+            $token = $this->client->refreshToken($this->client->getRefreshToken());
+        } catch (\Exception $exception) {
+            throw new \RuntimeException(sprintf('Google did not renew the token of the account "%s". Authorize it again with pumukit:youtube:account:create. %s', $login, $exception->getMessage()), 0, $exception);
+        }
+
+        if (isset($token['error'])) {
+            throw new \RuntimeException(sprintf('Google did not renew the token of the account "%s". Authorize it again with pumukit:youtube:account:create. %s', $login, $token['error']));
+        }
 
         return $this->client;
+    }
+
+    protected function createHttpClient(): GuzzleClient
+    {
+        return new GuzzleClient([
+            'connect_timeout' => self::HTTP_CONNECT_TIMEOUT_SECONDS,
+            'timeout' => self::HTTP_REQUEST_TIMEOUT_SECONDS,
+        ]);
     }
 
     private function createService(Client $client): YouTube
