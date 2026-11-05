@@ -377,6 +377,10 @@
         <source>File of PuMuKIT</source>
         <target>File of PuMuKIT</target>
       </trans-unit>
+      <trans-unit id="ytVidUpd" resname="The video could not be updated on YouTube.">
+        <source>The video could not be updated on YouTube.</source>
+        <target>The video could not be updated on YouTube.</target>
+      </trans-unit>
     </body>
   </file>
 </xliff>

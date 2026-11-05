@@ -6,10 +6,15 @@ namespace Pumukit\YoutubeBundle\Tests\Controller;
 
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
+use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\YoutubeBundle\Document\Error;
 use Pumukit\YoutubeBundle\Document\Youtube;
 use Pumukit\YoutubeBundle\Tests\Support\YoutubeTestCase;
+use Symfony\Component\AssetMapper\AssetMapperInterface;
+use Symfony\Component\DomCrawler\Crawler;
+use Symfony\Component\Finder\Finder;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
@@ -171,6 +176,115 @@ class AdminPagesTest extends YoutubeTestCase
         $this->assertStringContainsString('can not be deleted', json_decode($this->client->getResponse()->getContent(), true)['status']);
         $this->dm->clear();
         $this->assertNotNull($this->dm->getRepository(Tag::class)->find($id));
+    }
+
+    public function testNoTemplateUsesTheOldFrontend(): void
+    {
+        $old = '/data-(toggle|dismiss|target|backdrop|placement)=|<script|\son[a-z]+=|\sstyle=|\bmdi-|glyphicon|\|\s*raw\b|col-xs-|text-(right|left)\b|btn-(default|raised)|\blabel-(danger|success|warning)|input-group-addon|class="well|twitter_bootstrap3|select2/';
+        $found = [];
+        $finder = (new Finder())->files()->in(dirname(__DIR__, 2).'/Resources/views')->name('*.twig')->notName('updatemenu.html.twig');
+        $this->assertGreaterThan(20, $finder->count());
+        foreach ($finder as $file) {
+            foreach (file($file->getPathname()) as $number => $line) {
+                if (preg_match($old, $line)) {
+                    $found[] = $file->getRelativePathname().':'.($number + 1).' '.trim($line);
+                }
+            }
+        }
+
+        $this->assertSame([], $found);
+    }
+
+    public function testTheControllersOfTheBundleAreRegistered(): void
+    {
+        $controllers = static::getContainer()->get(AssetMapperInterface::class)->getAsset('@symfony/stimulus-bundle/controllers.js')->content;
+
+        $this->assertStringContainsString('youtube--publication', $controllers);
+        $this->assertStringContainsString('youtube--video', $controllers);
+    }
+
+    public function testThePublicationPageListsThePlaylistsOfTheFirstAccountWithoutSelection(): void
+    {
+        $playlist = $this->playlist('playlist1', 'list1');
+        $multimediaObject = $this->videoForYoutube();
+        $multimediaObject->setStatus(MultimediaObject::STATUS_PROTOTYPE);
+        foreach ($multimediaObject->getTags() as $tag) {
+            if (in_array($tag->getLevel(), [3, 4], true) && 'PUCHYOUTUBE' !== $tag->getCod()) {
+                $multimediaObject->removeTag($tag);
+            }
+        }
+        $this->dm->flush();
+        $this->dm->clear();
+        $this->login();
+
+        $crawler = $this->client->request('GET', self::BASE.'/update/config/'.$multimediaObject->getId());
+
+        $this->assertResponseIsSuccessful();
+        $panel = $crawler->filter('[data-controller="youtube--publication"]');
+        $this->assertCount(1, $panel);
+        $this->assertSame('pub_channels_PUCHYOUTUBE', $panel->attr('data-youtube--publication-channel-value'));
+        $this->assertSame(self::BASE.'/playlist/list/'.$this->account->getId(), $crawler->filter('[data-youtube--publication-target="account"] option')->first()->attr('data-url'));
+        $this->assertSame(['any', (string) $playlist->getId()], $crawler->filter('[data-youtube--publication-target="playlists"] option')->each(static fn (Crawler $option): string => (string) $option->attr('value')));
+        $this->assertSame('any', $crawler->filter('[data-youtube--publication-target="playlists"] option[selected]')->attr('value'));
+        $this->assertSame(self::BASE.'/create/playlist/'.$this->account->getId(), $crawler->filter('a[data-youtube--publication-target="create"][data-bs-toggle="modal"]')->attr('href'));
+    }
+
+    public function testTheVideoModalForcesTheUploadWithItsController(): void
+    {
+        $multimediaObject = $this->videoForYoutube();
+        $this->youtubeDocument($multimediaObject, Youtube::STATUS_PUBLISHED);
+        $this->login();
+
+        $crawler = $this->client->request('GET', self::BASE.'/modal/mm/'.$multimediaObject->getId());
+
+        $this->assertResponseIsSuccessful();
+        $action = $crawler->filter('[data-controller="youtube--video"] [data-action="click->youtube--video#run"]');
+        $this->assertSame(self::BASE.'/forceuploads/mm/'.$multimediaObject->getId(), $action->attr('data-youtube--video-url-param'));
+        $this->assertNotEmpty($action->attr('data-youtube--video-confirm-param'));
+        $this->assertCount(1, $crawler->filter('.modal-header button[data-bs-dismiss="modal"]'));
+    }
+
+    public function testTheActionsOfAPublishedVideoUseTheControllers(): void
+    {
+        $multimediaObject = $this->videoForYoutube();
+        $youtube = $this->youtubeDocument($multimediaObject, Youtube::STATUS_PUBLISHED);
+        static::getContainer()->get('request_stack')->push(new Request());
+
+        $html = static::getContainer()->get('twig')->render('@PumukitYoutube/Modal/index.html.twig', [
+            'mm' => $multimediaObject,
+            'youtube' => $youtube,
+            'youtube_status' => 'published',
+        ]);
+
+        $crawler = new Crawler($html);
+        $this->assertSame(
+            [self::BASE.'/updateplaylist/mm/'.$multimediaObject->getId(), self::BASE.'/forceuploads/mm/'.$multimediaObject->getId()],
+            $crawler->filter('[data-action="click->youtube--video#run"]')->each(static fn (Crawler $action): string => (string) $action->attr('data-youtube--video-url-param'))
+        );
+        $this->assertSame(
+            ['copy-youtube-link', 'copy-embed-link'],
+            $crawler->filter('[data-action="click->admin--actions#copy"]')->each(static fn (Crawler $action): string => (string) $action->attr('data-admin--actions-input-param'))
+        );
+        $this->assertCount(2, $crawler->filter('input.pmk-display-none'));
+    }
+
+    public function testTheStatsListEscapesTheDataOfTheDocument(): void
+    {
+        $multimediaObject = $this->videoForYoutube();
+        $youtube = $this->youtubeDocument($multimediaObject, Youtube::STATUS_ERROR);
+        $youtube->setFileUploaded('<img src=x onerror=alert(1)>');
+        $youtube->setYoutubeId('');
+        $youtube->setError(Error::create('invalidTitle', 'A bad title', new \DateTime(), []));
+        $this->dm->flush();
+        $this->login();
+
+        $crawler = $this->client->request('GET', self::BASE.'/stats/list/error/upload');
+
+        $this->assertResponseIsSuccessful();
+        $this->assertStringNotContainsString('<img src=x', $this->client->getResponse()->getContent());
+        $this->assertStringContainsString('<img src=x onerror=alert(1)>', $crawler->filter('td[headers="th-file"]')->text());
+        $this->assertCount(1, $crawler->filter('td[headers="th-youtube-id"] i.fa-xmark'));
+        $this->assertCount(1, $crawler->filter('td[headers="th-error"] a[data-bs-toggle="modal"][data-bs-target="#myModal"]'));
     }
 
     public function testThePlaylistSelectorAnswersWithTheOptionWithoutPlaylist(): void

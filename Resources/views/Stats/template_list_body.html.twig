@@ -1,25 +1,27 @@
-{% set icon_close = "<i class='mdi-navigation-close'></i>" %}
-
 {% for youtubeDocument in youtubeDocuments %}
     <tr>
         <td headers="th-account">
             {{ youtubeDocument.youtubeAccount }}
         </td>
         <td headers="th-youtube-id">
-            {{ youtubeDocument.youtubeId|default(icon_close)|raw }}
+            {% if youtubeDocument.youtubeId %}
+                {{ youtubeDocument.youtubeId }}
+            {% else %}
+                <i class="fa-solid fa-xmark"></i>
+            {% endif %}
         </td>
         <td headers="th-youtube-link">
             {% if youtubeDocument.link %}
                 <a href="{{ youtubeDocument.link }}">
-                    <i class="glyphicon glyphicon-eye-open"></i>
+                    <i class="fa-solid fa-eye"></i>
                 </a>
             {% else %}
-                {{ icon_close|raw }}
+                <i class="fa-solid fa-xmark"></i>
             {% endif %}
         </td>
         <td headers="th-youtube-playlist">
             {% if 0 == (youtubeDocument.playlists|length) %}
-                {{ youtubeDocument.playlists|default(icon_close)|raw }}
+                <i class="fa-solid fa-xmark"></i>
             {% else %}
                 {% for key, playlist in youtubeDocument.playlists %}
                     {{ playlist_name(key)|default('No title'|trans) }}
@@ -29,7 +31,7 @@
         <td headers="th-object">
             {% set title = multimedia_object_title(youtubeDocument.multimediaObjectId) %}
             {% if not title %}
-                <i class="mdi-navigation-close"></i>
+                <i class="fa-solid fa-xmark"></i>
             {% else %}
                 <a href="{{ path('pumukitnewadmin_mms_shortener', {'id' : youtubeDocument.multimediaObjectId }) }}" title="{{ ("Edit multimedia object "|trans) ~ youtubeDocument.multimediaObjectId }}">
                     {{ title }}
@@ -41,15 +43,19 @@
             {{ youtubeDocument.uploadDate| format_datetime("medium", "none",locale=app.request.getLocale()) }}
         </td>
         <td headers="th-file">
-            {{ youtubeDocument.fileUploaded|default(icon_close)|raw }}
+            {% if youtubeDocument.fileUploaded %}
+                {{ youtubeDocument.fileUploaded }}
+            {% else %}
+                <i class="fa-solid fa-xmark"></i>
+            {% endif %}
         </td>
         <td headers="th-error">
             {% if youtubeDocument.getError() or youtubeDocument.getMetadataUpdateError() or youtubeDocument.getPlaylistUpdateError() or youtubeDocument.getCaptionUpdateError() %}
-                <a data-toggle="modal" data-backdrop="static" data-dismiss="modal" data-target="#myModal" href="{{ path('pumukit_youtube_errors', {id: youtubeDocument.id}) }}">
-                    <i class="glyphicon glyphicon-eye-open"></i>
+                <a data-bs-toggle="modal" data-bs-backdrop="static" data-bs-target="#myModal" href="{{ path('pumukit_youtube_errors', {id: youtubeDocument.id}) }}">
+                    <i class="fa-solid fa-eye"></i>
                 </a>
             {% else %}
-                <i class="mdi-navigation-close"></i>
+                <i class="fa-solid fa-xmark"></i>
             {% endif %}
         </td>
     </tr>

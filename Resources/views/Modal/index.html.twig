@@ -1,28 +1,26 @@
 {% if youtube_status|lower == 'error' or youtube_status|lower == 'removed' or youtube_status|lower == 'duplicated' %}
-    {% set label_class = "label-danger" %}
+    {% set label_class = "text-bg-danger" %}
 {% elseif youtube_status|lower == 'published' %}
-    {% set label_class = "label-success" %}
+    {% set label_class = "text-bg-success" %}
 {% else %}
-    {% set label_class = "label-warning" %}
+    {% set label_class = "text-bg-warning" %}
 {% endif %}
 
 <div class="modal-header">
-    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-        <span aria-hidden="true">&times;</span>
-    </button>
-    <h4 class="modal-title text-center" id="myModalLabel">
+    <h4 class="modal-title" id="myModalLabel">
        {{ "Youtube"|trans|upper }}
     </h4>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 </div>
 
-<div class="modal-body">
+<div class="modal-body" data-controller="youtube--video">
     <div class="row">
     <div class="col-md-7">
         <div class="row">
-            <div class="col-md-6 text-right">
+            <div class="col-md-6 text-end">
                 <strong>{% trans %}Multimedia Object title{% endtrans %}</strong>
             </div>
-            <div class="col-md-6 text-left">
+            <div class="col-md-6 text-start">
                 {{ mm.title }}
             </div>
         </div>
@@ -30,10 +28,10 @@
 
         {% if youtube.youtubeAccount is defined and youtube.youtubeAccount is not empty %}
             <div class="row">
-                <div class="col-md-6 text-right">
+                <div class="col-md-6 text-end">
                     <strong>{% trans %}Youtube account{% endtrans %}</strong>
                 </div>
-                <div class="col-md-6 text-left">
+                <div class="col-md-6 text-start">
                     {{ youtube.youtubeAccount }}
                 </div>
             </div>
@@ -41,16 +39,16 @@
         {% endif %}
 
         <div class="row">
-            <div class="col-md-6 text-right">
+            <div class="col-md-6 text-end">
                 <strong>{% trans %}Youtube Playlists{% endtrans %}</strong>
             </div>
-            <div class="col-md-6 text-left">
+            <div class="col-md-6 text-start">
                 {% for key, playlist in youtube.playlists %}
                 <div class="input-group">
                     {{ playlist_name(key) }}
-                    <span class="input-group-addon">
+                    <span class="input-group-text">
                         <a href="{{ youtube.link }}&list={{ key }}" target="_blank" title="{{ "Go to playlist"|trans }}">
-                            <i class="mdi-action-exit-to-app"></i>
+                            <i class="fa-solid fa-arrow-up-right-from-square"></i>
                         </a>
                     </span>
                 </div>
@@ -62,11 +60,11 @@
         <hr />
 
         <div class="row">
-            <div class="col-md-6 text-right" style="overflow: hidden">
+            <div class="col-md-6 text-end">
                 <strong>{% trans %}Youtube Status{% endtrans %}</strong>
             </div>
-            <div class="col-md-6 text-left">
-                <span class="label label-dismissable {{ label_class }}" style="padding:5px;">
+            <div class="col-md-6 text-start">
+                <span class="badge {{ label_class }}">
                     {{ youtube_status|upper }}
                 </span>
             </div>
@@ -74,10 +72,10 @@
         <hr />
 
         <div class="row">
-            <div class="col-md-6 text-right" style="overflow: hidden">
+            <div class="col-md-6 text-end">
                 <strong>{% trans %}File uploaded{% endtrans %}</strong>
             </div>
-            <div class="col-md-6 text-left">
+            <div class="col-md-6 text-start">
                 {% if attribute(youtube, 'getFileUploaded') is defined and youtube.getFileUploaded() is not empty %}
                   {{ youtube.getFileUploaded() }}
                 {% else %}
@@ -88,10 +86,10 @@
         <hr />
 
         <div class="row">
-            <div class="col-md-6 text-right">
+            <div class="col-md-6 text-end">
                 <strong>{% trans %}Last Updated{% endtrans %}</strong>
             </div>
-            <div class="col-md-6 text-left">
+            <div class="col-md-6 text-start">
                 {{ youtube.getSyncMetadataDate()| format_datetime("medium", "none",locale=app.request.getLocale()) }}
             </div>
         </div>
@@ -100,16 +98,16 @@
         {% if youtube_status in ['published', 'proccessing'] %}
             <div class="row">
                 <div class="col-md-6">
-                    <a class="btn btn-default btn-raised copy-youtube-link" href="#"  title="{{ "Copy Youtube link"|trans }}">
+                    <button type="button" class="btn btn-secondary" title="{{ "Copy Youtube link"|trans }}" data-action="click->admin--actions#copy" data-admin--actions-input-param="copy-youtube-link">
                         {{ "Copy Youtube link"|trans }}
-                    </a>
-                    <input id="copy-youtube-link" type="text" value="{{ youtube.link }}" style="display:none;"/>
+                    </button>
+                    <input id="copy-youtube-link" type="text" value="{{ youtube.link }}" class="pmk-display-none"/>
                 </div>
                 <div class="col-md-6">
-                    <a class="btn btn-default btn-raised copy-embed-link" href="#"  title="{{ "Copy iframe"|trans }}">
+                    <button type="button" class="btn btn-secondary" title="{{ "Copy iframe"|trans }}" data-action="click->admin--actions#copy" data-admin--actions-input-param="copy-embed-link">
                         {{ "Copy iframe"|trans }}
-                    </a>
-                    <input id="copy-embed-link" type="text" value="{{ youtube.embed }}" style="display:none;"/>
+                    </button>
+                    <input id="copy-embed-link" type="text" value="{{ youtube.embed }}" class="pmk-display-none"/>
                 </div>
             </div>
             <hr />
@@ -119,7 +117,7 @@
 
         <div class="row">
             <div class="col-md-12 text-center">
-                <a class="btn btn-default btn-raised" href="{{ youtube.link }}" title="{{ "Show video on Youtube"|trans }}">
+                <a class="btn btn-secondary mb-2" href="{{ youtube.link }}" title="{{ "Show video on Youtube"|trans }}">
                     {{ "Show video on Youtube"|trans }}
                 </a>
             </div>
@@ -128,7 +126,11 @@
         {% if youtube_status in ['published'] %}
             <div class="row">
                 <div class="col-md-12 text-center">
-                    <a href="#" class="btn btn-pumukit manualUpdatePlaylist" title="{{ "Manual playlist update"|trans }}" data-id="{{ mm.id }}">
+                    <a href="#" class="btn btn-pumukit mb-2" title="{{ "Manual playlist update"|trans }}"
+                       data-action="click->youtube--video#run"
+                       data-youtube--video-url-param="{{ path('pumukityoutube_updateplaylist', {'id': mm.id}) }}"
+                       data-youtube--video-success-param="{{ 'Update playlist successfully'|trans }}"
+                       data-youtube--video-error-param="{{ 'The video could not be updated on YouTube.'|trans }}">
                        {{ "Update playlist"|trans }}
                     </a>
                 </div>
@@ -136,7 +138,12 @@
         {% endif %}
         <div class="row">
             <div class="col-md-12 text-center">
-                <a href="#" class="btn btn-pumukit forcedUploadVideo" title="{{ "Force upload video"|trans }}" data-id="{{ mm.id }}">
+                <a href="#" class="btn btn-pumukit mb-2" title="{{ "Force upload video"|trans }}"
+                   data-action="click->youtube--video#run"
+                   data-youtube--video-url-param="{{ path('pumukityoutube_force_upload', {'id': mm.id}) }}"
+                   data-youtube--video-confirm-param="{{ 'Do you want force upload this video? This action will delete old video causing lose all views on Youtube'|trans }}"
+                   data-youtube--video-success-param="{{ 'Update video successfully'|trans }}"
+                   data-youtube--video-error-param="{{ 'The video could not be updated on YouTube.'|trans }}">
                     {{ "Force upload video"|trans }}
                 </a>
             </div>
@@ -146,6 +153,3 @@
     </div>
 </div>
 
-<script>
-    {% include "@PumukitYoutube/Modal/js.js.twig" %}
-</script>

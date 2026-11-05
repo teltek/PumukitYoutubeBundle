@@ -1,6 +1,6 @@
 <h3 class="cab_body_div">
-    <ul class="breadcrumb" style="margin-bottom: 5px;">
-        <li class="active">
+    <ul class="breadcrumb pmk-margin-bottom-5">
+        <li class="active breadcrumb-item">
             {{ "Youtube Status Error"|trans }}
         </li>
     </ul>
@@ -9,10 +9,10 @@
 <div class="row">
     <div class="col-md-12">
         <div class="row">
-            <div class="col-md-3 col-sm-6 col-xs-12">
+            <div class="col-md-3 col-sm-6 col-12">
                 <a class="youtube_status_link_list" href="{{ path('pumukit_youtube_stat_by_error') }}">
-                    <div class="info-box" data-toggle="tooltip" data-placement="bottom">
-                        <span class="info-box-icon bg-warning">
+                    <div class="info-box">
+                        <span class="info-box-icon text-bg-info">
                             {{ "Upload error"|trans|first|upper }}
                         </span>
                         <div class="info-box-content">
@@ -29,10 +29,10 @@
                 </a>
             </div>
 
-            <div class="col-md-3 col-sm-6 col-xs-12">
+            <div class="col-md-3 col-sm-6 col-12">
                 <a class="youtube_status_link_list" href="{{ path('pumukit_youtube_stat_by_metadata_error') }}">
-                    <div class="info-box" data-toggle="tooltip" data-placement="bottom">
-                        <span class="info-box-icon bg-warning">
+                    <div class="info-box">
+                        <span class="info-box-icon text-bg-info">
                             {{ "Metadata Update Error"|trans|first|upper }}
                         </span>
                         <div class="info-box-content">
@@ -49,10 +49,10 @@
                 </a>
             </div>
 
-            <div class="col-md-3 col-sm-6 col-xs-12">
+            <div class="col-md-3 col-sm-6 col-12">
                 <a class="youtube_status_link_list" href="{{ path('pumukit_youtube_stat_by_playlists_error') }}">
-                    <div class="info-box" data-toggle="tooltip" data-placement="bottom">
-                        <span class="info-box-icon bg-warning">
+                    <div class="info-box">
+                        <span class="info-box-icon text-bg-info">
                             {{ "Playlists Update Error"|trans|first|upper }}
                         </span>
                         <div class="info-box-content">
@@ -69,10 +69,10 @@
                 </a>
             </div>
 
-            <div class="col-md-3 col-sm-6 col-xs-12">
+            <div class="col-md-3 col-sm-6 col-12">
                 <a class="youtube_status_link_list" href="{{ path('pumukit_youtube_stat_by_caption_error') }}">
-                    <div class="info-box" data-toggle="tooltip" data-placement="bottom">
-                        <span class="info-box-icon bg-warning">
+                    <div class="info-box">
+                        <span class="info-box-icon text-bg-info">
                             {{ "Captions Update Error"|trans|first|upper }}
                         </span>
                         <div class="info-box-content">

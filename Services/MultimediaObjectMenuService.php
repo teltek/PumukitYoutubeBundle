@@ -25,7 +25,7 @@ class MultimediaObjectMenuService implements ItemInterface
 
     public function getIcon(): string
     {
-        return 'mdi-action-info';
+        return 'fa-solid fa-circle-info';
     }
 
     public function getServiceTag(): string

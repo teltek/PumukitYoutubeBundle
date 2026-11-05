@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pumukit\YoutubeBundle\DependencyInjection;
 
+use Pumukit\CoreBundle\DependencyInjection\FrontendAssets;
 use Pumukit\YoutubeBundle\EventListener\BackofficeListener;
 use Pumukit\YoutubeBundle\EventListener\RemoveListener;
 use Pumukit\YoutubeBundle\EventListener\UpdateListener;
@@ -33,6 +34,8 @@ class PumukitYoutubeExtension extends Extension implements PrependExtensionInter
 
     public function prepend(ContainerBuilder $container): void
     {
+        FrontendAssets::register($container, dirname(__DIR__), '@pumukit/youtube');
+
         $container->prependExtensionConfig('monolog', [
             'channels' => ['youtube'],
             'handlers' => [
