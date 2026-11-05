@@ -9,6 +9,7 @@ use Doctrine\ODM\MongoDB\Mapping\Annotations as MongoDB;
 use Pumukit\YoutubeBundle\Repository\YoutubeRepository;
 
 #[MongoDB\Document(repositoryClass: YoutubeRepository::class)]
+#[MongoDB\Index(keys: ['multimediaObjectId' => 'asc'])]
 class Youtube
 {
     public const STATUS_DEFAULT = 0;

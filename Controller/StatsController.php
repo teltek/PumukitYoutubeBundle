@@ -40,9 +40,6 @@ class StatsController extends AbstractController
             throw new ServiceNotFoundException('YoutubeStatsService not found');
         }
 
-        $youtubeStatusDocuments = $this->youtubeStatsService->getYoutubeDocumentsByCriteria();
-        $statsYoutubeDocuments = $this->processYoutubeDocuments($youtubeStatusDocuments);
-
         return $this->render('@PumukitYoutube/Stats/template.html.twig', [
             'youtubeAccounts' => $this->youtubeStatsService->getYoutubeAccounts(),
             'accountsStats' => $this->youtubeStatsService->getAccountsStats(),
@@ -167,15 +164,5 @@ class StatsController extends AbstractController
         return $this->render('@PumukitYoutube/Modal/infoError.html.twig', [
             'youtube' => $youtube,
         ]);
-    }
-
-    private function processYoutubeDocuments(array $youtubeStatusDocuments): array
-    {
-        $stats = [];
-        foreach ($youtubeStatusDocuments as $document) {
-            $stats[$document->getStatus()][] = $document;
-        }
-
-        return $stats;
     }
 }

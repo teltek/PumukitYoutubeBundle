@@ -252,7 +252,7 @@ EOT
     private function collectMetadata(?string $filterAccount): array
     {
         $qb = $this->documentManager->getRepository(Youtube::class)->createQueryBuilder()
-            ->where('this.multimediaObjectUpdateDate > this.syncMetadataDate')
+            ->field('$expr')->equals(['$gt' => ['$multimediaObjectUpdateDate', '$syncMetadataDate']])
         ;
         if (null !== $filterAccount) {
             $qb->field('youtubeAccount')->equals($filterAccount);
