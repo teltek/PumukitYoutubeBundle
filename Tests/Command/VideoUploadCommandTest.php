@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace Pumukit\YoutubeBundle\Tests\Command;
 
-use PHPUnit\Framework\Attributes\Group;
 use Pumukit\SchemaBundle\Document\EmbeddedBroadcast;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\YoutubeBundle\Document\Youtube;
 use Pumukit\YoutubeBundle\Tests\Support\YoutubeTestCase;
+use Symfony\Component\Lock\LockFactory;
+use Symfony\Component\Lock\Store\FlockStore;
+use Symfony\Component\Lock\Store\SemaphoreStore;
 
 /**
  * @internal
@@ -90,34 +92,71 @@ class VideoUploadCommandTest extends YoutubeTestCase
         $this->assertStringContainsString('quota exceeded', $tester->getDisplay());
     }
 
-    #[Group('to-change')]
-    public function testAVideoInErrorIsUploadedAgainOnEveryRun(): void
+    public function testAVideoWithAPermanentErrorIsNotUploadedAgain(): void
     {
         $multimediaObject = $this->videoForYoutube();
         $this->youtubeDocument($multimediaObject, Youtube::STATUS_ERROR, null);
         $this->api->willFail('invalidTitle');
-        $this->api->willFail('invalidTitle');
 
         $this->runCommand('pumukit:youtube:video:upload');
         $this->runCommand('pumukit:youtube:video:upload');
 
-        $this->assertSame(2, $this->api->callsTo('POST', '/upload/youtube/v3/videos'));
-        $this->assertSame(0, $this->api->pending());
+        $this->assertSame(1, $this->api->callsTo('POST', '/upload/youtube/v3/videos'));
+        $this->assertSame('invalidTitle', $this->youtubeOf($multimediaObject)->getError()->id());
     }
 
-    #[Group('to-change')]
-    public function testARejectedVideoGoesBackToYoutubeLeavingACopy(): void
+    public function testAVideoWithATemporaryErrorIsRetried(): void
+    {
+        $multimediaObject = $this->videoForYoutube();
+        $this->youtubeDocument($multimediaObject, Youtube::STATUS_ERROR, null);
+        $this->api->willFail('backendError', 500);
+        $this->runCommand('pumukit:youtube:video:upload');
+        $this->assertSame('backendError', $this->youtubeOf($multimediaObject)->getError()->id());
+        $this->api->willStartAnUpload();
+        $this->api->willFinishAnUpload('uploaded');
+
+        $this->runCommand('pumukit:youtube:video:upload');
+
+        $this->assertSame('uploaded', $this->youtubeOf($multimediaObject)->getYoutubeId());
+    }
+
+    public function testARejectedVideoIsNotUploadedAgain(): void
     {
         $multimediaObject = $this->videoForYoutube();
         $this->youtubeDocument($multimediaObject, Youtube::STATUS_PROCESSING, 'rejected');
         $this->api->willListAVideo('rejected', 'rejected', ['rejectionReason' => 'duplicate']);
-        $this->api->willStartAnUpload();
-        $this->api->willFinishAnUpload('copy');
 
         $this->runCommand('pumukit:youtube:video:update:pendingstatus');
         $this->runCommand('pumukit:youtube:video:upload');
 
-        $this->assertSame('copy', $this->youtubeOf($multimediaObject)->getYoutubeId());
-        $this->assertSame(0, $this->api->callsTo('DELETE', '/youtube/v3/videos'));
+        $stored = $this->youtubeOf($multimediaObject);
+        $this->assertSame(Youtube::STATUS_ERROR, $stored->getStatus());
+        $this->assertSame('rejected', $stored->getYoutubeId());
+        $this->assertSame(0, $this->api->callsTo('POST', '/upload/youtube/v3/videos'));
+    }
+
+    public function testTheUploadLimitOfTheChannelStopsTheRun(): void
+    {
+        $this->videoForYoutube();
+        $this->videoForYoutube();
+        $this->api->willFail('uploadLimitExceeded', 403);
+
+        $this->runCommand('pumukit:youtube:video:upload');
+
+        $this->assertSame(1, $this->api->calls());
+        $this->assertSame([], $this->youtubeDocuments());
+    }
+
+    public function testAnotherRunningUploadStopsThisOne(): void
+    {
+        $this->videoForYoutube();
+        $lock = (new LockFactory(SemaphoreStore::isSupported() ? new SemaphoreStore() : new FlockStore()))->createLock('pumukit:youtube:video:upload');
+        $this->assertTrue($lock->acquire());
+
+        $tester = $this->runCommand('pumukit:youtube:video:upload');
+
+        $lock->release();
+        $this->assertStringContainsString('Another upload is running', $tester->getDisplay());
+        $this->assertSame(0, $this->api->calls());
     }
 }

@@ -13,12 +13,15 @@ use Pumukit\YoutubeBundle\Exception\YoutubeQuotaExceededException;
 use Pumukit\YoutubeBundle\Services\VideoInsertService;
 use Pumukit\YoutubeBundle\Services\YoutubeConfigurationService;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Command\LockableTrait;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class VideoUploadCommand extends Command
 {
+    use LockableTrait;
+
     private $documentManager;
     private $youtubeConfigurationService;
     private $videoInsertService;
@@ -56,24 +59,34 @@ EOT
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $this->usePumukit1 = $input->getOption('use-pmk1');
+        if (!$this->lock()) {
+            $output->writeln('<comment>Another upload is running. Stopping this run.</comment>');
 
-        $newMultimediaObjects = $this->getNewMultimediaObjectsToUpload();
-        $infoLog = '[YouTube] Uploading '.(is_countable($newMultimediaObjects) ? count($newMultimediaObjects) : 0).' new videos to YouTube';
-        $this->logger->info($infoLog);
-        $this->uploadVideosToYoutube($newMultimediaObjects, $output);
+            return 0;
+        }
 
-        $failureMultimediaObjects = $this->getUploadsByStatus([Youtube::STATUS_ERROR]);
-        $infoLog = '[YouTube] Uploading '.(is_countable($failureMultimediaObjects) ? count($failureMultimediaObjects) : 0).' failure videos to YouTube';
-        $this->logger->info($infoLog);
-        $this->uploadVideosToYoutube($failureMultimediaObjects, $output);
+        try {
+            $this->usePumukit1 = $input->getOption('use-pmk1');
 
-        if ($this->youtubeConfigurationService->uploadRemovedVideos()) {
-            $removedStatus = [Youtube::STATUS_REMOVED];
-            $removedYoutubeMultimediaObjects = $this->getUploadsByStatus($removedStatus);
-            $infoLog = '[YouTube] Uploading '.(is_countable($removedYoutubeMultimediaObjects) ? count($removedYoutubeMultimediaObjects) : 0).' removed videos to YouTube';
+            $newMultimediaObjects = $this->getNewMultimediaObjectsToUpload();
+            $infoLog = '[YouTube] Uploading '.(is_countable($newMultimediaObjects) ? count($newMultimediaObjects) : 0).' new videos to YouTube';
             $this->logger->info($infoLog);
-            $this->uploadVideosToYoutube($removedYoutubeMultimediaObjects, $output);
+            $this->uploadVideosToYoutube($newMultimediaObjects, $output);
+
+            $failureMultimediaObjects = $this->getUploadsWithTemporaryError();
+            $infoLog = '[YouTube] Uploading '.(is_countable($failureMultimediaObjects) ? count($failureMultimediaObjects) : 0).' failure videos to YouTube';
+            $this->logger->info($infoLog);
+            $this->uploadVideosToYoutube($failureMultimediaObjects, $output);
+
+            if ($this->youtubeConfigurationService->uploadRemovedVideos()) {
+                $removedStatus = [Youtube::STATUS_REMOVED];
+                $removedYoutubeMultimediaObjects = $this->getUploadsByStatus($removedStatus);
+                $infoLog = '[YouTube] Uploading '.(is_countable($removedYoutubeMultimediaObjects) ? count($removedYoutubeMultimediaObjects) : 0).' removed videos to YouTube';
+                $this->logger->info($infoLog);
+                $this->uploadVideosToYoutube($removedYoutubeMultimediaObjects, $output);
+            }
+        } finally {
+            $this->release();
         }
 
         return 0;
@@ -136,6 +149,16 @@ EOT
         return $this->createMultimediaObjectsToUploadQueryBuilder()
             ->field('properties.youtube')
             ->exists(false)
+            ->getQuery()
+            ->execute()
+        ;
+    }
+
+    private function getUploadsWithTemporaryError()
+    {
+        return $this->createMultimediaObjectsToUploadQueryBuilder()
+            ->field('_id')
+            ->in($this->documentManager->getRepository(Youtube::class)->getDistinctMultimediaObjectIdsToRetry())
             ->getQuery()
             ->execute()
         ;

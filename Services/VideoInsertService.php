@@ -7,7 +7,8 @@ namespace Pumukit\YoutubeBundle\Services;
 use Doctrine\ODM\MongoDB\DocumentManager;
 use Google\Http\MediaFileUpload;
 use Google\Service\YouTube\Video;
-use MongoDB\Driver\Exception\BulkWriteException;
+use Google\Service\YouTube\VideoSnippet;
+use Google\Service\YouTube\VideoStatus;
 use Psr\Log\LoggerInterface;
 use Pumukit\SchemaBundle\Document\MediaType\Track;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
@@ -28,6 +29,8 @@ class VideoInsertService extends GoogleVideoService
 
     private $googleApiErrorParser;
 
+    private $videoDeleteService;
+
     private $logger;
 
     public function __construct(
@@ -36,8 +39,10 @@ class VideoInsertService extends GoogleVideoService
         YoutubeConfigurationService $youtubeConfigurationService,
         VideoDataValidationService $videoDataValidationService,
         GoogleApiErrorParser $googleApiErrorParser,
+        VideoDeleteService $videoDeleteService,
         LoggerInterface $logger
     ) {
+        $this->videoDeleteService = $videoDeleteService;
         $this->googleAccountService = $googleAccountService;
         $this->documentManager = $documentManager;
         $this->youtubeConfigurationService = $youtubeConfigurationService;
@@ -211,7 +216,7 @@ class VideoInsertService extends GoogleVideoService
 
     private function insert(
         Tag $youtubeAccount,
-        \Google\Service\YouTube\Video $video,
+        Video $video,
         Track $track
     ): Video {
         $filePath = $track->storage()->path()->path();
@@ -289,9 +294,9 @@ class VideoInsertService extends GoogleVideoService
     }
 
     private function createVideo(
-        \Google\Service\YouTube\VideoSnippet $snippet,
-        \Google\Service\YouTube\VideoStatus $status
-    ): \Google\Service\YouTube\Video {
+        VideoSnippet $snippet,
+        VideoStatus $status
+    ): Video {
         $video = $this->createGoogleServiceYoutubeVideo();
         $video->setSnippet($snippet);
         $video->setStatus($status);
@@ -311,6 +316,18 @@ class VideoInsertService extends GoogleVideoService
                 $multimediaObject->getId(),
                 count($existingDocuments)
             ));
+        }
+
+        foreach ($existingDocuments as $existing) {
+            if ($this->hasVideoOnYoutube($existing) && !$this->videoDeleteService->deleteVideoFromYouTubeByYouTubeDocument($existing)) {
+                $this->logger->error(sprintf(
+                    '[YouTube] Multimedia object %s is not uploaded again because its previous video %s cannot be deleted.',
+                    $multimediaObject->getId(),
+                    $existing->getYoutubeId()
+                ));
+
+                return null;
+            }
         }
 
         if ($existingDocuments) {
@@ -346,16 +363,14 @@ class VideoInsertService extends GoogleVideoService
         return $youtube;
     }
 
+    private function hasVideoOnYoutube(Youtube $youtube): bool
+    {
+        return $youtube->getYoutubeId() && !in_array($youtube->getStatus(), [Youtube::STATUS_REMOVED, Youtube::STATUS_UPLOADING], true);
+    }
+
     private function isDuplicateKeyException(\Throwable $e): bool
     {
-        if (11000 === $e->getCode()) {
-            return true;
-        }
-        if ($e instanceof BulkWriteException) {
-            return true;
-        }
-
-        return str_contains($e->getMessage(), 'E11000');
+        return 11000 === $e->getCode() || str_contains($e->getMessage(), 'E11000');
     }
 
     private function updateVideoAndYoutubeDocumentByResult(

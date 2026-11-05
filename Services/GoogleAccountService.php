@@ -13,7 +13,7 @@ use Symfony\Component\Filesystem\Filesystem;
 class GoogleAccountService
 {
     private const HTTP_CONNECT_TIMEOUT_SECONDS = 30;
-    private const HTTP_REQUEST_TIMEOUT_SECONDS = 0;
+    private const HTTP_REQUEST_TIMEOUT_SECONDS = 900;
 
     private $client;
     private $youtubeConfigurationService;

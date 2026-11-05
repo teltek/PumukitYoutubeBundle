@@ -14,6 +14,7 @@ class GoogleApiErrorParser
         'dailyLimitExceeded',
         'rateLimitExceeded',
         'userRateLimitExceeded',
+        'uploadLimitExceeded',
     ];
 
     private LoggerInterface $logger;

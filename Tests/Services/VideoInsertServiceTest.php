@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Pumukit\YoutubeBundle\Tests\Services;
 
-use PHPUnit\Framework\Attributes\Group;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\YoutubeBundle\Document\Youtube;
 use Pumukit\YoutubeBundle\Exception\YoutubeQuotaExceededException;
@@ -180,11 +179,11 @@ class VideoInsertServiceTest extends YoutubeTestCase
         $this->assertSame(0, $this->api->calls());
     }
 
-    #[Group('to-change')]
-    public function testAnotherUploadForgetsThePreviousVideoAndLeavesItOnYoutube(): void
+    public function testAnotherUploadDeletesThePreviousVideoFromYoutube(): void
     {
         $multimediaObject = $this->videoForYoutube();
         $this->youtubeDocument($multimediaObject, Youtube::STATUS_ERROR, 'rejected');
+        $this->api->willAnswerEmpty();
         $this->api->willStartAnUpload();
         $this->api->willFinishAnUpload('second');
 
@@ -193,7 +192,35 @@ class VideoInsertServiceTest extends YoutubeTestCase
         $documents = $this->youtubeDocuments();
         $this->assertCount(1, $documents);
         $this->assertSame('second', $documents[0]->getYoutubeId());
+        $this->assertSame(1, $this->api->callsTo('DELETE', '/youtube/v3/videos'));
+    }
+
+    public function testAnotherUploadStopsIfThePreviousVideoCannotBeDeleted(): void
+    {
+        $multimediaObject = $this->videoForYoutube();
+        $this->youtubeDocument($multimediaObject, Youtube::STATUS_ERROR, 'rejected');
+        $this->api->willFail('forbidden', 403);
+
+        $this->assertFalse($this->service()->uploadVideoToYoutube($multimediaObject));
+
+        $documents = $this->youtubeDocuments();
+        $this->assertCount(1, $documents);
+        $this->assertSame('rejected', $documents[0]->getYoutubeId());
+        $this->assertSame('forbidden', $documents[0]->getError()->id());
+        $this->assertSame(0, $this->api->callsTo('POST', '/upload/youtube/v3/videos'));
+    }
+
+    public function testAnUploadAfterAChangeOfAccountDoesNotDeleteTheOldVideoAgain(): void
+    {
+        $multimediaObject = $this->videoForYoutube();
+        $this->youtubeDocument($multimediaObject, Youtube::STATUS_UPLOADING, 'old');
+        $this->api->willStartAnUpload();
+        $this->api->willFinishAnUpload('second');
+
+        $this->assertTrue($this->service()->uploadVideoToYoutube($multimediaObject));
+
         $this->assertSame(0, $this->api->callsTo('DELETE', '/youtube/v3/videos'));
+        $this->assertSame('second', $this->youtubeOf($multimediaObject)->getYoutubeId());
     }
 
     private function service(): VideoInsertService
