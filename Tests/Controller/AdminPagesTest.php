@@ -14,7 +14,6 @@ use Pumukit\YoutubeBundle\Tests\Support\YoutubeTestCase;
 use Symfony\Component\AssetMapper\AssetMapperInterface;
 use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\Finder\Finder;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
@@ -182,7 +181,7 @@ class AdminPagesTest extends YoutubeTestCase
     {
         $old = '/data-(toggle|dismiss|target|backdrop|placement)=|<script|\son[a-z]+=|\sstyle=|\bmdi-|glyphicon|\|\s*raw\b|col-xs-|text-(right|left)\b|btn-(default|raised)|\blabel-(danger|success|warning)|input-group-addon|class="well|twitter_bootstrap3|select2/';
         $found = [];
-        $finder = (new Finder())->files()->in(dirname(__DIR__, 2).'/Resources/views')->name('*.twig')->notName('updatemenu.html.twig');
+        $finder = (new Finder())->files()->in(dirname(__DIR__, 2).'/Resources/views')->name('*.twig');
         $this->assertGreaterThan(20, $finder->count());
         foreach ($finder as $file) {
             foreach (file($file->getPathname()) as $number => $line) {
@@ -229,7 +228,7 @@ class AdminPagesTest extends YoutubeTestCase
         $this->assertSame(self::BASE.'/create/playlist/'.$this->account->getId(), $crawler->filter('a[data-youtube--publication-target="create"][data-bs-toggle="modal"]')->attr('href'));
     }
 
-    public function testTheVideoModalForcesTheUploadWithItsController(): void
+    public function testTheVideoModalOffersTheActionsOfAPublishedVideo(): void
     {
         $multimediaObject = $this->videoForYoutube();
         $this->youtubeDocument($multimediaObject, Youtube::STATUS_PUBLISHED);
@@ -238,34 +237,61 @@ class AdminPagesTest extends YoutubeTestCase
         $crawler = $this->client->request('GET', self::BASE.'/modal/mm/'.$multimediaObject->getId());
 
         $this->assertResponseIsSuccessful();
-        $action = $crawler->filter('[data-controller="youtube--video"] [data-action="click->youtube--video#run"]');
-        $this->assertSame(self::BASE.'/forceuploads/mm/'.$multimediaObject->getId(), $action->attr('data-youtube--video-url-param'));
-        $this->assertNotEmpty($action->attr('data-youtube--video-confirm-param'));
-        $this->assertCount(1, $crawler->filter('.modal-header button[data-bs-dismiss="modal"]'));
-    }
-
-    public function testTheActionsOfAPublishedVideoUseTheControllers(): void
-    {
-        $multimediaObject = $this->videoForYoutube();
-        $youtube = $this->youtubeDocument($multimediaObject, Youtube::STATUS_PUBLISHED);
-        static::getContainer()->get('request_stack')->push(new Request());
-
-        $html = static::getContainer()->get('twig')->render('@PumukitYoutube/Modal/index.html.twig', [
-            'mm' => $multimediaObject,
-            'youtube' => $youtube,
-            'youtube_status' => 'published',
-        ]);
-
-        $crawler = new Crawler($html);
+        $actions = $crawler->filter('[data-controller="youtube--video"] [data-action="click->youtube--video#run"]');
         $this->assertSame(
             [self::BASE.'/updateplaylist/mm/'.$multimediaObject->getId(), self::BASE.'/forceuploads/mm/'.$multimediaObject->getId()],
-            $crawler->filter('[data-action="click->youtube--video#run"]')->each(static fn (Crawler $action): string => (string) $action->attr('data-youtube--video-url-param'))
+            $actions->each(static fn (Crawler $action): string => (string) $action->attr('data-youtube--video-url-param'))
         );
+        $this->assertNotEmpty($actions->last()->attr('data-youtube--video-confirm-param'));
         $this->assertSame(
             ['copy-youtube-link', 'copy-embed-link'],
             $crawler->filter('[data-action="click->admin--actions#copy"]')->each(static fn (Crawler $action): string => (string) $action->attr('data-admin--actions-input-param'))
         );
         $this->assertCount(2, $crawler->filter('input.pmk-display-none'));
+        $this->assertCount(1, $crawler->filter('.modal-header button[data-bs-dismiss="modal"]'));
+        $this->assertCount(1, $crawler->filter('.badge.text-bg-success'));
+    }
+
+    public function testTheVideoModalOfAVideoInProcessOffersTheCopyActionsButNotThePlaylist(): void
+    {
+        $multimediaObject = $this->videoForYoutube();
+        $this->youtubeDocument($multimediaObject, Youtube::STATUS_PROCESSING);
+        $this->login();
+
+        $crawler = $this->client->request('GET', self::BASE.'/modal/mm/'.$multimediaObject->getId());
+
+        $this->assertCount(2, $crawler->filter('[data-action="click->admin--actions#copy"]'));
+        $this->assertCount(1, $crawler->filter('[data-action="click->youtube--video#run"]'));
+    }
+
+    public function testTheVideoModalOfAVideoWithAnErrorOffersOnlyToForceTheUpload(): void
+    {
+        $multimediaObject = $this->videoForYoutube();
+        $this->youtubeDocument($multimediaObject, Youtube::STATUS_ERROR);
+        $this->login();
+
+        $crawler = $this->client->request('GET', self::BASE.'/modal/mm/'.$multimediaObject->getId());
+
+        $this->assertCount(0, $crawler->filter('[data-action="click->admin--actions#copy"]'));
+        $this->assertCount(1, $crawler->filter('[data-action="click->youtube--video#run"]'));
+        $this->assertCount(1, $crawler->filter('.badge.text-bg-danger'));
+    }
+
+    public function testTheConfigurationShowsAnEnabledOptionWithACheck(): void
+    {
+        $this->login();
+
+        $crawler = $this->client->request('GET', self::BASE.'/stats/configuration/');
+
+        $this->assertResponseIsSuccessful();
+        $icons = [];
+        $crawler->filter('tbody tr')->each(static function (Crawler $row) use (&$icons): void {
+            if (2 < $row->filter('td')->count()) {
+                $icons[trim($row->filter('td')->eq(1)->text())] = $row->filter('td i.fa-check')->count() ? 'check' : ($row->filter('td i.fa-xmark')->count() ? 'xmark' : 'value');
+            }
+        });
+        $this->assertSame('xmark', $icons['syncStatus']);
+        $this->assertSame('check', $icons['generateSbs']);
     }
 
     public function testTheStatsListEscapesTheDataOfTheDocument(): void

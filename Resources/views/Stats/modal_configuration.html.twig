@@ -18,9 +18,9 @@
                             {{ val }}
                         {% else %}
                             {% if value is same as(false) %}
-                                <i class="fa-solid fa-check"></i>
-                            {% elseif value is same as(true) %}
                                 <i class="fa-solid fa-xmark"></i>
+                            {% elseif value is same as(true) %}
+                                <i class="fa-solid fa-check"></i>
                             {% else %}
                                 {{ value }}
                             {% endif %}

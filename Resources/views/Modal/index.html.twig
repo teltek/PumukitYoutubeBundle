@@ -1,6 +1,7 @@
-{% if youtube_status|lower == 'error' or youtube_status|lower == 'removed' or youtube_status|lower == 'duplicated' %}
+{% set status = youtube_status|lower %}
+{% if status == 'error' or status == 'removed' or status == 'duplicated' %}
     {% set label_class = "text-bg-danger" %}
-{% elseif youtube_status|lower == 'published' %}
+{% elseif status == 'published' %}
     {% set label_class = "text-bg-success" %}
 {% else %}
     {% set label_class = "text-bg-warning" %}
@@ -95,7 +96,7 @@
         </div>
         <hr />
 
-        {% if youtube_status in ['published', 'proccessing'] %}
+        {% if status in ['published', 'processing'] %}
             <div class="row">
                 <div class="col-md-6">
                     <button type="button" class="btn btn-secondary" title="{{ "Copy Youtube link"|trans }}" data-action="click->admin--actions#copy" data-admin--actions-input-param="copy-youtube-link">
@@ -123,7 +124,7 @@
             </div>
         </div>
 
-        {% if youtube_status in ['published'] %}
+        {% if status == 'published' %}
             <div class="row">
                 <div class="col-md-12 text-center">
                     <a href="#" class="btn btn-pumukit mb-2" title="{{ "Manual playlist update"|trans }}"
