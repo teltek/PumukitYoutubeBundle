@@ -115,11 +115,45 @@ class ConfigurationTest extends TestCase
         $this->assertSame(['bat' => 'mine'], $container->getParameter('pumukitencode.profilelist')['video_youtube']);
     }
 
+    public function testTheChannelGetsItsDefaultProfilesIfTheInstallationHasNone(): void
+    {
+        $container = $this->container();
+        $container->setParameter('pumukitencode.target_default_profiles', ['PUCHWEBTV' => ['video' => 'mine']]);
+
+        (new PumukitYoutubeExtension())->load([], $container);
+
+        $targets = $container->getParameter('pumukitencode.target_default_profiles');
+        $this->assertSame(['video' => 'mine'], $targets['PUCHWEBTV']);
+        $this->assertSame('video_youtube', $targets['PUCHYOUTUBE']['audio']);
+        $this->assertSame('', $targets['PUCHYOUTUBE']['video']);
+    }
+
+    public function testTheDefaultProfilesOfTheInstallationWinOverTheOnesOfTheBundle(): void
+    {
+        $container = $this->container();
+        $container->setParameter('pumukitencode.target_default_profiles', ['PUCHYOUTUBE' => ['video' => 'mine']]);
+
+        (new PumukitYoutubeExtension())->load([], $container);
+
+        $this->assertSame(['video' => 'mine'], $container->getParameter('pumukitencode.target_default_profiles')['PUCHYOUTUBE']);
+    }
+
+    public function testDisabledItAddsNoDefaultProfiles(): void
+    {
+        $container = $this->container();
+        $container->setParameter('pumukitencode.target_default_profiles', []);
+
+        (new PumukitYoutubeExtension())->load([['enable' => false]], $container);
+
+        $this->assertSame([], $container->getParameter('pumukitencode.target_default_profiles'));
+    }
+
     private function container(): ContainerBuilder
     {
         $container = new ContainerBuilder();
         $container->setParameter('kernel.default_locale', 'en');
         $container->setParameter('pumukitencode.profilelist', []);
+        $container->setParameter('pumukitencode.target_default_profiles', []);
 
         return $container;
     }

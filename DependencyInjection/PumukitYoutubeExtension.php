@@ -8,6 +8,7 @@ use Pumukit\CoreBundle\DependencyInjection\FrontendAssets;
 use Pumukit\YoutubeBundle\EventListener\BackofficeListener;
 use Pumukit\YoutubeBundle\EventListener\RemoveListener;
 use Pumukit\YoutubeBundle\EventListener\UpdateListener;
+use Pumukit\YoutubeBundle\PumukitYoutubeBundle;
 use Pumukit\YoutubeBundle\Services\MenuService;
 use Pumukit\YoutubeBundle\Services\MenuStatService;
 use Pumukit\YoutubeBundle\Services\MultimediaObjectMenuService;
@@ -119,10 +120,12 @@ class PumukitYoutubeExtension extends Extension implements PrependExtensionInter
 
         $container->setParameter('pumukit_youtube.profilelist', $profiles);
         $container->setParameter('pumukitencode.profilelist', $encoderProfiles);
-        $container->setParameter(
-            'pumukit_youtube.default_track_upload',
-            isset($encoderProfiles[$config['default_track_upload']]) ? $config['default_track_upload'] : self::AUDIO_TRACK_PROFILE
-        );
+        $trackProfile = isset($encoderProfiles[$config['default_track_upload']]) ? $config['default_track_upload'] : self::AUDIO_TRACK_PROFILE;
+        $container->setParameter('pumukit_youtube.default_track_upload', $trackProfile);
+
+        $targetProfiles = $container->getParameter('pumukitencode.target_default_profiles');
+        $targetProfiles[PumukitYoutubeBundle::YOUTUBE_PUBLICATION_CHANNEL_CODE] ??= ['audio' => $trackProfile, 'video' => '', 'image' => '', 'image_raw' => '', 'document' => ''];
+        $container->setParameter('pumukitencode.target_default_profiles', $targetProfiles);
     }
 
     public function getConfiguration(array $config, ContainerBuilder $container): Configuration

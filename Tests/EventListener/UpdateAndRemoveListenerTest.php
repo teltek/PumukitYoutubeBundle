@@ -7,6 +7,7 @@ namespace Pumukit\YoutubeBundle\Tests\EventListener;
 use Pumukit\EncoderBundle\Document\Job;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Event\MultimediaObjectEvent;
+use Pumukit\SchemaBundle\Services\TagService;
 use Pumukit\YoutubeBundle\Document\Youtube;
 use Pumukit\YoutubeBundle\EventListener\UpdateListener;
 use Pumukit\YoutubeBundle\Tests\Support\YoutubeTestCase;
@@ -68,6 +69,16 @@ class UpdateAndRemoveListenerTest extends YoutubeTestCase
         $jobs = $this->dm->getRepository(Job::class)->findBy(['mm_id' => $multimediaObject->getId()]);
         $this->assertCount(1, $jobs);
         $this->assertSame('video_youtube', $jobs[0]->getProfile());
+    }
+
+    public function testAVideoWithOnlyItsMasterCanGetTheChannel(): void
+    {
+        $multimediaObject = $this->video([], $this->track(null, ['master', 'profile:master_copy']));
+
+        static::getContainer()->get(TagService::class)->addTagToMultimediaObject($multimediaObject, $this->publicationChannel->getId());
+
+        $this->assertTrue($multimediaObject->containsTagWithCod('PUCHYOUTUBE'));
+        $this->assertCount(0, $this->dm->getRepository(Job::class)->findBy(['mm_id' => $multimediaObject->getId()]));
     }
 
     public function testAnAudioWithItsVideoTrackDoesNotGenerateItAgain(): void
