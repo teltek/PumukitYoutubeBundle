@@ -176,8 +176,7 @@ class CaptionCommandsTest extends YoutubeTestCase
         $this->assertSame(0, $this->api->calls());
     }
 
-    #[Group('to-change')]
-    public function testAFailedDeleteForgetsTheError(): void
+    public function testAFailedDeleteKeepsTheError(): void
     {
         $multimediaObject = $this->videoForYoutube();
         $youtube = $this->youtubeDocument($multimediaObject);
@@ -189,6 +188,202 @@ class CaptionCommandsTest extends YoutubeTestCase
 
         $stored = $this->youtubeOf($multimediaObject);
         $this->assertCount(1, $stored->getCaptions());
+        $this->assertSame('forbidden', $stored->getCaptionUpdateError()->id());
+    }
+
+    public function testACaptionAlreadyGoneFromYoutubeIsForgotten(): void
+    {
+        $multimediaObject = $this->videoForYoutube();
+        $youtube = $this->youtubeDocument($multimediaObject);
+        $youtube->addCaption($this->caption('aaaaaaaaaaaaaaaaaaaaaaaa', 'caption1'));
+        $this->dm->flush();
+        $this->api->willFail('captionNotFound', 404);
+
+        $this->runCommand('pumukit:youtube:caption:delete');
+
+        $stored = $this->youtubeOf($multimediaObject);
+        $this->assertCount(0, $stored->getCaptions());
+        $this->assertNull($stored->getCaptionUpdateError());
+    }
+
+    public function testANewMaterialOfTheSameLanguageReplacesTheCaptionInOnePass(): void
+    {
+        $multimediaObject = $this->videoForYoutube();
+        $youtube = $this->youtubeDocument($multimediaObject);
+        $first = $this->material($multimediaObject);
+        $youtube->addCaption($this->caption($first->getId(), 'caption1', 'es'));
+        $this->dm->flush();
+        $second = $this->material($multimediaObject);
+        $this->api->willAnswerEmpty();
+        $this->willAcceptACaption('caption2');
+
+        $this->runCommand('pumukit:youtube:caption:upload');
+
+        $this->assertSame(1, $this->api->callsTo('DELETE', '/captions'));
+        $this->assertSame(1, $this->api->callsTo('POST', '/captions'));
+        $captions = $this->youtubeOf($multimediaObject)->getCaptions();
+        $this->assertCount(1, $captions);
+        $this->assertSame('caption2', $captions[0]->getCaptionId());
+        $this->assertSame($second->getId(), $captions[0]->getMaterialId());
+    }
+
+    public function testOnlyTheLatestMaterialOfALanguageIsUploaded(): void
+    {
+        $multimediaObject = $this->videoForYoutube();
+        $this->youtubeDocument($multimediaObject);
+        $this->material($multimediaObject);
+        $latest = $this->material($multimediaObject);
+        $this->willAcceptACaption('caption1');
+
+        $this->runCommand('pumukit:youtube:caption:upload');
+
+        $this->assertSame(1, $this->api->callsTo('POST', '/captions'));
+        $this->assertSame($latest->getId(), $this->youtubeOf($multimediaObject)->getCaptions()[0]->getMaterialId());
+    }
+
+    public function testTheOlderMaterialIsUploadedIfTheLatestIsHidden(): void
+    {
+        $multimediaObject = $this->videoForYoutube();
+        $this->youtubeDocument($multimediaObject);
+        $older = $this->material($multimediaObject);
+        $this->material($multimediaObject)->setHide(true);
+        $this->dm->flush();
+        $this->willAcceptACaption('caption1');
+
+        $this->runCommand('pumukit:youtube:caption:upload');
+
+        $this->assertSame($older->getId(), $this->youtubeOf($multimediaObject)->getCaptions()[0]->getMaterialId());
+    }
+
+    public function testDifferentLanguagesCoexist(): void
+    {
+        $multimediaObject = $this->videoForYoutube();
+        $youtube = $this->youtubeDocument($multimediaObject);
+        $youtube->addCaption($this->caption($this->material($multimediaObject, 'es')->getId(), 'caption1', 'es'));
+        $this->dm->flush();
+        $this->material($multimediaObject, 'en');
+        $this->willAcceptACaption('caption2');
+
+        $this->runCommand('pumukit:youtube:caption:upload');
+        $this->runCommand('pumukit:youtube:caption:delete');
+
+        $this->assertSame(0, $this->api->callsTo('DELETE', '/captions'));
+        $this->assertCount(2, $this->youtubeOf($multimediaObject)->getCaptions());
+    }
+
+    public function testAFileReplacedInTheSameMaterialIsUploadedAgain(): void
+    {
+        $multimediaObject = $this->videoForYoutube();
+        $this->youtubeDocument($multimediaObject);
+        $material = $this->material($multimediaObject);
+        $this->willAcceptACaption('caption1');
+        $this->runCommand('pumukit:youtube:caption:upload');
+        file_put_contents($material->getPath(), "WEBVTT\n\nnew content");
+        $this->api->willAnswerEmpty();
+        $this->willAcceptACaption('caption2');
+
+        $this->runCommand('pumukit:youtube:caption:upload');
+
+        $this->assertSame(1, $this->api->callsTo('DELETE', '/captions'));
+        $captions = $this->youtubeOf($multimediaObject)->getCaptions();
+        $this->assertCount(1, $captions);
+        $this->assertSame('caption2', $captions[0]->getCaptionId());
+    }
+
+    public function testAnUnchangedFileIsNotUploadedAgain(): void
+    {
+        $multimediaObject = $this->videoForYoutube();
+        $this->youtubeDocument($multimediaObject);
+        $this->material($multimediaObject);
+        $this->willAcceptACaption('caption1');
+        $this->runCommand('pumukit:youtube:caption:upload');
+
+        $this->runCommand('pumukit:youtube:caption:upload');
+
+        $this->assertSame(1, $this->api->callsTo('POST', '/captions'));
+    }
+
+    public function testACaptionUploadedBeforeNotesItsFileWithoutCallingYoutube(): void
+    {
+        $multimediaObject = $this->videoForYoutube();
+        $youtube = $this->youtubeDocument($multimediaObject);
+        $material = $this->material($multimediaObject);
+        $youtube->addCaption($this->caption($material->getId(), 'caption1', 'es'));
+        $this->dm->flush();
+
+        $this->runCommand('pumukit:youtube:caption:upload');
+
+        $this->assertSame(0, $this->api->calls());
+        $this->assertSame(sha1_file($material->getPath()), $this->youtubeOf($multimediaObject)->getCaptions()[0]->getFileHash());
+    }
+
+    public function testTwoCaptionsOfALanguageAlreadyOnYoutubeKeepOnlyTheLatest(): void
+    {
+        $multimediaObject = $this->videoForYoutube();
+        $youtube = $this->youtubeDocument($multimediaObject);
+        $older = $this->material($multimediaObject);
+        $latest = $this->material($multimediaObject);
+        $youtube->addCaption($this->caption($older->getId(), 'caption1', 'es'));
+        $youtube->addCaption($this->caption($latest->getId(), 'caption2', 'es'));
+        $this->dm->flush();
+        $this->api->willAnswerEmpty();
+
+        $this->runCommand('pumukit:youtube:caption:upload');
+        $this->runCommand('pumukit:youtube:caption:delete');
+
+        $this->assertSame(1, $this->api->callsTo('DELETE', '/captions'));
+        $this->assertSame(0, $this->api->callsTo('POST', '/captions'));
+        $captions = $this->youtubeOf($multimediaObject)->getCaptions();
+        $this->assertCount(1, $captions);
+        $this->assertSame('caption2', $captions[0]->getCaptionId());
+    }
+
+    public function testACaptionStaysUntilItsReplacementIsOnYoutube(): void
+    {
+        $multimediaObject = $this->videoForYoutube();
+        $youtube = $this->youtubeDocument($multimediaObject);
+        $youtube->addCaption($this->caption($this->material($multimediaObject)->getId(), 'caption1', 'es'));
+        $this->material($multimediaObject);
+        $this->dm->flush();
+
+        $this->runCommand('pumukit:youtube:caption:delete');
+
+        $this->assertSame(0, $this->api->calls());
+        $this->assertCount(1, $this->youtubeOf($multimediaObject)->getCaptions());
+    }
+
+    public function testACaptionThatCannotBeDeletedIsNotReplaced(): void
+    {
+        $multimediaObject = $this->videoForYoutube();
+        $youtube = $this->youtubeDocument($multimediaObject);
+        $youtube->addCaption($this->caption($this->material($multimediaObject)->getId(), 'caption1', 'es'));
+        $this->material($multimediaObject);
+        $this->dm->flush();
+        $this->api->willFail('forbidden', 403);
+
+        $this->runCommand('pumukit:youtube:caption:upload');
+
+        $this->assertSame(0, $this->api->callsTo('POST', '/captions'));
+        $stored = $this->youtubeOf($multimediaObject);
+        $this->assertSame('caption1', $stored->getCaptions()[0]->getCaptionId());
+        $this->assertSame('forbidden', $stored->getCaptionUpdateError()->id());
+    }
+
+    public function testACaptionAlreadyGoneIsReplacedWithoutFailing(): void
+    {
+        $multimediaObject = $this->videoForYoutube();
+        $youtube = $this->youtubeDocument($multimediaObject);
+        $youtube->addCaption($this->caption($this->material($multimediaObject)->getId(), 'caption1', 'es'));
+        $this->material($multimediaObject);
+        $this->dm->flush();
+        $this->api->willFail('captionNotFound', 404);
+        $this->willAcceptACaption('caption2');
+
+        $this->runCommand('pumukit:youtube:caption:upload');
+
+        $stored = $this->youtubeOf($multimediaObject);
+        $this->assertCount(1, $stored->getCaptions());
+        $this->assertSame('caption2', $stored->getCaptions()[0]->getCaptionId());
         $this->assertNull($stored->getCaptionUpdateError());
     }
 
@@ -197,9 +392,10 @@ class CaptionCommandsTest extends YoutubeTestCase
         $this->api->willAnswer(['kind' => 'youtube#caption', 'id' => $id, 'snippet' => ['name' => 'Caption', 'language' => 'es', 'lastUpdated' => '2026-01-01T10:00:00Z', 'isDraft' => false]]);
     }
 
-    private function caption(string $materialId, string $captionId): Caption
+    private function caption(string $materialId, string $captionId, string $language = 'en'): Caption
     {
         $caption = new Caption();
+        $caption->setLanguage($language);
         $caption->setMaterialId($materialId);
         $caption->setCaptionId($captionId);
         $caption->setName('Caption');

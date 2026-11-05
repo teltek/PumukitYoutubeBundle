@@ -8,6 +8,7 @@ use Doctrine\ODM\MongoDB\DocumentManager;
 use Psr\Log\LoggerInterface;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\YoutubeBundle\Document\Youtube;
+use Pumukit\YoutubeBundle\Services\CaptionsDataValidationService;
 use Pumukit\YoutubeBundle\Services\CaptionsInsertService;
 use Pumukit\YoutubeBundle\Services\YoutubeConfigurationService;
 use Symfony\Component\Console\Command\Command;
@@ -22,14 +23,17 @@ class CaptionUploadCommand extends Command
     private $configurationService;
 
     private $captionsInsertService;
+    private $captionsDataValidationService;
     private $logger;
 
     public function __construct(
         DocumentManager $documentManager,
         YoutubeConfigurationService $configurationService,
         CaptionsInsertService $captionsInsertService,
+        CaptionsDataValidationService $captionsDataValidationService,
         LoggerInterface $logger
     ) {
+        $this->captionsDataValidationService = $captionsDataValidationService;
         $this->documentManager = $documentManager;
         $this->configurationService = $configurationService;
         $this->captionsInsertService = $captionsInsertService;
@@ -71,8 +75,8 @@ EOT
                     continue;
                 }
 
-                $captionMaterialIds = $this->getCaptionsMaterialIds($youtube);
-                $newMaterialIds = $this->getNewMaterialIds($multimediaObject, $captionMaterialIds);
+                $newMaterialIds = $this->getNewMaterialIds($multimediaObject, $youtube);
+                $this->documentManager->flush();
 
                 if (!$newMaterialIds) {
                     continue;
@@ -104,23 +108,12 @@ EOT
         ;
     }
 
-    private function getCaptionsMaterialIds(Youtube $youtube): array
-    {
-        $captions = $youtube->getCaptions();
-        $captionsMaterialIds = [];
-        foreach ($captions as $caption) {
-            $captionsMaterialIds[] = $caption->getMaterialId();
-        }
-
-        return $captionsMaterialIds;
-    }
-
-    private function getNewMaterialIds(MultimediaObject $multimediaObject, array $captionMaterialIds = []): array
+    private function getNewMaterialIds(MultimediaObject $multimediaObject, Youtube $youtube): array
     {
         $newMaterialIds = [];
-        foreach ($multimediaObject->getMaterials() as $material) {
-            if (in_array($material->getId(), $captionMaterialIds)
-            || (!in_array($material->getMimeType(), $this->configurationService->allowedCaptionMimeTypes())) || $material->isHide()) {
+        foreach ($this->captionsDataValidationService->materialsForYoutube($multimediaObject) as $material) {
+            $caption = $youtube->getCaptionByMaterialId($material->getId());
+            if ($caption && !$this->captionsInsertService->isOutdated($caption, $material)) {
                 continue;
             }
             $newMaterialIds[] = $material->getId();

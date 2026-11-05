@@ -30,6 +30,9 @@ class Caption
     #[MongoDB\Field(type: 'bool')]
     private $isDraft = false;
 
+    #[MongoDB\Field(type: 'string')]
+    private $fileHash;
+
     public function getId()
     {
         return $this->id;
@@ -98,5 +101,15 @@ class Caption
     public function isDraft(): bool
     {
         return $this->isDraft;
+    }
+
+    public function setFileHash(string $fileHash): void
+    {
+        $this->fileHash = $fileHash;
+    }
+
+    public function getFileHash(): ?string
+    {
+        return $this->fileHash;
     }
 }

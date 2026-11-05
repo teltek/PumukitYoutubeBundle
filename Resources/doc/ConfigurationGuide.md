@@ -43,3 +43,5 @@ pumukit_youtube:
 - `account_storage` Account storage dir. Absolute path its necessary.
 
 If the installation does not define `PUCHYOUTUBE` in `pumukit_encoder.target_default_profiles`, the bundle adds it: audios generate the track of `default_track_upload` and videos generate nothing, because their master is uploaded. To generate other tracks, define it in your encoder configuration.
+
+YouTube keeps one caption per language. If a multimedia object has several visible captions of a language, the most recent one is uploaded and the previous one is deleted from YouTube. Materials are not touched in PuMuKIT. Replacing the file of a material uploads it again.

@@ -12,6 +12,8 @@ use Pumukit\YoutubeBundle\Document\Youtube;
 
 class CaptionsDeleteService extends GoogleCaptionService
 {
+    private const CAPTION_NOT_FOUND = 'captionNotFound';
+
     private $documentManager;
     private $googleAccountService;
 
@@ -29,6 +31,7 @@ class CaptionsDeleteService extends GoogleCaptionService
 
     public function deleteCaption(Tag $account, Youtube $youtube, array $captionsId): bool
     {
+        $failed = false;
         foreach ($captionsId as $captionId) {
             try {
                 $result = $this->delete($account, $captionId);
@@ -36,6 +39,13 @@ class CaptionsDeleteService extends GoogleCaptionService
                 $errorLog = sprintf('[YouTube] Remove caption for Youtube document %s failed. Error: %s', $youtube->getId(), $exception->getMessage());
                 $this->logger->error($errorLog);
                 $error = json_decode($exception->getMessage(), true, 512, JSON_THROW_ON_ERROR);
+                if (self::CAPTION_NOT_FOUND === ($error['error']['errors'][0]['reason'] ?? null)) {
+                    $youtube->removeCaptionByCaptionId($captionId);
+
+                    continue;
+                }
+
+                $failed = true;
                 $error = Error::create(
                     $error['error']['errors'][0]['reason'],
                     $error['error']['errors'][0]['message'] ?? 'No message received',
@@ -50,7 +60,9 @@ class CaptionsDeleteService extends GoogleCaptionService
             $youtube->removeCaptionByCaptionId($captionId);
         }
 
-        $youtube->removeCaptionUpdateError();
+        if (!$failed) {
+            $youtube->removeCaptionUpdateError();
+        }
         $this->documentManager->flush();
 
         return true;

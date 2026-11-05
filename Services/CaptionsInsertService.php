@@ -64,6 +64,10 @@ class CaptionsInsertService extends GoogleCaptionService
                     }
                 }
 
+                if (!$this->deleteCaptionsReplacedBy($account, $youtube, $material)) {
+                    continue;
+                }
+
                 $result = $this->insert($account, $material, $youtube->getYoutubeId());
 
                 $caption = $this->createCaptionDocument($material, $result);
@@ -86,6 +90,57 @@ class CaptionsInsertService extends GoogleCaptionService
         $this->documentManager->flush();
 
         return true;
+    }
+
+    public function isOutdated(Caption $caption, Material $material): bool
+    {
+        $fileHash = $this->fileHash($material);
+        if (null === $fileHash) {
+            return false;
+        }
+
+        if (null === $caption->getFileHash()) {
+            $caption->setFileHash($fileHash);
+
+            return false;
+        }
+
+        return $fileHash !== $caption->getFileHash();
+    }
+
+    private function deleteCaptionsReplacedBy(Tag $account, Youtube $youtube, Material $material): bool
+    {
+        $language = strtolower($material->getLanguage());
+        $captionIds = [];
+        foreach ($youtube->getCaptions() as $caption) {
+            if ($caption->getMaterialId() === $material->getId() || ('' !== $language && strtolower($caption->getLanguage()) === $language)) {
+                $captionIds[] = $caption->getCaptionId();
+            }
+        }
+
+        if (!$captionIds) {
+            return true;
+        }
+
+        $this->captionsDeleteService->deleteCaption($account, $youtube, $captionIds);
+
+        foreach ($captionIds as $captionId) {
+            if ($youtube->getCaptionByCaptionId($captionId)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private function fileHash(Material $material): ?string
+    {
+        $path = $material->getPath();
+        if (!$path || !is_file($path)) {
+            return null;
+        }
+
+        return sha1_file($path) ?: null;
     }
 
     private function insert(Tag $account, Material $material, string $videoId): \Google\Service\YouTube\Caption
@@ -127,6 +182,9 @@ class CaptionsInsertService extends GoogleCaptionService
         $caption->setLanguage($youtubeCaption->getSnippet()->getLanguage());
         $caption->setLastUpdated(new \DateTime($youtubeCaption->getSnippet()->getLastUpdated()));
         $caption->setIsDraft($youtubeCaption->getSnippet()->getIsDraft());
+        if ($fileHash = $this->fileHash($material)) {
+            $caption->setFileHash($fileHash);
+        }
 
         $this->documentManager->persist($caption);
 

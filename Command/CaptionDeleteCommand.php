@@ -6,6 +6,7 @@ namespace Pumukit\YoutubeBundle\Command;
 
 use Doctrine\ODM\MongoDB\DocumentManager;
 use Psr\Log\LoggerInterface;
+use Pumukit\SchemaBundle\Document\Material;
 use Pumukit\SchemaBundle\Document\MultimediaObject;
 use Pumukit\SchemaBundle\Document\Tag;
 use Pumukit\YoutubeBundle\Document\Youtube;
@@ -113,25 +114,15 @@ EOT
         ;
     }
 
-    private function getMmMaterialIds(MultimediaObject $multimediaObject): array
-    {
-        $materialIds = [];
-        foreach ($multimediaObject->getMaterials() as $material) {
-            $materialIds[] = $material->getId();
-        }
-
-        return $materialIds;
-    }
-
     private function getDeleteCaptionIds(Youtube $youtube, MultimediaObject $multimediaObject): array
     {
-        $materialIds = $this->getMmMaterialIds($multimediaObject);
+        $materialsForYoutube = $this->captionsDataValidationService->materialsForYoutube($multimediaObject);
         $deleteCaptionIds = [];
         $youtubeCaptions = $youtube->getCaptions();
 
         foreach ($youtubeCaptions as $caption) {
             $material = $multimediaObject->getMaterialById($caption->getMaterialId());
-            if (in_array($caption->getMaterialId(), $materialIds) && !$material->isHide()) {
+            if ($material && !$material->isHide() && !$this->isReplacedOnYoutube($material, $materialsForYoutube, $youtube)) {
                 continue;
             }
             $deleteCaptionIds[] = $caption->getCaptionId();
@@ -141,6 +132,13 @@ EOT
         }
 
         return $deleteCaptionIds;
+    }
+
+    private function isReplacedOnYoutube(Material $material, array $materialsForYoutube, Youtube $youtube): bool
+    {
+        $replacement = $materialsForYoutube[strtolower($material->getLanguage())] ?? null;
+
+        return $replacement && $replacement->getId() !== $material->getId() && $youtube->getCaptionByMaterialId($replacement->getId());
     }
 
     private function getYoutubeDocument(MultimediaObject $multimediaObject)
