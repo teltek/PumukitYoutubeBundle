@@ -49,12 +49,12 @@ class AdminController extends AbstractController
     #[Route('/list', name: 'pumukit_youtube_admin_list')]
     public function listAction(): Response
     {
-        $youtubeAccounts = $this->documentManager->getRepository(Tag::class)->findOneBy(['cod' => PumukitYoutubeBundle::YOUTUBE_TAG_CODE]);
-        if (!$youtubeAccounts) {
-            throw new NotFoundHttpException($this->translator->trans('Youtube tag not defined'));
-        }
+        $youtubeTag = $this->documentManager->getRepository(Tag::class)->findOneBy(['cod' => PumukitYoutubeBundle::YOUTUBE_TAG_CODE]);
 
-        return $this->render('@PumukitYoutube/Admin/list.html.twig', ['youtubeAccounts' => $youtubeAccounts->getChildren()]);
+        return $this->render('@PumukitYoutube/Admin/list.html.twig', [
+            'youtubeAccounts' => $youtubeTag ? $youtubeTag->getChildren() : [],
+            'tagsNotInitialized' => !$youtubeTag,
+        ]);
     }
 
     #[IsGranted('ROLE_ACCESS_YOUTUBE')]
@@ -69,6 +69,9 @@ class AdminController extends AbstractController
                 $youtubeTag = $this->documentManager->getRepository(Tag::class)->findOneBy([
                     'cod' => PumukitYoutubeBundle::YOUTUBE_TAG_CODE,
                 ]);
+                if (!$youtubeTag) {
+                    throw new \RuntimeException($this->translator->trans('Youtube tag not defined'));
+                }
                 $data = $form->getData();
                 $tag = new Tag();
                 $tag->setMetatag(false);
@@ -211,6 +214,15 @@ class AdminController extends AbstractController
         $youtubeAccounts = $this->documentManager->getRepository(Tag::class)->findOneBy([
             'cod' => PumukitYoutubeBundle::YOUTUBE_TAG_CODE,
         ]);
+        if (!$youtubeAccounts) {
+            return $this->render('@PumukitYoutube/Admin/updateYT.html.twig', [
+                'youtubeAccounts' => [],
+                'multimediaObject' => $multimediaObject,
+                'accountId' => '',
+                'playlistId' => [],
+            ]);
+        }
+
         $accountSelectedTag = '';
         $playlistSelectedTag = [];
         foreach ($multimediaObject->getTags() as $tag) {

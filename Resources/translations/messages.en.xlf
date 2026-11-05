@@ -405,6 +405,10 @@
         <source>Captions Update Error</source>
         <target>Captions Update Error</target>
       </trans-unit>
+      <trans-unit id="ytTagsInit" resname="The tags of the bundle are not created. Run the command:">
+        <source>The tags of the bundle are not created. Run the command:</source>
+        <target>The tags of the bundle are not created. Run the command:</target>
+      </trans-unit>
     </body>
   </file>
 </xliff>

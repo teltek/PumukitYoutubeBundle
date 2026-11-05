@@ -156,9 +156,12 @@ class StatsController extends AbstractController
     #[Route('/modal/error/{id}', name: 'pumukit_youtube_errors')]
     public function infoJobAction(string $id): Response
     {
-        $youtube = $this->youtubeStatsService->getYoutubeDocumentByCriteria([
+        $youtube = preg_match('/^[a-f\d]{24}$/i', $id) ? $this->youtubeStatsService->getYoutubeDocumentByCriteria([
             '_id' => new ObjectId($id),
-        ]);
+        ]) : null;
+        if (!$youtube) {
+            throw $this->createNotFoundException();
+        }
 
         return $this->render('@PumukitYoutube/Modal/infoError.html.twig', [
             'youtube' => $youtube,

@@ -397,6 +397,10 @@
         <source>Captions Update Error</source>
         <target>Error al actualizar subtítulos</target>
       </trans-unit>
+      <trans-unit id="ytTagsInit" resname="The tags of the bundle are not created. Run the command:">
+        <source>The tags of the bundle are not created. Run the command:</source>
+        <target>Las etiquetas del bundle no están creadas. Ejecuta el comando:</target>
+      </trans-unit>
     </body>
   </file>
 </xliff>

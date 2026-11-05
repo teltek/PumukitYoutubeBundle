@@ -207,6 +207,61 @@ class AdminPagesTest extends YoutubeTestCase
         $this->runCommand('pumukit:youtube:video:error:notification');
     }
 
+    public function testThePagesWithoutTheTagsOfTheBundleExplainIt(): void
+    {
+        $multimediaObject = $this->video([]);
+        $this->dm->remove($this->account);
+        $this->dm->remove($this->youtubeTag);
+        $this->dm->flush();
+        $this->login();
+
+        $crawler = $this->client->request('GET', self::BASE.'/');
+        $this->assertResponseIsSuccessful();
+        $this->assertStringContainsString('pumukit:youtube:init:pubchannel', $crawler->filter('.alert-warning')->text());
+
+        $this->client->request('GET', self::BASE.'/update/config/'.$multimediaObject->getId());
+        $this->assertResponseIsSuccessful();
+        $this->assertStringContainsString('create a new youtube account', $this->client->getResponse()->getContent());
+    }
+
+    public function testANewAccountWithoutTheTagsOfTheBundleSaysSo(): void
+    {
+        $this->login();
+        $crawler = $this->client->request('GET', self::BASE.'/create');
+        $form = $crawler->filter('form')->form();
+        $form['pumukit_youtube_account[login]'] = 'second';
+        foreach (array_keys($form->getValues()) as $field) {
+            if (str_contains($field, 'i18n_title')) {
+                $form[$field] = 'Second';
+            }
+        }
+        $this->dm->remove($this->account);
+        $this->dm->remove($this->youtubeTag);
+        $this->dm->flush();
+
+        $this->client->submit($form);
+
+        $this->assertResponseStatusCodeSame(Response::HTTP_INTERNAL_SERVER_ERROR);
+        $this->assertNull($this->dm->getRepository(Tag::class)->findOneBy(['properties.login' => 'second']));
+    }
+
+    #[DataProvider('unknownErrorDocuments')]
+    public function testTheErrorOfAnUnknownDocumentIsNotFound(string $id): void
+    {
+        $this->login();
+
+        $this->client->request('GET', self::BASE.'/stats/modal/error/'.$id);
+
+        $this->assertResponseStatusCodeSame(Response::HTTP_NOT_FOUND);
+    }
+
+    public static function unknownErrorDocuments(): iterable
+    {
+        yield 'missing' => ['aaaaaaaaaaaaaaaaaaaaaaaa'];
+
+        yield 'not an id' => ['bad'];
+    }
+
     public function testTheAccountListOpensItsFormsInTheModal(): void
     {
         $this->playlist('playlist1', 'list1');
