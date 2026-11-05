@@ -111,6 +111,68 @@ class AdminPagesTest extends YoutubeTestCase
         $this->assertResponseIsSuccessful();
     }
 
+    public function testTheAccountListOpensItsFormsInTheModal(): void
+    {
+        $this->playlist('playlist1', 'list1');
+        $this->dm->clear();
+        $this->login();
+
+        $crawler = $this->client->request('GET', self::BASE.'/');
+
+        $this->assertResponseIsSuccessful();
+        $this->assertCount(1, $crawler->filter('#list_youtube_accounts[data-controller="admin--tag-tree"]'));
+        $this->assertCount(1, $crawler->filter('a[data-bs-toggle="modal"][data-bs-target="#myModal"][href$="/admin/youtube/create"]'));
+        $this->assertGreaterThan(0, $crawler->filter('#list_youtube_accounts a[data-bs-toggle="modal"]')->count());
+        $this->assertGreaterThan(0, $crawler->filter('#list_youtube_accounts [data-action="click->admin--tag-tree#toggle"]')->count());
+        $this->assertGreaterThan(0, $crawler->filter('#list_youtube_accounts [data-action="click->admin--tag-tree#remove"]')->count());
+        $this->assertCount(0, $crawler->filter('[data-toggle], [data-dismiss], [onclick], #list_youtube_accounts script'));
+    }
+
+    #[DataProvider('formsOfTheModal')]
+    public function testTheFormsWorkInsideTheModal(string $path, string $target): void
+    {
+        $playlist = $this->playlist('playlist1', 'list1');
+        $this->login();
+        $url = strtr($path, ['{account}' => (string) $this->account->getId(), '{playlist}' => (string) $playlist->getId()]);
+
+        $crawler = $this->client->request('GET', self::BASE.$url);
+
+        $this->assertResponseIsSuccessful();
+        $form = $crawler->filter('form[data-controller="admin--modal-form"][data-action="submit->admin--modal-form#submit"]');
+        $this->assertCount(1, $form);
+        $this->assertSame(self::BASE.$url, $form->attr('action'));
+        $this->assertSame([['target' => $target, 'url' => self::BASE.'/list']], json_decode((string) $form->attr('data-admin--modal-form-refresh-value'), true));
+        $this->assertCount(1, $crawler->filter('.modal-header button[data-bs-dismiss="modal"]'));
+        $this->assertCount(1, $crawler->filter('form button[type="submit"]'));
+        $this->assertCount(0, $crawler->filter('script, [data-dismiss], form form'));
+    }
+
+    public static function formsOfTheModal(): iterable
+    {
+        yield 'new account' => ['/create', '#list_youtube_accounts'];
+
+        yield 'edit account' => ['/edit/{account}', '#list_youtube_accounts'];
+
+        yield 'new playlist' => ['/create/playlist/{account}', '#list_youtube_accounts'];
+
+        yield 'edit playlist' => ['/edit/playlist/{playlist}', '#list_youtube_accounts'];
+    }
+
+    public function testAnAccountWithPlaylistsIsNotDeletedAndTheAnswerIsAnError(): void
+    {
+        $this->playlist('playlist1', 'list1');
+        $this->dm->clear();
+        $id = (string) $this->account->getId();
+        $this->login();
+
+        $this->client->request('DELETE', self::BASE.'/delete/'.$id);
+
+        $this->assertResponseStatusCodeSame(Response::HTTP_INTERNAL_SERVER_ERROR);
+        $this->assertStringContainsString('can not be deleted', json_decode($this->client->getResponse()->getContent(), true)['status']);
+        $this->dm->clear();
+        $this->assertNotNull($this->dm->getRepository(Tag::class)->find($id));
+    }
+
     public function testThePlaylistSelectorAnswersWithTheOptionWithoutPlaylist(): void
     {
         $playlist = $this->playlist('playlist1', 'list1');

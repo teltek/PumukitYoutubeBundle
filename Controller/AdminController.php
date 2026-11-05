@@ -82,12 +82,7 @@ class AdminController extends AbstractController
 
                 return new JsonResponse(['success']);
             } catch (\Exception $exception) {
-                return new JsonResponse(
-                    [
-                        'error',
-                        'message' => $exception->getMessage(),
-                    ]
-                );
+                return $this->errorResponse($exception);
             }
         }
 
@@ -117,12 +112,7 @@ class AdminController extends AbstractController
 
                 return new JsonResponse(['success']);
             } catch (\Exception $exception) {
-                return new JsonResponse(
-                    [
-                        'error',
-                        'message' => $exception->getMessage(),
-                    ]
-                );
+                return $this->errorResponse($exception);
             }
         }
 
@@ -144,12 +134,7 @@ class AdminController extends AbstractController
 
             return new JsonResponse(['success']);
         } catch (\Exception $exception) {
-            return new JsonResponse(
-                [
-                    'error',
-                    'message' => $exception->getMessage(),
-                ]
-            );
+            return $this->errorResponse($exception);
         }
     }
 
@@ -185,12 +170,7 @@ class AdminController extends AbstractController
 
                 return new JsonResponse(['success']);
             } catch (\Exception $exception) {
-                return new JsonResponse(
-                    [
-                        'error',
-                        'message' => $exception->getMessage(),
-                    ]
-                );
+                return $this->errorResponse($exception);
             }
         }
 
@@ -216,12 +196,7 @@ class AdminController extends AbstractController
 
                 return new JsonResponse(['success']);
             } catch (\Exception $exception) {
-                return new JsonResponse(
-                    [
-                        'error',
-                        'message' => $exception->getMessage(),
-                    ]
-                );
+                return $this->errorResponse($exception);
             }
         }
 
@@ -281,5 +256,10 @@ class AdminController extends AbstractController
         array_unshift($children, $defaultOption);
 
         return new JsonResponse($children);
+    }
+
+    private function errorResponse(\Exception $exception): JsonResponse
+    {
+        return new JsonResponse(['status' => $exception->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
     }
 }
