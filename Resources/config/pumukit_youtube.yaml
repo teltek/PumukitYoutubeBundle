@@ -10,12 +10,6 @@ services:
       $accountStorage: "%pumukit_youtube.account_storage%"
       Psr\Log\LoggerInterface $logger: '@monolog.logger.youtube'
 
-  Pumukit\YoutubeBundle\Routing\RouteLoader:
-    arguments:
-      $enabled: '%pumukit_youtube.enable%'
-      $env: '%kernel.environment%'
-    tags: ['routing.loader']
-
   Pumukit\YoutubeBundle\Controller\:
     resource: '../../Controller'
     tags: ['controller.service_arguments']

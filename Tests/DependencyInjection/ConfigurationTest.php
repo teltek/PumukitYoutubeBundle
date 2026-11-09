@@ -8,13 +8,10 @@ use PHPUnit\Framework\TestCase;
 use Pumukit\YoutubeBundle\Command\VideoUploadCommand;
 use Pumukit\YoutubeBundle\DependencyInjection\Configuration;
 use Pumukit\YoutubeBundle\DependencyInjection\PumukitYoutubeExtension;
-use Pumukit\YoutubeBundle\EventListener\BackofficeListener;
-use Pumukit\YoutubeBundle\EventListener\RemoveListener;
 use Pumukit\YoutubeBundle\EventListener\UpdateListener;
 use Pumukit\YoutubeBundle\Routing\RouteLoader;
 use Pumukit\YoutubeBundle\Services\MenuService;
-use Pumukit\YoutubeBundle\Services\MenuStatService;
-use Pumukit\YoutubeBundle\Services\MultimediaObjectMenuService;
+use Pumukit\YoutubeBundle\Twig\YoutubeExtension;
 use Symfony\Component\Config\Definition\Processor;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
@@ -33,20 +30,31 @@ class ConfigurationTest extends TestCase
         $this->assertSame(['PUCHYOUTUBE'], $config['pub_channels_tags']);
     }
 
-    public function testDisabledItLoadsNothingThatActs(): void
+    public function testDisabledItOnlyRegistersTheRouteLoader(): void
     {
         $container = $this->container();
 
         (new PumukitYoutubeExtension())->load([['enable' => false]], $container);
 
-        foreach ([UpdateListener::class, RemoveListener::class, BackofficeListener::class, MenuService::class, MenuStatService::class, MultimediaObjectMenuService::class, VideoUploadCommand::class] as $service) {
-            $this->assertFalse($container->hasDefinition($service), $service);
-        }
+        $this->assertSame([RouteLoader::class], $this->bundleServices($container));
+        $this->assertFalse($container->getDefinition(RouteLoader::class)->getArgument(0));
         $this->assertSame([], $container->getParameter('pumukitencode.profilelist'));
         $this->assertCount(0, (new RouteLoader(false))->load('@PumukitYoutubeBundle/Controller/', RouteLoader::TYPE));
     }
 
-    public function testDisabledItDeclaresNoPermission(): void
+    public function testEnabledItRegistersItsServices(): void
+    {
+        $container = $this->container();
+
+        (new PumukitYoutubeExtension())->load([], $container);
+
+        $this->assertTrue($container->getDefinition(RouteLoader::class)->getArgument(0));
+        foreach ([UpdateListener::class, MenuService::class, VideoUploadCommand::class, YoutubeExtension::class] as $service) {
+            $this->assertTrue($container->hasDefinition($service), $service);
+        }
+    }
+
+    public function testDisabledItDeclaresNoPermissionNorLogChannel(): void
     {
         $container = new ContainerBuilder();
         $container->prependExtensionConfig('pumukit_youtube', ['enable' => false]);
@@ -54,15 +62,17 @@ class ConfigurationTest extends TestCase
         (new PumukitYoutubeExtension())->prepend($container);
 
         $this->assertSame([], $container->getExtensionConfig('pumukit_schema'));
+        $this->assertSame([], $container->getExtensionConfig('monolog'));
     }
 
-    public function testEnabledItDeclaresItsPermission(): void
+    public function testEnabledItDeclaresItsPermissionAndItsLogChannel(): void
     {
         $container = new ContainerBuilder();
 
         (new PumukitYoutubeExtension())->prepend($container);
 
         $this->assertSame('ROLE_ACCESS_YOUTUBE', $container->getExtensionConfig('pumukit_schema')[0]['external_permissions'][0]['role']);
+        $this->assertSame(['youtube'], $container->getExtensionConfig('monolog')[0]['channels']);
     }
 
     public function testEnabledItAddsItsProfileWithTheImageToTheEncoder(): void
@@ -156,5 +166,10 @@ class ConfigurationTest extends TestCase
         $container->setParameter('pumukitencode.target_default_profiles', []);
 
         return $container;
+    }
+
+    private function bundleServices(ContainerBuilder $container): array
+    {
+        return array_values(array_filter(array_keys($container->getDefinitions()), static fn (string $id): bool => str_starts_with($id, 'Pumukit\YoutubeBundle\\')));
     }
 }

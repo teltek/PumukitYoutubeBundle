@@ -5,13 +5,8 @@ declare(strict_types=1);
 namespace Pumukit\YoutubeBundle\DependencyInjection;
 
 use Pumukit\CoreBundle\DependencyInjection\FrontendAssets;
-use Pumukit\YoutubeBundle\EventListener\BackofficeListener;
-use Pumukit\YoutubeBundle\EventListener\RemoveListener;
-use Pumukit\YoutubeBundle\EventListener\UpdateListener;
 use Pumukit\YoutubeBundle\PumukitYoutubeBundle;
-use Pumukit\YoutubeBundle\Services\MenuService;
-use Pumukit\YoutubeBundle\Services\MenuStatService;
-use Pumukit\YoutubeBundle\Services\MultimediaObjectMenuService;
+use Pumukit\YoutubeBundle\Routing\RouteLoader;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\Extension;
@@ -23,19 +18,13 @@ class PumukitYoutubeExtension extends Extension implements PrependExtensionInter
 {
     public const AUDIO_TRACK_PROFILE = 'video_youtube';
 
-    private const COMMAND_NAMESPACE = 'Pumukit\YoutubeBundle\Command\\';
-    private const SERVICES_OF_AN_ENABLED_BUNDLE = [
-        UpdateListener::class,
-        RemoveListener::class,
-        BackofficeListener::class,
-        MenuService::class,
-        MenuStatService::class,
-        MultimediaObjectMenuService::class,
-    ];
-
     public function prepend(ContainerBuilder $container): void
     {
         FrontendAssets::register($container, dirname(__DIR__), '@pumukit/youtube');
+
+        if (!$this->processConfiguration(new Configuration(), $container->getExtensionConfig($this->getAlias()))['enable']) {
+            return;
+        }
 
         $container->prependExtensionConfig('monolog', [
             'channels' => ['youtube'],
@@ -51,10 +40,6 @@ class PumukitYoutubeExtension extends Extension implements PrependExtensionInter
                 ],
             ],
         ]);
-
-        if (!$this->processConfiguration(new Configuration(), $container->getExtensionConfig($this->getAlias()))['enable']) {
-            return;
-        }
 
         $container->prependExtensionConfig('pumukit_schema', [
             'external_permissions' => [
@@ -92,15 +77,19 @@ class PumukitYoutubeExtension extends Extension implements PrependExtensionInter
         $container->setParameter('pumukit_youtube.upload_timeout_hours', $config['upload_timeout_hours']);
         $container->setParameter('pumukit_youtube.max_upload_size_in_bytes', $config['max_upload_size_in_bytes']);
 
-        $loader = new YamlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
-        $loader->load('pumukit_youtube.yaml');
+        $container->register(RouteLoader::class)
+            ->setArguments([$config['enable'], '%kernel.environment%'])
+            ->addTag('routing.loader')
+        ;
 
         if (!$config['enable']) {
-            $this->removeWhatAnEnabledBundleLoads($container);
             $container->setParameter('pumukit_youtube.profilelist', []);
 
             return;
         }
+
+        $loader = new YamlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
+        $loader->load('pumukit_youtube.yaml');
 
         $profiles = $config['profiles'] ?: $this->processConfiguration(
             $configuration,
@@ -131,18 +120,5 @@ class PumukitYoutubeExtension extends Extension implements PrependExtensionInter
     public function getConfiguration(array $config, ContainerBuilder $container): Configuration
     {
         return new Configuration($container->getParameter('kernel.default_locale'));
-    }
-
-    private function removeWhatAnEnabledBundleLoads(ContainerBuilder $container): void
-    {
-        foreach (self::SERVICES_OF_AN_ENABLED_BUNDLE as $service) {
-            $container->removeDefinition($service);
-        }
-
-        foreach (array_keys($container->getDefinitions()) as $service) {
-            if (str_starts_with($service, self::COMMAND_NAMESPACE)) {
-                $container->removeDefinition($service);
-            }
-        }
     }
 }

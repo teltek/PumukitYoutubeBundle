@@ -34,7 +34,8 @@ php bin/console assets:install
 ```
 
 Configure the bundle using the [Configuration Guide](Resources/doc/ConfigurationGuide.md). With `enable: false` the
-routes, commands, listeners, menu entries, encoder profiles and the permission of the bundle are not loaded.
+routes give 404 and nothing else of the bundle is loaded: no commands, listeners, menu entries, Twig functions, encoder
+profiles, permission or log channel.
 
 The Google client brings every Google service (about 200 MB). To keep only YouTube, add this to the `composer.json` of
 the installation and run `composer install`:

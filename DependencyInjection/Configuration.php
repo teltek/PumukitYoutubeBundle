@@ -26,7 +26,7 @@ class Configuration implements ConfigurationInterface
             ->children()
             ->booleanNode('enable')
             ->defaultTrue()
-            ->info('If false, the routes, commands, listeners, menu entries, encoder profiles and the permission of the bundle are not loaded')
+            ->info('If false, the routes give 404 and nothing else of the bundle is loaded: no commands, listeners, menu entries, Twig functions, encoder profiles, permission or log channel')
             ->end()
             ->enumNode('playlist_privacy_status')
             ->defaultValue('public')
