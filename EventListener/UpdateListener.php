@@ -116,7 +116,7 @@ class UpdateListener
     }
 
     /**
-     * Set YouTube account ( from template ) on multimedia object that was cut (TTK-22155).
+     * Set YouTube account ( from template ) on multimedia object that was cut.
      */
     private function setYoutubeAccount(MultimediaObject $multimediaObject): void
     {
