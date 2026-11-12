@@ -11,7 +11,7 @@ Create YouTube API account [Guide](AccountsGuide.md)
     php bin/console pumukit:youtube:import:playlist:from:channel --account={ACCOUNT} --channel={CHANNEL_ID}
 ```
 
-where ACCOUNT is the name added for YouTube tag created on PuMuKIT and CHANNEL_ID is the channel id of the YouTube channel.
+where ACCOUNT is the login of the YouTube account in PuMuKIT and CHANNEL_ID is the channel id of the YouTube channel.
 
 ###  2. Import videos from YouTube
 
@@ -23,7 +23,7 @@ The command creates a new video on PuMuKIT for each video on YouTube on default 
     php bin/console pumukit:youtube:import:videos:from:channel --account={ACCOUNT} --channel={CHANNEL_ID}
 ```
 
-where ACCOUNT is the name added for YouTube tag created on PuMuKIT and CHANNEL_ID is the channel id of the YouTube channel.
+where ACCOUNT is the login of the YouTube account in PuMuKIT and CHANNEL_ID is the channel id of the YouTube channel.
 
 ###  3. Download videos from YouTube
 
@@ -35,7 +35,7 @@ Max resolution will be downloaded.
     php bin/console pumukit:youtube:download:videos:from:channel --account={ACCOUNT} --channel={CHANNEL_ID}
 ```
 
-where ACCOUNT is the name added for YouTube tag created on PuMuKIT and CHANNEL_ID is the channel id of the YouTube channel.
+where ACCOUNT is the login of the YouTube account in PuMuKIT and CHANNEL_ID is the channel id of the YouTube channel.
 
 You can use limit to test the download using optional parameter --limit={NUMBER_OF_VIDEOS}.
 
@@ -48,7 +48,7 @@ This process will move imported videos from default series to imported series.
     php bin/console pumukit:youtube:import:videos:on:playlist --account={ACCOUNT} --channel={CHANNEL_ID}
 ```
 
-where ACCOUNT is the name added for YouTube tag created on PuMuKIT and CHANNEL_ID is the channel id of the YouTube channel.
+where ACCOUNT is the login of the YouTube account in PuMuKIT and CHANNEL_ID is the channel id of the YouTube channel.
 
 ### 5. Generate jobs for downloaded videos
 
@@ -58,4 +58,4 @@ This process will generate jobs for downloaded videos.
     php bin/console pumukit:youtube:import:add:jobs --account={ACCOUNT} --channel={CHANNEL_ID}
 ```
 
-where ACCOUNT is the name added for YouTube tag created on PuMuKIT and CHANNEL_ID is the channel id of the YouTube channel.
+where ACCOUNT is the login of the YouTube account in PuMuKIT and CHANNEL_ID is the channel id of the YouTube channel.

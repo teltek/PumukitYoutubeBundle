@@ -14,15 +14,8 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
- * Cleans up Youtube documents left inconsistent by the pre-fix updateStatus catch bug:
- *   - error fields persisted as null (residue from removeError()) that still make
- *     $exists:true queries flag the document as errored.
- *   - false STATUS_ERROR documents whose error is a "pumukit.updateStatusError" with
- *     empty message/raw (created by the swallowed JsonException path).
- *
- * The next run of pumukit:youtube:video:update:status reconciles those STATUS_ERROR
- * documents against YouTube on its own, so this command only clears residue and
- * reports the STATUS_ERROR documents that lack a youtubeId (unreconcilable).
+ * Removes empty error fields and empty status errors from the Youtube documents, and lists
+ * the documents in error status without a youtubeId, which need a manual review.
  */
 class CleanupErrorsCommand extends Command
 {
@@ -42,7 +35,7 @@ class CleanupErrorsCommand extends Command
     {
         $this
             ->setName('pumukit:youtube:errors:cleanup')
-            ->setDescription('Clean up residual error fields left by the updateStatus catch bug.')
+            ->setDescription('Remove empty error fields and empty status errors from the YouTube documents.')
             ->addOption('apply', null, InputOption::VALUE_NONE, 'Apply changes. Without this flag the command runs in dry-run mode.')
             ->addOption(
                 'field',
@@ -53,26 +46,24 @@ class CleanupErrorsCommand extends Command
             )
             ->setHelp(
                 <<<'EOT'
-Reports and (with --apply) fixes the two inconsistent states left by the pre-fix
-updateStatus catch:
+Cleans two kinds of inconsistent data in the YouTube documents that earlier versions
+of the bundle could leave behind:
 
-  1. Residual null error fields — documents whose status is anything other than
-     STATUS_ERROR but that still carry `<field>: null` in Mongo, because
-     Youtube::remove*Error() sets the property to null instead of unsetting the
-     field. These documents show up as false positives in the stats page counters.
+  1. Empty error fields: error, metadataUpdateError, playlistUpdateError or
+     captionUpdateError stored as null. For "error", only in the documents whose
+     status is not error. The field is removed.
 
-  2. False STATUS_ERROR with pumukit.updateStatusError + empty message — documents
-     that hit the JsonException path in the old VideoListService catch. Their
-     `status` is left at STATUS_ERROR (5) but the stored Error carries an empty
-     message and raw. The command unsets the error field and leaves the status
-     at STATUS_ERROR so the next `pumukit:youtube:video:update:status` cron
-     reconciles them against YouTube using the fixed catch.
+  2. Empty status errors: documents in error status, with a YouTube id, whose error
+     is "pumukit.updateStatusError" without a message. The error is removed and the
+     status is kept, so the next run of pumukit:youtube:video:update:status checks
+     the video on YouTube and sets its real status.
 
-  3. Unreconcilable documents — STATUS_ERROR documents without a youtubeId cannot
-     be checked against the YouTube API. They are only listed, never modified.
+It also lists the documents in error status without a YouTube id. They cannot be
+checked on YouTube and are never changed: review them by hand.
 
-Run without --apply to see counts and a sample of case (3). Add --apply to
-persist the cleanup.
+Run it once after upgrading from an earlier version of the bundle, or when the
+statistics show errors without a message. Without --apply it only shows what it
+would change. Use --field to clean a single error field.
 EOT
             )
         ;

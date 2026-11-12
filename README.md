@@ -53,6 +53,10 @@ the installation and run `composer install`:
 
 The bundle logs to its own `youtube` channel, in `var/log/youtube_<environment>-YYYY-MM-DD.log` (`PUMUKIT_LOG_MAX_FILES` files kept, 15 by default).
 
+## Upgrade from 5.x
+
+See the [Migration Guide](Resources/doc/MigrationGuide.md).
+
 ## Tests
 
 They run inside a PuMuKIT 6.0 with the bundle installed and never call YouTube: the real Google client talks to

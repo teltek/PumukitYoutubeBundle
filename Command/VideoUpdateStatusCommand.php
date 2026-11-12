@@ -55,7 +55,7 @@ The statuses removed, notified error and duplicated are not updated.
 
 The statuses uploading and processing are not updated, use command pending status instead.
 
-PERFORMANCE NOTE: This command has a bad performance because use all the multimedia objects uploaded in Youtube Service. (See youtube:video:update:pendingstatus)
+PERFORMANCE NOTE: This command has a bad performance because use all the multimedia objects uploaded in Youtube Service. (See pumukit:youtube:video:update:pendingstatus)
 
 EOT
             )

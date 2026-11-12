@@ -66,7 +66,7 @@ class Configuration implements ConfigurationInterface
             ->info('Default image for audio to youtube upload')
             ->end()
             ->arrayNode('allowed_caption_mimetypes')
-            ->info('Determines allowed caption mimetypes to upload to Youtube. Default value: [vtt, dfxp]')
+            ->info('Determines allowed caption mimetypes to upload to Youtube. Default value: [vtt]')
             ->prototype('scalar')->end()
             ->defaultValue(['vtt'])
             ->end()

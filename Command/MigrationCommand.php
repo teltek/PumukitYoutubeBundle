@@ -69,11 +69,11 @@ class MigrationCommand extends Command
 
                 Example to check account:
 
-                php app/console youtube:migration:schema --single_account_name=my_name_account
+                php bin/console pumukit:youtube:migration:schema --single_account_name=my_name_account
 
                 Example to execute migration:
 
-                php app/console youtube:migration:schema --single_account_name=my_name_account --force
+                php bin/console pumukit:youtube:migration:schema --single_account_name=my_name_account --force
 EOT
             )
         ;

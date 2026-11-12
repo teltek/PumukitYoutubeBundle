@@ -84,15 +84,15 @@ class MigrationV5Command extends Command
 
                 Example to check account:
 
-                php app/console youtube:migration:schema --account=my_name_account
+                php bin/console pumukit:youtube:migration:v5:schema --account=my_name_account
 
                 Example to execute migration:
 
-                php app/console youtube:migration:schema --account=my_name_account --step=1 --force
+                php bin/console pumukit:youtube:migration:v5:schema --account=my_name_account --step=1 --force
                 
                 Example to execute all steps migration:
 
-                php app/console youtube:migration:schema --account=my_name_account --step=99 --force
+                php bin/console pumukit:youtube:migration:v5:schema --account=my_name_account --step=99 --force
 EOT
             )
         ;
