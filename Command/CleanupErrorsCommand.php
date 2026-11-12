@@ -198,7 +198,7 @@ EOT
 
     private function residueFilter(string $errorField): array
     {
-        $filter = [$errorField => null];
+        $filter = [$errorField => ['$type' => 'null']];
         if ('error' === $errorField) {
             $filter['status'] = ['$ne' => Youtube::STATUS_ERROR];
         }
