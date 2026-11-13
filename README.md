@@ -20,10 +20,11 @@ pumukit_youtube:
     resource: "@PumukitYoutubeBundle/Resources/config/routing.yml"
 ```
 
-Initialize the bundle tags:
+Create the bundle tags with `php bin/console pumukit:setup` of PuMuKIT, which runs the setup of every enabled bundle,
+or only with:
 
 ```bash
-php bin/console pumukit:youtube:init:pubchannel --force
+php bin/console pumukit:youtube:init:pubchannel
 ```
 
 Then execute the following commands:
@@ -56,6 +57,9 @@ The bundle logs to its own `youtube` channel, in `var/log/youtube_<environment>-
 ## Upgrade from 5.x
 
 See the [Migration Guide](Resources/doc/MigrationGuide.md).
+
+- `pumukit:youtube:init:pubchannel` no longer needs `--force` and only creates the tags that do not exist, so
+  `pumukit:setup` runs it on every deployment.
 
 ## Tests
 
